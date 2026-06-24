@@ -11,7 +11,7 @@ import time
 from urllib import request as req
 from urllib.error import URLError
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
@@ -21,35 +21,29 @@ from sklearn.metrics.pairwise import cosine_similarity
 class Memory:
     def __init__(self):
         self.facts = []
-        self.vectorizer = None
+        self.vecs = []
+        self.model = SentenceTransformer('BAAI/bge-small-zh-v1.5')
     
     def add(self, fact):
         if fact not in self.facts:
             self.facts.append(fact)
-            self._rebuild_index()
+            vec = self.model.encode(fact)
+            self.vecs.append(vec)
             return True
         return False
     
-    def _rebuild_index(self):
-        if self.facts:
-            self.vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(2, 4))
-            self.vectors = self.vectorizer.fit_transform(self.facts)
-        else:
-            self.vectorizer = None
-            self.vectors = None
-    
     def query(self, question, top_k=3):
-        if not self.facts or self.vectorizer is None:
+        if not self.facts:
             return []
         try:
-            q_vec = self.vectorizer.transform([question])
-            scores = cosine_similarity(q_vec, self.vectors)[0]
+            q_vec = self.model.encode(question)
+            scores = cosine_similarity([q_vec], self.vecs)[0]
             results = []
             for idx in scores.argsort()[::-1][:top_k]:
-                if scores[idx] > 0.1:
+                if scores[idx] > 0.15:
                     results.append({"fact": self.facts[idx], "score": float(scores[idx])})
             return results
-        except:
+        except Exception:
             return []
 
 
