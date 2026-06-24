@@ -14,7 +14,7 @@ from urllib.error import URLError
 # ============================================================
 # 第一步：配置（换成你的 API Key 和地址）
 # ============================================================
-API_KEY=os.env...Y", "")
+API_KEY=***...
 BASE_URL = "https://api.deepseek.com"    # DeepSeek 官方地址
 MODEL = "deepseek-v4-flash"               # DeepSeek V4 Flash
 
