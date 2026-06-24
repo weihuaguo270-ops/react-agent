@@ -19,16 +19,41 @@ from sklearn.metrics.pairwise import cosine_similarity
 # 记忆系统
 # ============================================================
 class Memory:
-    def __init__(self):
+    def __init__(self, save_path=r"D:\agent_learning\memory.json"):
+        self.save_path = save_path
         self.facts = []
         self.vecs = []
         self.model = SentenceTransformer('BAAI/bge-small-zh-v1.5')
+        self._load()
+    
+    def _load(self):
+        try:
+            import json
+            with open(self.save_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.facts = data.get("facts", [])
+            import numpy as np
+            self.vecs = [np.array(v) for v in data.get("vecs", [])]
+            print(f"[记忆] 已加载 {len(self.facts)} 条记忆")
+        except:
+            self.facts = []
+            self.vecs = []
+    
+    def _save(self):
+        import json
+        import numpy as np
+        with open(self.save_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "facts": self.facts,
+                "vecs": [v.tolist() for v in self.vecs],
+            }, f, ensure_ascii=False, indent=2)
     
     def add(self, fact):
         if fact not in self.facts:
             self.facts.append(fact)
             vec = self.model.encode(fact)
             self.vecs.append(vec)
+            self._save()
             return True
         return False
     
