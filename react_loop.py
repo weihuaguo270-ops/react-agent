@@ -7,6 +7,7 @@
 
 import json
 import re
+import subprocess
 import time
 from urllib import request as req
 from urllib.error import URLError
@@ -14,6 +15,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import os as _os
+from mcp_client import MCPClient
 _os.environ['HF_HUB_DISABLE_SYMLINKS_WARNING'] = '1'
 
 
@@ -77,8 +79,15 @@ class Memory:
 MEMORY = Memory()
 
 
+
+
+# 全局 MCP 客户端实例（默认 None，启动时通过参数初始化）
+MCP_CLIENT = None
+
+
 # ============================================================
 # 第一步：配置（换成你的 API Key 和地址）
+# ============================================================（换成你的 API Key 和地址）
 # ============================================================
 API_KEY='***'
 BASE_URL = "https://api.deepseek.com"    # DeepSeek 官方地址
@@ -380,11 +389,20 @@ def execute_tool_call(tool_call):
         arguments = json.loads(tool_call["function"]["arguments"])
     except json.JSONDecodeError:
         return '{"error": "参数解析失败"}'
+    # 先查本地注册的工具
     if func_name in TOOL_REGISTRY:
         try:
             return str(TOOL_REGISTRY[func_name](**arguments))
         except Exception as e:
             return json.dumps({"error": f"执行错误: {e}"})
+    # 不在本地注册表 → 尝试 MCP 工具
+    if MCP_CLIENT is not None:
+        try:
+            print(f"  [MCP] 转发: {func_name}({json.dumps(arguments, ensure_ascii=False)[:100]})")
+            result = MCP_CLIENT.call_tool(func_name, arguments)
+            return result
+        except Exception as e:
+            return json.dumps({"error": f"MCP调用失败: {e}"})
     return json.dumps({"error": f"未知工具: {func_name}"})
 
 # ============================================================
@@ -487,8 +505,36 @@ def react_loop(user_query, max_steps=10):
 if __name__ == "__main__":
     import sys as _sys
     
-    if len(_sys.argv) > 1:
-        q = _sys.argv[1]
+    # 解析 --mcp 参数：python react_loop.py --mcp uvx mcp-server-time
+    _sys_argv = _sys.argv[1:]
+    _mcp_args = None
+    if "--mcp" in _sys_argv:
+        idx = _sys_argv.index("--mcp")
+        # --mcp 后面紧跟一个引号包裹的命令串，如 "uvx mcp-server-time"
+        if idx + 1 < len(_sys_argv):
+            _mcp_str = _sys_argv[idx + 1]   # 取命令串
+            _mcp_args = _mcp_str.split()    # 拆成 command + args
+        _sys_argv = _sys_argv[:idx] + _sys_argv[idx + 2:]  # 移除 --mcp 及其参数
+    
+    # 如果指定了 MCP，启动连接并发现工具
+    if _mcp_args:
+        # (模块级作用域，无需 global 声明)
+        cmd = _mcp_args[0]
+        args = _mcp_args[1:]
+        print(f"\n[MCP] 连接服务器: {cmd} {' '.join(args)}")
+        try:
+            MCP_CLIENT = MCPClient(cmd, args)
+            MCP_CLIENT.connect()
+            mcp_tools = MCP_CLIENT.discover_tools()
+            mcp_defs = MCP_CLIENT.to_tool_definitions()
+            TOOL_DEFINITIONS.extend(mcp_defs)
+            print(f"[MCP] 合并了 {len(mcp_defs)} 个 MCP 工具到 TOOL_DEFINITIONS\n")
+        except Exception as e:
+            print(f"[MCP] 连接失败: {e}\n")
+            MCP_CLIENT = None
+    
+    if _sys_argv:
+        q = " ".join(_sys_argv)
         memories = MEMORY.query(q)
         memory_context = ""
         if memories:
@@ -506,10 +552,18 @@ if __name__ == "__main__":
                 print(f"\n[记忆] 已记住: {fact}")
     
     else:
+        # 交互模式可用工具列表（动态包含 MCP 工具）
+        tool_list = " / ".join(list(TOOL_REGISTRY.keys()))
+        if MCP_CLIENT:
+            mcp_names = [t["name"] for t in MCP_CLIENT.tools]
+            tool_list += " / " + " / ".join(mcp_names)
+        
         print("\n" + "=" * 50)
         print("  Agent 交互模式已启动")
         print("  " + "=" * 50)
-        print("  可用工具：get_time / calculator / web_search / fetch_page / summarize")
+        print(f"  可用工具：{tool_list}")
+        if MCP_CLIENT:
+            print(f"  MCP 已连接: {len(MCP_CLIENT.tools)} 个远程工具可用")
         print("  可问：时间、计算、搜索新闻、读网页、总结内容")
         print("  记忆：说 \"记住...\" 保存信息，输入 '记忆' 查看")
         print("  退出：输入 'exit' 或 '退出'")
