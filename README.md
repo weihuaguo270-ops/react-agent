@@ -94,6 +94,15 @@ venv\Scripts\python react_loop.py "现在几点了？"
 | `web_search(query)` | 搜索互联网新闻 | AnySearch 搜索引擎 |
 | `fetch_page(url)` | 读取网页正文 | 维基API/HTML提取 |
 | `summarize(text)` | 自动提取摘要 | 抽取式 |
+| `read_text_file(path)` | 读取文件内容 | MCP server-filesystem |
+| `write_file(path, content)` | 写入文件 | MCP server-filesystem |
+| `edit_file(path, edits)` | 编辑文件（行级替换） | MCP server-filesystem |
+| `list_directory(path)` | 列出目录内容 | MCP server-filesystem |
+| `create_directory(path)` | 创建目录 | MCP server-filesystem |
+| `move_file(src, dst)` | 移动/重命名文件 | MCP server-filesystem |
+| `search_files(pattern)` | 搜索文件 | MCP server-filesystem |
+| `get_file_info(path)` | 获取文件元信息 | MCP server-filesystem |
+| `directory_tree(path)` | 递归目录树 | MCP server-filesystem |
 
 ### Pipeline 示例
 
