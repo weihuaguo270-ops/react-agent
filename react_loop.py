@@ -507,13 +507,16 @@ def react_loop(user_query, max_steps=10, tool_defs=None):
 # 多 Agent 协作（Orchestrator-Worker 链式调用）
 # ============================================================
 
-def multi_agent_chain(user_query):
+def multi_agent_chain(user_query, parallel=False):
     """多 Agent 协作（内部使用 Orchestrator 类）"""
-    return Orchestrator(call_llm, react_loop, tool_definitions=TOOL_DEFINITIONS).execute(user_query)
+    return Orchestrator(call_llm, react_loop, tool_definitions=TOOL_DEFINITIONS).execute(user_query, parallel=parallel)
 
 if __name__ == "__main__":
     import sys as _sys
     _sys_argv = _sys.argv[1:]
+    _parallel_mode = "--parallel" in _sys_argv
+    if _parallel_mode:
+        _sys_argv.remove("--parallel")
     _mcp_args_list = []
     while "--mcp" in _sys_argv:
         idx = _sys_argv.index("--mcp")
@@ -548,7 +551,7 @@ if __name__ == "__main__":
         try:
             full_q = memory_context + q if memory_context else q
             if any(w in q for w in ["同时", "并且", "还有", "另外", "且"]):
-                multi_agent_chain(full_q)
+                multi_agent_chain(full_q, parallel=_parallel_mode)
             else:
                 react_loop(full_q)
         except Exception as e:

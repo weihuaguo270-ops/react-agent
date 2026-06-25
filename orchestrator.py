@@ -4,6 +4,7 @@ Orchestrator — 独立的多 Agent 协作模块
 支持 Worker 隔离：每个 Worker 有独立的工具集
 """
 import json, urllib.request, sys, os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -27,23 +28,20 @@ PROFILE_HINTS = {
 
 
 def classify_tool_needs(task, call_llm):
-    prompt = (
-        f"判断以下任务需要使用哪种工具。只输出分类名，多个用逗号分隔。\n\n"
-        f"可选分类:\n"
-        + "\n".join(f"- {k}: {v}" for k, v in PROFILE_HINTS.items()) +
-        f"\n\n任务: {task}\n分类:"
-    )
-    msg = call_llm([
-        {"role": "system", "content": "你是一个工具分类助手，只输出分类名。"},
-        {"role": "user", "content": prompt},
-    ])
-    text = (msg.get("content", "") or "").strip().lower()
+    # 基于关键词快速分类，避免额外 LLM 调用
+    task_lower = task.lower()
     tags = set()
-    for t in text.replace("\uff0c", ",").split(","):
-        t = t.strip()
-        if t in TOOL_PROFILES:
-            tags.add(t)
-    return tags or {"web"}
+    if any(w in task_lower for w in ["时间", "时区", "当前时间", "现在几点", "纽约", "伦敦"]):
+        tags.add("time")
+    if any(w in task_lower for w in ["文件", "目录", "文件夹", "大小", "写", "读", "创建"]):
+        tags.add("file")
+    if any(w in task_lower for w in ["搜索", "网页", "新闻", "查询"]):
+        tags.add("web")
+    if any(w in task_lower for w in ["计算", "数学", "等于"]):
+        tags.add("calc")
+    if any(w in task_lower for w in ["总结", "摘要", "概括"]):
+        tags.add("summary")
+    return tags or {"web", "calc"}  # 默认 web+calc
 
 
 def filter_tools(all_defs, needed_tags):
@@ -119,10 +117,48 @@ class Orchestrator:
         print(final)
         return final
 
-    def execute(self, user_query):
+    def execute(self, user_query, parallel=False):
         self.plan(user_query)
         self.results = []
-        for task in self.tasks:
-            result = self.run_worker(task)
-            self.results.append(f"[任务] {task}\n{result}")
+        if parallel and len(self.tasks) > 1:
+            self._execute_parallel()
+        else:
+            for task in self.tasks:
+                result = self.run_worker(task)
+                self.results.append(f"[任务] {task}\n{result}")
         return self.synthesize()
+
+    def _execute_parallel(self):
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        import copy
+
+        # 预先分类，每个 Worker 拿到自己的工具快照
+        worker_snapshots = []
+        for task in self.tasks:
+            needed = classify_tool_needs(task, self.call_llm)
+            filtered = filter_tools(self.all_tools, needed) if needed else copy.deepcopy(self.all_tools)
+            worker_snapshots.append((task, filtered))
+            print(f"  [并行] {task} ({len(filtered)} 个工具)")
+
+        def run_one(task, tools_snapshot):
+            """每个 Worker 在自己的线程里用独立的工具快照"""
+            # 临时替换全局 TOOL_DEFINITIONS 为 Worker 的专属工具
+            old = self.all_tools[:]
+            self.all_tools[:] = tools_snapshot
+            try:
+                result = self.react_loop(task)
+                return f"[任务] {task}\n{result}"
+            finally:
+                self.all_tools[:] = old
+
+        with ThreadPoolExecutor(max_workers=len(self.tasks)) as ex:
+            futures = {ex.submit(run_one, t, tl): t for t, tl in worker_snapshots}
+            for f in as_completed(futures):
+                task = futures[f]
+                try:
+                    r = f.result()
+                    self.results.append(r)
+                    print(f"  [完成] {task}")
+                except Exception as e:
+                    print(f"  [失败] {task}: {e}")
+                    self.results.append(f"[任务] {task}\n失败: {e}")
