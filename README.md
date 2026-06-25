@@ -128,6 +128,7 @@ venv\Scripts\python eval.py
 handwritten-react-agent/
 ├── react_loop.py    # 主代码（ReAct Loop + 工具 + 记忆 + 交互模式）
 ├── mcp_client.py    # MCP 协议模块（JSON-RPC 2.0 over stdio）
+├── orchestrator.py  # 多 Agent 协作（Orchestrator-Worker）
 ├── eval.py          # 自动化评测
 ├── memory.json      # 记忆持久化（自动生成）
 ├── README.md
@@ -165,11 +166,22 @@ handwritten-react-agent/
 
 ### 实现
 
+`orchestrator.py` — 独立模块，可被任何项目导入：
+
+```python
+from orchestrator import Orchestrator
+o = Orchestrator(call_llm, react_loop)
+o.execute("现在纽约几点？同时看看mcp_client.py大小")
+```
+
+内部流程：
+
 ```python
 def multi_agent_chain(user_query):
-    # 1. Orchestrator 拆任务（LLM）
-    # 2. Workers 依次执行（独立 ReAct Loop）
-    # 3. Orchestrator 汇总（LLM 合并结果）
+    return Orchestrator(call_llm, react_loop).execute(user_query)
+    # 1. plan()      → LLM 拆任务
+    # 2. run_worker() → 每个子任务独立 ReAct Loop
+    # 3. synthesize() → 汇总结果
 ```
 
 ## 后续计划
