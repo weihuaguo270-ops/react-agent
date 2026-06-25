@@ -22,6 +22,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import os as _os
 from mcp_client import MCPClient
+from orchestrator import Orchestrator
 MCP_CLIENTS = []
 
 DEFAULT_MCP_SERVERS = [
@@ -504,7 +505,11 @@ def react_loop(user_query, max_steps=10):
 # ============================================================
 # 多 Agent 协作（Orchestrator-Worker 链式调用）
 # ============================================================
+
 def multi_agent_chain(user_query):
+    """多 Agent 协作（内部使用 Orchestrator 类）"""
+    return Orchestrator(call_llm, react_loop).execute(user_query)
+
     """
     Orchestrator-Worker 模式：
     1. Orchestrator 将用户问题拆成独立子任务
