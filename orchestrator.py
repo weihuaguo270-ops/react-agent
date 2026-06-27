@@ -129,7 +129,6 @@ class Orchestrator:
         return self.synthesize()
 
     def _execute_parallel(self):
-        from concurrent.futures import ThreadPoolExecutor, as_completed
         import copy
 
         # 预先分类，每个 Worker 拿到自己的工具快照

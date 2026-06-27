@@ -13,11 +13,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import json
 import re
-import subprocess
 import time
 from urllib import request as req
 from urllib.error import URLError
-import os as _os
+from urllib.parse import urlparse, quote
 from mcp_client import MCPClient
 from orchestrator import Orchestrator
 MCP_CLIENTS = []
@@ -27,7 +26,7 @@ DEFAULT_MCP_SERVERS = [
     # 取消注释下一行可启用文件系统 Server：
     ["C:/Program Files/nodejs/npx.cmd", "-y", "@modelcontextprotocol/server-filesystem", "D:/agent_learning/repo"],
 ]
-_os.environ['HF_HUB_DISABLE_SYMLINKS_WARNING'] = '1'
+os.environ['HF_HUB_DISABLE_SYMLINKS_WARNING'] = '1'
 
 
 # ============================================================
@@ -54,7 +53,7 @@ except Exception as e:
 # 第一步：配置（换成你的 API Key 和地址）
 # ============================================================（换成你的 API Key 和地址）
 # ============================================================
-API_KEY='***'
+API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 BASE_URL = "https://api.deepseek.com"    # DeepSeek 官方地址
 MODEL = "deepseek-v4-flash"               # DeepSeek V4 Flash
 
@@ -77,18 +76,12 @@ def tool_get_time() -> str:
     return time.strftime("%Y-%m-%d %H:%M:%S")
 
 
-import urllib.request as _req
-import urllib.parse as _parse
-import urllib.parse as _up
-
 def tool_web_search(query: str, max_results: int = 1) -> str:
     """搜索互联网，返回实时新闻结果"""
     try:
-        import json as _json
-        import urllib.request as _ur
 
-        max_results = min(max(1, max_results), 5)  # 至少1条，最多5条
-        payload = _json.dumps({
+        max_results = min(max(1, max_results), 5)
+        payload = json.dumps({
             "jsonrpc": "2.0",
             "method": "tools/call",
             "params": {
@@ -103,7 +96,7 @@ def tool_web_search(query: str, max_results: int = 1) -> str:
             "id": 1
         }).encode()
 
-        req = _ur.Request(
+        http_request = req.Request(
             "https://api.anysearch.com/mcp",
             data=payload,
             headers={
@@ -113,8 +106,8 @@ def tool_web_search(query: str, max_results: int = 1) -> str:
             method="POST"
         )
 
-        with _ur.urlopen(req, timeout=15) as resp:
-            data = _json.loads(resp.read().decode())
+        with req.urlopen(http_request, timeout=15) as resp:
+            data = json.loads(resp.read().decode())
 
         result_text = data.get("result", {}).get("content", [{}])[0].get("text", "")
         if not result_text or "Search Results" not in result_text:
@@ -148,13 +141,12 @@ def tool_fetch_page(url: str) -> str:
         # 如果是维基百科，用 API 直接取纯文本
         if "wikipedia.org" in url:
             title = url.split("/wiki/")[-1].split("#")[0]
-            from urllib.parse import quote as _q
-            netloc = _up.urlparse(url).netloc
+            netloc = urlparse(url).netloc
             api_url = (f"https://{netloc}/w/api.php"
                        f"?action=query&prop=extracts&explaintext"
-                       f"&titles={_q(title)}&format=json&exchars=3000")
-            r = _req.Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
-            with _req.urlopen(r, timeout=10) as resp:
+                       f"&titles={quote(title)}&format=json&exchars=3000")
+            r = req.Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
+            with req.urlopen(r, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
             pages = data.get("query", {}).get("pages", {})
             for pid, pdata in pages.items():
@@ -165,10 +157,10 @@ def tool_fetch_page(url: str) -> str:
                     return text if text else "页面无内容"
 
         # 非维基百科：请求网页
-        r = _req.Request(url, headers={
+        r = req.Request(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         })
-        with _req.urlopen(r, timeout=10) as resp:
+        with req.urlopen(r, timeout=10) as resp:
             html = resp.read().decode("utf-8", errors="replace")
 
         # 提取 <p> 标签中的正文段落
@@ -390,8 +382,7 @@ def react_loop(user_query, max_steps=10, tool_defs=None):
         print(f"--- Step {step}/{max_steps} ---")
 
         # (1) 调 LLM（支持传入自定义工具列表）
-        _tools = tool_defs if tool_defs is not None else None
-        msg = call_llm(messages, tool_defs=_tools)
+        msg = call_llm(messages, tool_defs=tool_defs)
         last_content = msg.get("content", "") or ""
         if last_content.strip():
             print(f"[LLM思考] {last_content[:200]}")
@@ -504,8 +495,7 @@ def auto_extract_memory(user_query, assistant_answer):
     return Orchestrator(call_llm, react_loop, tool_definitions=TOOL_DEFINITIONS).execute(user_query, parallel=parallel)
 
 if __name__ == "__main__":
-    import sys as _sys
-    _sys_argv = _sys.argv[1:]
+    _sys_argv = sys.argv[1:]
     _parallel_mode = "--parallel" in _sys_argv
     if _parallel_mode:
         _sys_argv.remove("--parallel")
