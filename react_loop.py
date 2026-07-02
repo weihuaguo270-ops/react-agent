@@ -19,6 +19,8 @@ from urllib.error import URLError
 from urllib.parse import urlparse, quote
 from mcp_client import MCPClient
 from orchestrator import Orchestrator
+from cot import COT, COT_TOOL_DEFINITION, tool_switch_cot_strategy
+from tot import TOT, TOT_TOOL_DEFINITION, tool_tot_reasoning, set_tot_llm_call
 MCP_CLIENTS = []
 
 DEFAULT_MCP_SERVERS = [
@@ -218,6 +220,8 @@ TOOL_REGISTRY = {
     "fetch_page": tool_fetch_page,
     "summarize": tool_summarize,
     "rag_query": rag_query,
+    "switch_cot_strategy": tool_switch_cot_strategy,
+    "tot_reasoning": tool_tot_reasoning,
 }
 
 # 工具的 JSON 描述（发给 LLM 让它知道能调什么）
@@ -299,6 +303,8 @@ TOOL_DEFINITIONS = [
         },
     },
     RAG_TOOL_DEFINITION,
+    COT_TOOL_DEFINITION,
+    TOT_TOOL_DEFINITION,
 ]
 
 # ============================================================
@@ -336,6 +342,18 @@ def call_llm(messages, max_retries=2, tool_defs=None):
             return {"role": "assistant", "content": f"解析失败: {e}"}
     return {"role": "assistant", "content": "超过最大重试"}
 
+
+# ToT 模块的 LLM 调用适配器（它在内部需要调 LLM 做生成和评估）
+def _tot_llm_wrapper(prompt: str) -> str:
+    """把 ToT 的 (prompt → reply) 签名适配成 react_loop 的 call_llm"""
+    messages = [{"role": "user", "content": prompt}]
+    result = call_llm(messages, tool_defs=[])
+    return result.get("content", "")
+
+
+set_tot_llm_call(_tot_llm_wrapper)
+
+
 # ============================================================
 # 第四步：执行工具
 # ============================================================
@@ -365,11 +383,12 @@ def execute_tool_call(tool_call):
 # 第五步：ReAct Loop 主循环（核心！）
 # ============================================================
 def react_loop(user_query, max_steps=10, tool_defs=None):
-    system_prompt = """你是一个可以使用工具的 AI 助手。规则：
+    base_prompt = """你是一个可以使用工具的 AI 助手。规则：
 1. 用 THOUGHT / ACTION / OBSERVATION / FINAL ANSWER 格式
 2. 最终答案用 FINAL ANSWER: 开头
 3. 根据用户问题选择最合适的工具——包括本地工具和 MCP 远程工具
 4. 搜索2次没结果就直接回答，不要继续搜"""
+    system_prompt = COT.inject(base_prompt, query=user_query)
 
     messages = [
         {"role": "system", "content": system_prompt},

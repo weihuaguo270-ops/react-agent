@@ -6,6 +6,7 @@ Orchestrator — 独立的多 Agent 协作模块
 import json, urllib.request, sys, os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from planner import Planner, Task
 
 
 TOOL_PROFILES = {
@@ -60,36 +61,37 @@ class Orchestrator:
         self.all_tools = tool_definitions or []
 
     def plan(self, user_query):
-        prompt = (
-            "将以下请求拆成独立子任务。要求：\n"
-            "- 每个子任务一句话，只做一件事\n"
-            "- 每行一个子任务，不要编号\n"
-            "- 不要解释，直接输出任务\n\n"
-            "例子：\n"
-            "请求: 现在纽约几点？同时看看mcp_client.py大小\n"
-            "输出:\n"
-            "查询纽约的当前时间\n"
-            "查看mcp_client.py的文件大小\n\n"
-            f"请求: {user_query}\n"
-            "输出:"
-        )
-        msg = self.call_llm([
-            {"role": "system", "content": "你是一个任务分解助手。"},
-            {"role": "user", "content": prompt},
-        ])
-        self.tasks = [t.strip() for t in (msg.get("content", "") or "").split("\n") if t.strip()]
-        print(f"\n[Orchestrator] 拆分为 {len(self.tasks)} 个子任务:")
-        for i, t in enumerate(self.tasks, 1):
-            print(f"  {i}. {t}")
-        return self.tasks
+        """LLM 自动分解任务 + 依赖分析（使用 Planner）"""
+        planner = Planner()
+        tasks = planner.plan(user_query, self.call_llm)
+        if not tasks:
+            print("[Orchestrator] Planner 未返回任务，使用默认 fallback")
+            return []
 
-    def run_worker(self, task):
+        self.tasks = tasks
+        self._levels = planner.schedule(tasks)
+        print(f"\n[Orchestrator] 分解为 {len(tasks)} 个子任务，{len(self._levels)} 个执行层级:")
+        for t in tasks:
+            deps = f"（依赖 #{','.join(t.depends_on)}）" if t.depends_on else "（无依赖）"
+            print(f"  #{t.id}: {t.description} {deps}")
+        print()
+        print(planner.describe_schedule(self._levels))
+        return tasks
+
+    def run_worker(self, task, context=""):
         print(f"\n{'='*50}")
         print(f"[Worker] {task}")
         print(f"{'='*50}")
 
-        needed = classify_tool_needs(task, self.call_llm)
-        print(f"  需要工具: {', '.join(needed) if needed else '默认'}")
+        # 如果有前置任务的结果，注入为上下文
+        if context:
+            print(f"  [上下文] 收到 {context.count('---')} 个前置任务的结果")
+            task_with_context = f"{task}\n\n参考信息：\n{context}"
+        else:
+            task_with_context = task
+
+        needed = classify_tool_needs(task_with_context if context else task, self.call_llm)
+        print(f"  需要工具: {', '.join(needed) if needed else '默认'}\n")
 
         old_tools = None
         if needed and self.all_tools:
@@ -98,7 +100,7 @@ class Orchestrator:
             self.all_tools[:] = filtered
             print(f"  暴露 {len(filtered)}/{len(old_tools)} 个工具")
 
-        result = self.react_loop(task)
+        result = self.react_loop(task_with_context)
 
         if old_tools:
             self.all_tools[:] = old_tools
@@ -120,13 +122,59 @@ class Orchestrator:
     def execute(self, user_query, parallel=False):
         self.plan(user_query)
         self.results = []
-        if parallel and len(self.tasks) > 1:
-            self._execute_parallel()
-        else:
-            for task in self.tasks:
-                result = self.run_worker(task)
-                self.results.append(f"[任务] {task}\n{result}")
+        completed_ids = set()
+
+        if not hasattr(self, '_levels') or not self._levels:
+            print("[Orchestrator] 无任务可执行")
+            return ""
+
+        for level_idx, level in enumerate(self._levels):
+            print(f"\n{'='*50}")
+            print(f"[层级 {level_idx + 1}/{len(self._levels)}] {len(level)} 个任务")
+            print(f"{'='*50}")
+
+            if len(level) == 1:
+                # 单个任务直接执行
+                t = level[0]
+                context = self._build_context(t, completed_ids)
+                result = self.run_worker(t.description, context=context)
+                self.results.append(f"[#{t.id}] {t.description}\n{result}")
+                completed_ids.add(t.id)
+            else:
+                # 多个任务并行执行
+                self._execute_level_parallel(level, completed_ids)
+
         return self.synthesize()
+
+    def _build_context(self, task: Task, completed_ids: set[str]) -> str:
+        """为依赖任务构建上下文：把前置任务的结果传给它"""
+        if not task.depends_on:
+            return ""
+        context_parts = ["以下是已完成任务的结果，供你参考："]
+        for t in self.tasks:
+            if t.id in task.depends_on and t.result:
+                context_parts.append(f"\n--- #{t.id}: {t.description} ---")
+                context_parts.append(t.result)
+        return "\n".join(context_parts)
+
+    def _execute_level_parallel(self, level: list, completed_ids: set[str]):
+        """并行执行同一层的所有任务"""
+        def run_one(task: Task) -> tuple:
+            context = self._build_context(task, completed_ids)
+            result = self.run_worker(task.description, context=context)
+            return (task.id, result)
+
+        with ThreadPoolExecutor(max_workers=len(level)) as ex:
+            futures = {ex.submit(run_one, t): t for t in level}
+            for f in as_completed(futures):
+                t = futures[f]
+                try:
+                    tid, result = f.result()
+                    self.results.append(f"[#{tid}] {t.description}\n{result}")
+                    completed_ids.add(tid)
+                    print(f"  [完成] #{tid}: {t.description[:50]}")
+                except Exception as e:
+                    print(f"  [失败] #{t.id}: {t.description[:50]}: {e}")
 
     def _execute_parallel(self):
         import copy
