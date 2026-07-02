@@ -5,76 +5,50 @@
 理解这个代码 = 理解了 Agent 最核心的机制
 """
 
+
+import sys
+import os
+# ensure mcp_client.py can be found
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import json
 import re
 import time
 from urllib import request as req
 from urllib.error import URLError
-import numpy as np
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-import os as _os
-_os.environ['HF_HUB_DISABLE_SYMLINKS_WARNING'] = '1'
+from urllib.parse import urlparse, quote
+from mcp_client import MCPClient
+from orchestrator import Orchestrator
+from cot import COT, COT_TOOL_DEFINITION, tool_switch_cot_strategy
+from tot import TOT, TOT_TOOL_DEFINITION, tool_tot_reasoning, set_tot_llm_call
+MCP_CLIENTS = []
+
+DEFAULT_MCP_SERVERS = [
+    ["uvx", "mcp-server-time"],
+    # 取消注释下一行可启用文件系统 Server：
+    ["C:/Program Files/nodejs/npx.cmd", "-y", "@modelcontextprotocol/server-filesystem", "D:/agent_learning/repo"],
+]
+os.environ['HF_HUB_DISABLE_SYMLINKS_WARNING'] = '1'
 
 
 # ============================================================
-# 记忆系统
+# 记忆系统（独立模块见 memory.py）
 # ============================================================
-class Memory:
-    def __init__(self, save_path=r"D:\agent_learning\memory.json"):
-        self.save_path = save_path
-        self.facts = []
-        self.vecs = []
-        self.model = SentenceTransformer('BAAI/bge-small-zh-v1.5')
-        self._load()
-    
-    def _load(self):
-        try:
-            import json
-            with open(self.save_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            self.facts = data.get("facts", [])
-            import numpy as np
-            self.vecs = [np.array(v) for v in data.get("vecs", [])]
-            print(f"[记忆] 已加载 {len(self.facts)} 条记忆")
-        except:
-            self.facts = []
-            self.vecs = []
-    
-    def _save(self):
-        import json
-        import numpy as np
-        with open(self.save_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "facts": self.facts,
-                "vecs": [[round(float(x), 4) for x in v] for v in self.vecs],
-            }, f, ensure_ascii=False, separators=(",", ":"))
-    
-    def add(self, fact):
-        if fact not in self.facts:
-            self.facts.append(fact)
-            vec = self.model.encode(fact)
-            self.vecs.append(vec)
-            self._save()
-            return True
-        return False
-    
-    def query(self, question, top_k=3):
-        if not self.facts:
-            return []
-        try:
-            q_vec = self.model.encode(question)
-            scores = cosine_similarity([q_vec], self.vecs)[0]
-            results = []
-            for idx in scores.argsort()[::-1][:top_k]:
-                if scores[idx] > 0.15:
-                    results.append({"fact": self.facts[idx], "score": float(scores[idx])})
-            return results
-        except Exception:
-            return []
-
+from memory import Memory
 
 MEMORY = Memory()
+from rag import RAG_INDEX, rag_query, RAG_TOOL_DEFINITION
+
+# ============================================================
+# 预加载 RAG 知识库：启动时自动索引项目文档
+# ============================================================
+print("[启动] 正在加载 RAG 知识库...")
+_rag_dir = os.path.dirname(os.path.abspath(__file__))
+try:
+    n = RAG_INDEX.ingest_directory(_rag_dir)
+    print(f"[启动] RAG 知识库就绪：{len(RAG_INDEX.chunks)} 个片段 (来自 {n} 个文件)")
+except Exception as e:
+    print(f"[启动] RAG 知识库加载跳过: {e}")
 
 
 # ============================================================
@@ -109,18 +83,12 @@ def tool_get_time() -> str:
     return time.strftime("%Y-%m-%d %H:%M:%S")
 
 
-import urllib.request as _req
-import urllib.parse as _parse
-import urllib.parse as _up
-
 def tool_web_search(query: str, max_results: int = 1) -> str:
     """搜索互联网，返回实时新闻结果"""
     try:
-        import json as _json
-        import urllib.request as _ur
 
-        max_results = min(max(1, max_results), 5)  # 至少1条，最多5条
-        payload = _json.dumps({
+        max_results = min(max(1, max_results), 5)
+        payload = json.dumps({
             "jsonrpc": "2.0",
             "method": "tools/call",
             "params": {
@@ -135,7 +103,7 @@ def tool_web_search(query: str, max_results: int = 1) -> str:
             "id": 1
         }).encode()
 
-        req = _ur.Request(
+        http_request = req.Request(
             "https://api.anysearch.com/mcp",
             data=payload,
             headers={
@@ -145,8 +113,8 @@ def tool_web_search(query: str, max_results: int = 1) -> str:
             method="POST"
         )
 
-        with _ur.urlopen(req, timeout=15) as resp:
-            data = _json.loads(resp.read().decode())
+        with req.urlopen(http_request, timeout=15) as resp:
+            data = json.loads(resp.read().decode())
 
         result_text = data.get("result", {}).get("content", [{}])[0].get("text", "")
         if not result_text or "Search Results" not in result_text:
@@ -180,13 +148,12 @@ def tool_fetch_page(url: str) -> str:
         # 如果是维基百科，用 API 直接取纯文本
         if "wikipedia.org" in url:
             title = url.split("/wiki/")[-1].split("#")[0]
-            from urllib.parse import quote as _q
-            netloc = _up.urlparse(url).netloc
+            netloc = urlparse(url).netloc
             api_url = (f"https://{netloc}/w/api.php"
                        f"?action=query&prop=extracts&explaintext"
-                       f"&titles={_q(title)}&format=json&exchars=3000")
-            r = _req.Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
-            with _req.urlopen(r, timeout=10) as resp:
+                       f"&titles={quote(title)}&format=json&exchars=3000")
+            r = req.Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
+            with req.urlopen(r, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
             pages = data.get("query", {}).get("pages", {})
             for pid, pdata in pages.items():
@@ -197,10 +164,10 @@ def tool_fetch_page(url: str) -> str:
                     return text if text else "页面无内容"
 
         # 非维基百科：请求网页
-        r = _req.Request(url, headers={
+        r = req.Request(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         })
-        with _req.urlopen(r, timeout=10) as resp:
+        with req.urlopen(r, timeout=10) as resp:
             html = resp.read().decode("utf-8", errors="replace")
 
         # 提取 <p> 标签中的正文段落
@@ -247,11 +214,14 @@ def tool_summarize(text: str, max_sentences: int = 5) -> str:
 
 
 TOOL_REGISTRY = {
-    "calculator": tool_calculator,
     "get_time": tool_get_time,
+    "calculator": tool_calculator,
     "web_search": tool_web_search,
     "fetch_page": tool_fetch_page,
     "summarize": tool_summarize,
+    "rag_query": rag_query,
+    "switch_cot_strategy": tool_switch_cot_strategy,
+    "tot_reasoning": tool_tot_reasoning,
 }
 
 # 工具的 JSON 描述（发给 LLM 让它知道能调什么）
@@ -297,14 +267,6 @@ TOOL_DEFINITIONS = [
     {
         "type": "function",
         "function": {
-            "name": "get_time",
-            "description": "获取当前时间",
-            "parameters": {"type": "object", "properties": {}},
-            },
-        },
-    {
-        "type": "function",
-        "function": {
             "name": "fetch_page",
             "description": "读取网页内容，输入URL返回正文文本",
             "parameters": {
@@ -340,16 +302,19 @@ TOOL_DEFINITIONS = [
             },
         },
     },
+    RAG_TOOL_DEFINITION,
+    COT_TOOL_DEFINITION,
+    TOT_TOOL_DEFINITION,
 ]
 
 # ============================================================
 # 第三步：调用 LLM
 # ============================================================
-def call_llm(messages, max_retries=2):
+def call_llm(messages, max_retries=2, tool_defs=None):
     payload = {
         "model": MODEL,
         "messages": messages,
-        "tools": TOOL_DEFINITIONS,
+        "tools": tool_defs if tool_defs is not None else TOOL_DEFINITIONS,
         "tool_choice": "auto",
         "temperature": 0.7,
         "max_tokens": 2000,
@@ -377,6 +342,18 @@ def call_llm(messages, max_retries=2):
             return {"role": "assistant", "content": f"解析失败: {e}"}
     return {"role": "assistant", "content": "超过最大重试"}
 
+
+# ToT 模块的 LLM 调用适配器（它在内部需要调 LLM 做生成和评估）
+def _tot_llm_wrapper(prompt: str) -> str:
+    """把 ToT 的 (prompt → reply) 签名适配成 react_loop 的 call_llm"""
+    messages = [{"role": "user", "content": prompt}]
+    result = call_llm(messages, tool_defs=[])
+    return result.get("content", "")
+
+
+set_tot_llm_call(_tot_llm_wrapper)
+
+
 # ============================================================
 # 第四步：执行工具
 # ============================================================
@@ -386,21 +363,32 @@ def execute_tool_call(tool_call):
         arguments = json.loads(tool_call["function"]["arguments"])
     except json.JSONDecodeError:
         return '{"error": "参数解析失败"}'
+    # 先查本地注册的工具
     if func_name in TOOL_REGISTRY:
         try:
             return str(TOOL_REGISTRY[func_name](**arguments))
         except Exception as e:
             return json.dumps({"error": f"执行错误: {e}"})
+    # 不在本地注册表 → 尝试遍历所有 MCP Client
+    for _mcp_client in MCP_CLIENTS:
+        if func_name in [t["name"] for t in _mcp_client.tools]:
+            try:
+                print(f"  [MCP] 转发: {func_name}({json.dumps(arguments, ensure_ascii=False)[:100]})")
+                return _mcp_client.call_tool(func_name, arguments)
+            except Exception as e:
+                return json.dumps({"error": f"MCP调用失败: {e}"})
     return json.dumps({"error": f"未知工具: {func_name}"})
 
 # ============================================================
 # 第五步：ReAct Loop 主循环（核心！）
 # ============================================================
-def react_loop(user_query, max_steps=10):
-    system_prompt = """你是一个可以使用工具的 AI 助手。规则：
+def react_loop(user_query, max_steps=10, tool_defs=None):
+    base_prompt = """你是一个可以使用工具的 AI 助手。规则：
 1. 用 THOUGHT / ACTION / OBSERVATION / FINAL ANSWER 格式
 2. 最终答案用 FINAL ANSWER: 开头
-3. 搜索2次没结果就直接回答，不要继续搜"""
+3. 根据用户问题选择最合适的工具——包括本地工具和 MCP 远程工具
+4. 搜索2次没结果就直接回答，不要继续搜"""
+    system_prompt = COT.inject(base_prompt, query=user_query)
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -411,17 +399,17 @@ def react_loop(user_query, max_steps=10):
     print(f"用户: {user_query}")
     print(f"{'='*60}\n")
 
-    no_tool_streak = 0      # 连续未调工具次数
-    tools_were_used = False  # 上一步是否调了工具
-    search_count = 0         # 搜索次数限制
+    last_content = ""
+    tools_were_used = False
+    search_count = 0
     for step in range(1, max_steps + 1):
         print(f"--- Step {step}/{max_steps} ---")
 
-        # (1) 调 LLM
-        msg = call_llm(messages)
-        content = msg.get("content", "") or ""
-        if content.strip():
-            print(f"[LLM思考] {content[:200]}")
+        # (1) 调 LLM（支持传入自定义工具列表）
+        msg = call_llm(messages, tool_defs=tool_defs)
+        last_content = msg.get("content", "") or ""
+        if last_content.strip():
+            print(f"[LLM思考] {last_content[:200]}")
 
         # (2) LLM 回复加入对话历史
         messages.append(msg)
@@ -430,51 +418,43 @@ def react_loop(user_query, max_steps=10):
         tool_calls = msg.get("tool_calls", [])
 
         if not tool_calls:
-            # LLM 没调工具 -> 可能给出了最终答案
-            if "FINAL ANSWER:" in content.upper():
-                final = content.split("FINAL ANSWER:", 1)[1].strip()
+            # 检查是否有最终答案标记
+            if "FINAL ANSWER:" in last_content.upper():
+                final = last_content.split("FINAL ANSWER:", 1)[1].strip()
                 print(f"\n>>> 最终答案: {final}")
                 return final
-            # 如果上一步调用了工具、这一步没有调工具
-            # 说明 LLM 正在根据工具结果给出回答 -> 返回这个回答
-            if tools_were_used:
-                print(f"\n>>> 最终答案: {content.strip()}")
-                return content
-            # 如果 LLM 两轮都没调工具 -> 可能是寒暄或空转 -> 也结束
-            no_tool_streak += 1
-            if no_tool_streak >= 2:
-                print(f"\n(LLM 连续 {no_tool_streak} 轮未调工具，停止)")
-                return content
-            continue  # 继续下一轮
-
-        # 记录这一轮调了工具，供下一轮判断
-        tools_were_used = True
-
-        # (4) 限制搜索次数（最多3次）
-        for tc in tool_calls:
-            if tc["function"]["name"] == "web_search":
-                search_count += 1
-        if search_count >= 4:
-            # 搜索已超限，阻止搜索，让 LLM 用已有知识回答
-            for tc in tool_calls:
-                if tc["function"]["name"] == "web_search":
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tc["id"],
-                        "content": "搜索次数已达上限，请基于已有知识和已获取的信息回答"
-                    })
+            # 上一步用了工具，这一步没调但给出了实质内容 → 作为答案
+            if tools_were_used and len(last_content.strip()) > 10:
+                print(f"\n>>> 最终答案: {last_content.strip()}")
+                return last_content
+            # 连续 4 步寒暄（没调工具也不是明确答案）→ 结束
+            if not tools_were_used and len(last_content.strip()) > 5 and step >= 4:
+                print(f"\n(连续 {step} 步寒暄未调用工具，自动结束)")
+                return last_content
             continue
 
-        # (4) 执行工具
+        # 执行工具
+        tools_were_used = True
         for tc in tool_calls:
             name = tc["function"]["name"]
             args = tc["function"]["arguments"]
             print(f"[调工具] {name}({args})")
 
+            # 搜索次数限制（只阻止搜索，不影响其他工具）
+            if name == "web_search":
+                search_count += 1
+                if search_count >= 4:
+                    print(f"  (搜索已达上限，跳过)")
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc["id"],
+                        "content": "搜索已达上限，请基于已有信息回答"
+                    })
+                    continue
+
             result = execute_tool_call(tc)
             print(f"[工具返回] {result[:100]}")
 
-            # 关键：工具结果作为 Observation 加回对话
             messages.append({
                 "role": "tool",
                 "tool_call_id": tc["id"],
@@ -482,57 +462,150 @@ def react_loop(user_query, max_steps=10):
             })
 
     print(f"\n(达到最大步骤 {max_steps}，停止)")
-    print(f">>> 最终答案: {content.strip()}")
-    return content
+    if last_content.strip():
+        print(f">>> 最终答案: {last_content.strip()}")
+    return last_content
 
 # ============================================================
 # 运行测试
 # ============================================================
 
 
-if __name__ == "__main__":
-    import sys as _sys
+
+# ============================================================
+# 多 Agent 协作（Orchestrator-Worker 链式调用）
+# ============================================================
+
+def auto_extract_memory(user_query, assistant_answer):
+    """从对话中自动提取值得记住的信息（独立函数，依赖 call_llm）"""
+    if not assistant_answer or len(assistant_answer) < 20 or any(w in user_query for w in ["忘记", "删除"]):
+        return 0
     
-    if len(_sys.argv) > 1:
-        q = _sys.argv[1]
-        memories = MEMORY.query(q)
-        memory_context = ""
-        if memories:
-            memory_context = "\n[来自记忆]\n"
-            for m in memories:
-                memory_context += f"  - {m['fact']}\n"
+    prompt = (
+        "从以下对话中提取**具体的事实性信息**。\n"
+        "规则：\n"
+        "- 提取具体信息，如姓名、职业、爱好、背景、联系方式等\n"
+        "- 每个事实单独一行\n"
+        "- 忽略闲聊、问候、临时问题\n"
+        "- 如果用户明确告知个人信息，务必提取\n"
+        "- 没有任何具体事实就输出空行\n\n"
+        f"用户: {user_query}\n\n"
+        f"助手: {assistant_answer}\n\n"
+        "事实:"
+    )
+    
+    msg = call_llm([
+        {"role": "system", "content": "你是一个信息提取助手。"},
+        {"role": "user", "content": prompt},
+    ])
+    
+    raw = msg.get("content", "") or ""
+    if raw.startswith("LLM失败") or raw.startswith("解析失败"):
+        return 0
+    
+    facts = [f.strip() for f in raw.split("\n") if f.strip()]
+    saved = 0
+    for fact in facts:
+        if len(fact) > 5 and not any(w in fact for w in ["LLM失败", "错误", "抱歉", "值得记住", "信息:", "没有提供", "没有任何", "事实:", "个人信息"]):
+            if MEMORY.add(fact):
+                saved += 1
+    if saved > 0:
+        print(f"[记忆] 自动记忆: 保存了 {saved} 条新信息")
+    return saved
+
+
+
+    """多 Agent 协作（内部使用 Orchestrator 类）"""
+    return Orchestrator(call_llm, react_loop, tool_definitions=TOOL_DEFINITIONS).execute(user_query, parallel=parallel)
+
+if __name__ == "__main__":
+    _sys_argv = sys.argv[1:]
+    _parallel_mode = "--parallel" in _sys_argv
+    if _parallel_mode:
+        _sys_argv.remove("--parallel")
+    _mcp_args_list = []
+    while "--mcp" in _sys_argv:
+        idx = _sys_argv.index("--mcp")
+        if idx + 1 < len(_sys_argv):
+            _mcp_args_list.append(_sys_argv[idx + 1].split())
+        _sys_argv = _sys_argv[:idx] + _sys_argv[idx + 2:]
+    if not _mcp_args_list:
+        _mcp_args_list = DEFAULT_MCP_SERVERS
+    for mcp_args in _mcp_args_list:
+        cmd = mcp_args[0]
+        args = mcp_args[1:]
+        print("  [MCP] connect")
         try:
-            react_loop(memory_context + q)
+            client = MCPClient(cmd, args)
+            client.connect()
+            client.discover_tools()
+            mcp_defs = client.to_tool_definitions()
+            _suppress = {"get_time"}
+            TOOL_DEFINITIONS = [t for t in TOOL_DEFINITIONS if t["function"]["name"] not in _suppress]
+            TOOL_DEFINITIONS.extend(mcp_defs)
+            MCP_CLIENTS.append(client)
+            print(f"  -> 隐藏本地重复工具，合并 {len(mcp_defs)} 个 MCP 工具")
         except Exception as e:
-            print(f"[错误] {e}")
+            print(f"  -> 连接失败: {e}\n")
+
+    _skip_query = False
+    if _sys_argv:
+        q = " ".join(_sys_argv)
+        # 处理"忘记/删除"——直接删，不走 react_loop
+        if "忘记" in q or "删除" in q:
+            target = q.split("忘记", 1)[1].strip() if "忘记" in q else q.split("删除", 1)[1].strip()
+            if "所有" in target or "全部" in target:
+                MEMORY.clear()
+                print("\n[记忆] 已清空所有记忆")
+            elif target:
+                n = MEMORY.remove(target)
+                if n > 0:
+                    print(f"\n[记忆] 已删除相关记忆")
+                else:
+                    print(f"\n[记忆] 未找到匹配的记忆")
+            _skip_query = True
+        
+        if not _skip_query:
+            memories = MEMORY.query(q)
+            memory_context = ""
+            if memories:
+                memory_context = "\n".join([f"（相关记忆：{m['fact']}）" for m in memories])
+        try:
+            full_q = memory_context + q if memory_context and not _skip_query else q
+            if any(w in q for w in ["同时", "并且", "还有", "另外", "且"]):
+                result = multi_agent_chain(full_q, parallel=_parallel_mode)
+            else:
+                result = react_loop(full_q)
+            if result:
+                auto_extract_memory(q, result)
+        except Exception as e:
+            import traceback; traceback.print_exc()
+        
         if "记住" in q:
             fact = q.split("记住", 1)[1].strip().lstrip(" ，,、。.：:")
             if fact:
                 MEMORY.add(fact)
                 print(f"\n[记忆] 已记住: {fact}")
-    
     else:
         print("\n" + "=" * 50)
         print("  Agent 交互模式已启动")
         print("  " + "=" * 50)
-        print("  可用工具：get_time / calculator / web_search / fetch_page / summarize")
-        print("  可问：时间、计算、搜索新闻、读网页、总结内容")
-        print("  记忆：说 \"记住...\" 保存信息，输入 '记忆' 查看")
+        tool_list = " / ".join(list(TOOL_REGISTRY.keys()))
+        for _c in MCP_CLIENTS:
+            mcp_names = [t["name"] for t in _c.tools]
+            tool_list += " / " + " / ".join(mcp_names)
+        print(f"  可用工具：{tool_list}")
         print("  退出：输入 'exit' 或 '退出'")
         print("  " + "=" * 50 + "\n")
-        
         first = True
         while True:
-            if first:
-                q = input("你 > ")
-                first = False
-            else:
-                q = input("\n你 > ")
-            
+            q = input("\n你 > " if not first else "你 > ")
+            first = False
             if q.lower() in ("exit", "退出", "quit"):
                 print("再见！")
                 break
-            
+            if not q.strip():
+                continue
             if q == "记忆":
                 print("\n已保存的记忆:")
                 if MEMORY.facts:
@@ -541,21 +614,32 @@ if __name__ == "__main__":
                 else:
                     print("  （无）")
                 continue
-            
             memories = MEMORY.query(q)
             memory_context = ""
             if memories:
-                memory_context = "\n[来自记忆]\n"
-                for m in memories:
-                    memory_context += f"  - {m['fact']}\n"
-            
+                memory_context = "\n".join([f"（相关记忆：{m['fact']}）" for m in memories])
             try:
-                if memory_context:
-                    react_loop(memory_context + q)
+                full_q = memory_context + q if memory_context else q
+                if any(w in q for w in ["同时", "并且", "还有", "另外", "且"]):
+                    result = multi_agent_chain(full_q)
                 else:
-                    react_loop(q)
+                    result = react_loop(full_q)
+                if result:
+                    auto_extract_memory(q, result)
             except Exception as e:
-                print(f"[错误] {e}")
+                import traceback; traceback.print_exc()
+            if "忘记" in q or "删除" in q:
+                target = q.split("忘记", 1)[1].strip() if "忘记" in q else q.split("删除", 1)[1].strip()
+                if "所有" in target or "全部" in target:
+                    MEMORY.clear()
+                    print("\n[记忆] 已清空所有记忆")
+                elif target:
+                    n = MEMORY.remove(target)
+                    if n > 0:
+                        print(f"\n[记忆] 已删除相关记忆")
+                    else:
+                        print(f"\n[记忆] 未找到匹配的记忆")
+                continue  # 直接下一轮
             
             if "记住" in q:
                 fact = q.split("记住", 1)[1].strip().lstrip(" ，,、。.：:")

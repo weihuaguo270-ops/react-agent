@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+_test_*.py
+docs/
+memory.json
+rag_index.json
