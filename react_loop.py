@@ -72,13 +72,22 @@ MODEL = "deepseek-v4-flash"               # DeepSeek V4 Flash
 # 第二步：定义工具（就像 C 里声明函数）
 # ============================================================
 def tool_calculator(expression: str) -> str:
-    """计算数学表达式"""
+    """计算数学表达式（基于 AST 解析，安全无注入风险）"""
+    import ast
     try:
-        allowed = set("0123456789+-*/.() ")
-        if not all(c in allowed for c in expression):
-            return "错误：非法字符"
-        result = eval(expression)
+        # 解析表达式为 AST，只允许数学运算
+        tree = ast.parse(expression.strip(), mode='eval')
+        ALLOWED_NODES = (ast.Expression, ast.Constant, ast.UnaryOp,
+                         ast.UAdd, ast.USub, ast.BinOp, ast.Add, ast.Sub, ast.Mult, ast.Div)
+        for node in ast.walk(tree):
+            if not isinstance(node, ALLOWED_NODES):
+                return "错误：表达式包含非法操作"
+        # AST 通过检查，编译执行
+        code = compile(tree, '<string>', 'eval')
+        result = eval(code)
         return str(result)
+    except SyntaxError:
+        return "错误：表达式语法错误"
     except Exception as e:
         return f"计算错误：{e}"
 
@@ -149,6 +158,17 @@ def tool_web_search(query: str, max_results: int = 1) -> str:
 def tool_fetch_page(url: str) -> str:
     """读取网页内容并提取正文"""
     try:
+        # 验证 URL，防止 SSRF
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return f"不支持的协议: {parsed.scheme}"
+        # 简单内网地址阻断
+        netloc = parsed.netloc.split(":")[0]
+        if netloc in ("127.0.0.1", "localhost", "0.0.0.0", "::1"):
+            return "不允许访问内网地址"
+        if netloc.startswith("10.") or netloc.startswith("172.") or netloc.startswith("192.168."):
+            return "不允许访问内网地址"
+
         # 如果是维基百科，用 API 直接取纯文本
         if "wikipedia.org" in url:
             title = url.split("/wiki/")[-1].split("#")[0]
@@ -445,9 +465,10 @@ def react_loop(user_query, max_steps=10, tool_defs=None):
         tool_calls = msg.get("tool_calls", [])
 
         if not tool_calls:
-            # 检查是否有最终答案标记
-            if "FINAL ANSWER:" in last_content.upper():
-                final = last_content.split("FINAL ANSWER:", 1)[1].strip()
+            # 检查是否有最终答案标记（大小写不敏感）
+            fa_match = re.search(r'FINAL ANSWER:\s*(.*)', last_content, re.IGNORECASE | re.DOTALL)
+            if fa_match:
+                final = fa_match.group(1).strip()
                 print(f"\n>>> 最终答案: {final}")
                 finish_trajectory(final)
                 return final
@@ -555,7 +576,7 @@ def auto_extract_memory(user_query, assistant_answer):
     return saved
 
 
-
+def multi_agent_chain(user_query, parallel=False):
     """多 Agent 协作（内部使用 Orchestrator 类）"""
     return Orchestrator(call_llm, react_loop, tool_definitions=TOOL_DEFINITIONS).execute(user_query, parallel=parallel)
 
