@@ -44,7 +44,7 @@ react_loop 入口（普通或 Worker）:
   │              拼接进 system prompt 的思路部分。
   │     不触发: memory.json 为空时。
   │
-  ├── step 0: start_trajectory() → Harness 开始记录
+  ├── step 0: Harness Recorder 开始记录（harness/recorder.py）
   │     触发时机: 每次 react_loop() 被调用时必定执行。
   │     记录内容: session_id / query / model / system_prompt
   │
@@ -54,7 +54,7 @@ react_loop 入口（普通或 Worker）:
           │
           ├── (a) call_llm(messages, tool_defs)
           │      → LLM 返回: thought + 可选的 tool_calls
-          │      → Harness: traj.add_thought(step, LLM_回复)
+          │      → Harness Recorder: add_thought(step, LLM_回复)
           │
           ├── (b) 检查 tool_calls 是否为空
           │     │
@@ -83,7 +83,7 @@ react_loop 入口（普通或 Worker）:
           │           │       └── 都不在 → 返回"未知工具"错误
           │           │
           │           │    触发 Harness 记录:
-          │           │      traj.add_tool_call(step, name, args, result)
+          │           │      Recorder: add_tool_call(step, name, args, result)
           │           │     （每次工具调用后都记录）
           │           │
           │           ├── (d) ToT 何时介入？
