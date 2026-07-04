@@ -6,6 +6,7 @@ import glob
 import time
 import sys
 import subprocess
+import signal
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
@@ -124,5 +125,27 @@ def clear_trajectories():
     return jsonify({'message': msg})
 
 
+@app.route('/api/shutdown', methods=['POST'])
+def shutdown():
+    """关闭 Dashboard 服务"""
+    os._exit(0)
+
+
+def kill_old_server(port=5050):
+    """启动前杀掉占用端口的旧进程"""
+    if sys.platform.startswith('win'):
+        subprocess.run(
+            f'for /f "tokens=5" %a in (\'netstat -ano ^| findstr ":{port}"\') do taskkill /F /PID %a 2>nul',
+            shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+    else:
+        subprocess.run(
+            ['pkill', '-f', f'python.*server.py.*:{port}'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+    time.sleep(0.5)
+
+
 if __name__ == '__main__':
+    kill_old_server(5050)
     app.run(host='127.0.0.1', port=5050, debug=False)

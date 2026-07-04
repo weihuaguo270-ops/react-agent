@@ -426,14 +426,21 @@ DASHBOARD_PROCESS = []
 def tool_start_dashboard(port: int = 5050) -> str:
     """启动 Dashboard Web 界面（轨迹查看器 + 聊天面板）"""
     import subprocess
-    if DASHBOARD_PROCESS and DASHBOARD_PROCESS[0].poll() is None:
-        return f"Dashboard 已在运行: http://127.0.0.1:{port}"
+    import sys as _sys
+    # 先杀掉旧进程（通过 server.py 自带的 kill_old_server）
+    try:
+        kill_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard", "kill_old.py")
+        if os.path.exists(kill_script):
+            subprocess.run([_sys.executable, kill_script], cwd=os.path.dirname(kill_script),
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+    except Exception:
+        pass
     try:
         server_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard", "server.py")
         if not os.path.exists(server_script):
             return f"错误: 找不到 dashboard/server.py"
         proc = subprocess.Popen(
-            [sys.executable, server_script],
+            [_sys.executable, server_script],
             cwd=os.path.dirname(server_script),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

@@ -89,6 +89,7 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-s
         <button class="btn btn-primary" id="btn-play" onclick="togglePlay()">▶ 播放</button>
         <button class="btn" id="btn-next" disabled onclick="nextStep()">→</button>
         <button class="btn" onclick="showClearDialog()">🗑️</button>
+        <button class="btn" onclick="shutdownServer()">⏻</button>
       </div>
     </div>
     <div class="content" id="viewer">
@@ -311,6 +312,13 @@ async function doClear(days) {
   }
   btn.disabled = false;
   btn.textContent = originalText;
+}
+async function shutdownServer() {
+  if (!confirm('确认关闭 Dashboard 服务？')) return;
+  try {
+    await fetch('/api/shutdown', {method:'POST'});
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-size:18px;color:#666">Dashboard 已关闭，可关闭此页面</div>';
+  } catch(e) {}
 }
 </script>
 </body>
