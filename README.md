@@ -7,96 +7,118 @@
 
 ### 运行时全链路
 
-用户输入一句话到获得最终答案，经过以下顺序执行：
+用户输入一条 query 到获得最终答案，各模块介入的时机与触发条件如下：
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                  用户输入 query                        │
-│  例: "搜索今天AI新闻并总结"                            │
-└──────────────────┬───────────────────────────────────┘
-                   │
-                   ▼
-┌──────────────────────────────────────────────────────┐
-│  ① 构建 system prompt（三层拼接）                      │
-│  (1) base_prompt: ReAct 格式规则 + 工具使用规则        │
-│  (2) ROLE_MANAGER.inject(): 根据 query 选角色风格      │
-│  (3) COT.inject(): 根据 query 选 CoT 推理策略          │
-│                                                       │
-│  如果是 Orchestrator 入口，还会多一步：                │
-│  (0) Planner 分解任务 → 拓扑排序 → 按层级逐个执行     │
-└──────────────────┬───────────────────────────────────┘
-                   │ system_prompt + messages
-                   ▼
-┌──────────────────────────────────────────────────────┐
-│  ② start_trajectory() — 开始 Harness 轨迹记录        │
-│     写入 session_id / query / model / system_prompt   │
-└──────────────────┬───────────────────────────────────┘
-                   │
-                   ▼
-┌──────────────────────────────────────────────────────┐
-│  ③ ReAct Loop（多轮循环，最多 max_steps=10 步）       │
-│                                                       │
-│  ┌──────────────────────────────────────────────┐     │
-│  │ Step N:                                      │     │
-│  │                                               │     │
-│  │ (a) call_llm(messages, tool_defs)             │     │
-│  │     → LLM 输出: thought + 可能的 tool_calls   │     │
-│  │     → 记录 Harness: traj.add_thought()        │     │
-│  │                                               │     │
-│  │ (b) 检查 tool_calls 是否为空                   │     │
-│  │     ├── 为空:                                 │     │
-│  │     │   ├── FINAL ANSWER 标记? → 输出答案，结束│     │
-│  │     │   ├── 上一步用了工具且有实质内容? → 结束 │     │
-│  │     │   └── 寒暄检测(连续4步无工具)? → 结束   │     │
-│  │     │                                          │     │
-│  │     └── 不为空:                                │     │
-│  │         ├── web_search 达4次? → 跳过返回上限   │     │
-│  │         ├── sandbox 开启? → 子进程隔离执行     │     │
-│  │         ├── execute_tool_call() → 执行工具     │     │
-│  │         └── 记录 Harness: traj.add_tool_call() │     │
-│  │                                               │     │
-│  │ (c) CONTEXT.manage(messages) — 检查上下文      │     │
-│  │     超限时自动: truncate / drop / summarize    │     │
-│  └──────────────────────────────────────────────┘     │
-│              │ 循环直到步数上限或给出答案              │
-└──────────────────┬───────────────────────────────────┘
-                   │ final_answer
-                   ▼
-┌──────────────────────────────────────────────────────┐
-│  ④ finish_trajectory() — 结束轨迹记录                 │
-│     输出: trajectories/<session_id>.json               │
-└──────────────────┬───────────────────────────────────┘
-                   │
-                   ▼
-┌──────────────────────────────────────────────────────┐
-│  ⑤ 输出最终答案给用户                                │
-└──────────────────────────────────────────────────────┘
+query 输入
+  │
+  ├── 普通入口（直接） → react_loop()
+  │     ↓
+  └── Orchestrator 入口
+        │
+        ├── (A) Orchestrator.execute() 被调用
+        │       ↓
+        ├── (B) Orchestrator.plan() → Planner.plan() 分解任务
+        │       触发条件: LLM 被调用，解析 task_N/depends_on 格式
+        │       不需要: 单任务场景（不触发 Planner）
+        │
+        ├── (C) Orchestrator.run_worker() → 每个子任务独立走 react_loop()
+        │       注意: Planner 和 Orchestrator 只在 Orchestrator 入口时触发
+        │             普通入口不涉及 Planner/Orchestrator
+        │
+        └── (D) Orchestrator.synthesize() 汇总各 Worker 结果 → 输出
+             触发条件: 所有层级执行完毕
+
+
+react_loop 入口（普通或 Worker）:
+  │
+  ├── step 0: 构建 system prompt（三层拼接）
+  │     (1) base_prompt: ReAct 格式规则
+  │     (2) ROLE_MANAGER.inject() → 根据 query 关键词选角色
+  │     (3) COT.inject() → 根据 query 关键词选 CoT 策略
+  │     ↑ 注意：CoT 只在这里（system prompt 构建时）起作用。
+  │       ToT 不在这里，它是作为一个工具被注册的。
+  │
+  ├── step 0: Memory 检索（如果有记忆）
+  │     触发时机: 每次运行 react_loop() 时，Memory 将已保存的事实
+  │              拼接进 system prompt 的思路部分。
+  │     不触发: memory.json 为空时。
+  │
+  ├── step 0: start_trajectory() → Harness 开始记录
+  │     触发时机: 每次 react_loop() 被调用时必定执行。
+  │     记录内容: session_id / query / model / system_prompt
+  │
+
+  └── ReAct Loop:
+        for step in range(1, max_steps + 1):
+          │
+          ├── (a) call_llm(messages, tool_defs)
+          │      → LLM 返回: thought + 可选的 tool_calls
+          │      → Harness: traj.add_thought(step, LLM_回复)
+          │
+          ├── (b) 检查 tool_calls 是否为空
+          │     │
+          │     ├── tool_calls == []:
+          │     │     ├── 含 FINAL ANSWER: 标记?
+          │     │     │   → finish_trajectory(答案) → return 答案
+          │     │     ├── 上一步调了工具 + 本次有实质输出?
+          │     │     │   → 视为隐式答案 → finish_trajectory() → return
+          │     │     ├── 寒暄检测（≥4步无工具 + 内容<10字）?
+          │     │     │   → finish_trajectory(空) → return
+          │     │     └── 都不是 → continue 进入下一轮
+          │     │
+          │     └── tool_calls != []:
+          │           │
+          │           ├── (c) 执行工具调用（每个 tool_call 独立执行）
+          │           │
+          │           │  TOOL_REGISTRY 查找顺序:
+          │           │    1. 本地注册表（TOOL_REGISTRY 字典）
+          │           │       ├── SANDBOX.enabled? → 子进程隔离执行
+          │           │       └── 非启用 → 直接 Python 调用函数
+          │           │
+          │           │    2. 不在 TOOL_REGISTRY → 遍历 MCP_CLIENTS
+          │           │       ├── 工具名在 MCP 工具列表?
+          │           │       │   → mcp_client.call_tool(name, args)
+          │           │       │     MCP 通过 JSON-RPC over stdio 通信
+          │           │       └── 都不在 → 返回"未知工具"错误
+          │           │
+          │           │    触发 Harness 记录:
+          │           │      traj.add_tool_call(step, name, args, result)
+          │           │     （每次工具调用后都记录）
+          │           │
+          │           ├── (d) ToT 何时介入？
+          │           │     触发时机: LLM 在 tool_calls 里选择了
+          │           │               tot_reasoning 工具时才触发。
+          │           │     ToT 是一个普通工具，不是系统层模块。
+          │           │     过程: tot.solve() 内部多次 call_llm()。
+          │           │     结果: 最终字符串返回 → 追加到 messages。
+          │           │
+          │           └── (e) 工具结果追加到 messages
+          │                 messages.append({role: "tool", content: result})
+          │
+          └── (f) CONTEXT.manage(messages) — 每步结束后执行
+                    触发条件: messages 总 token 超过阈值时。
+                    策略: auto(默认) / truncate / drop / summarize
+                    不触发: token 未超限时。
+  │
+  └── 输出最终答案（发生位置: react_loop() 的 return 语句）
+        输出来源:
+        (1) FINAL ANSWER: 正则匹配 → finish_trajectory() → return
+        (2) 工具后无工具调用 + 实质内容 → finish_trajectory() → return
+        (3) 步数耗尽 → finish_trajectory() → return
 ```
 
-### 旁路模块（不直接出现在主循环中，但全程可用）
+### 各模块触发时机汇总
 
-```
-  Memory (memory.py)
-    位置: 第 5 步之前 / 第 2 步之后 / 以及交互中
-    作用: 用户在对话中可以说"记住 xxx"，
-          或者 LLM 自动从对话中提取事实存入 memory.json。
-          后续对话自动检索相关记忆补入 context。
-
-  RAG (rag.py)
-    位置: 仅当 LLM 调用 rag_query 工具时
-    作用: LLM 自主判断是否需要查本地文档库。
-          BGE 向量检索 → 返回相关文档片段。
-
-  Sandbox (sandbox.py)
-    位置: 仅当 sandbox 开启且 LLM 调工具时
-    作用: 把工具调用在子进程中执行，
-          崩溃不炸主进程。
-
-  Replay (replay.py)
-    位置: 完全独立于运行时
-    作用: 读取 Harness 记录的 JSON 文件，
-          命令行逐步回放（python replay.py --latest）。
-```
+| 模块 | 触发条件 | 介入位置 | 数据流向 |
+|------|---------|---------|---------|
+| Memory | react_loop 每次启动时 | 拼接进 system prompt | memory.json → system prompt |
+| Planner | Orchestrator 入口时 | Orchestrator.plan() | LLM → 子任务列表 |
+| Orchestrator | query 发给 Orchestrator.execute() 时 | 外部包装 | query → 子任务 → Worker 汇总 |
+| CoT | react_loop 启动时、system prompt 构建阶段 | base_prompt 拼接 | 向 system_prompt 末尾追加推理指令 |
+| ToT | 仅当 LLM 选择 tot_reasoning 工具时 | ReAct Loop 内工具执行阶段 | 工具调用 → 内部多轮 LLM 调用 → 结果字符串 |
+| Context | ReAct Loop 每步结束后 | messages.append 之后 | 检查 token → 可选压缩/截断 |
+| Harness | react_loop 进入/退出/每步工具调用 | start_trajectory / add_thought / add_tool_call / finish_trajectory | 持久化到 trajectories/*.json |
 ## 快速开始
 
 ### 1. 配置 API Key
