@@ -44,7 +44,7 @@ react_loop 入口（普通或 Worker）:
   │              拼接进 system prompt 的思路部分。
   │     不触发: memory.json 为空时。
   │
-  ├── step 0: start_trajectory() → Harness 开始记录
+  ├── step 0: Harness Recorder 开始记录（harness/recorder.py）
   │     触发时机: 每次 react_loop() 被调用时必定执行。
   │     记录内容: session_id / query / model / system_prompt
   │
@@ -54,7 +54,7 @@ react_loop 入口（普通或 Worker）:
           │
           ├── (a) call_llm(messages, tool_defs)
           │      → LLM 返回: thought + 可选的 tool_calls
-          │      → Harness: traj.add_thought(step, LLM_回复)
+          │      → Harness Recorder: add_thought(step, LLM_回复)
           │
           ├── (b) 检查 tool_calls 是否为空
           │     │
@@ -83,7 +83,7 @@ react_loop 入口（普通或 Worker）:
           │           │       └── 都不在 → 返回"未知工具"错误
           │           │
           │           │    触发 Harness 记录:
-          │           │      traj.add_tool_call(step, name, args, result)
+          │           │      Recorder: add_tool_call(step, name, args, result)
           │           │     （每次工具调用后都记录）
           │           │
           │           ├── (d) ToT 何时介入？
@@ -119,6 +119,7 @@ react_loop 入口（普通或 Worker）:
 | ToT | 仅当 LLM 选择 tot_reasoning 工具时 | ReAct Loop 内工具执行阶段 | 工具调用 → 内部多轮 LLM 调用 → 结果字符串 |
 | Context | ReAct Loop 每步结束后 | messages.append 之后 | 检查 token → 可选压缩/截断 |
 | Harness | react_loop 进入/退出/每步工具调用 | start_trajectory / add_thought / add_tool_call / finish_trajectory | 持久化到 trajectories/*.json |
+| Dashboard | 用户主动启动（命令行或 Agent 调用 start_dashboard 工具） | 独立 Flask Web 服务（端口 5050） | 读取 trajectories/ 目录 → 浏览器展示轨迹回放与实时对话 |
 ## 快速开始
 
 ### 1. 配置 API Key
@@ -236,11 +237,13 @@ Planner 负责将复杂请求分解为子任务并分析依赖关系；Orchestra
 | drop | 仅删已执行的 tool_call→tool_result 对 | 0 |
 | summarize | 将早期对话压缩为摘要 | 1 次 |
 
-### Harness / Sandbox / Replay（harness.py / sandbox.py / replay.py）
+### Harness 层（harness/）
 
-- **Harness：** 每步 thought/action/observation/token_usage 持久化为 JSON
-- **Sandbox：** subprocess + timeout 隔离不可信代码，AST 白名单安全解析
-- **Replay：** `python replay.py --latest` 从轨迹文件逐步回放
+Harness = Recorder（轨迹记录）+ Sandbox（沙箱隔离）+ Replay（回放调试），对应 Agent = LLM + Harness 中的保障层。
+
+- **Recorder（harness/recorder.py）：** 每步 thought/action/observation/token_usage 持久化为 JSON
+- **Sandbox（harness/sandbox.py）：** subprocess + timeout 隔离不可信代码，AST 白名单安全解析；支持启动时预热缓存
+- **Replay：** `python -m harness.replay --latest` 从轨迹文件逐步回放
 
 ## 已实现工具
 
