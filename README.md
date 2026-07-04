@@ -119,6 +119,7 @@ react_loop 入口（普通或 Worker）:
 | ToT | 仅当 LLM 选择 tot_reasoning 工具时 | ReAct Loop 内工具执行阶段 | 工具调用 → 内部多轮 LLM 调用 → 结果字符串 |
 | Context | ReAct Loop 每步结束后 | messages.append 之后 | 检查 token → 可选压缩/截断 |
 | Harness | react_loop 进入/退出/每步工具调用 | start_trajectory / add_thought / add_tool_call / finish_trajectory | 持久化到 trajectories/*.json |
+| Dashboard | 用户主动启动（命令行或 Agent 调用 start_dashboard 工具） | 独立 Flask Web 服务（端口 5050） | 读取 trajectories/ 目录 → 浏览器展示轨迹回放与实时对话 |
 ## 快速开始
 
 ### 1. 配置 API Key
