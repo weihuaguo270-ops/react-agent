@@ -277,9 +277,11 @@ Planner 负责将复杂请求分解为子任务并分析依赖关系；Orchestra
 ├── orchestrator.py     # 多 Agent DAG 调度
 ├── prompts.py          # 角色注入（5 种风络）
 ├── context.py          # 上下文窗口管理（4 种策略）
-├── harness.py          # 轨迹记录器（JSON 持久化）
-├── sandbox.py          # 子进程沙箱隔离
-├── replay.py           # 轨迹重放器
+├── harness/            # Harness 层（沙箱 + 记录 + 重放）
+│   ├── __init__.py     # 统一 Harness 入口
+│   ├── recorder.py     # 轨迹记录（原来的 harness.py）
+│   ├── sandbox.py      # 子进程隔离（原来的 sandbox.py）
+│   └── replay.py       # 离线回放（原来的 replay.py）
 ├── mcp_client.py       # MCP 协议客户端
 ├── rag.py              # RAG 检索增强生成
 ├── memory.py           # 语义记忆系统

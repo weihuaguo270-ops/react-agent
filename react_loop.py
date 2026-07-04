@@ -24,7 +24,7 @@ from tot import TOT, TOT_TOOL_DEFINITION, tool_tot_reasoning, set_tot_llm_call
 from prompts import ROLE_MANAGER, ROLE_TOOL_DEFINITION, tool_switch_role
 from context import CONTEXT, CONTEXT_TOOL_DEFINITION, tool_switch_context_strategy
 from harness import start_trajectory, current_trajectory, finish_trajectory
-from sandbox import SANDBOX, SANDBOX_TOOL_DEFINITION, tool_toggle_sandbox
+from harness import SANDBOX, SANDBOX_TOOL_DEFINITION, tool_toggle_sandbox
 MCP_CLIENTS = []
 
 DEFAULT_MCP_SERVERS = [
