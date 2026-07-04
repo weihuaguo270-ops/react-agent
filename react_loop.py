@@ -25,6 +25,7 @@ from prompts import ROLE_MANAGER, ROLE_TOOL_DEFINITION, tool_switch_role
 from context import CONTEXT, CONTEXT_TOOL_DEFINITION, tool_switch_context_strategy
 from harness import start_trajectory, current_trajectory, finish_trajectory
 from harness import SANDBOX, SANDBOX_TOOL_DEFINITION, tool_toggle_sandbox
+from harness.recorder import clear_trajectories
 MCP_CLIENTS = []
 
 DEFAULT_MCP_SERVERS = [
@@ -250,6 +251,7 @@ TOOL_REGISTRY = {
     "switch_context_strategy": tool_switch_context_strategy,
     "toggle_sandbox": tool_toggle_sandbox,
     "start_dashboard": tool_start_dashboard,
+    "clear_trajectories": clear_trajectories,
 }
 
 # 工具的 JSON 描述（发给 LLM 让它知道能调什么）
@@ -350,6 +352,23 @@ TOOL_DEFINITIONS = [
                     }
                 },
                 "required": []
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "clear_trajectories",
+            "description": "删除历史轨迹文件，用于清理 Agent 的对话记录。支持按天数保留（如只保留最近7天）或全部删除",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "integer",
+                        "description": "保留最近几天的文件（0=全部删除，7=保留近7天）"
+                    }
+                },
+                "required": ["days"]
             }
         }
     },

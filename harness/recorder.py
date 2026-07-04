@@ -130,3 +130,34 @@ def finish_trajectory(final_answer: str = "") -> Optional[str]:
     filepath = _current_trajectory.save()
     _current_trajectory = None
     return filepath
+
+
+def clear_trajectories(days: int = 0) -> str:
+    """删除历史轨迹文件
+
+    参数:
+        days: 保留最近几天的文件，0 表示全部删除
+
+    返回:
+        删除结果描述
+    """
+    import glob
+    import time
+    pattern = os.path.join(TRAJECTORY_DIR, "traj_*.json")
+    files = glob.glob(pattern)
+    if not files:
+        return "没有轨迹文件可删除"
+    now = time.time()
+    cutoff = now - days * 86400 if days > 0 else now + 1
+    removed = 0
+    for f in files:
+        if days > 0:
+            mtime = os.path.getmtime(f)
+            if mtime >= cutoff:
+                continue
+        try:
+            os.remove(f)
+            removed += 1
+        except OSError:
+            continue
+    return f"已删除 {removed} 个轨迹文件" if removed else "没有符合条件的轨迹文件"
