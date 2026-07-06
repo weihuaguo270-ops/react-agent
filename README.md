@@ -423,11 +423,16 @@ python orchestrator.py "帮我查时间"    # 多 Agent 编排
                 ┌────────┴────────┐
                 ▼                 ▼
           ┌──────────┐     ┌──────────────┐
-          │   tools   │     │extract_memory│  ← 用 LLM 提取事实
-          │ (执行工具) │     │ (记忆提取)   │     存入记忆库
+          │   tools   │     │context_manage│  ← 检查消息长度
+          │ (执行工具) │     │ (上下文管理)  │     超限时截断
           └────┬─────┘     └──────┬───────┘
                │                  │
                └──→ call_model    │
+                              │
+                          ┌───▼────┐
+                          │extract │  ← 用 LLM 提取事实
+                          │_memory │     存入记忆库
+                          └───┬────┘
                               │
                           ┌───▼────┐
                           │   END   │
@@ -436,8 +441,17 @@ python orchestrator.py "帮我查时间"    # 多 Agent 编排
 
 - **`call_model`** — 调 `ChatOpenAI`（绑定工具），将回复追加到 messages
 - **`tools`** — 执行 `@tool` 函数，支持搜索次数限制
+- **`context_manage`** — 每轮结束时检查消息 token 数，超限则截断最早的非 system 消息
 - **`extract_memory`** — 用 LLM 从对话中提取事实，通过 `add_or_update` 语义去重后存入记忆
-- **`should_continue`** — 条件边：有 tool_calls → tools，否则 → extract_memory → END
+- **`should_continue`** — 条件边：有 tool_calls → tools，否则 → context_manage → extract_memory → END
+
+### MCP 连接
+
+启动时自动连接 `mcp-server-time` 等 MCP 服务器，工具列表合并到 LLM 的工具定义中。
+
+### 轨迹记录
+
+每次对话后自动保存轨迹 JSON 到 `trajectories/` 目录（保留最近 100 条）。
 
 ### LangChain 在架构中的角色
 
