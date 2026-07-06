@@ -359,7 +359,7 @@ def main():
         # 处理"忘记/删除"——直接删，不走 react_loop
         if "忘记" in q or "删除" in q:
             target = q.split("忘记", 1)[1].strip() if "忘记" in q else q.split("删除", 1)[1].strip()
-            if "所有" in target or "全部" in target:
+            if target in ("所有", "全部"):
                 MEMORY.clear()
                 print("\n[记忆] 已清空所有记忆")
             elif target:
@@ -435,7 +435,7 @@ def main():
                 import traceback; traceback.print_exc()
             if "忘记" in q or "删除" in q:
                 target = q.split("忘记", 1)[1].strip() if "忘记" in q else q.split("删除", 1)[1].strip()
-                if "所有" in target or "全部" in target:
+                if target in ("所有", "全部"):
                     MEMORY.clear()
                     print("\n[记忆] 已清空所有记忆")
                 elif target:

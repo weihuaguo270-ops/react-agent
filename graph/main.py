@@ -35,7 +35,8 @@ def _handle_single_query(q: str):
     """单次查询模式"""
     if "忘记" in q or "删除" in q:
         target = q.split("忘记", 1)[1].strip() if "忘记" in q else q.split("删除", 1)[1].strip()
-        if "所有" in target or "全部" in target:
+        # 只有 target 本身就是"所有"或"全部"时才清空，而不是包含这些词就清空
+        if target in ("所有", "全部"):
             MEMORY.clear()
             print("\n[记忆] 已清空所有记忆")
         elif target:
