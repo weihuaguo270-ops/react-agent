@@ -47,6 +47,7 @@ def _build_isolated_worker(task_description: str):
     tools = filter_tools(task_description)
     llm = get_llm().bind_tools(tools)
     tool_map = {t.name: t for t in tools}
+    print(f"  [Worker隔离] \"{task_description[:30]}...\" → 工具: {list(tool_map.keys())}")
 
     def call_model(state):
         response = llm.invoke(state["messages"])
