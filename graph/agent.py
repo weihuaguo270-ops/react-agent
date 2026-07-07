@@ -29,6 +29,7 @@ from llm import get_llm
 from tools import get_tools
 from prompts import build_system_prompt
 from memory import MEMORY
+from context import manage as manage_context
 
 
 # ============================================================
@@ -134,65 +135,20 @@ def build_agent():
         """
         上下文管理节点。
 
-        在每轮 Agent 循环结束时检查消息总长度。
-        如果超出预设限制，截断最早的非 system 消息。
-
-        阈值: 2000 条消息或估算 token 超过 32000 时触发截断。
-        每次保留 system prompt + 最近 3 条消息。
+        在 Agent 循环结束时检查消息总长度。超限时按策略处理：
+        truncate / drop / summarize（具体逻辑在 graph/context.py 中）。
 
         参数:
             state: 当前 Agent 状态
 
         返回:
-            {"messages": [...], "search_count": int} — 可能被截断的消息列表
+            {"messages": [...], "search_count": int}
         """
-        messages = list(state["messages"])
         search_count = state.get("search_count", 0)
-        MAX_TOKENS = 32000
-        KEEP_RECENT = 3
-
-        # 估算 token 数（简单估算：中文字符 / 1.5 + 英文 / 4）
-        def estimate(msg) -> int:
-            text = msg.content if hasattr(msg, "content") else str(msg.get("content", ""))
-            if not text:
-                return 0
-            chinese = sum(1 for c in text if '\u4e00' <= c <= '\u9fff')
-            other = len(text) - chinese
-            return int(chinese / 1.5 + other / 4) + 1
-
-        total_tokens = sum(estimate(m) for m in messages)
-
-        if total_tokens <= MAX_TOKENS and len(messages) <= 2000:
-            return {"messages": [], "search_count": search_count}
-
-        deleted = 0
-        while len(messages) > KEEP_RECENT + 1:  # +1 是 system
-            if estimate(messages[-1]) > 1000:
-                # 最后一条太长（可能是工具结果）— 截断它
-                pass
-            # 找到第一条非 system 消息
-            removed = False
-            for i in range(1, len(messages) - KEEP_RECENT):
-                if hasattr(messages[i], "type"):
-                    if messages[i].type != "system":
-                        messages.pop(i)
-                        deleted += 1
-                        removed = True
-                        break
-                elif isinstance(messages[i], dict) and messages[i].get("role") != "system":
-                    messages.pop(i)
-                    deleted += 1
-                    removed = True
-                    break
-            if not removed:
-                break
-            if sum(estimate(m) for m in messages) <= MAX_TOKENS and len(messages) <= 2000:
-                break
-
-        if deleted > 0:
-            print(f"[上下文] 截断了 {deleted} 条消息（当前 {len(messages)} 条）")
-
-        return {"messages": messages, "search_count": search_count}
+        managed_messages, action = manage_context(state["messages"])
+        if action:
+            print(f"[上下文] {action}")
+        return {"messages": managed_messages, "search_count": search_count}
 
     def extract_memory_node(state: AgentState):
         """
