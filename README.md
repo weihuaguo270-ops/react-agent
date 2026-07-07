@@ -388,16 +388,23 @@ pip install numpy scikit-learn sentence-transformers
 
 项目同时提供了 `graph/` 目录下的 **LangChain/LangGraph 全栈版本**，与手写版模块一一对应：
 
-| 手写模块 | LangChain 替代 | 文件 |
-|---------|---------------|------|
-| `llm.py` | `ChatOpenAI`（读 `llm_config.json` 配置） | `graph/llm.py` |
-| `tools/` + `TOOL_REGISTRY` | `@tool` 装饰器 | `graph/tools.py` |
-| `rag.py` | `FAISS` + `HuggingFaceEmbeddings` | `graph/rag.py` |
-| `memory.py` | 语义记忆（同 BGE + LRU，新增语义去重更新） | `graph/memory.py` |
-| `prompts.py` + `cot.py` | `SystemMessage` + PromptTemplate | `graph/prompts.py` |
-| `react_loop.py` | `StateGraph` 节点 + 条件边 | `graph/agent.py` |
-| `orchestrator.py` | `StateGraph` 编排（supervisor → worker → join） | `graph/orchestrator.py` |
-| `main() / __main__.py` | CLI 入口（交互模式 + 单次查询） | `graph/main.py` |
+| 手写模块 | LangChain 替代 | graph/ 文件 | 状态 |
+|---------|---------------|------------|------|
+| `llm.py` | `ChatOpenAI`（读 `llm_config.json` 配置） | `graph/llm.py` | ✅ |
+| `tools/` + `TOOL_REGISTRY` | `@tool` 装饰器 | `graph/tools.py` | ✅ |
+| `rag.py` | `FAISS` + `HuggingFaceEmbeddings` | `graph/rag.py` | ✅ |
+| `memory.py` | 语义记忆（BGE + LRU + 语义去重更新） | `graph/memory.py` | ✅ |
+| `prompts.py` + `cot.py` | 角色模板 + CoT 注入（字符串拼接） | `graph/prompts.py` | ✅ |
+| `react_loop.py` | `StateGraph` 节点 + 条件边 | `graph/agent.py` | ✅ |
+| `orchestrator.py` | `StateGraph` 编排（supervisor → worker → join） | `graph/orchestrator.py` | ✅ |
+| `context.py` | `context_manage_node`（token 估算 + 截断） | `graph/agent.py` | ✅ |
+| `harness/recorder.py` | 轨迹 JSON 持久化 | `graph/main.py` | ✅ |
+| `mcp_client.py` | 独立 MCP 客户端（JSON-RPC over stdio） | `graph/mcp.py` | ✅ |
+| `main() / __main__.py` | CLI 入口（交互 + 单次查询 + MCP 连接） | `graph/main.py` | ✅ |
+| `harness/sandbox.py` | — | — | ⬜ 未移植 |
+| `tot.py` | — | — | ⬜ 未移植 |
+| `planner.py` | — | — | ⬜ 未移植 |
+| `test_all.py` | — | — | ⬜ 未移植 |
 
 **运行方式：**
 ```bash
@@ -447,7 +454,18 @@ python orchestrator.py "帮我查时间"    # 多 Agent 编排
 
 ### MCP 连接
 
-启动时自动连接 `mcp-server-time` 等 MCP 服务器，工具列表合并到 LLM 的工具定义中。
+启动时通过 `graph/mcp.py` 自动连接 `mcp-server-time` 等 MCP 服务器，工具列表合并到 LLM 的工具定义中。同名工具自动跳过（本地优先）。
+
+### 工具列表
+
+| 工具 | 来源 | 功能 |
+|------|------|------|
+| `get_current_time` | 本地 `@tool` | 系统时间 |
+| `calculator` | 本地 `@tool` | 数学计算（AST 安全解析） |
+| `web_search` | AnySearch API | 搜索互联网新闻和网页 |
+| `web_rag` | AnySearch + 网页抓取 | 搜索并返回网页全文内容 |
+| `rag_query` | 本地 FAISS 索引 | 本地项目文档语义检索 |
+| `convert_time` | MCP (`mcp-server-time`) | 时区转换 |
 
 ### 轨迹记录
 
@@ -514,11 +532,12 @@ LangGraph 在架构中的角色：
     └──────────────┘      └──────────────┘      └──────────┘
                               每个 Worker 内部
                               是独立 build_agent()
-```
 
-- **`supervisor`** — 用 LLM 将用户请求分解为子任务列表
-- **`worker`** — 对每个子任务调用独立的 `build_agent()` 子图执行
+- **`supervisor`** — 用 LLM 将用户请求分解为子任务列表，分析依赖关系（depends_on）
+- **`worker`** — 按依赖层级执行，同层无依赖的任务并行（ThreadPoolExecutor），有依赖的任务等待前置任务完成后注入上下文再执行
 - **`join`** — 合并所有 Worker 的结果为最终汇总
+
+**Worker 隔离：** 每个 Worker 根据子任务描述（如"计算"、"搜索"）通过 `filter_tools()` 自动筛选只暴露相关工具。例如"计算 2^100"的 Worker 只有 `calculator`，"搜索新闻"的 Worker 只有 `web_search`，互不干扰。
 
 ### 语义记忆去重更新（2026-07-06 新增）
 
