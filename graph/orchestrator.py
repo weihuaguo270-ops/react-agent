@@ -110,31 +110,36 @@ class OrchestratorState(TypedDict):
 def supervisor(state: OrchestratorState):
     """用 LLM 分解任务并分析依赖关系"""
     llm = get_llm()
-    prompt = f"""将以下用户请求分解为多个可执行的子任务，并分析它们之间的依赖关系。
+    prompt = f"""将以下用户请求分解为多个可独立执行的子任务，并分析它们之间的依赖关系。
 
-输出格式（严格 JSON 数组，不要加额外文字）：
-[
-  {{"id": "1", "description": "子任务描述", "depends_on": []}},
-  {{"id": "2", "description": "子任务描述", "depends_on": ["1"]}},
-  ...
+你必须严格按照以下格式输出 JSON 数组，不要加任何额外文字。
+
+示例：
+输入：搜索今天的科技新闻，计算 25 * 48，查一下纽约当前时间
+输出：[
+  {{"id": "1", "description": "搜索今天的科技新闻", "depends_on": []}},
+  {{"id": "2", "description": "计算 25 * 48", "depends_on": []}},
+  {{"id": "3", "description": "查一下纽约当前时间", "depends_on": []}}
 ]
 
 规则：
 - depends_on 为空数组表示无前置依赖
 - 如果任务 B 需要任务 A 的结果才能执行，B.depends_on 包含 A.id
-- 每个独立的需求拆成一个子任务（比如"查时间"和"计算"是两个独立任务）
-- 不需要合并多个子任务
+- 每个独立的需求必须拆成一个单独的子任务，不能合并
+- 输出必须是一个 JSON 数组，不要加任何说明文字
 
 请求: {state['query']}"""
     response = llm.invoke([HumanMessage(content=prompt)]).content or ""
 
-    # 提取 JSON 数组（LLM 可能输出 markdown 代码块）
-    json_match = re.search(r'\[.*?\]', response, re.DOTALL)
-    if not json_match:
+    # 提取 JSON 数组（取第一个 [ 到最后一个 ] 之间的内容）
+    start = response.find('[')
+    end = response.rfind(']')
+    if start == -1 or end == -1 or end <= start:
         return {"tasks": [{"id": "1", "description": state["query"], "depends_on": []}]}
+    json_str = response[start:end+1]
 
     try:
-        tasks = json.loads(json_match.group(0))
+        tasks = json.loads(json_str)
         # 验证每个 task 的字段
         validated = []
         for t in tasks:
@@ -237,7 +242,7 @@ def _run_single_worker(task_description: str) -> str:
             SystemMessage(content="你是一个专注于子任务的 AI 助手。完成后输出 FINAL ANSWER。"),
             HumanMessage(content=task_description),
         ]
-    }, {"recursion_limit": 12})
+    }, {"recursion_limit": 12, "configurable": {"thread_id": f"worker_{id(task_description)}"}})
     for m in reversed(result["messages"]):
         if hasattr(m, "content") and m.content:
             return m.content.strip()
