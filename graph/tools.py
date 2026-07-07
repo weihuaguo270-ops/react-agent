@@ -82,13 +82,48 @@ def web_search(query: str) -> str:
         return f"搜索失败: {e}"
 
 
-# 工具函数清单（供 graph/tools_node.py 或 agent.py import）
+# 工具函数清单
 def get_tools():
     """返回所有可用工具的列表"""
     from rag import rag_query as _rag
     return [get_current_time, calculator, web_search, _rag]
 
 
-def get_tool_map():
-    """返回 name → tool 的字典"""
-    return {t.name: t for t in get_tools()}
+# ============================================================
+# 工具分类（供 Worker 隔离使用）
+# ============================================================
+
+TOOL_PROFILES = {
+    "time": {"get_current_time"},
+    "calc": {"calculator"},
+    "web": {"web_search"},
+    "summary": {"rag_query"},
+}
+
+
+def classify_task(task_description: str) -> set:
+    """根据子任务描述判断需要的工具类型"""
+    desc = task_description.lower()
+    needed = set()
+
+    if any(w in desc for w in ["时间", "时区", "当前时间", "现在几点"]):
+        needed.add("time")
+    if any(w in desc for w in ["计算", "数学", "等于", "+", "-", "*", "/"]):
+        needed.add("calc")
+    if any(w in desc for w in ["搜索", "网页", "新闻", "查询", "查找"]):
+        needed.add("web")
+    if any(w in desc for w in ["总结", "摘要", "概括", "归纳"]):
+        needed.add("summary")
+
+    return needed if needed else {"web", "calc"}  # 默认
+
+
+def filter_tools(task_description: str) -> list:
+    """根据子任务描述，返回该任务允许使用的工具子集"""
+    tags = classify_task(task_description)
+    allowed_names = set()
+    for tag in tags:
+        allowed_names |= TOOL_PROFILES.get(tag, set())
+
+    all_tools = get_tools()
+    return [t for t in all_tools if t.name in allowed_names]
