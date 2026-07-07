@@ -108,11 +108,14 @@ class OrchestratorState(TypedDict):
 # ============================================================
 
 def supervisor(state: OrchestratorState):
-    """用 LLM 分解任务并分析依赖关系"""
+    """用 LLM 判断是否需要任务分解，如需分解则输出子任务"""
     llm = get_llm()
-    prompt = f"""将以下用户请求分解为多个可独立执行的子任务，并分析它们之间的依赖关系。
+    prompt = f"""判断以下请求是否需要拆分为多个子任务。
 
-你必须严格按照以下格式输出 JSON 数组，不要加任何额外文字。
+如果当前请求**不需要**调用多个独立的工具就能回答，输出空数组：[]
+
+如果当前请求**需要**多个独立的工具调用才能完成（如同时查时间和做计算），
+则拆分为子任务并按以下格式输出 JSON 数组：
 
 示例：
 输入：搜索今天的科技新闻，计算 25 * 48，查一下纽约当前时间
@@ -123,9 +126,10 @@ def supervisor(state: OrchestratorState):
 ]
 
 规则：
+- 不需要拆分的请求输出 []，不要输出其他内容
+- 需要拆分的请求，每个独立需求拆成一个子任务
 - depends_on 为空数组表示无前置依赖
 - 如果任务 B 需要任务 A 的结果才能执行，B.depends_on 包含 A.id
-- 每个独立的需求必须拆成一个单独的子任务，不能合并
 - 输出必须是一个 JSON 数组，不要加任何说明文字
 
 请求: {state['query']}"""
@@ -155,10 +159,12 @@ def supervisor(state: OrchestratorState):
                 deps = f"（依赖 #{','.join(t['depends_on'])}）" if t['depends_on'] else "（无依赖）"
                 print(f"  #{t['id']}: {t['description']} {deps}")
             return {"tasks": validated}
+        # 空数组表示不需要拆分
+        return {"tasks": []}
     except (json.JSONDecodeError, Exception):
         pass
 
-    return {"tasks": [{"id": "1", "description": state["query"], "depends_on": []}]}
+    return {"tasks": []}  # 解析失败也当不需要拆分处理
 
 
 # ============================================================
@@ -250,6 +256,17 @@ def _run_single_worker(task_description: str) -> str:
 
 
 # ============================================================
+# Direct：不需要拆分时，直接用单 Agent 回答
+# ============================================================
+
+def direct_node(state: OrchestratorState):
+    """不需要任务拆分时，直接运行单 Agent 回答"""
+    from agent import run as run_agent
+    result = run_agent(state["query"])
+    return {"results": [result]}
+
+
+# ============================================================
 # Join：合并结果
 # ============================================================
 
@@ -271,13 +288,16 @@ def build_orchestrator():
     builder = StateGraph(OrchestratorState)
     builder.add_node("supervisor", supervisor)
     builder.add_node("worker", worker_node)
+    builder.add_node("direct", direct_node)
     builder.add_node("join", join)
     builder.set_entry_point("supervisor")
     builder.add_conditional_edges(
         "supervisor",
-        lambda s: "worker" if s.get("tasks") else "join",
+        lambda s: "direct" if not s.get("tasks") else "worker",
+        {"worker": "worker", "direct": "direct"},
     )
     builder.add_edge("worker", "join")
+    builder.add_edge("direct", "join")
     builder.set_finish_point("join")
     return builder.compile()
 
