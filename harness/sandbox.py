@@ -202,12 +202,11 @@ class Sandbox:
         """
         return should_sandbox_by_risk(tool_name, self.strategy)
 
-    def run(self, tool_call: dict, runner_path: str = "") -> str:
+    def run(self, tool_call: dict) -> str:
         """在子进程中执行工具调用
 
         参数:
             tool_call: 标准的 LLM tool_call 字典
-            runner_path: 可选的 runner 脚本路径（LangGraph 版可以传入 graph/ 的 runner）
 
         返回:
             工具执行结果的字符串；跳过时返回 "__SANDBOX_DISABLED__"
@@ -220,11 +219,10 @@ class Sandbox:
 
         payload = json.dumps(tool_call, ensure_ascii=False)
         project_dir = os.path.dirname(os.path.abspath(__file__))
-        runner = runner_path or _RUNNER_PATH
 
         try:
             result = subprocess.run(
-                [sys.executable, runner, payload],
+                [sys.executable, _RUNNER_PATH, payload],
                 capture_output=True,
                 text=True,
                 timeout=self.timeout,

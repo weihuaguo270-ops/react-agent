@@ -112,8 +112,7 @@ class Harness:
 
     def run_sandboxed(self, tool_call: dict) -> str:
         """在沙箱子进程中执行工具调用"""
-        from .sandbox import RUNNER_PATH
-        return self.sandbox.run(tool_call, runner_path=RUNNER_PATH)
+        return self.sandbox.run(tool_call)
 
     def set_sandbox_strategy(self, strategy: str) -> str:
         """运行时切换沙箱策略"""
