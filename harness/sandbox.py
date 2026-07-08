@@ -62,8 +62,8 @@ def classify_risk(tool_name: str) -> str:
         return RISK_IO
     if tool_name in cpu_tools:
         return RISK_CPU
-    # 未知工具: 默认走沙箱
-    return RISK_IO
+    # 未知工具: 默认 safe（不走沙箱），因为可能是 MCP/HTTP 等外部工具
+    return RISK_SAFE
 
 
 def should_sandbox_by_risk(tool_name: str, strategy: str) -> bool:
