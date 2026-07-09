@@ -127,9 +127,10 @@ react_loop 入口（普通或 Worker）:
 | LLM 调用 | call_llm() 被调用时 | llm.py → _current_llm.chat() | 按 LLM_PROVIDER 选择配置 → HTTP POST /chat/completions |
 | 工具路由 | LLM 返回 tool_calls 时 | TOOL_REGISTRY 查找（tools/ 模块） | 函数名 → tools.TOOL_REGISTRY[name]() 或遍历 MCP_CLIENTS |
 | Context | ReAct Loop 每步结束后 | messages.append 之后 | 检查 token → 可选压缩/截断 |
+| RAG | react_loop 首次启动时（懒加载） | RAG_INDEX.ingest_directory() → query 时检索 | 文档片段 → BGE 向量 → rag_index.json |
 | Harness | react_loop 进入/退出/每步工具调用 | start_trajectory / add_thought / add_tool_call / finish_trajectory | 持久化到 trajectories/*.json |
-| Eval（评测） | `python -m eval` 或 Dashboard 📊 页面 | eval/runner → subprocess 调 react_loop.py | 轨迹 → scorer → eval/reports/*.json |
 | Dashboard | 用户主动启动 | 独立 Flask Web 服务（端口 5050） | 读取 trajectories/ → 轨迹回放；读取 eval/reports/ → 评测看板 |
+| Eval（评测） | `python -m handwritten_react_agent.eval` 或 Dashboard 📊 页面 | eval/runner → subprocess 调 react_loop.py | 轨迹 → scorer → eval/reports/*.json |
 ## 快速开始
 
 ### 1. 安装与配置
