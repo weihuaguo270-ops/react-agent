@@ -204,8 +204,8 @@ python -m handwritten_react_agent.tools.dashboard
   Agent 交互模式已启动
   ==================================================
   可用工具：get_time / calculator / web_search /
-           fetch_page / summarize / rag_query
-  可问：时间、计算、搜索新闻、读网页、总结内容、查文档知识
+           fetch_page / summarize / rag_query / execute_python
+  可问：时间、计算、搜索新闻、读网页、总结内容、查文档知识、执行代码
   记忆：说"记住..."保存信息，输入'记忆'查看
   退出：输入'exit'或'退出'
   ==================================================
