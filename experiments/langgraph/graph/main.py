@@ -19,6 +19,7 @@ from mcp import connect_default_servers
 from agent import run as run_agent
 from memory import MEMORY
 from rag import ingest_directory
+from llm import get_llm
 
 # Harness 集成
 from harness import Harness
@@ -28,7 +29,7 @@ MCP_CLIENTS = []
 
 # 轨迹目录（与手写版共享）
 TRAJECTORY_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     "trajectories",
 )
 
@@ -69,7 +70,16 @@ def _get_harness(sandbox_strategy: str = "auto") -> Harness:
 # 主入口
 # ============================================================
 
-def main():
+# ============================================================
+# 懒加载：RAG + MCP（只在首次需要时连接）
+# ============================================================
+_rag_loaded = False
+
+def _ensure_rag_loaded():
+    global _rag_loaded
+    if _rag_loaded:
+        return
+    _rag_loaded = True
     _rag_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     print("[启动] 正在加载 RAG 知识库...")
     try:
@@ -77,9 +87,18 @@ def main():
     except Exception as e:
         print(f"[启动] RAG 加载跳过: {e}")
 
+_mcp_connected = False
+
+def _ensure_mcp_connected():
+    global _mcp_connected, MCP_CLIENTS
+    if _mcp_connected:
+        return
+    _mcp_connected = True
     print("[启动] 正在连接 MCP 服务器...")
     _connect_mcp()
 
+
+def main():
     if len(sys.argv) > 1:
         q = " ".join(sys.argv[1:])
         _handle_single_query(q)
@@ -92,9 +111,12 @@ def _handle_single_query(q: str):
     if _handle_memory_ops(q):
         return
 
+    _ensure_rag_loaded()
+    _ensure_mcp_connected()
+
     # ── 创建 Harness 记录本次对话轨迹 ──
     harness = _get_harness()
-    harness.start_trajectory(query=q, model="deepseek-chat",
+    harness.start_trajectory(query=q, model=str(get_llm().model_name),
                              system_prompt="LangChain Agent 交互模式")
 
     memories = MEMORY.query(q)
@@ -127,8 +149,14 @@ def _interactive_mode():
     print("=" * 50)
 
     session_count = 0
+    _first_query = True
 
     while True:
+        if _first_query:
+            _first_query = False
+            _ensure_rag_loaded()
+            _ensure_mcp_connected()
+
         q = input("\n你 > ").strip()
         if q.lower() in ("exit", "退出", "quit"):
             # 会话结束时显示汇总
@@ -147,7 +175,7 @@ def _interactive_mode():
 
         # 轨迹记录 + 沙箱
         harness = _get_harness()
-        harness.start_trajectory(query=q, model="deepseek-chat",
+        harness.start_trajectory(query=q, model=str(get_llm().model_name),
                                  system_prompt="LangChain Agent 交互模式")
 
         memories = MEMORY.query(q)

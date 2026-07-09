@@ -10,7 +10,12 @@ import os
 from typing import Optional
 from langchain_openai import ChatOpenAI
 
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "llm_config.json")
+# 优先找本目录上级（experiments/langgraph/），再找项目根目录（repo/）
+_pkg_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../experiments/langgraph/
+_repo_root = os.path.dirname(os.path.dirname(_pkg_dir))                # .../repo/
+CONFIG_FILE = os.path.join(_pkg_dir, "llm_config.json")
+if not os.path.exists(CONFIG_FILE):
+    CONFIG_FILE = os.path.join(_repo_root, "llm_config.json")
 
 _CONFIG: Optional[dict] = None
 
