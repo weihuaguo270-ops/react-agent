@@ -85,11 +85,24 @@ class Orchestrator:
         # 如果有前置任务的结果，注入为上下文
         if context:
             print(f"  [上下文] 收到 {context.count('---')} 个前置任务的结果")
-            # 把前置数据嵌入任务描述，让 LLM 直接看到数字
-            task_with_context = (
-                f"{task}\n\n"
-                f"{context}\n\n"
-            )
+            # 如果有前置数据，重写任务描述——让"计算"直接带上数据
+            if "【前置数据】" in context:
+                # 提取 data = [...] 部分
+                data_line = ""
+                for line in context.split("\n"):
+                    if line.startswith("data ="):
+                        data_line = line.strip()
+                        break
+                if data_line:
+                    task_with_context = (
+                        f"对以下数据进行计算：{task}\n\n"
+                        f"数据：\n{data_line}\n\n"
+                        f"请用 Python 对这组数据执行计算，不要重新生成数据。"
+                    )
+                else:
+                    task_with_context = f"{task}\n\n{context}"
+            else:
+                task_with_context = f"{task}\n\n{context}"
         else:
             task_with_context = task
         needed = classify_tool_needs(task_with_context if context else task, self.call_llm)
