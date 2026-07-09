@@ -12,12 +12,20 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.tools import tool
 
-_EMBEDDINGS = HuggingFaceEmbeddings(model_name="BAAI/bge-small-zh-v1.5")
+_EMBEDDINGS = None
 _RAG_INDEX_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rag_index.json")
+
+
+def _get_embeddings():
+    """首次使用时加载 Embedding 模型，后续复用"""
+    global _EMBEDDINGS
+    if _EMBEDDINGS is None:
+        from langchain_huggingface import HuggingFaceEmbeddings
+        print("  [RAG] 加载 Embedding 模型...")
+        _EMBEDDINGS = HuggingFaceEmbeddings(model_name="BAAI/bge-small-zh-v1.5")
+    return _EMBEDDINGS
 
 _store = None
 
@@ -32,11 +40,11 @@ def _get_store():
             data = json.load(f)
         chunks = data.get("chunks", [])
         if chunks:
-            _store = FAISS.from_texts(chunks, _EMBEDDINGS)
+            _store = FAISS.from_texts(chunks, _get_embeddings())
             print(f"[RAG] 已加载 {len(chunks)} 个文档片段")
             return _store
 
-    _store = FAISS.from_texts(["[占位]"], _EMBEDDINGS)
+    _store = FAISS.from_texts(["[占位]"], _get_embeddings())
     return _store
 
 
