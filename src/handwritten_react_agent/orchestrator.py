@@ -16,6 +16,7 @@ TOOL_PROFILES = {
     "web": {"web_search", "fetch_page"},
     "calc": {"calculator"},
     "summary": {"summarize"},
+    "code": {"execute_python"},
 }
 
 PROFILE_HINTS = {
@@ -24,6 +25,7 @@ PROFILE_HINTS = {
     "web": "搜索互联网、读取网页",
     "calc": "数学计算",
     "summary": "文本摘要",
+    "code": "Python 代码执行、数据分析、脚本编写",
 }
 
 
@@ -41,6 +43,8 @@ def classify_tool_needs(task, call_llm):
         tags.add("calc")
     if any(w in task_lower for w in ["总结", "摘要", "概括"]):
         tags.add("summary")
+    if any(w in task_lower for w in ["python", "代码", "脚本", "编写", "数据分析", "生成", "统计", "计算"]):
+        tags.add("code")
     return tags or {"web", "calc"}  # 默认 web+calc
 
 
