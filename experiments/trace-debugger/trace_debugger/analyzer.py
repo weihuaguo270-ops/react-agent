@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from .reader import Trajectory, Path, Step
+from .semantic import SemanticAnalyzer, SemanticReport
 
 
 # ── 失败分类 ──
@@ -87,7 +88,8 @@ class TrajectoryAnalysis:
     overall_assessment: str
     needs_fix: bool
     fix_suggestions: list[str]
-    traj_issues: list[str] = field(default_factory=list)  # 轨迹级问题
+    traj_issues: list[str] = field(default_factory=list)
+    semantic: SemanticReport = field(default_factory=SemanticReport)  # B 层语义分析
 
 
 # ── 分析器 ──
@@ -98,9 +100,12 @@ class Analyzer:
     用法：
         analyzer = Analyzer()
         analysis = analyzer.analyze(trajectory)
+        # 可选：语义分析（B 层）
+        analysis = analyzer.analyze(trajectory, semantic_analyzer=my_semantic)
     """
 
-    def analyze(self, traj: Trajectory) -> TrajectoryAnalysis:
+    def analyze(self, traj: Trajectory,
+                semantic_analyzer: Optional[SemanticAnalyzer] = None) -> TrajectoryAnalysis:
         """分析完整轨迹"""
         path_analyses = []
         for i, path in enumerate(traj.paths):
@@ -139,7 +144,27 @@ class Analyzer:
             needs_fix=needs_fix,
             fix_suggestions=self._generate_suggestions(traj, path_analyses, traj_level_issues),
             traj_issues=traj_level_issues,
+            semantic=self._run_semantic(traj, traj_level_issues, semantic_analyzer),
         )
+
+    def _run_semantic(self, traj: Trajectory, traj_issues: list[str],
+                      semantic_analyzer: Optional[SemanticAnalyzer] = None) -> SemanticReport:
+        """运行语义分析（B 层）"""
+        if not semantic_analyzer:
+            return SemanticReport(summary="未配置语义分析")
+        try:
+            # 创建一个简化的分析对象供语义分析使用
+            temp_analysis = TrajectoryAnalysis(
+                session_id=traj.session_id, query=traj.query,
+                model=traj.model, total_duration=traj.total_duration,
+                total_steps=traj.num_steps, num_paths=len(traj.paths),
+                paths=[], main_path_summary="", failed_paths_summary="",
+                overall_assessment="", needs_fix=False, fix_suggestions=[],
+                traj_issues=traj_issues,
+            )
+            return semantic_analyzer.analyze(traj, temp_analysis)
+        except Exception as e:
+            return SemanticReport(summary=f"语义分析异常: {e}")
 
     def _analyze_trajectory_level(self, traj: Trajectory) -> list[str]:
         """轨迹级问题检测"""

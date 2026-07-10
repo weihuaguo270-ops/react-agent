@@ -61,6 +61,16 @@ def format_report(analysis: TrajectoryAnalysis) -> str:
             lines.append(f"  ⚠ {issue}")
         lines.append("")
 
+    # 语义分析（B 层）
+    if analysis.semantic.has_issues:
+        lines.append("  ── 语义分析 ──")
+        for issue in analysis.semantic.issues:
+            severity_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(issue.severity, "⚪")
+            lines.append(f"  {severity_icon} [{issue.severity}] {issue.description}")
+            lines.append(f"     证据: {issue.evidence[:100]}")
+            lines.append(f"     建议: {issue.suggestion}")
+        lines.append("")
+
     # 失败路径汇总
     if any(not pa.success and not pa.is_main for pa in analysis.paths):
         lines.append("  ── 失败路径汇总 ──")
