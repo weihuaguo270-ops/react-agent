@@ -1,27 +1,22 @@
 """hagent — handwritten-react-agent CLI
 
 极简交互风格（类似 Claude Code / Codex）。
-Agent 的思考过程、工具调用、输出自然融入对话。
 """
 from __future__ import annotations
-import os
-import sys
-import importlib
+import os, sys, importlib, json, glob
 
 _base = os.path.dirname(os.path.abspath(__file__))
 for p in [_base, os.path.join(_base, "src"),
           os.path.join(_base, "experiments", "eval-engine")]:
-    if p not in sys.path:
-        sys.path.insert(0, p)
+    sys.path.insert(0, p)
 
 from rich.console import Console
-from rich.markdown import Markdown
+from rich.table import Table
 from rich.prompt import Prompt
-from rich.style import Style
 import typer
 
 _console = Console()
-_err_console = Console(stderr=True)
+_last_traj_file = [""]  # 用于 /replay 记录最近一次轨迹文件路径
 
 
 def _import(mod: str, name: str):
@@ -32,65 +27,70 @@ app = typer.Typer(name="hagent", no_args_is_help=True)
 
 
 # ══════════════════════════════════════════════
-#  shell — 交互模式
+#  交互模式
 # ══════════════════════════════════════════════
 
 @app.command()
-def shell(
-    provider: str = "",
-):
-    """启动交互模式（类似 Claude Code）"""
+def shell(provider: str = ""):
+    """启动交互模式"""
     if provider:
         os.environ["LLM_PROVIDER"] = provider
-    provider_name = os.environ.get("LLM_PROVIDER", "default")
-
-    _console.print(f"hagent [dim]({provider_name})[/dim]  — 输入 /help 查看命令")
+    pname = os.environ.get("LLM_PROVIDER", "default")
+    _console.print(f"hagent [dim]({pname})[/dim]  — /help")
     _console.print()
 
     while True:
         try:
             query = Prompt.ask(">")
         except (EOFError, KeyboardInterrupt):
-            _console.print()
             break
-
         query = query.strip()
         if not query:
             continue
         if query.startswith("/"):
             _handle_cmd(query)
             continue
-
         _execute(query)
         _console.print()
 
 
 def _handle_cmd(cmd: str):
     c = cmd.split()[0].lower()
+    args = cmd.split(maxsplit=1)
+
     if c in ("/exit", "/quit"):
         raise SystemExit(0)
     elif c == "/help":
-        _console.print("  /exit  退出")
-        _console.print("  /clear 清屏")
-        _console.print("  /config 配置")
+        _console.print("  /exit        退出")
+        _console.print("  /clear       清屏")
+        _console.print("  /config      查看配置")
+        _console.print("  /provider    切换 Provider（例：/provider openai）")
+        _console.print("  /replay      查看上一条轨迹")
+        _console.print("  /eval        评测上一条回答")
     elif c == "/clear":
         os.system("cls" if os.name == "nt" else "clear")
     elif c == "/config":
         _show_config()
+    elif c == "/provider" and len(args) > 1:
+        os.environ["LLM_PROVIDER"] = args[1]
+        _console.print(f"→ provider: {args[1]}")
+    elif c == "/replay":
+        _cmd_replay()
+    elif c == "/eval":
+        _cmd_eval_last()
     else:
-        _console.print(f"[red]? 未知命令: {c}[/]")
+        _console.print(f"[red]? {cmd}[/]")
 
 
 def _execute(query: str):
-    """执行查询，类似 Claude Code 的对话流"""
-    # ── 意图分类 ──
+    """执行查询"""
+    # ── 分类 ──
     try:
-        Classifier = _import("intent.classifier", "IntentClassifier")
-        task_type = Classifier().classify(query)
+        task_type = _import("intent.classifier", "IntentClassifier")().classify(query)
     except Exception:
         task_type = ""
 
-    # ── 权限包装 ──
+    # ── 权限 ──
     HITL = _import("core.human_in_the_loop", "HumanInTheLoop")
     PW = _import("integration.agent_wrapper", "PermissionWrapper")
     hitl = HITL(ask_fn=_hitl_ask)
@@ -99,16 +99,17 @@ def _execute(query: str):
     import src.handwritten_react_agent.react_loop as rl_mod
     rl_mod.execute_tool_call = perm.wrap(orig)
 
-    # ── 执行（Agent 原生输出直接显示）───
     _console.print(f"[dim]{task_type}[/]" if task_type else "")
 
+    # ── 执行 ──
     try:
         result = rl_mod.react_loop(query, max_steps=10)
     except Exception as e:
         _console.print(f"[red]✗ {e}[/]")
-        import traceback
-        traceback.print_exc()
         return
+
+    # ── 轨迹文件路径（供 /replay 使用）───
+    _last_traj_file[0] = _find_latest_traj()
 
     # ── 复盘 ──
     report = perm.watch.summary()
@@ -116,32 +117,112 @@ def _execute(query: str):
         for ev in report.events:
             icon = {"tool_blocked": "🔒", "tool_error": "✗",
                     "approach_switch": "→", "search_fail": "⚠",
-                    "limit_hit": "⛔", "complete": ""}.get(ev.type, "•")
+                    "limit_hit": "⛔"}.get(ev.type, "•")
             _console.print(f"  {icon} [dim]{ev.description}[/]")
         if hitl.check_direction("重试失败路径", details=report.one_liner):
             _console.print("↻ 重试...")
             _execute(query)
 
+    # ── 快速 Eval 评分 ──
+    if task_type != "functional_test" and result:
+        _quick_eval(query, result)
+
+
+def _find_latest_traj() -> str:
+    """找最新轨迹文件"""
+    for d in [os.path.join(_base, "src", "handwritten_react_agent", "trajectories"),
+              os.path.join(_base, "trajectories")]:
+        if os.path.exists(d):
+            files = sorted(glob.glob(os.path.join(d, "*.json")), reverse=True)
+            if files:
+                return files[0]
+    return ""
+
+
+# ══════════════════════════════════════════════
+#  Eval 评分
+# ══════════════════════════════════════════════
+
+def _quick_eval(query: str, response: str):
+    """快速评测"""
+    try:
+        report_mod = _import("report", "run_eval")
+        fmt = _import("report", "format_text")
+        report = report_mod(response=response, context=query)
+        for line in fmt(report).split("\n")[:4]:
+            if "总体评分" in line or "评测维度" in line or "通过" in line:
+                _console.print(f"  [dim]{line.strip()}[/]")
+    except Exception:
+        pass
+
+
+def _cmd_eval_last():
+    """评测上一次回答"""
+    from src.handwritten_react_agent.llm import LLM_DEFAULT
+    try:
+        _console.print("[dim]请输入要评测的回答（多行输入，空行结束）:[/]")
+        lines = []
+        while True:
+            line = input()
+            if not line:
+                break
+            lines.append(line)
+        response = "\n".join(lines)
+        if not response:
+            return
+        query = Prompt.ask("参考上下文（可选）", default="")
+        _quick_eval(query, response)
+    except Exception:
+        pass
+
+
+# ══════════════════════════════════════════════
+#  Replay
+# ══════════════════════════════════════════════
+
+def _cmd_replay():
+    """查看上一条轨迹"""
+    path = _last_traj_file[0]
+    if not path or not os.path.exists(path):
+        _console.print("[dim]没有最近的轨迹[/]")
+        return
+    try:
+        import json
+        with open(path) as f:
+            d = json.load(f)
+        _console.print(f"[dim]会话: {d.get('session_id','')}[/]")
+        _console.print(f"[dim]查询: {d.get('query','')[:100]}[/]")
+        _console.print(f"[dim]步骤: {d.get('total_steps',0)} 步[/]")
+        for s in d.get("steps", []):
+            act = s.get("action", {}) or {}
+            name = act.get("name", "")
+            args = str(act.get("arguments", act.get("args", "")))[:60]
+            obs = (s.get("observation") or "")[:80]
+            if name:
+                _console.print(f"  [dim]Step {s['step']}: {name}({args})[/]")
+            elif obs:
+                _console.print(f"  [dim]Step {s['step']}: → {obs}[/]")
+    except Exception as e:
+        _console.print(f"[red]✗ {e}[/]")
+
+
+# ══════════════════════════════════════════════
+#  HITL
+# ══════════════════════════════════════════════
 
 def _hitl_ask(msg: str, choices: list[str]) -> str:
-    """HITL 确认（极简风格）"""
     _console.print(f"[yellow]? {msg}[/]")
-    labels = {"1": "允许", "2": "本次会话", "3": "拒绝"}
-    _console.print("  " + " ".join(
-        f"[dim]{k}[/]:{v}" for k, v in labels.items()
-    ))
+    _console.print("  1:允许 2:本次会话 3:拒绝")
     return Prompt.ask("", choices=choices, default="1")
 
 
 # ══════════════════════════════════════════════
-#  run — 单次执行
+#  Run
 # ══════════════════════════════════════════════
 
 @app.command()
-def run(
-    query: str = typer.Argument(...),
-    provider: str = typer.Option("", "--provider", "-p"),
-):
+def run(query: str = typer.Argument(...),
+        provider: str = typer.Option("", "--provider", "-p")):
     """单次执行 Agent"""
     if provider:
         os.environ["LLM_PROVIDER"] = provider
@@ -149,7 +230,7 @@ def run(
 
 
 # ══════════════════════════════════════════════
-#  config — 配置
+#  Config
 # ══════════════════════════════════════════════
 
 @app.command()
