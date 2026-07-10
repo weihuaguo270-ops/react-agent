@@ -17,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 agent = "handwritten_react_agent.react_loop:cli_entry"
+hagent = "hagent_cli:cli_app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
