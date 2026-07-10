@@ -33,6 +33,28 @@ def test_unknown_safe():
     assert get_tool_permission("nonexistent_tool") == PermissionLevel.SAFE
     print("  ✅ 未知工具默认 SAFE")
 
+def test_args_level_safe():
+    """参数级规则：/tmp/ 下写文件降为 SAFE"""
+    h = HumanInTheLoop(ask_fn=None)
+    assert h.check_tool_call("write_file", {"path": "/tmp/test.log"}) is True
+    # 参数为空/未知路径 → 保持 CONFIRM
+    assert h.check_tool_call("write_file", {"path": "/unknown/path.txt"}) is True  # 无 ask_fn 放行
+    print("  ✅ 路径级 SAFE 正确")
+
+def test_args_level_deny():
+    """参数级规则：含敏感关键词提升为 DENY"""
+    h = HumanInTheLoop(ask_fn=None)
+    assert h.check_tool_call("write_file", {"path": "/tmp/passwords.txt", "content": "admin:123456"}) is False
+    assert h.check_tool_call("write_file", {"path": "/tmp/config.env", "content": "API_KEY=sk-xxx"}) is False
+    print("  ✅ 敏感内容 DENY 正确")
+
+def test_args_level_confirm():
+    """参数级规则：系统路径保持 CONFIRM"""
+    h = HumanInTheLoop(ask_fn=None)
+    assert h.check_tool_call("write_file", {"path": "/etc/nginx.conf"}) is True  # 无 ask_fn 放行
+    assert h.check_tool_call("execute_python", {"code": "import os; os.system('rm -rf /')"}) is True  # 无 ask_fn 放行
+    print("  ✅ 系统路径 CONFIRM 正确")
+
 def test_high_risk():
     assert is_high_risk(PermissionLevel.CONFIRM)
     assert is_high_risk(PermissionLevel.DENY)
@@ -168,7 +190,8 @@ if __name__ == "__main__":
     print("=" * 50)
     tests = [
         test_safe_tools, test_confirm_tools, test_deny_tools,
-        test_unknown_safe, test_high_risk, test_describe, test_describe_masked,
+        test_unknown_safe, test_args_level_safe, test_args_level_deny, test_args_level_confirm,
+        test_high_risk, test_describe, test_describe_masked,
         test_auto_approve_safe, test_confirm_approved, test_confirm_denied,
         test_deny_default, test_deny_override, test_deny_permanent, test_temp_auth_expiry,
         test_direction_approved, test_direction_denied,

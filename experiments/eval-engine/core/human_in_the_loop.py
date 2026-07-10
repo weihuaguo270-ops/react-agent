@@ -68,7 +68,7 @@ class HumanInTheLoop:
         tool_args: Optional[dict] = None,
         reason: str = "",
     ) -> bool:
-        level = get_tool_permission(tool_name)
+        level = get_tool_permission(tool_name, tool_args)  # 参数级权限
         desc = describe_action(tool_name, tool_args)
         return self._check(
             operation=desc,
