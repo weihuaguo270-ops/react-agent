@@ -425,7 +425,7 @@ if __name__ == "__main__":
     from core.human_in_the_loop import HumanInTheLoop
 
     def _mock_ask_reject(msg, choices):
-        return "❌ 拒绝"
+        return "3"  # 拒绝（在 CONFIRM 上下文中 3=拒绝）
 
     hitl = HumanInTheLoop(ask_fn=_mock_ask_reject)
     engine_hitl = EvalLoopEngine(

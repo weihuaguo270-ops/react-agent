@@ -91,27 +91,27 @@ def test_auto_approve_safe():
     print("  ✅ SAFE 自动放行")
 
 def test_confirm_approved():
-    h = HumanInTheLoop(ask_fn=_make_ask_fn("✅ 允许")[0])
+    h = HumanInTheLoop(ask_fn=_make_ask_fn("1")[0])
     assert h.check_tool_call("write_file", {"path": "/tmp/x"}) is True
     print("  ✅ CONFIRM 用户批准")
 
 def test_confirm_denied():
-    h = HumanInTheLoop(ask_fn=_make_ask_fn("❌ 拒绝")[0])
+    h = HumanInTheLoop(ask_fn=_make_ask_fn("3")[0])
     assert h.check_tool_call("execute_python", {"code": "print(1)"}) is False
     print("  ✅ CONFIRM 用户拒绝")
 
 def test_deny_default():
-    h = HumanInTheLoop(ask_fn=_make_ask_fn("🚫 保持拒绝")[0])
+    h = HumanInTheLoop(ask_fn=_make_ask_fn("1")[0])
     assert h.check_tool_call("delete_directory", {}) is False
     print("  ✅ DENY 默认拒绝")
 
 def test_deny_override():
-    h = HumanInTheLoop(ask_fn=_make_ask_fn("⏱ 仅此一次（5分钟有效）")[0])
+    h = HumanInTheLoop(ask_fn=_make_ask_fn("2")[0])
     assert h.check_tool_call("delete_directory", {}) is True
     print("  ✅ DENY 临时授权（5分钟有效）")
 
 def test_deny_permanent():
-    h = HumanInTheLoop(ask_fn=_make_ask_fn("🔓 永久允许此类操作")[0])
+    h = HumanInTheLoop(ask_fn=_make_ask_fn("3")[0])
     assert h.check_tool_call("delete_directory", {}) is True
     # 第二次同类型操作不再询问
     assert h.check_tool_call("delete_directory", {"path": "/tmp"}) is True
@@ -124,8 +124,8 @@ def test_temp_auth_expiry():
     def _ask_once_then_reject(msg, choices):
         call_n["count"] += 1
         if call_n["count"] == 1:
-            return "⏱ 仅此一次（5分钟有效）"
-        return "🚫 保持拒绝"
+            return "2"
+        return "1"
 
     h = HumanInTheLoop(ask_fn=_ask_once_then_reject, temp_auth_minutes=0.01)
     # 第一次：获得临时授权
@@ -137,12 +137,12 @@ def test_temp_auth_expiry():
     print("  ✅ 临时授权过期正确")
 
 def test_direction_approved():
-    h = HumanInTheLoop(ask_fn=_make_ask_fn("✅ 允许")[0])
+    h = HumanInTheLoop(ask_fn=_make_ask_fn("1")[0])
     assert h.check_direction("修正指令注入", "添加新步骤") is True
     print("  ✅ 方向调整批准")
 
 def test_direction_denied():
-    h = HumanInTheLoop(ask_fn=_make_ask_fn("❌ 拒绝")[0])
+    h = HumanInTheLoop(ask_fn=_make_ask_fn("3")[0])
     assert h.check_direction("重新执行步骤", "Step 3") is False
     print("  ✅ 方向调整拒绝")
 

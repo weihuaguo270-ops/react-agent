@@ -176,16 +176,16 @@ class HumanInTheLoop:
 
     def _ask_confirm(self, operation: str, reason: str, context_hint: str = "") -> tuple[bool, bool]:
         msg = self._build_msg(operation, reason, context_hint)
-        msg += "\n\n是否允许？"
+        msg += "\n\n是否允许？\n1) ✅ 允许\n2) ⏱ 允许本次会话\n3) ❌ 拒绝\n\n请输入编号 (1-3):"
 
         try:
-            choice = self.ask_fn(msg, ["✅ 允许", "⏱ 允许本次会话", "❌ 拒绝"])
-            if "本次会话" in choice or "⏱" in choice:
-                # 临时授权：当前会话有效
-                tool_key = self._tool_key(operation.split("：")[0] if "：" in operation else operation)
+            choice = self.ask_fn(msg, ["1", "2", "3"])
+            if "2" in choice or "本次会话" in choice:
+                tool_key = self._tool_key(
+                    operation.split("：")[0] if "：" in operation else operation)
                 self._temp_approvals[tool_key] = time.time() + self._temp_auth_ttl
                 return True, False
-            if "允许" in choice or "✅" in choice:
+            if "1" in choice or "允许" in choice:
                 return True, False
             return False, False
         except Exception:
@@ -193,20 +193,17 @@ class HumanInTheLoop:
 
     def _ask_override(self, operation: str, reason: str, context_hint: str = "") -> tuple[bool, bool]:
         msg = self._build_msg(operation, reason, context_hint)
-        msg += "\n\n此操作默认拒绝。请选择："
+        msg += "\n\n此操作默认拒绝。请选择：\n1) 🚫 保持拒绝\n2) ⏱ 仅此一次（5分钟有效）\n3) 🔓 永久允许此类操作\n\n请输入编号 (1-3):"
 
         try:
-            choice = self.ask_fn(msg, [
-                "🚫 保持拒绝",
-                "⏱ 仅此一次（5分钟有效）",
-                "🔓 永久允许此类操作",
-            ])
-            tool_key = self._tool_key(operation.split("：")[0] if "：" in operation else operation)
+            choice = self.ask_fn(msg, ["1", "2", "3"])
+            tool_key = self._tool_key(
+                operation.split("：")[0] if "：" in operation else operation)
 
-            if "永久" in choice or "🔓" in choice:
+            if "3" in choice or "永久" in choice:
                 self._perm_approvals[tool_key] = True
                 return True, False
-            if "仅此一次" in choice or "⏱" in choice:
+            if "2" in choice or "仅此一次" in choice:
                 self._temp_approvals[tool_key] = time.time() + self._temp_auth_ttl
                 return True, False
             return False, False
@@ -218,9 +215,9 @@ class HumanInTheLoop:
             return
         msg = f"ℹ️ Agent 正在执行：{operation}"
         if reason:
-            msg += f"\n\n原因：{reason}"
+            msg += f"\n\n原因：{reason}\n\n输入 1 继续"
         try:
-            self.ask_fn(msg, ["知道了"])
+            self.ask_fn(msg, ["1"])
         except Exception:
             pass
 
