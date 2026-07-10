@@ -6,6 +6,7 @@ from __future__ import annotations
 import os, sys, importlib, json, glob
 
 _base = os.path.dirname(os.path.abspath(__file__))
+os.chdir(_base)  # 确保 CWD 是项目根目录
 for p in [_base, os.path.join(_base, "src"),
           os.path.join(_base, "experiments", "eval-engine")]:
     sys.path.insert(0, p)
