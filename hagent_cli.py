@@ -58,21 +58,43 @@ def _recent_traj() -> str:
 # ── 工具调用拦截器（实时展示到终端）──
 
 class ToolMonitor:
-    """拦截工具调用，实时显示到终端（通过 stdout 直写）"""
+    """拦截工具调用，实时显示到终端（彩色面板风格）"""
     def __init__(self):
-        self._orig = None
+        self._count = 0
 
     def wrap(self, original):
-        self._orig = original
         def wrapped(tc):
+            self._count += 1
             name = tc.get("function", {}).get("name", "")
-            args = tc.get("function", {}).get("arguments", "{}")
-            # 直接写 stdout，绕过 Console（因为可能在 redirect_stdout 中）
-            sys.__stdout__.write(f"  ● {name} {args[:80]}\n")
+            args_raw = tc.get("function", {}).get("arguments", "{}")
+            try:
+                args = json.loads(args_raw) if isinstance(args_raw, str) else args_raw
+            except json.JSONDecodeError:
+                args = {}
+
+            # 精简参数显示
+            args_short = ""
+            if isinstance(args, dict) and args:
+                items = []
+                for k, v in args.items():
+                    vs = str(v)
+                    if len(vs) > 40: vs = vs[:40] + "..."
+                    items.append(f"{k}={vs}")
+                args_short = " " + ", ".join(items[:3])
+
+            # ── 彩色面板输出 ──
+            border = "─" * max(20, 50 - len(name))
+            sys.__stdout__.write(f"\033[33m● {name}{args_short}\033[0m\n")
             sys.__stdout__.flush()
+
             result = original(tc)
-            summary = result.strip()[:80].replace("\n", " ")
-            sys.__stdout__.write(f"    → {summary}\n")
+
+            # 结果摘要
+            summary = result.strip()[:100].replace("\n", " ")
+            if "error" in result[:20].lower():
+                sys.__stdout__.write(f"\033[31m  ✗ {summary}\033[0m\n")
+            else:
+                sys.__stdout__.write(f"\033[32m  ✓ {summary}\033[0m\n")
             sys.__stdout__.flush()
             return result
         return wrapped
