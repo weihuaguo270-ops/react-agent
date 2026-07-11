@@ -161,8 +161,13 @@ def shell(provider: str = ""):
     dash = "─" * 50
 
     while True:
-        # Header
-        cur = os.environ.get("LLM_PROVIDER", "default")
+        # Header — 显示实际模型名而非 provider 标签
+        cur = "unknown"
+        try:
+            from src.handwritten_react_agent.llm import LLM
+            cur = LLM().model
+        except Exception:
+            cur = os.environ.get("LLM_PROVIDER", "default")
         _console.print(f"[bold]handwritten-react-agent[/] [dim]({cur})[/]")
         _console.print(dash)
 
