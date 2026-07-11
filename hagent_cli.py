@@ -118,13 +118,11 @@ def _execute(query: str):
     import src.handwritten_react_agent.react_loop as rl_mod
     rl_mod.execute_tool_call = perm.wrap(orig)
 
-    _console.print(f"[dim]{task_type}[/]" if task_type else "")
-
-    # ── 多轮对话：注入历史上下文 ──
+    # ── 多轮对话 ──
     if _session_history:
         context_summary = "\n".join(
             f"{'你' if m['role']=='user' else '我'}: {m['content'][:200]}"
-            for m in _session_history[-3:]  # 最近 3 轮
+            for m in _session_history[-3:]
         )
         query_with_context = (
             f"【对话历史】\n{context_summary}\n\n"
@@ -133,15 +131,26 @@ def _execute(query: str):
     else:
         query_with_context = query
 
-    # ── 执行 ──
+    # ── 执行（捕获中间输出，只显示最终答案）───
+    from io import StringIO
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+
     try:
+        from src.handwritten_react_agent.react_loop import execute_tool_call as orig
+        import src.handwritten_react_agent.react_loop as rl_mod
+        rl_mod.execute_tool_call = perm.wrap(orig)
         result = rl_mod.react_loop(query_with_context, max_steps=10)
     except Exception as e:
+        sys.stdout = old_stdout
         _console.print(f"[red]✗ {e}[/]")
         return
 
-    # ── 轨迹文件路径（供 /replay 使用）───
-    _last_traj_file[0] = _find_latest_traj()
+    sys.stdout = old_stdout  # 恢复输出
+
+    # ── 只显示最终答案 ──
+    if result:
+        _console.print(f"{result[:1000]}")
 
     # ── 复盘 ──
     report = perm.watch.summary()
