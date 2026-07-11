@@ -22,8 +22,17 @@ import typer
 
 _console = Console()
 _last_traj_file = [""]
-_session_history: list[dict] = []  # 多轮对话历史 [{role, content}, ...]
+_session_history: list[dict] = []
 _MAX_HISTORY = 10
+
+# 预先静默加载 RAG（避免首次查询时打印加载信息）
+from contextlib import redirect_stdout
+from io import StringIO
+with redirect_stdout(StringIO()):
+    try:
+        import src.handwritten_react_agent.react_loop as _rl_preload
+    except Exception:
+        pass
 
 
 def _import(mod: str, name: str):
@@ -103,6 +112,10 @@ def _handle_cmd(cmd: str):
 
 def _execute(query: str):
     """执行查询"""
+    from contextlib import redirect_stdout
+    from io import StringIO
+    import os
+
     # ── 分类 ──
     try:
         task_type = _import("intent.classifier", "IntentClassifier")().classify(query)
@@ -131,22 +144,17 @@ def _execute(query: str):
     else:
         query_with_context = query
 
-    # ── 执行（捕获中间输出，只显示最终答案）───
-    from io import StringIO
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
+    # ── 执行（静默模式：捕获所有 print 输出）───
+    f = StringIO()
+    with redirect_stdout(f):
+        try:
+            result = rl_mod.react_loop(query_with_context, max_steps=10)
+        except Exception as e:
+            _console.print(f"[red]✗ {e}[/]")
+            return
 
-    try:
-        from src.handwritten_react_agent.react_loop import execute_tool_call as orig
-        import src.handwritten_react_agent.react_loop as rl_mod
-        rl_mod.execute_tool_call = perm.wrap(orig)
-        result = rl_mod.react_loop(query_with_context, max_steps=10)
-    except Exception as e:
-        sys.stdout = old_stdout
-        _console.print(f"[red]✗ {e}[/]")
-        return
-
-    sys.stdout = old_stdout  # 恢复输出
+    # ── 轨迹文件路径 ──
+    _last_traj_file[0] = _find_latest_traj()
 
     # ── 只显示最终答案 ──
     if result:
