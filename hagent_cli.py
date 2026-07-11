@@ -82,14 +82,21 @@ def _run(q: str) -> str:
     hitl = HITL(ask_fn=_hitl_ask)
     perm = PW(hitl=hitl)
     m = ToolMonitor()
+    # CLI 模式：注入简洁角色（覆盖 prompt 中默认的客套风格）
     import src.handwritten_react_agent.react_loop as rl
     rl.execute_tool_call = m.wrap(perm.wrap(rl.execute_tool_call))
+
+    # 在查询中注入风格指令，让 Agent 回答简洁直接
+    style_prefix = "[指令] 你是CLI工具，不是聊天机器人。回答必须简洁：直接给答案，不说客套话，不解释自己是什么。"
 
     ctx = q
     if _history:
         ctx = "[历史]\n" + "\n".join(
             f"Q: {h['c'][:150]}" for h in _history[-3:] if h['r']=='u'
         ) + "\n[现在]\n" + q
+
+    # 注入 CLI 风格
+    ctx = style_prefix + "\n\n问题: " + ctx
 
     f = StringIO()
     with redirect_stdout(f):
