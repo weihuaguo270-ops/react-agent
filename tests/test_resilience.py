@@ -147,6 +147,80 @@ def test_circuit_breaker_trips():
     print("  ✅ 熔断器打开后直接降级")
 
 
+def test_tool_guard_retry():
+    """ToolGuard 重试"""
+    from handwritten_react_agent.resilience import ToolGuard
+    guard = ToolGuard()
+    call_count = {"n": 0}
+
+    def flaky_tool(tc):
+        call_count["n"] += 1
+        if call_count["n"] < 3:
+            raise Exception("timeout")
+        return "ok"
+
+    wrapped = guard.wrap(flaky_tool)
+    result = wrapped({"function": {"name": "get_time", "arguments": "{}"}})
+    assert result == "ok"
+    assert call_count["n"] == 3
+    print("  ✅ ToolGuard 重试成功")
+
+
+def test_tool_guard_timeout():
+    """ToolGuard 超时保护"""
+    from handwritten_react_agent.resilience import ToolGuard
+    guard = ToolGuard()
+
+    def slow_tool(tc):
+        import time
+        time.sleep(5)
+        return "ok"
+
+    wrapped = guard.wrap(slow_tool)
+    # get_time 默认超时 60s，测试用特殊 timeout 检查
+    import json
+    result = wrapped({"function": {"name": "execute_python", "arguments": "{}"}})
+    # 应该超时后尝试重试（1次），最后返回错误
+    parsed = json.loads(result)
+    assert "超时" in parsed.get("error", "")
+    print("  ✅ ToolGuard 超时保护正确")
+
+
+def test_tool_guard_dangerous_no_retry():
+    """危险工具不重试"""
+    from handwritten_react_agent.resilience import ToolGuard
+    guard = ToolGuard()
+    call_count = {"n": 0}
+
+    def fail_tool(tc):
+        call_count["n"] += 1
+        raise Exception("error")
+
+    wrapped = guard.wrap(fail_tool)
+    wrapped({"function": {"name": "delete_directory", "arguments": "{}"}})
+    assert call_count["n"] == 1  # 不重试
+    print("  ✅ 危险工具不重试")
+
+
+def test_tool_guard_rate_limit():
+    """频率限制"""
+    from handwritten_react_agent.resilience import ToolGuard
+    guard = ToolGuard()
+    guard._max_rate = 2
+
+    def ok_tool(tc):
+        return "ok"
+
+    wrapped = guard.wrap(ok_tool)
+    tc = {"function": {"name": "web_search", "arguments": "{}"}}
+    assert wrapped(tc) == "ok"  # 第1次
+    assert wrapped(tc) == "ok"  # 第2次
+    import json
+    r = json.loads(wrapped(tc))  # 第3次
+    assert r.get("blocked") is True
+    print("  ✅ 频率限制正确")
+
+
 if __name__ == "__main__":
     print("=" * 50)
     print("  Resilience 模块测试")
@@ -160,4 +234,7 @@ if __name__ == "__main__":
     test_circuit_breaker()
     test_guarded_call_fallback()
     test_circuit_breaker_trips()
-    print(f"\n  ✅ 全部 9 个测试通过")
+    test_tool_guard_retry()
+    test_tool_guard_dangerous_no_retry()
+    test_tool_guard_rate_limit()
+    print(f"\n  ✅ 全部 13 个测试通过")

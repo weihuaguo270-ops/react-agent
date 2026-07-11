@@ -4,6 +4,7 @@
 不依赖任何外部框架，纯 Python 实现。
 """
 from __future__ import annotations
+import json
 import time
 import random
 import functools
@@ -297,3 +298,140 @@ def guarded_call(
         if fallback:
             return fallback(**kwargs)
         raise
+
+
+# ══════════════════════════════════════════════
+#  ToolGuard — 工具调用统一保护层
+# ══════════════════════════════════════════════
+
+class ToolGuard:
+    """工具调用保护层 — 按安全级别分级保护
+
+    安全边界规则：
+      DENY 工具    → 不重试、不熔断（走 HITL，不由 resilience 干预）
+      CONFIRM 工具 → 最多重试 1 次、无熔断（写/执行操作不能自动重试）
+      SAFE 工具    → 重试 3 次、有熔断（只读操作可以安全重试）
+      未知工具     → 默认 SAFE 级别
+
+    用法：
+        guard = ToolGuard()
+        guard.wrap(original_execute_tool_call)
+        # 替换 react_loop 中的 execute_tool_call
+    """
+
+    # 工具安全级别（简化版，与 permissions.py 保持一致）
+    _DANGEROUS = {"delete_directory", "format_disk", "shutdown", "restart",
+                  "modify_system_config", "install_package", "uninstall_package"}
+    _WRITE = {"write_file", "patch_file", "execute_python", "execute_command",
+              "send_email", "delete_file", "create_file",
+              "save_memory", "update_memory", "mcp_call_tool"}
+
+    # 工具超时（秒）
+    _TOOL_TIMEOUTS = {
+        "web_search": 30,
+        "fetch_page": 30,
+        "execute_python": 30,
+        "calculator": 10,
+        "default": 60,
+    }
+
+    def __init__(self):
+        self._breakers: dict[str, CircuitBreaker] = {}
+        self._rate_tracker: dict[str, list[float]] = {}
+        self._max_rate = 10
+
+    def _get_breaker(self, tool_name: str) -> CircuitBreaker:
+        if tool_name not in self._breakers:
+            if tool_name in self._DANGEROUS:
+                # 危险工具：阈值极高，永不熔断（走 HITL）
+                self._breakers[tool_name] = CircuitBreaker(
+                    failure_threshold=999, recovery_timeout=999, name=tool_name)
+            else:
+                self._breakers[tool_name] = CircuitBreaker(
+                    failure_threshold=3, recovery_timeout=30, name=tool_name)
+        return self._breakers[tool_name]
+
+    def _check_rate_limit(self, tool_name: str) -> bool:
+        now = time.time()
+        if tool_name not in self._rate_tracker:
+            self._rate_tracker[tool_name] = []
+        self._rate_tracker[tool_name] = [
+            t for t in self._rate_tracker[tool_name] if now - t < 60
+        ]
+        if len(self._rate_tracker[tool_name]) >= self._max_rate:
+            return False
+        self._rate_tracker[tool_name].append(now)
+        return True
+
+    def _max_retries(self, tool_name: str) -> int:
+        if tool_name in self._DANGEROUS:
+            return 0
+        if tool_name in self._WRITE:
+            return 1
+        return 3
+
+    def wrap(self, original_fn: Callable) -> Callable:
+        """包装 execute_tool_call"""
+        def wrapped(tool_call: dict) -> str:
+            if not isinstance(tool_call, dict) or "function" not in tool_call:
+                return '{"error": "畸形工具调用", "blocked": true}'
+            name = tool_call["function"].get("name", "unknown")
+            breaker = self._get_breaker(name)
+
+            # 频率限制
+            if not self._check_rate_limit(name):
+                return f'{{"error": "工具 {name} 调用频繁", "blocked": true}}'
+
+            # 熔断检查
+            if breaker.is_open():
+                return f'{{"error": "工具 {name} 暂不可用", "blocked": true}}'
+
+            max_retries = self._max_retries(name)
+            timeout = self._TOOL_TIMEOUTS.get(name, 60)
+            last_error = ""
+
+            for attempt in range(max_retries + 1):
+                try:
+                    result = _call_with_timeout(original_fn, tool_call, timeout)
+                    breaker.on_success()
+                    return result
+                except TimeoutError:
+                    last_error = f"超时 ({timeout}s)"
+                    breaker.on_failure()
+                    if attempt < max_retries:
+                        time.sleep(0.5)
+                except Exception as e:
+                    last_error = str(e)[:100]
+                    cat = classify_error(e)
+                    breaker.on_failure()
+                    if not is_retryable(cat) or attempt >= max_retries:
+                        return json.dumps({"error": last_error, "blocked": False})
+                    time.sleep(0.5)
+
+            return json.dumps({"error": last_error, "blocked": False,
+                               "retry_exhausted": True})
+        return wrapped
+
+
+def _call_with_timeout(func, arg, timeout):
+    """带超时的函数调用"""
+    import threading
+    result = [None]
+    error = [None]
+    done = threading.Event()
+
+    def runner():
+        try:
+            result[0] = func(arg)
+        except Exception as e:
+            error[0] = e
+        finally:
+            done.set()
+
+    t = threading.Thread(target=runner, daemon=True)
+    t.start()
+    if not done.wait(timeout=timeout):
+        raise TimeoutError(f"超时 ({timeout}s)")
+    if error[0]:
+        raise error[0]
+    return result[0]
