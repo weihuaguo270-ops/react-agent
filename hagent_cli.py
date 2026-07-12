@@ -1,4 +1,4 @@
-"""hagent — handwritten-react-agent CLI"""
+""""hagent — react-agent CLI"""
 from __future__ import annotations
 import os, sys, json, glob
 from contextlib import redirect_stdout
@@ -175,7 +175,7 @@ def shell(provider: str = ""):
             cur = LLM().model
         except Exception:
             cur = os.environ.get("LLM_PROVIDER", "default")
-        _console.print(f"[bold]handwritten-react-agent[/] [dim]({cur})[/]")
+        _console.print(f"[bold]react-agent[/] [dim]({cur})[/]")
         _console.print(dash)
 
         try:
