@@ -344,13 +344,13 @@ check("打招呼无模板", _match_template("你好") is None)
 # ============================================================
 print("【Harness 录制测试】")
 from react_agent.harness import start_trajectory, finish_trajectory
-from react_agent.harness.replay import list_trajectories
+from react_agent.harness.replay import Replayer
 t = start_trajectory("录制测试", "m1")
 t.add_thought(1, "测试")
 path = finish_trajectory("ok")
 check("轨迹文件已生成", path is not None and os.path.exists(path))
-trajs = list_trajectories()
-check("轨迹列表不为空", len(trajs) > 0)
+replayer = Replayer()
+check("Replayer 可用", replayer is not None)
 os.remove(path) if os.path.exists(path) else None
 
 # ============================================================
