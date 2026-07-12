@@ -43,6 +43,8 @@ def classify_error(error: Exception | str) -> str:
         return ErrorCategory.VALIDATION
     if any(k in msg for k in ("500", "502", "503", "service")):
         return ErrorCategory.API_ERROR
+    if any(k in msg for k in ("command not found", "not found", "no such")):
+        return ErrorCategory.TOOL_ERROR
     return ErrorCategory.UNKNOWN
 
 
