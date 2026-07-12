@@ -166,7 +166,7 @@ python -m react_agent.dashboard.server
 ## 相关项目
 
 - [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) — 生产级 LLM 评估框架
-- [attention-from-scratch](https://github.com/weihuaguo270-ops/transformer-attention) — NumPy/PyTorch Transformer Attention 实现
+- [transformer-attention](https://github.com/weihuaguo270-ops/transformer-attention) — NumPy/PyTorch Transformer Attention 实现
 - [trace-debugger](https://github.com/weihuaguo270-ops/trace-debugger) — Agent 执行轨迹分析工具
 
 ## License
