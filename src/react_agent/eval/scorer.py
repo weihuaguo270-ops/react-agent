@@ -10,7 +10,7 @@
 """
 
 import re
-from typing import Optional
+from typing import Optional, Callable
 
 
 def score_result(case, stdout: str, trajectory: Optional[dict]) -> dict:
@@ -175,7 +175,7 @@ def _score_answer(stdout: str, trajectory: Optional[dict]) -> dict:
 # ──────────────────────────────────────────────
 
 
-def score_with_eval_engine(case, trajectory: dict) -> Optional[dict]:
+def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] = None) -> Optional[dict]:
     """使用 llm-eval-engine 的 Process Reward 评分
 
     需安装 llm-eval-engine: pip install -e /path/to/llm-eval-engine
@@ -208,11 +208,12 @@ def score_with_eval_engine(case, trajectory: dict) -> Optional[dict]:
                 min_score=3, weight=1.0,
             ))
 
-        # 定义 mock judge（真实场景下应传入 LLM judge）
-        def mock_judge(prompt: str) -> dict:
-            return {"score": 4.0, "reasoning": "评分完成（mock）", "details": []}
+        # 使用传入的 judge_fn，或回退到 mock
+        if judge_fn is None:
+            def judge_fn(prompt: str) -> dict:
+                return {"score": 4.0, "reasoning": "评分完成（mock）", "details": []}
 
-        scorer = ProcessRewardScorer(judge_fn=mock_judge, verifiers=contracts or None)
+        scorer = ProcessRewardScorer(judge_fn=judge_fn, verifiers=contracts or None)
         report = scorer.score_trajectory(dag, fast_mode=True)
 
         return {
