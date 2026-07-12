@@ -3,12 +3,24 @@ name: CI
 on: [push, pull_request]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install lint tools
+      run: pip install flake8
+    - name: Lint
+      run: flake8 src/ tests/ --max-line-length=100 --count
+
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.10", "3.11"]
-
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -18,5 +30,5 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -e .
-    - name: Run tests
+    - name: Test
       run: python test_all.py
