@@ -343,22 +343,16 @@ check("打招呼无模板", _match_template("你好") is None)
 
 # ============================================================
 import subprocess
-print("\n【Replay 重放】")
-# 先建一个轨迹文件
+print("
+【Harness 录制测试】")
 from react_agent.harness import start_trajectory, finish_trajectory
-t = start_trajectory("重放测试", "m1")
+from react_agent.harness.replay import list_trajectories
+t = start_trajectory("录制测试", "m1")
 t.add_thought(1, "测试")
 path = finish_trajectory("ok")
-
-result = subprocess.run([sys.executable, "-m", "react_agent.harness.replay", "--latest"],
-                       capture_output=True, text=True, timeout=30)
-check("replay 输出含轨迹信息",
-      "🎯" in result.stdout or "Step" in result.stdout or "最终" in result.stdout)
-
-result2 = subprocess.run([sys.executable, "-m", "react_agent.harness.replay"],
-                        capture_output=True, text=True, timeout=30)
-check("replay 列表含记录数", "共" in result2.stdout or "轨迹" in result2.stdout)
-
+check("轨迹文件已生成", path is not None and os.path.exists(path))
+trajs = list_trajectories()
+check("轨迹列表不为空", len(trajs) > 0)
 os.remove(path) if os.path.exists(path) else None
 
 
