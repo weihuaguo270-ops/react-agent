@@ -342,9 +342,7 @@ check("空查询无模板", _match_template("") is None)
 check("打招呼无模板", _match_template("你好") is None)
 
 # ============================================================
-import subprocess
-print("
-【Harness 录制测试】")
+print("【Harness 录制测试】")
 from react_agent.harness import start_trajectory, finish_trajectory
 from react_agent.harness.replay import list_trajectories
 t = start_trajectory("录制测试", "m1")
@@ -354,7 +352,6 @@ check("轨迹文件已生成", path is not None and os.path.exists(path))
 trajs = list_trajectories()
 check("轨迹列表不为空", len(trajs) > 0)
 os.remove(path) if os.path.exists(path) else None
-
 
 # ============================================================
 print(f"\n{'='*50}")
