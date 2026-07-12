@@ -15,7 +15,17 @@ traj = {
     "final_answer": "ok",
 }
 
-result = score_with_eval_engine({"question": "test", "expected_tool": "web_search"}, traj)
+# 有 API key 时尝试用真实 Judge
+judge_fn = None
+if os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("JUDGE_API_KEY"):
+    try:
+        from eval_engine.judge.executor import JudgeExecutor
+        judge_fn = JudgeExecutor()
+        print("使用真实 Judge LLM")
+    except Exception:
+        pass
+
+result = score_with_eval_engine({"question": "test", "expected_tool": "web_search"}, traj, judge_fn)
 assert result is not None, "score_with_eval_engine returned None"
 assert result.get("eval_engine") is True
-print(f"✅ eval-engine scoring: {result['total']}/{result['max_score']}")
+print(f"\u2705 eval-engine scoring: {result['total']}/{result['max_score']}")
