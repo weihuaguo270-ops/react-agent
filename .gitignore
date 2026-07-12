@@ -8,3 +8,10 @@ rag_index.json
 trajectories/
 _sandbox_runner.py
 handwritten_react_agent.egg-info/
+
+# Local data files
+trajectories/
+rag_index.json
+memory.json
+llm_config.json
+.env
