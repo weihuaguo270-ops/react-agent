@@ -1,4 +1,4 @@
-# Bug 记录 — handwritten-react-agent
+# Bug 记录
 
 格式：操作 / 输入 / 错误结果 / 修复结果
 
