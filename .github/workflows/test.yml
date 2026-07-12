@@ -17,6 +17,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip install numpy scikit-learn sentence-transformers
+        pip install -e .
     - name: Run tests
       run: python test_all.py
