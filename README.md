@@ -1,5 +1,7 @@
 # ReAct Agent Framework
 
+[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **生产级 ReAct Agent 框架，双实现路线** — 手写运行时用于深入理解和完全控制，LangGraph 版用于生产部署。14 个模块覆盖 RAG、MCP 工具集成、多 Agent 编排、执行录制回放和安全护栏。
 
 ## 架构概览
