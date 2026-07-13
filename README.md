@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-**ReAct Agent 学习实现，双实现路线** — 手写运行时用于深入理解和完全控制，LangGraph 版用于对照框架集成写法。14 个模块覆盖 RAG、MCP 工具集成、多 Agent 编排、执行录制回放和安全护栏。
+**ReAct Agent 学习实现，双实现路线** — 手写运行时用于深入理解和完全控制，LangGraph 版用于对照框架集成写法。覆盖 RAG、MCP、多 Agent 编排、执行录制回放、安全护栏与内置评测等模块。
 
 ## 架构概览
 
@@ -189,6 +189,13 @@ python -m react_agent.eval --list
 
 报告保存在 `src/react_agent/eval/reports/`，`summary` 含 `by_capability` 与顶层 `accuracy_rate` / `tool_selection_f1` / `reasoning_rate` / `consistency_rate` / `hallucination_rate`。
 
+### 最近一次公开结果（学习用途，样本量有限）
+
+| 报告 | 日期 | 结果 | 说明 |
+|------|------|------|------|
+| [功能向整理](docs/eval_report_20260713.md) | 2026-07-13 | **23/26（88%）** | DeepSeek；3 例失败多为角色关键词检测过严 |
+| [Capability 快照](docs/capability_snapshot_20260713.md) | 2026-07-13 | **18/18（100%）** | 规则打分器五维能力集 |
+
 与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 的 Process Reward 打通示例见 `examples/agent_to_eval.py`（CI 会校验导入路径；有 API Key 时可走真实 Judge）。
 
 ## 测试
@@ -203,6 +210,9 @@ python test_all.py
 # 真实 LLM 集成测试（无 Key 时自动 skip）
 pytest tests/test_real_llm.py -v
 ```
+
+CI（GitHub Actions）默认跑 lint + `test_all.py` + `pytest tests/` + Agent→Eval 集成。  
+若在仓库 Settings → Secrets 配置 `DEEPSEEK_API_KEY`，会额外跑 `tests/test_real_llm.py`（失败不阻断主 CI，见 workflow `continue-on-error`）。
 
 ## 环境要求
 
@@ -219,3 +229,7 @@ pytest tests/test_real_llm.py -v
 ## License
 
 MIT
+
+## 贡献与安全
+
+见 [CONTRIBUTING.md](CONTRIBUTING.md) / [SECURITY.md](SECURITY.md)。

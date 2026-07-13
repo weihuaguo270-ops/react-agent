@@ -32,8 +32,11 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -e .
-    - name: Test
+        pip install pytest
+    - name: Script tests
       run: python test_all.py
+    - name: Pytest (offline)
+      run: pytest tests/ -q --ignore=tests/test_real_llm.py
 
   integration:
     runs-on: ubuntu-latest
@@ -54,3 +57,28 @@ jobs:
       run: python examples/agent_to_eval.py
     - name: Verify eval-engine scoring path
       run: python tests/ci_verify_integration.py
+
+  # Optional: only runs meaningfully when repo secret DEEPSEEK_API_KEY is set
+  real-llm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install
+      run: |
+        pip install -e .
+        pip install pytest
+    - name: Real LLM tests
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      run: |
+        if [ -z "$DEEPSEEK_API_KEY" ]; then
+          echo "No DEEPSEEK_API_KEY secret — skipping real LLM job (exit 0)"
+          exit 0
+        fi
+        pytest tests/test_real_llm.py -v --tb=short
