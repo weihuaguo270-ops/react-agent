@@ -205,12 +205,27 @@ pytest tests/ -q
 # 全模块脚本测试（不依赖 LLM）
 python test_all.py
 
-# 真实 LLM 集成测试（无 Key 时自动 skip）
-pytest tests/test_real_llm.py -v
+# 真实 LLM：CI 冒烟子集 / 全量（无 Key 时自动 skip）
+pytest tests/test_real_llm.py -v -m real_llm_smoke
+pytest tests/test_real_llm.py -v -m real_llm
 ```
 
-CI（GitHub Actions）默认跑 lint + `test_all.py` + `pytest tests/` + Agent→Eval 集成。  
-若在仓库 Settings → Secrets 配置 `DEEPSEEK_API_KEY`，会额外跑 `tests/test_real_llm.py`（失败不阻断主 CI，见 workflow `continue-on-error`）。
+### CI 与真实 LLM
+
+| Job | 触发 | 行为 |
+|-----|------|------|
+| lint / test / integration | push、PR | 离线；不消耗 API |
+| **Real LLM (smoke)** | push、PR（且已配置 Secret） | 跑 `real_llm_smoke`（事实问答 / 计算器 / 多步推理）；**失败会使该 job 红** |
+| **Real LLM (full)** | Actions → Run workflow → suite=`full` | 全量 `real_llm` |
+
+在仓库 **Settings → Secrets and variables → Actions** 添加 `DEEPSEEK_API_KEY`（与本地 `.env` 同名即可）。未配置时 smoke/full job 显示为 **Skipped**，不影响离线 CI。
+
+也可本地写入 Secret（勿把 Key 提交进 Git）：
+
+```bash
+# 从 .env 读取一行写入 GitHub（需已 gh auth login）
+gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DEEPSEEK_API_KEY=' .env | cut -d= -f2-)
+```
 
 ## 环境要求
 

@@ -5,6 +5,10 @@
 测试分类：
   - 简单任务：事实问答、工具调用
   - 复杂任务：多步推理、错误恢复、长上下文
+
+标记：
+  - real_llm          全部真实 LLM 用例
+  - real_llm_smoke    CI 默认冒烟子集（省时省费用）
 """
 
 import os
@@ -17,6 +21,8 @@ def _has_key() -> bool:
 
 
 REQUIRES_API = pytest.mark.skipif(not _has_key(), reason="需要 DEEPSEEK_API_KEY")
+REAL_LLM = pytest.mark.real_llm
+SMOKE = pytest.mark.real_llm_smoke
 
 _FAIL_MARKERS = (
     "LLM调用失败",
@@ -43,6 +49,8 @@ def _assert_llm_ok(answer: str, label: str = ""):
 # ══════════════════════════════════════════════
 
 @REQUIRES_API
+@REAL_LLM
+@SMOKE
 def test_factual_qa():
     """事实问答 — Agent 应直接给出正确答案"""
     from react_agent.react_loop import react_loop
@@ -56,6 +64,8 @@ def test_factual_qa():
 
 
 @REQUIRES_API
+@REAL_LLM
+@SMOKE
 def test_calculator():
     """工具调用 — Agent 应调 calculator 而非靠 LLM 记忆算数"""
     from react_agent.react_loop import react_loop
@@ -68,6 +78,7 @@ def test_calculator():
 
 
 @REQUIRES_API
+@REAL_LLM
 def test_tool_selection():
     """工具选择 — Agent 应尝试调 web_search 等工具"""
     from react_agent.react_loop import react_loop
@@ -81,6 +92,7 @@ def test_tool_selection():
 
 
 @REQUIRES_API
+@REAL_LLM
 def test_qa_with_city():
     """开放问答 — 包含多个信息点的回答"""
     from react_agent.react_loop import react_loop
@@ -97,6 +109,8 @@ def test_qa_with_city():
 # ══════════════════════════════════════════════
 
 @REQUIRES_API
+@REAL_LLM
+@SMOKE
 def test_multi_step_reasoning():
     """多步推理 — Agent 逐步分析问题"""
     from react_agent.react_loop import react_loop
@@ -111,6 +125,7 @@ def test_multi_step_reasoning():
 
 
 @REQUIRES_API
+@REAL_LLM
 def test_multi_turn_consistency():
     """多轮一致性 — 多次回答应包含相同核心事实"""
     from react_agent.react_loop import react_loop
@@ -128,6 +143,7 @@ def test_multi_turn_consistency():
 
 
 @REQUIRES_API
+@REAL_LLM
 def test_tool_error_recovery():
     """错误恢复 — 工具调用失败后 Agent 应尝试其他方式"""
     from react_agent.react_loop import react_loop
@@ -140,6 +156,7 @@ def test_tool_error_recovery():
 
 
 @REQUIRES_API
+@REAL_LLM
 def test_long_context():
     """长上下文 — 能处理包含长输入的任务"""
     from react_agent.react_loop import react_loop
@@ -153,6 +170,7 @@ def test_long_context():
 
 
 @REQUIRES_API
+@REAL_LLM
 def test_mcp_tool_integration():
     """MCP 工具 — MCP 客户端模块可被正确导入"""
     from react_agent.mcp_client import MCPClient

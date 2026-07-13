@@ -20,3 +20,9 @@ agent = "react_agent.react_loop:cli_entry"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+markers = [
+    "real_llm: live LLM integration tests (need DEEPSEEK_API_KEY)",
+    "real_llm_smoke: minimal live LLM subset for CI",
+]
