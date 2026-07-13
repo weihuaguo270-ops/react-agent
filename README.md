@@ -79,7 +79,7 @@ react_agent/
 ├── intent/              任务分类
 │   └── classifier.py    意图识别（功能测试 vs 生成式任务）
 │
-├── dashboard/           实时执行可视化
+├── dashboard/           实时执行可视化（server.py + index.html）
 │
 └── resilience.py        错误处理与重试
 ```
@@ -135,11 +135,9 @@ replay_trajectory(trajectory)
 from react_agent.orchestrator import Orchestrator
 
 orc = Orchestrator()
-plan = orc.plan("调研并撰写 AI 趋势报告")
-# → [task_1: 搜索趋势, task_2: 分析数据, task_3: 撰写报告]
-#   task_2 依赖 task_1，task_3 依赖 task_1 + task_2
-
-results = orc.execute(plan)
+# execute 内部会先 plan（分解子任务与依赖），再按层级执行并 synthesize
+results = orc.execute("调研并撰写 AI 趋势报告")
+# 也可单独查看计划：orc.plan("调研并撰写 AI 趋势报告")
 ```
 
 ## LangGraph 版（`experiments/langgraph/`）
