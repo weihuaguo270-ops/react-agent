@@ -218,7 +218,7 @@ pytest tests/test_real_llm.py -v -m real_llm
 | **Real LLM (smoke)** | push、PR（且已配置 Secret） | 跑 `real_llm_smoke`（事实问答 / 计算器 / 多步推理）；**失败会使该 job 红** |
 | **Real LLM (full)** | Actions → Run workflow → suite=`full` | 全量 `real_llm` |
 
-在仓库 **Settings → Secrets and variables → Actions** 添加 `DEEPSEEK_API_KEY`（与本地 `.env` 同名即可）。未配置时 smoke/full job 显示为 **Skipped**，不影响离线 CI。
+在仓库 **Settings → Secrets and variables → Actions** 添加 `DEEPSEEK_API_KEY`（与本地 `.env` 同名即可）。未配置时 **Real LLM gate** 会标记无 Key，smoke/full job 显示为 **Skipped**，不影响离线 CI。
 
 也可本地写入 Secret（勿把 Key 提交进 Git）：
 

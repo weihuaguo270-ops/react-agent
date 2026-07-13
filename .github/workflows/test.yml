@@ -70,12 +70,31 @@ jobs:
     - name: Verify eval-engine scoring path
       run: python tests/ci_verify_integration.py
 
-  # Runs only when repo secret DEEPSEEK_API_KEY is set (skipped otherwise).
-  # Smoke is required evidence: failures fail the job (no continue-on-error).
+  # Probe secret without exposing it in job-level `if` (secrets context is invalid there).
+  real-llm-gate:
+    name: Real LLM gate
+    runs-on: ubuntu-latest
+    outputs:
+      has_key: ${{ steps.probe.outputs.has_key }}
+    steps:
+    - id: probe
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      run: |
+        if [ -n "$DEEPSEEK_API_KEY" ]; then
+          echo "has_key=true" >> "$GITHUB_OUTPUT"
+          echo "DEEPSEEK_API_KEY is configured — real LLM jobs may run"
+        else
+          echo "has_key=false" >> "$GITHUB_OUTPUT"
+          echo "No DEEPSEEK_API_KEY secret — real LLM jobs will be skipped"
+        fi
+
+  # Smoke is required evidence when the key exists: failures fail this job.
   real-llm-smoke:
     name: Real LLM (smoke)
+    needs: real-llm-gate
     if: >-
-      ${{ secrets.DEEPSEEK_API_KEY != '' &&
+      ${{ needs.real-llm-gate.outputs.has_key == 'true' &&
           (github.event_name != 'workflow_dispatch' ||
            github.event.inputs.suite == 'smoke') }}
     runs-on: ubuntu-latest
@@ -109,8 +128,9 @@ jobs:
   # Full live suite: manual dispatch only (cost/time).
   real-llm-full:
     name: Real LLM (full)
+    needs: real-llm-gate
     if: >-
-      ${{ secrets.DEEPSEEK_API_KEY != '' &&
+      ${{ needs.real-llm-gate.outputs.has_key == 'true' &&
           github.event_name == 'workflow_dispatch' &&
           github.event.inputs.suite == 'full' }}
     runs-on: ubuntu-latest
