@@ -2,16 +2,16 @@
 
 [![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-** ReAct Agent 框架，双实现路线** — 手写运行时用于深入理解和完全控制，LangGraph 版用于生产部署。14 个模块覆盖 RAG、MCP 工具集成、多 Agent 编排、执行录制回放和安全护栏。
+**ReAct Agent 学习实现，双实现路线** — 手写运行时用于深入理解和完全控制，LangGraph 版用于对照框架集成写法。14 个模块覆盖 RAG、MCP 工具集成、多 Agent 编排、执行录制回放和安全护栏。
 
 ## 架构概览
 
-框架提供两种互补的 ReAct Agent 实现：
+本仓库提供两种互补的 ReAct Agent 实现（教学/实验用途）：
 
 | 维度 | 手写版（`src/`） | LangGraph 版（`experiments/langgraph/`） |
 |------|-----------------|----------------------------------------|
 | **依赖** | Python 标准库 + LLM API | LangChain + LangGraph |
-| **目标** | 完全透明，每行代码可控 | 可扩展部署 |
+| **目标** | 完全透明，每行代码可控 | 对照框架图编排写法 |
 | **状态管理** | 手动管理 | LangGraph 内置 graph 状态 |
 
 ### 执行流程
@@ -58,10 +58,13 @@ react_agent/
 ├── mcp_client.py        MCP 协议客户端
 │
 ├── eval/                评估与评分
-│   ├── runner.py        批量评估
-│   ├── scorer.py        评分函数
+│   ├── runner.py        批量评估（支持 consistency 重复跑）
+│   ├── scorer.py        功能 4 维评分
+│   ├── capability_scorer.py  能力评估（准确率/工具/推理/一致性/幻觉）
 │   ├── dataset.py       数据集加载
-│   └── report.py        报告生成
+│   ├── dataset.json     功能验证集
+│   ├── capability_dataset.json  能力评估集
+│   └── report.py        报告生成（含 by_capability）
 │
 ├── harness/             执行录制与回放
 │   ├── recorder.py      完整轨迹录制
@@ -143,7 +146,7 @@ results = orc.execute(plan)
 
 ## LangGraph 版（`experiments/langgraph/`）
 
-基于 LangChain/LangGraph 的图计算实现，适用于生产环境中需要框架集成的场景。功能等价于手写版：可配置 Agent 图、上下文管理、MCP 工具、RAG pipeline、执行录制、记忆管理、多 Agent 编排。
+基于 LangChain/LangGraph 的图计算实验实现，用于对照「手写循环 vs 框架编排」。覆盖可配置 Agent 图、上下文管理、MCP 工具、RAG pipeline、执行录制、记忆管理、多 Agent 编排；与手写版能力接近，但未做严格等价性测试。
 
 ## 快速开始
 
@@ -158,6 +161,35 @@ python -m react_agent "法国的首都是什么？"
 # 启动 Web 面板
 python -m react_agent.dashboard.server
 ```
+
+## 评测
+
+功能验证（工具/关键词/步数）与能力评估（规则打分）共用 `EvalRunner`：
+
+| 指标 | capability | 含义 |
+|------|------------|------|
+| 准确率 | `accuracy` | 最终答案命中 `expected_answer` |
+| 工具选择 | `tool_selection` | 工具精确率 / 召回率 / F1 |
+| 多步推理 | `reasoning` | 检查点 + 最终答案 |
+| 一致性 | `consistency` | 同题多次运行答案一致率 |
+| 幻觉率 | `hallucination` | 禁止错误主张 + 可选 grounded |
+
+```bash
+# 功能验证集
+python -m react_agent.eval
+
+# 能力评估全集
+python -m react_agent.eval --dataset capability
+
+# 只跑某一能力维度
+python -m react_agent.eval --capability accuracy
+python -m react_agent.eval --capability tool_selection
+
+# 查看历史报告
+python -m react_agent.eval --list
+```
+
+报告保存在 `src/react_agent/eval/reports/`，`summary` 含 `by_capability` 与顶层 `accuracy_rate` / `tool_selection_f1` / `reasoning_rate` / `consistency_rate` / `hallucination_rate`。
 
 ## 环境要求
 
