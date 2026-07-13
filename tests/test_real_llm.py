@@ -27,7 +27,7 @@ def _has_api_key() -> bool:
     return False
 
 REQUIRES_API = pytest.mark.skipif(
-    not _has_api_key(),
+    not (os.environ.get("DEEPSEEK_API_KEY") or os.path.exists("llm_config.json")),
     reason="需要 DEEPSEEK_API_KEY 或 llm_config.json"
 )
 
@@ -54,9 +54,11 @@ def test_react_loop_with_real_llm():
 def test_trajectory_recorded():
     """真实 LLM 执行后轨迹被正确录制"""
     from react_agent.react_loop import react_loop
-    from react_agent.harness import current_trajectory
+    from react_agent.harness import current_trajectory, start_trajectory, finish_trajectory
 
+    start_trajectory("中国的首都是什么？")
     _ = react_loop("中国的首都是什么？", max_steps=3)
+    finish_trajectory()
     traj = current_trajectory()
     assert traj is not None, "无轨迹记录"
     if traj:
