@@ -74,7 +74,10 @@ jobs:
   # Smoke is required evidence: failures fail the job (no continue-on-error).
   real-llm-smoke:
     name: Real LLM (smoke)
-    if: ${{ secrets.DEEPSEEK_API_KEY != '' && (github.event_name != 'workflow_dispatch' || inputs.suite == 'smoke') }}
+    if: >-
+      ${{ secrets.DEEPSEEK_API_KEY != '' &&
+          (github.event_name != 'workflow_dispatch' ||
+           github.event.inputs.suite == 'smoke') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -106,7 +109,10 @@ jobs:
   # Full live suite: manual dispatch only (cost/time).
   real-llm-full:
     name: Real LLM (full)
-    if: ${{ secrets.DEEPSEEK_API_KEY != '' && github.event_name == 'workflow_dispatch' && inputs.suite == 'full' }}
+    if: >-
+      ${{ secrets.DEEPSEEK_API_KEY != '' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.event.inputs.suite == 'full' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
