@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/weihuaguo270-ops/react-agent/schemas/harness_trajectory.schema.json",
+  "title": "Harness Trajectory (Format B)",
+  "description": "Shared Agent trajectory JSON across react-agent (recorder), trace-debugger, and llm-eval-engine. Canonical producer: react-agent Harness.",
+  "type": "object",
+  "required": ["session_id", "query", "steps", "final_answer"],
+  "additionalProperties": true,
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique run / session id"
+    },
+    "query": {
+      "type": "string",
+      "description": "User query for this run"
+    },
+    "model": {
+      "type": "string",
+      "description": "Model id used by the agent"
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "ISO-8601 timestamp when recording started"
+    },
+    "system_prompt_preview": {
+      "type": "string",
+      "description": "Truncated system prompt for debugging"
+    },
+    "total_steps": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "total_duration_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "total_tokens_estimated": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "final_answer": {
+      "type": "string",
+      "description": "Agent final answer (may be empty if the run failed)"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/step" }
+    }
+  },
+  "$defs": {
+    "toolCall": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tool / action name"
+        },
+        "arguments": {
+          "description": "Preferred: JSON string of tool args (recorder default)",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "object" }
+          ]
+        },
+        "args": {
+          "description": "Accepted alias (object or string); consumers should read arguments || args",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "object" }
+          ]
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": ["step"],
+      "additionalProperties": true,
+      "properties": {
+        "step": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based step number (Harness Format B). Do not emit 0."
+        },
+        "thought": { "type": "string" },
+        "observation": { "type": "string" },
+        "duration_seconds": { "type": "number", "minimum": 0 },
+        "tokens_estimated": { "type": "integer", "minimum": 0 },
+        "action": { "$ref": "#/$defs/toolCall" },
+        "actions": {
+          "type": "array",
+          "description": "Multi-tool parallel calls in one step; prefer singular action when only one tool",
+          "items": { "$ref": "#/$defs/toolCall" },
+          "minItems": 1
+        }
+      }
+    }
+  }
+}

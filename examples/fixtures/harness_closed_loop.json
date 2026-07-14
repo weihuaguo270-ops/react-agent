@@ -1,0 +1,42 @@
+{
+  "session_id": "harness_demo_001",
+  "query": "Python 里 list.sort 怎么用？",
+  "model": "mock-gpt",
+  "timestamp": "2026-07-14T12:00:00Z",
+  "system_prompt_preview": "You are a helpful ReAct agent.",
+  "total_steps": 3,
+  "total_duration_seconds": 2.4,
+  "total_tokens_estimated": 420,
+  "final_answer": "list.sort() 会原地按升序排序列表；如需新列表请用 sorted(iterable)。",
+  "steps": [
+    {
+      "step": 1,
+      "thought": "用户问 list.sort 用法，先搜索官方说明。",
+      "action": {
+        "name": "web_search",
+        "arguments": "{\"query\": \"Python list.sort documentation\"}"
+      },
+      "observation": "list.sort(*, key=None, reverse=False): 原地排序，默认升序。",
+      "duration_seconds": 0.9,
+      "tokens_estimated": 160
+    },
+    {
+      "step": 2,
+      "thought": "再确认 sorted 与 sort 的差异，避免答偏。",
+      "action": {
+        "name": "web_search",
+        "arguments": "{\"query\": \"Python sorted vs list.sort\"}"
+      },
+      "observation": "sorted() 返回新列表；list.sort() 返回 None 并修改原列表。",
+      "duration_seconds": 0.8,
+      "tokens_estimated": 150
+    },
+    {
+      "step": 3,
+      "thought": "信息足够，给出简洁最终答案。",
+      "observation": "",
+      "duration_seconds": 0.3,
+      "tokens_estimated": 110
+    }
+  ]
+}

@@ -206,6 +206,25 @@ python examples/publish_eval_snapshot.py --run capability   # 需 API Key
 
 与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 的 Process Reward / 人机校准打通见 `examples/agent_to_eval.py`；校准快照在 eval-engine 的 `docs/calibration_snapshot_*.md`。
 
+### Harness 轨迹 Schema + 闭环 Demo
+
+三仓共用 **Format B** 轨迹约定（1-based `step`，工具参数优先 `arguments` 字符串）：
+
+| 产物 | 路径 |
+|------|------|
+| JSON Schema | [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json) |
+| 校验 / 归一化 | `react_agent.harness.schema` |
+| 离线 fixture | `examples/fixtures/harness_closed_loop.json` |
+| 一键 demo | `python examples/harness_closed_loop.py` |
+
+闭环：`Agent 记录 → Trace Debugger 失败分类 → Eval Engine Process Reward`（CI `integration` job 会 clone 两仓并跑 demo）。
+
+```bash
+pip install -e ../trace-debugger -e ../llm-eval-engine   # 本地旁路仓
+python examples/harness_closed_loop.py --fixture
+python examples/harness_closed_loop.py --mock-agent
+```
+
 ## 测试
 
 ```bash

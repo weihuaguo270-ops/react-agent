@@ -65,8 +65,14 @@ jobs:
       run: |
         git clone --depth=1 https://github.com/weihuaguo270-ops/llm-eval-engine.git /tmp/llm-eval-engine
         pip install -e /tmp/llm-eval-engine
+    - name: Clone & install trace-debugger
+      run: |
+        git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
+        pip install -e /tmp/trace-debugger
     - name: Run Agent → Eval integration
       run: python examples/agent_to_eval.py
+    - name: Run Harness closed-loop demo (schema → tdebug → eval)
+      run: python examples/harness_closed_loop.py --fixture
     - name: Verify eval-engine scoring path
       run: python tests/ci_verify_integration.py
 

@@ -8,7 +8,7 @@ traj = {
     "session_id": "ci_test",
     "query": "test",
     "steps": [
-        {"step": 0, "thought": "search",
+        {"step": 1, "thought": "search",
          "action": {"name": "web_search", "arguments": "{}"},
          "observation": "result"}
     ],

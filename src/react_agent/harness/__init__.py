@@ -16,6 +16,13 @@
 from .recorder import Trajectory, start_trajectory, current_trajectory, finish_trajectory
 from .sandbox import Sandbox, SANDBOX, SANDBOX_TOOL_DEFINITION, tool_toggle_sandbox
 from .replay import Replay, Replayer
+from .schema import (
+    assert_valid,
+    load_and_validate,
+    normalize_trajectory,
+    validate_trajectory,
+    TrajectorySchemaError,
+)
 
 # ----------
 # 统一入口
