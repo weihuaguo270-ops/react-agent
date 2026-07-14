@@ -306,45 +306,54 @@ for td in TDS:
 
 
 # ============================================================
-# 10. Memory（语义记忆）— 用假模型，避免加载 BGE/torch 拖垮机器
+# 10. Memory（语义记忆）— 有 [rag] 时用假模型；否则测关键词降级
 # ============================================================
 print("\n【Memory 记忆系统】")
 import tempfile
-import numpy as np
+from react_agent import memory as memory_mod
 from react_agent.memory import Memory
-
-
-class _FakeEmbedder:
-    """确定性假向量，仅供单测，不加载 sentence-transformers。"""
-
-    def encode(self, text):
-        vec = np.zeros(16, dtype=float)
-        for i, ch in enumerate(str(text)):
-            vec[i % 16] += (ord(ch) % 13) + 1
-        n = np.linalg.norm(vec)
-        return vec / n if n else vec
-
 
 _mem_path = tempfile.mktemp(suffix="_memory_test.json")
 m = Memory(save_path=_mem_path)
-m._model = _FakeEmbedder()
 m.facts = []
 m.vecs = []
 m.access_count = []
 m.last_access = []
-check("空记忆无检索", len(m.query("test")) == 0)
 
-m.clear()
-m._model = _FakeEmbedder()  # clear 后仍用假模型
-m.add("小明是学生")
-check("添加后事实数>0", len(m.facts) > 0)
+if memory_mod._HAS_VECTOR:
+    import numpy as np
 
-found = m.query("小明")
-check("查询小明有结果", len(found) > 0)
+    class _FakeEmbedder:
+        """确定性假向量，仅供单测，不加载 sentence-transformers。"""
 
-removed = m.remove("小明")
-check("remove 返回 True", removed)
-check("remove 后事实减少", len(m.facts) == 0)
+        def encode(self, text):
+            vec = np.zeros(16, dtype=float)
+            for i, ch in enumerate(str(text)):
+                vec[i % 16] += (ord(ch) % 13) + 1
+            n = np.linalg.norm(vec)
+            return vec / n if n else vec
+
+    m._model = _FakeEmbedder()
+    check("空记忆无检索", len(m.query("test")) == 0)
+    m.clear()
+    m._model = _FakeEmbedder()
+    m.add("小明是学生")
+    check("添加后事实数>0", len(m.facts) > 0)
+    found = m.query("小明")
+    check("查询小明有结果", len(found) > 0)
+    removed = m.remove("小明")
+    check("remove 返回 True", removed)
+    check("remove 后事实减少", len(m.facts) == 0)
+else:
+    check("空记忆无检索(关键词)", len(m.query("test")) == 0)
+    m.clear()
+    m.add("小明是学生")
+    check("添加后事实数>0", len(m.facts) > 0)
+    found = m.query("小明")
+    check("查询小明有结果(关键词)", len(found) > 0)
+    removed = m.remove("小明")
+    check("remove 返回 True", removed)
+    check("remove 后事实减少", len(m.facts) == 0)
 try:
     os.remove(_mem_path)
 except OSError:
