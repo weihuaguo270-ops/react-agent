@@ -48,6 +48,11 @@ jobs:
       run: python test_all.py
     - name: Pytest (offline)
       run: pytest tests/ -q --ignore=tests/test_real_llm.py
+    - name: Execution suite (offline tools)
+      run: |
+        set -e
+        export REACT_AGENT_SKIP_RAG=1
+        python examples/run_execution_suite.py
 
   integration:
     runs-on: ubuntu-latest

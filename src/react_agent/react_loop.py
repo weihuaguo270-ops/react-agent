@@ -138,9 +138,49 @@ set_tot_llm_call(_tot_llm_wrapper)
 
 
 # ============================================================
-# 第四步：执行工具
+# 第四步：执行工具（含 ToolGuard 超时/重试/熔断）
 # ============================================================
-def execute_tool_call(tool_call):
+_TOOL_GUARD = None
+_GUARDED_EXECUTE = None
+
+
+def _tool_guard_enabled() -> bool:
+    return os.environ.get("REACT_AGENT_TOOL_GUARD", "1").strip().lower() not in (
+        "0", "false", "off", "no",
+    )
+
+
+def _self_repair_enabled() -> bool:
+    return os.environ.get("REACT_AGENT_SELF_REPAIR", "1").strip().lower() not in (
+        "0", "false", "off", "no",
+    )
+
+
+def looks_like_tool_error(result: str) -> bool:
+    """启发式：工具返回是否像失败（供自修提示）。"""
+    if not result:
+        return True
+    low = result.lower().strip()
+    if low.startswith("[错误]") or "错误：" in result[:80]:
+        return True
+    if '"error"' in low or "'error'" in low:
+        return True
+    if "retry_exhausted" in low or '"blocked": true' in low or '"blocked":true' in low:
+        return True
+    return False
+
+
+def self_repair_hint(tool_name: str, result: str) -> str:
+    """失败时附加给模型的短提示，鼓励改参/换工具而非盲目重复。"""
+    return (
+        f"\n\n[Harness自修] 工具 `{tool_name}` 本次失败或被阻断。"
+        "请检查参数合法性后重试一次，或换用其它合适工具完成目标；"
+        "不要重复完全相同的失败调用。"
+        f" 原始返回摘要: {result[:240]}"
+    )
+
+
+def _execute_tool_call_raw(tool_call):
     func_name = tool_call["function"]["name"]
     try:
         arguments = json.loads(tool_call["function"]["arguments"])
@@ -168,16 +208,43 @@ def execute_tool_call(tool_call):
                 return json.dumps({"error": f"MCP调用失败: {e}"})
     return json.dumps({"error": f"未知工具: {func_name}"})
 
+
+def execute_tool_call(tool_call):
+    """执行工具调用；默认经 ToolGuard（超时/重试/熔断）。
+
+    关闭: REACT_AGENT_TOOL_GUARD=0
+    """
+    global _TOOL_GUARD, _GUARDED_EXECUTE
+    if not _tool_guard_enabled():
+        return _execute_tool_call_raw(tool_call)
+    if _GUARDED_EXECUTE is None:
+        from react_agent.resilience import ToolGuard
+        _TOOL_GUARD = ToolGuard()
+        _GUARDED_EXECUTE = _TOOL_GUARD.wrap(_execute_tool_call_raw)
+    return _GUARDED_EXECUTE(tool_call)
+
+
+def _resolve_max_steps(max_steps) -> int:
+    if max_steps is not None:
+        return int(max_steps)
+    env_v = os.environ.get("REACT_AGENT_MAX_STEPS", "").strip()
+    if env_v.isdigit():
+        return max(1, int(env_v))
+    return 10
+
+
 # ============================================================
 # 第五步：ReAct Loop 主循环（核心！）
 # ============================================================
-def react_loop(user_query, max_steps=10, tool_defs=None):
+def react_loop(user_query, max_steps=None, tool_defs=None):
     _ensure_rag_loaded()
+    max_steps = _resolve_max_steps(max_steps)
     base_prompt = """你是一个可以使用工具的 AI 助手。规则：
 1. 用 THOUGHT / ACTION / OBSERVATION / FINAL ANSWER 格式
 2. 最终答案用 FINAL ANSWER: 开头
 3. 根据用户问题选择最合适的工具——包括本地工具和 MCP 远程工具
-4. 搜索2次没结果就直接回答，不要继续搜"""
+4. 搜索2次没结果就直接回答，不要继续搜
+5. 若工具返回含 [Harness自修] 或 error，请修正参数后重试，或换工具；勿盲目重复同一失败调用"""
     # 角色注入 → CoT 注入（角色先定风格，CoT 再定推理方式）
     role_enhanced = ROLE_MANAGER.inject(base_prompt, query=user_query)
     system_prompt = COT.inject(role_enhanced, query=user_query)
@@ -269,13 +336,18 @@ def react_loop(user_query, max_steps=10, tool_defs=None):
             result = execute_tool_call(tc)
             print(f"[工具返回] {result[:100]}")
 
+            content_for_llm = result
+            if _self_repair_enabled() and looks_like_tool_error(result):
+                content_for_llm = result + self_repair_hint(name, result)
+                print(f"  [Harness自修] 已附加修复提示 → {name}")
+
             if traj:
                 traj.add_tool_call(step, name, args, result)
 
             messages.append({
                 "role": "tool",
                 "tool_call_id": tc["id"],
-                "content": result,
+                "content": content_for_llm,
             })
 
         # (5) 每步结束：检查上下文窗口，超限则自动管理
@@ -488,11 +560,14 @@ def main():
         print('  agent "你的问题"               单次提问')
         print("  agent --setup                 运行配置向导")
         print("  agent --parallel \"多任务问题\"  并行多 Agent 协作")
+        print("  agent --max-steps N           限制最大步数（也可设 REACT_AGENT_MAX_STEPS）")
         print("  agent --mcp uvx mcp-server-xxx  连接额外 MCP 服务器")
         print("  agent --help                  显示帮助")
         print()
         print("首次使用建议先运行: agent --setup")
         print("环境变量: DEEPSEEK_API_KEY / OPENAI_API_KEY / LLM_PROVIDER")
+        print("         REACT_AGENT_TOOL_GUARD=1（默认）超时/重试/熔断")
+        print("         REACT_AGENT_SELF_REPAIR=1（默认）工具失败时附加自修提示")
         return
 
     if not _current_llm or not _current_llm.api_key.strip():
@@ -512,6 +587,15 @@ def main():
     _parallel_mode = "--parallel" in _sys_argv
     if _parallel_mode:
         _sys_argv.remove("--parallel")
+    _cli_max_steps = None
+    if "--max-steps" in _sys_argv:
+        idx = _sys_argv.index("--max-steps")
+        if idx + 1 < len(_sys_argv) and str(_sys_argv[idx + 1]).isdigit():
+            _cli_max_steps = int(_sys_argv[idx + 1])
+            os.environ["REACT_AGENT_MAX_STEPS"] = str(_cli_max_steps)
+            _sys_argv = _sys_argv[:idx] + _sys_argv[idx + 2:]
+        else:
+            _sys_argv = _sys_argv[:idx] + _sys_argv[idx + 1:]
     _mcp_args_list = []
     while "--mcp" in _sys_argv:
         idx = _sys_argv.index("--mcp")
@@ -564,7 +648,7 @@ def main():
             if any(w in q for w in ["同时", "并且", "还有", "另外", "且"]):
                 result = multi_agent_chain(full_q, parallel=_parallel_mode)
             else:
-                result = react_loop(full_q)
+                result = react_loop(full_q, max_steps=_cli_max_steps)
             if result:
                 auto_extract_memory(q, result)
         except Exception as e:

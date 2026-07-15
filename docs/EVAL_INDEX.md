@@ -9,12 +9,26 @@
 | [capability_snapshot_20260713.md](./capability_snapshot_20260713.md) | capability（当时 18 条） | 18/18（100%） | [snapshots/…](./snapshots/capability_snapshot_20260713.json) |
 | [eval_report_20260713.md](./eval_report_20260713.md) | default 功能集 26 条 | 23/26（88%） | 人工整理（见文内失败分析） |
 | [capability_newcases_20260713.md](./capability_newcases_20260713.md) | capability 扩容 6 条 | **5/6（83%）** | [snapshots/…](./snapshots/capability_newcases_20260713.json) |
+| [execution_snapshot_20260715.md](./execution_snapshot_20260715.md) | execution 离线工具集 8 条 | **8/8（100%）** | [snapshots/…](./snapshots/execution_snapshot_20260715.json) |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 
 ```bash
 python examples/publish_eval_snapshot.py --run capability --stem capability_snapshot_YYYYMMDD
 ```
+
+## Execution 成功率（不经 LLM）
+
+```bash
+python examples/run_execution_suite.py
+python examples/run_execution_suite.py --publish
+```
+
+说明：execution 测的是 **工具执行验收**，不是端到端 Agent 规划通过率。
+
+## 失败归因周报
+
+轨迹失败分布见姊妹仓 [trace-debugger/docs/FAILURE_INDEX.md](https://github.com/weihuaguo270-ops/trace-debugger/blob/master/docs/FAILURE_INDEX.md)。
 
 ## 一键发布（推荐）
 

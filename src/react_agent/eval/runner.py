@@ -20,7 +20,8 @@ TRAJECTORY_DIR = os.path.join(BASE_DIR, "trajectories")
 
 
 def run_single_case(question: str, timeout: int = 60,
-                    provider: Optional[str] = None) -> tuple:
+                    provider: Optional[str] = None,
+                    max_steps: Optional[int] = None) -> tuple:
     """执行单条测试用例
 
     返回:
@@ -36,14 +37,23 @@ def run_single_case(question: str, timeout: int = 60,
     ).rstrip(os.pathsep)
     # 评测子进程关闭沙箱预热，避免每条用例多一次冷启动
     env["REACT_AGENT_SANDBOX_PREWARM"] = "0"
+    # 长跑可靠性：评测默认开 ToolGuard / 自修；步数由用例透传
+    env.setdefault("REACT_AGENT_TOOL_GUARD", "1")
+    env.setdefault("REACT_AGENT_SELF_REPAIR", "1")
+    if max_steps is not None:
+        env["REACT_AGENT_MAX_STEPS"] = str(int(max_steps))
 
     before_files = _list_traj_files()
 
     start_time = time.time()
     try:
         # cwd 用项目根，便于加载 llm_config.json / .env
+        cmd = [sys.executable, REACT_LOOP]
+        if max_steps is not None:
+            cmd.extend(["--max-steps", str(int(max_steps))])
+        cmd.append(question)
         result = subprocess.run(
-            [sys.executable, REACT_LOOP, question],
+            cmd,
             capture_output=True, text=True, timeout=timeout,
             encoding="utf-8", errors="replace",
             cwd=PROJECT_ROOT if os.path.isdir(PROJECT_ROOT) else BASE_DIR,
@@ -108,9 +118,11 @@ def run_batch(cases: list, provider: Optional[str] = None,
         last_exit = 0
         timed_out = False
 
+        case_max_steps = getattr(case, "max_steps", None)
         for r_i in range(runs):
             stdout, trajectory, exit_code, duration = run_single_case(
                 case.question, timeout=timeout, provider=provider,
+                max_steps=case_max_steps,
             )
             total_duration += duration
             last_exit = exit_code

@@ -1,0 +1,120 @@
+[
+  {
+    "id": "exec_calc_mul",
+    "name": "calculator: 17*19",
+    "tags": ["execution", "calculator"],
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "calculator",
+        "arguments": {"expression": "17 * 19"},
+        "expect_equals": "323"
+      }
+    ]
+  },
+  {
+    "id": "exec_calc_div",
+    "name": "calculator: 144/12",
+    "tags": ["execution", "calculator"],
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "calculator",
+        "arguments": {"expression": "144 / 12"},
+        "expect_equals": "12.0"
+      }
+    ]
+  },
+  {
+    "id": "exec_calc_chain",
+    "name": "calculator two-step chain",
+    "tags": ["execution", "calculator", "multi_step"],
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "calculator",
+        "arguments": {"expression": "25 + 17"},
+        "expect_equals": "42"
+      },
+      {
+        "tool": "calculator",
+        "arguments": {"expression": "42 * 2"},
+        "expect_equals": "84"
+      }
+    ]
+  },
+  {
+    "id": "exec_get_time_format",
+    "name": "get_time returns YYYY-MM-DD HH:MM:SS",
+    "tags": ["execution", "get_time"],
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "get_time",
+        "arguments": {},
+        "expect_regex": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$"
+      }
+    ]
+  },
+  {
+    "id": "exec_py_sum",
+    "name": "execute_python: print sum",
+    "tags": ["execution", "execute_python"],
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "execute_python",
+        "arguments": {"code": "print(sum(range(1, 11)))"},
+        "expect_contains": "55"
+      }
+    ]
+  },
+  {
+    "id": "exec_py_json_roundtrip",
+    "name": "execute_python: json roundtrip",
+    "tags": ["execution", "execute_python"],
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "execute_python",
+        "arguments": {
+          "code": "import json\nprint(json.dumps({'ok': True, 'n': 3}))"
+        },
+        "expect_contains": "\"ok\": true"
+      }
+    ]
+  },
+  {
+    "id": "exec_py_fib",
+    "name": "execute_python: fib(10)",
+    "tags": ["execution", "execute_python"],
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "execute_python",
+        "arguments": {
+          "code": "a,b=0,1\nfor _ in range(10):\n    a,b=b,a+b\nprint(a)"
+        },
+        "expect_contains": "55"
+      }
+    ]
+  },
+  {
+    "id": "exec_mixed_calc_then_py",
+    "name": "mixed: calc then python verify",
+    "tags": ["execution", "multi_step", "mixed"],
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "calculator",
+        "arguments": {"expression": "8 * 7"},
+        "expect_equals": "56"
+      },
+      {
+        "tool": "execute_python",
+        "arguments": {"code": "print(8 * 7)"},
+        "expect_contains": "56"
+      }
+    ]
+  }
+]

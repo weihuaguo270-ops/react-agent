@@ -13,6 +13,7 @@ from typing import Optional
 _EVAL_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_DATASET = os.path.join(_EVAL_DIR, "dataset.json")
 CAPABILITY_DATASET = os.path.join(_EVAL_DIR, "capability_dataset.json")
+EXECUTION_DATASET = os.path.join(_EVAL_DIR, "execution_dataset.json")
 
 CAPABILITIES = (
     "accuracy",
@@ -114,13 +115,25 @@ def resolve_dataset_path(name_or_path: Optional[str] = None) -> str:
     支持：
       - None / "default" / "functional" → dataset.json
       - "capability" / "capabilities" → capability_dataset.json
+      - "execution" / "exec" → execution_dataset.json（离线工具脚本；
+        请用 `react_agent.eval.execution_scorer` 跑，勿走 LLM EvalRunner）
       - 其它字符串 → 当作文件路径
     """
     if not name_or_path or name_or_path in ("default", "functional"):
         return DEFAULT_DATASET
     if name_or_path in ("capability", "capabilities"):
         return CAPABILITY_DATASET
+    if name_or_path in ("execution", "exec"):
+        return EXECUTION_DATASET
     return name_or_path
+
+
+def name_or_path_is_execution(name_or_path: Optional[str]) -> bool:
+    if name_or_path in ("execution", "exec"):
+        return True
+    if name_or_path and os.path.basename(str(name_or_path)) == "execution_dataset.json":
+        return True
+    return False
 
 
 def load_dataset(path: Optional[str] = None) -> list[TestCase]:
@@ -129,8 +142,16 @@ def load_dataset(path: Optional[str] = None) -> list[TestCase]:
     path 可为：
       - None / "default" / "functional" → dataset.json
       - "capability" → capability_dataset.json
+      - "execution" → 返回空并提示改用 execution_scorer
       - 具体文件路径
     """
+    if name_or_path_is_execution(path):
+        print(
+            "[Eval] execution 数据集请用: "
+            "python examples/run_execution_suite.py "
+            "（或 react_agent.eval.execution_scorer）"
+        )
+        return []
     filepath = resolve_dataset_path(path)
     if not os.path.exists(filepath):
         print(f"[Eval] 数据集文件不存在: {filepath}，返回空列表")
