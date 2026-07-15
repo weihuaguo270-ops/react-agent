@@ -54,11 +54,19 @@ def main() -> int:
         default="offline_tools",
         help="逗号分隔: offline_tools,agent（默认仅 offline_tools）",
     )
+    parser.add_argument(
+        "--difficulty",
+        default=None,
+        help="逗号分隔过滤: easy,medium,hard（默认全部）",
+    )
     parser.add_argument("--publish", action="store_true")
     parser.add_argument("--stem", default=None)
     args = parser.parse_args()
 
     modes = [m.strip() for m in args.modes.split(",") if m.strip()]
+    difficulties = None
+    if args.difficulty:
+        difficulties = [d.strip() for d in args.difficulty.split(",") if d.strip()]
     if "agent" in modes:
         import os
         os.environ.setdefault("REACT_AGENT_SKIP_RAG", "1")
@@ -69,11 +77,15 @@ def main() -> int:
             print("ERROR: agent 模式需要 DEEPSEEK_API_KEY 或 OPENAI_API_KEY", file=sys.stderr)
             return 2
 
-    report = run_execution_suite(args.dataset, modes=modes)
+    report = run_execution_suite(
+        args.dataset, modes=modes, difficulties=difficulties,
+    )
     s = report["summary"]
     print("=" * 55)
-    print(f"  Execution Suite modes={modes}")
+    print(f"  Execution Suite modes={modes} difficulty={difficulties or 'all'}")
     print(f"  {s['passed']}/{s['total']}  pass_rate={s['pass_rate']}%")
+    if report.get("by_difficulty"):
+        print(f"  by_difficulty: {report['by_difficulty']}")
     print("=" * 55)
     for r in report["results"]:
         icon = "OK" if r["passed"] else ("SKIP" if r.get("skipped") else "FAIL")

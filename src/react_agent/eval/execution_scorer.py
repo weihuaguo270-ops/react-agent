@@ -116,6 +116,7 @@ def score_offline_task(task: dict) -> dict[str, Any]:
         "id": task_id,
         "name": task.get("name", ""),
         "tags": list(task.get("tags") or []),
+        "difficulty": task.get("difficulty") or "unspecified",
         "mode": "offline_tools",
         "passed": all_ok and bool(step_results),
         "skipped": False,
@@ -173,15 +174,56 @@ def score_agent_task(
         checks.append({"name": "timeout", "passed": True, "reason": f"exit={exit_code}"})
 
     expected_tools = list(task.get("expected_tools") or [])
-    if expected_tools:
+    if expected_tools and not task.get("require_all_tools") and not task.get(
+        "require_all_tool_groups"
+    ):
         hit = tools & set(expected_tools)
         tool_ok = bool(hit)
         checks.append({
             "name": "tools",
             "passed": tool_ok,
-            "reason": f"called={sorted(tools)} expected={expected_tools}",
+            "reason": f"called={sorted(tools)} expected_any={expected_tools}",
         })
         ok = ok and tool_ok
+
+    require_all = list(task.get("require_all_tools") or [])
+    if require_all:
+        missing = [t for t in require_all if t not in tools]
+        all_ok = not missing
+        checks.append({
+            "name": "require_all_tools",
+            "passed": all_ok,
+            "reason": f"called={sorted(tools)} need_all={require_all} missing={missing}",
+        })
+        ok = ok and all_ok
+
+    groups = list(task.get("require_all_tool_groups") or [])
+    if groups:
+        group_ok = True
+        detail = []
+        for g in groups:
+            gset = set(g)
+            hit = bool(tools & gset)
+            detail.append({"group": list(g), "hit": hit})
+            if not hit:
+                group_ok = False
+        checks.append({
+            "name": "require_all_tool_groups",
+            "passed": group_ok,
+            "reason": str(detail),
+        })
+        ok = ok and group_ok
+
+    forbid = list(task.get("forbid_tools") or [])
+    if forbid:
+        bad = sorted(tools & set(forbid))
+        forbid_ok = not bad
+        checks.append({
+            "name": "forbid_tools",
+            "passed": forbid_ok,
+            "reason": f"forbidden_used={bad}" if bad else "no forbidden tools",
+        })
+        ok = ok and forbid_ok
 
     expected_answer = task.get("expected_answer")
     if expected_answer is not None:
@@ -233,6 +275,7 @@ def score_agent_task(
         "id": task_id,
         "name": task.get("name", ""),
         "tags": list(task.get("tags") or []),
+        "difficulty": task.get("difficulty") or "unspecified",
         "mode": "agent",
         "passed": ok,
         "skipped": False,
@@ -278,17 +321,25 @@ def run_execution_suite(
     *,
     only_ids: Optional[set[str]] = None,
     modes: Optional[list[str]] = None,
+    difficulties: Optional[list[str]] = None,
     agent_runner: Optional[AgentRunner] = None,
 ) -> dict[str, Any]:
     """跑 execution 集，返回可归档 JSON 报告。
 
     modes: 默认 ["offline_tools"]。传 ["agent"] 或 ["offline_tools","agent"]。
+    difficulties: 可选过滤 easy/medium/hard。
     """
     wanted = set(modes or ["offline_tools"])
     tasks = load_execution_dataset(path)
     if only_ids:
         tasks = [t for t in tasks if str(t.get("id")) in only_ids]
     tasks = [t for t in tasks if (t.get("mode") or "offline_tools") in wanted]
+    if difficulties:
+        wanted_d = set(difficulties)
+        tasks = [
+            t for t in tasks
+            if (t.get("difficulty") or "unspecified") in wanted_d
+        ]
 
     results = []
     for task in tasks:
@@ -301,11 +352,16 @@ def run_execution_suite(
 
     by_tag: dict[str, dict[str, int]] = defaultdict(lambda: {"total": 0, "passed": 0})
     by_mode: dict[str, dict[str, int]] = defaultdict(lambda: {"total": 0, "passed": 0})
+    by_diff: dict[str, dict[str, int]] = defaultdict(lambda: {"total": 0, "passed": 0})
     for r in scored:
         mode = r.get("mode") or "unknown"
         by_mode[mode]["total"] += 1
         if r["passed"]:
             by_mode[mode]["passed"] += 1
+        diff = r.get("difficulty") or "unspecified"
+        by_diff[diff]["total"] += 1
+        if r["passed"]:
+            by_diff[diff]["passed"] += 1
         for tag in r.get("tags") or ["untagged"]:
             by_tag[tag]["total"] += 1
             if r["passed"]:
@@ -333,6 +389,7 @@ def run_execution_suite(
             "skipped": sum(1 for r in results if r.get("skipped")),
         },
         "by_mode": _rate_map(by_mode),
+        "by_difficulty": _rate_map(by_diff),
         "by_tag": _rate_map(by_tag),
         "results": results,
     }
@@ -363,6 +420,19 @@ def report_to_markdown(report: dict, *, title: Optional[str] = None) -> str:
             f"| `{mode}` | {info.get('passed', 0)} | {info.get('total', 0)} "
             f"| {info.get('pass_rate', 0)}% |"
         )
+    if report.get("by_difficulty"):
+        lines.extend([
+            "",
+            "## 按 difficulty",
+            "",
+            "| difficulty | passed | total | rate |",
+            "|------------|--------|-------|------|",
+        ])
+        for diff, info in (report.get("by_difficulty") or {}).items():
+            lines.append(
+                f"| `{diff}` | {info.get('passed', 0)} | {info.get('total', 0)} "
+                f"| {info.get('pass_rate', 0)}% |"
+            )
     lines.extend([
         "",
         "## 按 tag",
@@ -379,7 +449,8 @@ def report_to_markdown(report: dict, *, title: Optional[str] = None) -> str:
     for r in report.get("results") or []:
         icon = "PASS" if r.get("passed") else ("SKIP" if r.get("skipped") else "FAIL")
         lines.append(
-            f"- **{icon}** `{r.get('id')}` [{r.get('mode', '')}] — {r.get('name', '')} "
+            f"- **{icon}** `{r.get('id')}` [{r.get('mode', '')}/{r.get('difficulty', '')}] "
+            f"— {r.get('name', '')} "
             f"({r.get('duration_seconds', 0)}s) — {r.get('reason', '')}"
         )
     honesty = [
@@ -390,7 +461,8 @@ def report_to_markdown(report: dict, *, title: Optional[str] = None) -> str:
     if "agent" in modes and "offline_tools" not in modes:
         honesty.extend([
             "- 本套为 **端到端 Agent（LLM 规划 + 工具）** 执行验收，绑定模型与日期",
-            "- 样本量有限；失败需区分模型失误 / 评分过严 / 工具环境",
+            "- 难度分层：`easy` 单工具、`medium` 多步/选型、`hard` 双工具/算法/禁工具约束",
+            "- 失败需区分模型失误 / 评分过严 / 工具环境；样本量仍属学习级",
             "",
         ])
     elif "agent" in modes:

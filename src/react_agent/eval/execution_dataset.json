@@ -3,6 +3,7 @@
     "id": "exec_calc_mul",
     "name": "calculator: 17*19",
     "tags": ["execution", "calculator"],
+    "difficulty": "easy",
     "mode": "offline_tools",
     "steps": [
       {
@@ -16,6 +17,7 @@
     "id": "exec_calc_div",
     "name": "calculator: 144/12",
     "tags": ["execution", "calculator"],
+    "difficulty": "easy",
     "mode": "offline_tools",
     "steps": [
       {
@@ -29,6 +31,7 @@
     "id": "exec_calc_chain",
     "name": "calculator two-step chain",
     "tags": ["execution", "calculator", "multi_step"],
+    "difficulty": "medium",
     "mode": "offline_tools",
     "steps": [
       {
@@ -47,6 +50,7 @@
     "id": "exec_get_time_format",
     "name": "get_time returns YYYY-MM-DD HH:MM:SS",
     "tags": ["execution", "get_time"],
+    "difficulty": "easy",
     "mode": "offline_tools",
     "steps": [
       {
@@ -60,6 +64,7 @@
     "id": "exec_py_sum",
     "name": "execute_python: print sum",
     "tags": ["execution", "execute_python"],
+    "difficulty": "easy",
     "mode": "offline_tools",
     "steps": [
       {
@@ -73,6 +78,7 @@
     "id": "exec_py_json_roundtrip",
     "name": "execute_python: json roundtrip",
     "tags": ["execution", "execute_python"],
+    "difficulty": "medium",
     "mode": "offline_tools",
     "steps": [
       {
@@ -88,6 +94,7 @@
     "id": "exec_py_fib",
     "name": "execute_python: fib(10)",
     "tags": ["execution", "execute_python"],
+    "difficulty": "medium",
     "mode": "offline_tools",
     "steps": [
       {
@@ -103,6 +110,7 @@
     "id": "exec_mixed_calc_then_py",
     "name": "mixed: calc then python verify",
     "tags": ["execution", "multi_step", "mixed"],
+    "difficulty": "medium",
     "mode": "offline_tools",
     "steps": [
       {
@@ -118,9 +126,73 @@
     ]
   },
   {
+    "id": "exec_py_unique_sum",
+    "name": "execute_python: unique sum",
+    "tags": ["execution", "execute_python"],
+    "difficulty": "hard",
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "execute_python",
+        "arguments": {
+          "code": "print(sum(set([3, 1, 2, 1, 4])))"
+        },
+        "expect_contains": "10"
+      }
+    ]
+  },
+  {
+    "id": "exec_py_gcd",
+    "name": "execute_python: gcd(48,18)",
+    "tags": ["execution", "execute_python"],
+    "difficulty": "hard",
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "execute_python",
+        "arguments": {
+          "code": "import math\nprint(math.gcd(48, 18))"
+        },
+        "expect_contains": "6"
+      }
+    ]
+  },
+  {
+    "id": "exec_calc_nested",
+    "name": "calculator: (100-28)/8",
+    "tags": ["execution", "calculator"],
+    "difficulty": "medium",
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "calculator",
+        "arguments": {"expression": "(100 - 28) / 8"},
+        "expect_equals": "9.0"
+      }
+    ]
+  },
+  {
+    "id": "exec_py_median",
+    "name": "execute_python: median of list",
+    "tags": ["execution", "execute_python"],
+    "difficulty": "hard",
+    "mode": "offline_tools",
+    "steps": [
+      {
+        "tool": "execute_python",
+        "arguments": {
+          "code": "xs=sorted([9,1,4,7,2])\nn=len(xs)\nprint(xs[n//2])"
+        },
+        "expect_contains": "4"
+      }
+    ]
+  },
+
+  {
     "id": "agent_calc_17x19",
     "name": "Agent: compute 17*19 with calculator",
     "tags": ["execution", "agent", "calculator"],
+    "difficulty": "easy",
     "mode": "agent",
     "question": "请用 calculator 工具计算 17*19，给出数字答案。",
     "expected_tools": ["calculator"],
@@ -132,6 +204,7 @@
     "id": "agent_calc_100_minus_37",
     "name": "Agent: compute 100-37",
     "tags": ["execution", "agent", "calculator"],
+    "difficulty": "easy",
     "mode": "agent",
     "question": "请调用 calculator 计算 100 - 37，只关心数值结果。",
     "expected_tools": ["calculator"],
@@ -143,6 +216,7 @@
     "id": "agent_get_time",
     "name": "Agent: get current time via tool",
     "tags": ["execution", "agent", "get_time"],
+    "difficulty": "easy",
     "mode": "agent",
     "question": "请调用 get_time 工具查询当前时间，并在答案里写出日期（YYYY-MM-DD 格式即可）。",
     "expected_tools": ["get_time", "get_current_time"],
@@ -154,6 +228,7 @@
     "id": "agent_py_sum_1_to_5",
     "name": "Agent: execute_python sum 1..5",
     "tags": ["execution", "agent", "execute_python"],
+    "difficulty": "easy",
     "mode": "agent",
     "question": "请用 execute_python 工具写代码打印 1+2+3+4+5 的结果，并给出最终数字。",
     "expected_tools": ["execute_python"],
@@ -165,6 +240,7 @@
     "id": "agent_calc_8x7",
     "name": "Agent: 8*7 via calculator",
     "tags": ["execution", "agent", "calculator"],
+    "difficulty": "easy",
     "mode": "agent",
     "question": "用 calculator 算一下 8 乘以 7 等于多少？",
     "expected_tools": ["calculator"],
@@ -176,11 +252,234 @@
     "id": "agent_py_factorial_5",
     "name": "Agent: factorial 5 via python",
     "tags": ["execution", "agent", "execute_python"],
+    "difficulty": "easy",
     "mode": "agent",
     "question": "请用 execute_python 计算 5 的阶乘（5!），输出最终数字。",
     "expected_tools": ["execute_python"],
     "expected_answer": "120",
     "max_steps": 6,
     "timeout": 120
+  },
+  {
+    "id": "agent_calc_15x16",
+    "name": "Agent: 15*16",
+    "tags": ["execution", "agent", "calculator"],
+    "difficulty": "easy",
+    "mode": "agent",
+    "question": "请用 calculator 计算 15*16，只给出最终数字。",
+    "expected_tools": ["calculator"],
+    "expected_answer": "240",
+    "max_steps": 5,
+    "timeout": 90
+  },
+  {
+    "id": "agent_py_pow2_8",
+    "name": "Agent: 2**8 via python",
+    "tags": ["execution", "agent", "execute_python"],
+    "difficulty": "easy",
+    "mode": "agent",
+    "question": "请用 execute_python 计算 2 的 8 次方，输出数字。",
+    "expected_tools": ["execute_python"],
+    "expected_answer": "256",
+    "max_steps": 6,
+    "timeout": 120
+  },
+
+  {
+    "id": "agent_chain_12sq_plus7",
+    "name": "Agent: 12*12 then +7",
+    "tags": ["execution", "agent", "calculator", "multi_step"],
+    "difficulty": "medium",
+    "mode": "agent",
+    "question": "请用 calculator：先计算 12*12，再把结果加 7，最终是多少？",
+    "expected_tools": ["calculator"],
+    "expected_answer": "151",
+    "max_steps": 8,
+    "timeout": 120
+  },
+  {
+    "id": "agent_paren_calc",
+    "name": "Agent: (23+45)*2",
+    "tags": ["execution", "agent", "calculator"],
+    "difficulty": "medium",
+    "mode": "agent",
+    "question": "请使用计算器工具计算 (23+45)*2，给出最终数字。",
+    "expected_tools": ["calculator"],
+    "expected_answer": "136",
+    "max_steps": 6,
+    "timeout": 90
+  },
+  {
+    "id": "agent_time_then_calc",
+    "name": "Agent: time then 100/4",
+    "tags": ["execution", "agent", "multi_step", "mixed"],
+    "difficulty": "medium",
+    "mode": "agent",
+    "question": "请先调用 get_time 获取当前时间，再用 calculator 计算 100/4，最终答案里必须包含计算结果。",
+    "expected_tools": ["get_time", "get_current_time", "calculator"],
+    "require_all_tool_groups": [["get_time", "get_current_time"], ["calculator"]],
+    "expected_answer": "25",
+    "max_steps": 8,
+    "timeout": 120
+  },
+  {
+    "id": "agent_no_search_calc",
+    "name": "Agent: forbid search, use calculator",
+    "tags": ["execution", "agent", "tool_selection"],
+    "difficulty": "medium",
+    "mode": "agent",
+    "question": "不要用搜索。请只用 calculator 计算 45*67，给出数字。",
+    "expected_tools": ["calculator"],
+    "forbid_tools": ["web_search", "fetch_page"],
+    "expected_answer": "3015",
+    "max_steps": 6,
+    "timeout": 90
+  },
+  {
+    "id": "agent_py_sum_evens",
+    "name": "Agent: sum even 1..10",
+    "tags": ["execution", "agent", "execute_python"],
+    "difficulty": "medium",
+    "mode": "agent",
+    "question": "请用 execute_python 计算 1 到 10 中所有偶数之和，输出最终数字。",
+    "expected_tools": ["execute_python"],
+    "expected_answer": "30",
+    "max_steps": 6,
+    "timeout": 120
+  },
+  {
+    "id": "agent_ages_with_calc",
+    "name": "Agent: age puzzle with calculator",
+    "tags": ["execution", "agent", "calculator", "reasoning"],
+    "difficulty": "medium",
+    "mode": "agent",
+    "question": "小明比小红大 3 岁，两人年龄之和是 25 岁。请用 calculator 算出小明多少岁，只回答数字。",
+    "expected_tools": ["calculator"],
+    "expected_answer": "14",
+    "max_steps": 8,
+    "timeout": 120
+  },
+  {
+    "id": "agent_nested_div",
+    "name": "Agent: (100-28)/8",
+    "tags": ["execution", "agent", "calculator"],
+    "difficulty": "medium",
+    "mode": "agent",
+    "question": "请用 calculator 计算 (100-28)/8，给出结果（整数或小数均可，但数值要对）。",
+    "expected_tools": ["calculator"],
+    "must_contain_any": ["9", "9.0"],
+    "max_steps": 6,
+    "timeout": 90
+  },
+  {
+    "id": "agent_py_reverse_str",
+    "name": "Agent: reverse string via python",
+    "tags": ["execution", "agent", "execute_python"],
+    "difficulty": "medium",
+    "mode": "agent",
+    "question": "请用 execute_python 把字符串 agent 倒序输出，最终答案里给出倒序结果。",
+    "expected_tools": ["execute_python"],
+    "expected_answer": "tnega",
+    "max_steps": 6,
+    "timeout": 120
+  },
+
+  {
+    "id": "agent_large_mul",
+    "name": "Agent: 1234*5678 grounded",
+    "tags": ["execution", "agent", "calculator", "grounding"],
+    "difficulty": "hard",
+    "mode": "agent",
+    "question": "请用 calculator 计算 1234*5678，只根据工具结果回答最终数字，不要口算猜测。",
+    "expected_tools": ["calculator"],
+    "expected_answer": "7006652",
+    "max_steps": 6,
+    "timeout": 120
+  },
+  {
+    "id": "agent_py_fib15",
+    "name": "Agent: fib(15) via python",
+    "tags": ["execution", "agent", "execute_python"],
+    "difficulty": "hard",
+    "mode": "agent",
+    "question": "请用 execute_python 计算斐波那契数列第 15 项（F(0)=0,F(1)=1，因此 F(15)=610），输出数字 610。",
+    "expected_tools": ["execute_python"],
+    "expected_answer": "610",
+    "max_steps": 8,
+    "timeout": 150
+  },
+  {
+    "id": "agent_py_unique_sum",
+    "name": "Agent: unique sum via python",
+    "tags": ["execution", "agent", "execute_python"],
+    "difficulty": "hard",
+    "mode": "agent",
+    "question": "请用 execute_python：对列表 [3,1,2,1,4] 去重后求和，输出最终数字。",
+    "expected_tools": ["execute_python"],
+    "expected_answer": "10",
+    "max_steps": 8,
+    "timeout": 150
+  },
+  {
+    "id": "agent_dual_verify_143",
+    "name": "Agent: calc then python verify 11*13",
+    "tags": ["execution", "agent", "multi_step", "mixed"],
+    "difficulty": "hard",
+    "mode": "agent",
+    "question": "请先用 calculator 计算 11*13，再用 execute_python 打印同样的乘法结果做验证。最终答案给出数字。",
+    "expected_tools": ["calculator", "execute_python"],
+    "require_all_tools": ["calculator", "execute_python"],
+    "expected_answer": "143",
+    "max_steps": 10,
+    "timeout": 180
+  },
+  {
+    "id": "agent_fact7_plus3",
+    "name": "Agent: 7! then +3",
+    "tags": ["execution", "agent", "execute_python", "multi_step"],
+    "difficulty": "hard",
+    "mode": "agent",
+    "question": "请用 execute_python 先算 7 的阶乘，再把结果加 3，输出最终数字。",
+    "expected_tools": ["execute_python"],
+    "expected_answer": "5043",
+    "max_steps": 10,
+    "timeout": 180
+  },
+  {
+    "id": "agent_py_gcd",
+    "name": "Agent: gcd(48,18)",
+    "tags": ["execution", "agent", "execute_python"],
+    "difficulty": "hard",
+    "mode": "agent",
+    "question": "请用 execute_python 计算 gcd(48, 18)（可用 math.gcd），输出最终数字。",
+    "expected_tools": ["execute_python"],
+    "expected_answer": "6",
+    "max_steps": 8,
+    "timeout": 150
+  },
+  {
+    "id": "agent_tool_choice_no_rag",
+    "name": "Agent: tool choice calc not rag",
+    "tags": ["execution", "agent", "tool_selection"],
+    "difficulty": "hard",
+    "mode": "agent",
+    "question": "这是一个纯计算问题：99+1 等于多少？请用 calculator，不要用 rag_query 或 web_search。",
+    "expected_tools": ["calculator"],
+    "forbid_tools": ["rag_query", "web_search", "fetch_page"],
+    "expected_answer": "100",
+    "max_steps": 6,
+    "timeout": 90
+  },
+  {
+    "id": "agent_py_median",
+    "name": "Agent: median via python",
+    "tags": ["execution", "agent", "execute_python"],
+    "difficulty": "hard",
+    "mode": "agent",
+    "question": "请用 execute_python 计算列表 [9,1,4,7,2] 排序后的中位数（奇数个元素取中间），输出数字。",
+    "expected_tools": ["execute_python"],
+    "expected_answer": "4",
+    "max_steps": 8,
+    "timeout": 150
   }
 ]

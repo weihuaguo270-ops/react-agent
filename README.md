@@ -222,6 +222,7 @@ python examples/publish_eval_snapshot.py --run capability   # 需 API Key
 | [功能向整理](docs/eval_report_20260713.md) | 2026-07-13 | **23/26（88%）** | DeepSeek；3 例角色关键词检测过严 |
 | [Execution 离线工具集](docs/execution_snapshot_20260715.md) | 2026-07-15 | **8/8（100%）** | 不经 LLM；工具执行验收 |
 | [Execution Agent 端到端](docs/execution_agent_snapshot_20260715.md) | 2026-07-15 | **6/6（100%）** | DeepSeek live；`DISABLE_MCP=1` |
+| [Execution Agent 扩容 v2](docs/execution_agent_snapshot_20260715_v2.md) | 2026-07-15 | **24/24（100%）** | 易/中/难各 8；双工具/禁工具/算法 |
 | [Harness 可靠性对照](docs/reliability_snapshot_20260715.md) | 2026-07-15 | **4/4（100%）** | ToolGuard/自修注入故障 |
 | Capability 集规模 | 2026-07-13 | **24 条** | 原 18 + 新 6；索引见 [EVAL_INDEX](docs/EVAL_INDEX.md) |
 

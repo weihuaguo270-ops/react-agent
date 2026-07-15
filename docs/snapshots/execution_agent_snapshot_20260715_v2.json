@@ -1,0 +1,1174 @@
+{
+  "report_id": "execution_agent_snapshot_20260715_v2",
+  "timestamp": "2026-07-15T08:35:45.338235+00:00",
+  "dataset": "execution_dataset.json",
+  "modes": [
+    "agent"
+  ],
+  "summary": {
+    "total": 24,
+    "passed": 24,
+    "failed": 0,
+    "pass_rate": 100.0,
+    "skipped": 0
+  },
+  "by_mode": {
+    "agent": {
+      "total": 24,
+      "passed": 24,
+      "pass_rate": 100.0
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "total": 8,
+      "passed": 8,
+      "pass_rate": 100.0
+    },
+    "hard": {
+      "total": 8,
+      "passed": 8,
+      "pass_rate": 100.0
+    },
+    "medium": {
+      "total": 8,
+      "passed": 8,
+      "pass_rate": 100.0
+    }
+  },
+  "by_tag": {
+    "agent": {
+      "total": 24,
+      "passed": 24,
+      "pass_rate": 100.0
+    },
+    "calculator": {
+      "total": 9,
+      "passed": 9,
+      "pass_rate": 100.0
+    },
+    "execute_python": {
+      "total": 10,
+      "passed": 10,
+      "pass_rate": 100.0
+    },
+    "execution": {
+      "total": 24,
+      "passed": 24,
+      "pass_rate": 100.0
+    },
+    "get_time": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 100.0
+    },
+    "grounding": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 100.0
+    },
+    "mixed": {
+      "total": 2,
+      "passed": 2,
+      "pass_rate": 100.0
+    },
+    "multi_step": {
+      "total": 4,
+      "passed": 4,
+      "pass_rate": 100.0
+    },
+    "reasoning": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 100.0
+    },
+    "tool_selection": {
+      "total": 2,
+      "passed": 2,
+      "pass_rate": 100.0
+    }
+  },
+  "results": [
+    {
+      "id": "agent_calc_17x19",
+      "name": "Agent: compute 17*19 with calculator",
+      "tags": [
+        "execution",
+        "agent",
+        "calculator"
+      ],
+      "difficulty": "easy",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 22.79,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '323'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：日期：2026年7月13日（星期一））\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）请用 calculator 工具计算 17*19，给出数字答案。\n============================================================\n\n--- Step 1/5 ---\n[调工具] cal",
+      "final_answer_preview": "323",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_calc_100_minus_37",
+      "name": "Agent: compute 100-37",
+      "tags": [
+        "execution",
+        "agent",
+        "calculator"
+      ],
+      "difficulty": "easy",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 25.5,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '63'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 奖金：1100万瑞典克朗（约合人民币834万元），由三人平分）请调用 calculator 计算 100 - 37，只关心数值结果。\n============================================================\n\n--- Step ",
+      "final_answer_preview": "63",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_get_time",
+      "name": "Agent: get current time via tool",
+      "tags": [
+        "execution",
+        "agent",
+        "get_time"
+      ],
+      "difficulty": "easy",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 27.07,
+      "exit_code": 0,
+      "tools_called": [
+        "get_time"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['get_time'] expected_any=['get_time', 'get_current_time']"
+        },
+        {
+          "name": "must_contain_any",
+          "passed": true,
+          "reason": "need any of ['2026']"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：日期：2026年7月13日（星期一））\n（相关记忆：- 执行结果数值：15）\n（相关记忆：- 颁奖时间：2025年10月7日）请调用 get_time 工具查询当前时间，并在答案里写出日期（YYYY-MM-DD 格式即可）。\n============================================================\n\n--- Step 1/5 ---\n[调工具]",
+      "final_answer_preview": "当前时间是 **2026-07-15**。",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_py_sum_1_to_5",
+      "name": "Agent: execute_python sum 1..5",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python"
+      ],
+      "difficulty": "easy",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 31.87,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '15'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 执行结果数值：15）\n（相关记忆：日期：2026年7月13日（星期一））请用 execute_python 工具写代码打印 1+2+3+4+5 的结果，并给出最终数字。\n============================================================\n\n--- Step 1/6 --",
+      "final_answer_preview": "15",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_calc_8x7",
+      "name": "Agent: 8*7 via calculator",
+      "tags": [
+        "execution",
+        "agent",
+        "calculator"
+      ],
+      "difficulty": "easy",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 24.1,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '56'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：日期：2026年7月13日（星期一））\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）用 calculator 算一下 8 乘以 7 等于多少？\n============================================================\n\n--- Step 1/5 ---\n[调工具] calcul",
+      "final_answer_preview": "56",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_py_factorial_5",
+      "name": "Agent: factorial 5 via python",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python"
+      ],
+      "difficulty": "easy",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 22.47,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '120'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 执行结果数值：15）\n（相关记忆：日期：2026年7月13日（星期一））请用 execute_python 计算 5 的阶乘（5!），输出最终数字。\n============================================================\n\n--- Step 1/6 ---\n[调工具] ex",
+      "final_answer_preview": "120",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_calc_15x16",
+      "name": "Agent: 15*16",
+      "tags": [
+        "execution",
+        "agent",
+        "calculator"
+      ],
+      "difficulty": "easy",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 23.56,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '240'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：日期：2026年7月13日（星期一））请用 calculator 计算 15*16，只给出最终数字。\n============================================================\n\n--- Step 1/5 ---\n[调工具] calc",
+      "final_answer_preview": "240",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_py_pow2_8",
+      "name": "Agent: 2**8 via python",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python"
+      ],
+      "difficulty": "easy",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 34.41,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '256'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 执行结果数值：15）\n（相关记忆：日期：2026年7月13日（星期一））请用 execute_python 计算 2 的 8 次方，输出数字。\n============================================================\n\n--- Step 1/6 ---\n[调工具] execu",
+      "final_answer_preview": "256",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_chain_12sq_plus7",
+      "name": "Agent: 12*12 then +7",
+      "tags": [
+        "execution",
+        "agent",
+        "calculator",
+        "multi_step"
+      ],
+      "difficulty": "medium",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 25.27,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '151'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：日期：2026年7月13日（星期一））请用 calculator：先计算 12*12，再把结果加 7，最终是多少？\n============================================================\n\n--- Step 1/8 ---\n[调工",
+      "final_answer_preview": "151",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_paren_calc",
+      "name": "Agent: (23+45)*2",
+      "tags": [
+        "execution",
+        "agent",
+        "calculator"
+      ],
+      "difficulty": "medium",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 25.36,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '136'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 执行结果数值：15）\n（相关记忆：日期：2026年7月13日（星期一））请使用计算器工具计算 (23+45)*2，给出最终数字。\n============================================================\n\n--- Step 1/6 ---\n[调工具] calcula",
+      "final_answer_preview": "136",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_time_then_calc",
+      "name": "Agent: time then 100/4",
+      "tags": [
+        "execution",
+        "agent",
+        "multi_step",
+        "mixed"
+      ],
+      "difficulty": "medium",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 26.5,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator",
+        "get_time"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "require_all_tool_groups",
+          "passed": true,
+          "reason": "[{'group': ['get_time', 'get_current_time'], 'hit': True}, {'group': ['calculator'], 'hit': True}]"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '25'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 颁奖时间：2025年10月7日）请先调用 get_time 获取当前时间，再用 calculator 计算 100/4，最终答案里必须包含计算结果。\n============================================================\n\n-",
+      "final_answer_preview": "当前时间为 2026年7月15日 16:29:50，100/4 的计算结果为 **25.0**。",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_no_search_calc",
+      "name": "Agent: forbid search, use calculator",
+      "tags": [
+        "execution",
+        "agent",
+        "tool_selection"
+      ],
+      "difficulty": "medium",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 24.66,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "forbid_tools",
+          "passed": true,
+          "reason": "no forbidden tools"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '3015'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：日期：2026年7月13日（星期一））不要用搜索。请只用 calculator 计算 45*67，给出数字。\n============================================================\n\n--- Step 1/6 ---\n[调工具] ",
+      "final_answer_preview": "3015",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_py_sum_evens",
+      "name": "Agent: sum even 1..10",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python"
+      ],
+      "difficulty": "medium",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 35.66,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '30'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 颁奖时间：2025年10月7日）请用 execute_python 计算 1 到 10 中所有偶数之和，输出最终数字。\n============================================================\n\n--- Step 1/6 ---\n[调工具",
+      "final_answer_preview": "30",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_ages_with_calc",
+      "name": "Agent: age puzzle with calculator",
+      "tags": [
+        "execution",
+        "agent",
+        "calculator",
+        "reasoning"
+      ],
+      "difficulty": "medium",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 25.75,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '14'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：日期：2026年7月13日（星期一））小明比小红大 3 岁，两人年龄之和是 25 岁。请用 calculator 算出小明多少岁，只回答数字。\n============================================================\n\n--- St",
+      "final_answer_preview": "14",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_nested_div",
+      "name": "Agent: (100-28)/8",
+      "tags": [
+        "execution",
+        "agent",
+        "calculator"
+      ],
+      "difficulty": "medium",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 22.91,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "must_contain_any",
+          "passed": true,
+          "reason": "need any of ['9', '9.0']"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 奖金：1100万瑞典克朗（约合人民币834万元），由三人平分）请用 calculator 计算 (100-28)/8，给出结果（整数或小数均可，但数值要对）。\n==========================================================",
+      "final_answer_preview": "** 9",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_py_reverse_str",
+      "name": "Agent: reverse string via python",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python"
+      ],
+      "difficulty": "medium",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 25.22,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need 'tnega'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 执行结果数值：15）\n（相关记忆：- 获奖理由：发现了电路中的宏观量子力学隧穿效应和能量量子化）请用 execute_python 把字符串 agent 倒序输出，最终答案里给出倒序结果。\n============================================================\n\n--- S",
+      "final_answer_preview": "\"agent\" 倒序的结果是 **tnega**。",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_large_mul",
+      "name": "Agent: 1234*5678 grounded",
+      "tags": [
+        "execution",
+        "agent",
+        "calculator",
+        "grounding"
+      ],
+      "difficulty": "hard",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 37.35,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '7006652'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：日期：2026年7月13日（星期一））请用 calculator 计算 1234*5678，只根据工具结果回答最终数字，不要口算猜测。\n============================================================\n\n--- Step 1",
+      "final_answer_preview": "7006652",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_py_fib15",
+      "name": "Agent: fib(15) via python",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python"
+      ],
+      "difficulty": "hard",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 29.01,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '610'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：日期：2026年7月13日（星期一））请用 execute_python 计算斐波那契数列第 15 项（F(0)=0,F(1)=1，因此 F(15)=610），输出数字 610。\n=======================================================",
+      "final_answer_preview": "610\n\n斐波那契数列定义：F(0)=0, F(1)=1, F(n)=F(n-1)+F(n-2)，计算结果 F(15)=610。",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_py_unique_sum",
+      "name": "Agent: unique sum via python",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python"
+      ],
+      "difficulty": "hard",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 23.04,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '10'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 执行结果数值：15）\n（相关记忆：日期：2026年7月13日（星期一））请用 execute_python：对列表 [3,1,2,1,4] 去重后求和，输出最终数字。\n============================================================\n\n--- Step 1/8 ---",
+      "final_answer_preview": "10",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_dual_verify_143",
+      "name": "Agent: calc then python verify 11*13",
+      "tags": [
+        "execution",
+        "agent",
+        "multi_step",
+        "mixed"
+      ],
+      "difficulty": "hard",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 22.3,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator",
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "require_all_tools",
+          "passed": true,
+          "reason": "called=['calculator', 'execute_python'] need_all=['calculator', 'execute_python'] missing=[]"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '143'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 执行结果数值：15）\n（相关记忆：（无具体事实信息可提取））请先用 calculator 计算 11*13，再用 execute_python 打印同样的乘法结果做验证。最终答案给出数字。\n============================================================\n\n--- S",
+      "final_answer_preview": "143**",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_fact7_plus3",
+      "name": "Agent: 7! then +3",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python",
+        "multi_step"
+      ],
+      "difficulty": "hard",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 23.41,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '5043'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 执行结果数值：15）\n（相关记忆：日期：2026年7月13日（星期一））请用 execute_python 先算 7 的阶乘，再把结果加 3，输出最终数字。\n============================================================\n\n--- Step 1/10 ---\n[调工",
+      "final_answer_preview": "5043",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_py_gcd",
+      "name": "Agent: gcd(48,18)",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python"
+      ],
+      "difficulty": "hard",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 34.72,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '6'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：日期：2026年7月13日（星期一））请用 execute_python 计算 gcd(48, 18)（可用 math.gcd），输出最终数字。\n============================================================\n\n--- Step 1",
+      "final_answer_preview": "6",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_tool_choice_no_rag",
+      "name": "Agent: tool choice calc not rag",
+      "tags": [
+        "execution",
+        "agent",
+        "tool_selection"
+      ],
+      "difficulty": "hard",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 23.68,
+      "exit_code": 0,
+      "tools_called": [
+        "calculator"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['calculator'] expected_any=['calculator']"
+        },
+        {
+          "name": "forbid_tools",
+          "passed": true,
+          "reason": "no forbidden tools"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '100'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] research_assistant\n\n============================================================\n用户: （相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 执行结果数值：15）\n（相关记忆：（无具体事实信息可提取））这是一个纯计算问题：99+1 等于多少？请用 calculator，不要用 rag_query 或 web_search。\n============================================================\n\n---",
+      "final_answer_preview": "100",
+      "reason": "agent outcome ok"
+    },
+    {
+      "id": "agent_py_median",
+      "name": "Agent: median via python",
+      "tags": [
+        "execution",
+        "agent",
+        "execute_python"
+      ],
+      "difficulty": "hard",
+      "mode": "agent",
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 21.64,
+      "exit_code": 0,
+      "tools_called": [
+        "execute_python"
+      ],
+      "self_repair_seen": false,
+      "checks": [
+        {
+          "name": "timeout",
+          "passed": true,
+          "reason": "exit=0"
+        },
+        {
+          "name": "tools",
+          "passed": true,
+          "reason": "called=['execute_python'] expected_any=['execute_python']"
+        },
+        {
+          "name": "expected_answer",
+          "passed": true,
+          "reason": "need '4'"
+        },
+        {
+          "name": "has_answer",
+          "passed": true,
+          "reason": "final_answer present"
+        }
+      ],
+      "stdout_preview": "[RAG] 已加载 381 个文档片段（语义，模型懒加载）\n[记忆] 已加载 11 条记忆（语义）\n  [记忆] 加载语义模型...\n[启动] 已设置 REACT_AGENT_SKIP_RAG，跳过 RAG 加载\n[角色] code_reviewer\n\n============================================================\n用户: （相关记忆：- 执行结果数值：15）\n（相关记忆：- 助手执行的代码功能：计算 1+2+3+4+5 并打印结果）\n（相关记忆：- 奖金：1100万瑞典克朗（约合人民币834万元），由三人平分）请用 execute_python 计算列表 [9,1,4,7,2] 排序后的中位数（奇数个元素取中间），输出数字。\n=====================================================",
+      "final_answer_preview": "4",
+      "reason": "agent outcome ok"
+    }
+  ],
+  "meta": {
+    "git": "8ede276",
+    "provider": "deepseek",
+    "mcp": "REACT_AGENT_DISABLE_MCP=1",
+    "reproduce_cmd": "set REACT_AGENT_DISABLE_MCP=1 && python examples/run_execution_suite.py --modes agent --publish --stem execution_agent_snapshot_20260715_v2",
+    "scale": "24 agent tasks; easy/medium/hard stratified"
+  }
+}

@@ -11,6 +11,7 @@
 | [capability_newcases_20260713.md](./capability_newcases_20260713.md) | capability 扩容 6 条 | **5/6（83%）** | [snapshots/…](./snapshots/capability_newcases_20260713.json) |
 | [execution_snapshot_20260715.md](./execution_snapshot_20260715.md) | execution 离线工具集 8 条 | **8/8（100%）** | [snapshots/…](./snapshots/execution_snapshot_20260715.json) |
 | [execution_agent_snapshot_20260715.md](./execution_agent_snapshot_20260715.md) | execution **agent** 端到端 6 条 | **6/6（100%）** | DeepSeek；`DISABLE_MCP=1`；[归档](./snapshots/execution_agent_snapshot_20260715.json) |
+| [execution_agent_snapshot_20260715_v2.md](./execution_agent_snapshot_20260715_v2.md) | agent 扩容 **24** 条（易/中/难各 8） | **24/24（100%）** | 含双工具/禁工具/算法；[归档](./snapshots/execution_agent_snapshot_20260715_v2.json) |
 | [reliability_snapshot_20260715.md](./reliability_snapshot_20260715.md) | ToolGuard/自修注入对照 4 场景 | **4/4（100%）** | [snapshots/…](./snapshots/reliability_snapshot_20260715.json) |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
@@ -27,9 +28,10 @@ python examples/run_execution_suite.py
 # 端到端 Agent（需 API Key；评测默认关 MCP 以提高确定性）
 set REACT_AGENT_DISABLE_MCP=1
 python examples/run_execution_suite.py --modes agent --publish
+# 可按难度过滤：--difficulty easy,medium,hard
 ```
 
-说明：`offline_tools` ≠ `agent`；前者测工具，后者测 LLM 规划+执行。
+说明：`offline_tools`（现 12 条）≠ `agent`（现 24 条，easy/medium/hard 各 8）；勿混谈为同一指标。
 
 ## Harness 可靠性对照
 
