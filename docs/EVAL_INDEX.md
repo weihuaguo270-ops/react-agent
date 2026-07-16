@@ -17,7 +17,8 @@
 | [reliability_live_live_20260716.md](./reliability_live_live_20260716.md) | live Guard ON/OFF × 8 场景 | flaky 皆 6/6；**error_obs 0 vs 3** | [归档](./snapshots/reliability_live_live_20260716.json) |
 | [reliability_live_live_20260716_v2.md](./reliability_live_live_20260716_v2.md) | live 扩容 **20 flaky + 4 baseline** | flaky 20/20 vs 20/20；**error_obs 0 vs 3.1**；calls **1.0 vs 2.25** | [归档](./snapshots/reliability_live_live_20260716_v2.json) |
 | [P0_EVIDENCE_MAP.md](./P0_EVIDENCE_MAP.md) | 四层证据串联 | — | Execution × Reliability × Failure × Judge |
-| [FAILURE_FLYWHEEL.md](./FAILURE_FLYWHEEL.md) | 失败→动作→复测飞轮 | 已追加首条 | 配合 tdebug 扫描 |
+| [FAILURE_FLYWHEEL.md](./FAILURE_FLYWHEEL.md) | 失败→动作→复测飞轮 | 真闭环已勾选 | 配合 tdebug 扫描 |
+| [flywheel_closed_loop_20260716.md](./flywheel_closed_loop_20260716.md) | 同批 100 条改前/改后 | **llm_offtrack 6→1** | [snapshots/…](./snapshots/flywheel_closed_loop_20260716.json) |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 
@@ -46,6 +47,7 @@ python examples/run_reliability_live.py --mock
 set REACT_AGENT_DISABLE_MCP=1
 python examples/run_reliability_live.py --live --publish
 python examples/run_failure_flywheel.py --fixture --publish
+python examples/run_flywheel_closed_loop.py --publish
 ```
 
 证据总图见 [P0_EVIDENCE_MAP.md](./P0_EVIDENCE_MAP.md)。

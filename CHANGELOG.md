@@ -8,6 +8,7 @@
 - Harness 可靠性注入对照：`examples/run_reliability_harness.py`（4/4 公开快照）
 - **Live 可靠性 ON/OFF**：扩至 **20 flaky + 4 baseline**（error_obs 0 vs 3.1；tool_calls 1.0 vs 2.25）
 - 失败飞轮：`examples/run_failure_flywheel.py` + `docs/FAILURE_FLYWHEEL.md`；证据总图 `docs/P0_EVIDENCE_MAP.md`
+- **飞轮真闭环**：相邻同参工具拦截（`REACT_AGENT_BLOCK_DUPLICATE_TOOLS`）+ `run_flywheel_closed_loop.py`；同批 100 条 `llm_offtrack` **6→1**
 - Harness 长跑：默认接通 `ToolGuard`（超时/重试/熔断）与工具失败自修提示；评测透传 `max_steps`
 
 ## 0.1.0 (2026-07-13)

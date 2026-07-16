@@ -1,0 +1,67 @@
+{
+  "report_id": "flywheel_closed_loop_20260716_014112",
+  "timestamp": "2026-07-16T01:41:12.345901+00:00",
+  "fixes": [
+    "react-agent: block adjacent identical tool calls (REACT_AGENT_BLOCK_DUPLICATE_TOOLS=1)",
+    "react-agent: prompt rules 6–7 (no duplicate / stay on short factual Q)",
+    "trace-debugger: skip llm_offtrack when answer grounded in tool observations / short-fact+digits"
+  ],
+  "unit_checks": {
+    "duplicate_normalize": {
+      "same_args_equal": true,
+      "diff_args_unequal": true,
+      "passed": true
+    },
+    "offtrack_time_case": {
+      "failure_types": [],
+      "passed": true
+    }
+  },
+  "before": {
+    "source": "D:/agent_learning/trace-debugger/docs/snapshots/tdebug_failure_real_20260715.json",
+    "n": 100,
+    "distribution": {
+      "tool_error": 2,
+      "duplicate": 1,
+      "llm_offtrack": 6,
+      "no_answer": 1
+    }
+  },
+  "after": {
+    "source": "D:/agent_learning/react-agent/src/react_agent/trajectories",
+    "n": 100,
+    "distribution": {
+      "tool_error": 2,
+      "duplicate": 1,
+      "llm_offtrack": 1,
+      "no_answer": 1
+    },
+    "note": "reanalyze same files from before snapshot (100 found)"
+  },
+  "delta": {
+    "duplicate": {
+      "before": 1,
+      "after": 1,
+      "delta": 0
+    },
+    "llm_offtrack": {
+      "before": 6,
+      "after": 1,
+      "delta": -5
+    },
+    "no_answer": {
+      "before": 1,
+      "after": 1,
+      "delta": 0
+    },
+    "tool_error": {
+      "before": 2,
+      "after": 2,
+      "delta": 0
+    }
+  },
+  "meta": {
+    "react_agent_git": "d888012",
+    "trace_debugger_git": "2f1a3dc"
+  }
+}

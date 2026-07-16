@@ -6,7 +6,7 @@
 |----|------|------|---------------------------|
 | **能不能干成** | 工具 / Agent 任务成功率 | [execution offline](./execution_snapshot_20260715.md) · [agent v3](./execution_agent_snapshot_20260716_v3.md) | offline **12/12**；agent **36/36**（易8/中12/难16） |
 | **坏了能不能撑住** | Guard/自修是否有效 | [注入对照](./reliability_snapshot_20260715.md) · [live v2](./reliability_live_live_20260716_v2.md) | 注入 **4/4**；live flaky **n=20**：ON/OFF 皆 100%，**error_obs 0 vs 3.1**，**tool_calls 1.0 vs 2.25** |
-| **坏在哪** | 轨迹失败分布 | [tdebug 真实 100 条](https://github.com/weihuaguo270-ops/trace-debugger/blob/master/docs/tdebug_failure_real_20260715.md) · [飞轮](./FAILURE_FLYWHEEL.md) | tool_error/llm_offtrack/… |
+| **坏在哪** | 轨迹失败分布 | [tdebug 真实 100 条](https://github.com/weihuaguo270-ops/trace-debugger/blob/master/docs/tdebug_failure_real_20260715.md) · [飞轮闭环](./flywheel_closed_loop_20260716.md) | 同批重扫：`llm_offtrack` **6→1**；duplicate Harness 已拦 |
 | **评得清不清** | Judge 与人标一致吗 | [llm-eval-engine κ](https://github.com/weihuaguo270-ops/llm-eval-engine/blob/master/docs/calibration_snapshot_20260713.md) | κ≈**0.47**（建议继续校准） |
 
 ## 怎么读（简历叙事）
@@ -28,13 +28,14 @@ python examples/run_reliability_harness.py --publish
 python examples/run_reliability_live.py --mock
 python examples/run_reliability_live.py --live --publish
 
-# Failure flywheel
+# Failure flywheel（观察→修复→同批对照）
 python examples/run_failure_flywheel.py --fixture --publish
-python examples/run_failure_flywheel.py --dir src/react_agent/trajectories --n 50 --publish
+python examples/run_flywheel_closed_loop.py --publish
 ```
 
 ## 诚实边界
 
 - 样本量仍属学习级；live 绑定模型与日期  
 - flaky live 使用注入超时，证明机制有效，不等于生产故障率  
-- κ<0.6 已在校准快照中标明「建议继续校准」
+- κ<0.6 已在校准快照中标明「建议继续校准」  
+- 飞轮 `llm_offtrack` 下降含假阳性修复；`duplicate` 历史 traj 不变，需新跑才体现 Harness 拦截

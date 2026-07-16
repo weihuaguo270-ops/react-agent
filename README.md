@@ -228,6 +228,7 @@ python examples/publish_eval_snapshot.py --run capability   # 需 API Key
 | [Live 可靠性 ON/OFF](docs/reliability_live_live_20260716.md) | 2026-07-16 | flaky 6/6 vs 6/6 | **error_obs 0 vs 3**；tool_calls 1.0 vs 2.33 |
 | [Live 可靠性扩容 v2](docs/reliability_live_live_20260716_v2.md) | 2026-07-16 | flaky **20/20 vs 20/20** | **error_obs 0 vs 3.1**；calls **1.0 vs 2.25** |
 | [P0 证据地图](docs/P0_EVIDENCE_MAP.md) | 2026-07-16 | — | Execution × Reliability × Failure × Judge |
+| [飞轮闭环对照](docs/flywheel_closed_loop_20260716.md) | 2026-07-16 | **llm_offtrack 6→1** | 同批 100 条；duplicate Harness 已拦 |
 | Capability 集规模 | 2026-07-13 | **24 条** | 原 18 + 新 6；索引见 [EVAL_INDEX](docs/EVAL_INDEX.md) |
 
 Execution / 可靠性复跑：
@@ -240,6 +241,7 @@ python examples/run_reliability_harness.py --publish
 python examples/run_reliability_live.py --mock          # CI
 python examples/run_reliability_live.py --live --publish
 python examples/run_failure_flywheel.py --fixture --publish
+python examples/run_flywheel_closed_loop.py --publish
 ```
 
 Harness 长跑默认策略（可关）：`REACT_AGENT_TOOL_GUARD=1`、`REACT_AGENT_SELF_REPAIR=1`、`REACT_AGENT_MAX_STEPS` / `--max-steps`；评测默认 `REACT_AGENT_DISABLE_MCP=1`；live flaky 注入：`REACT_AGENT_INJECT_FLAKY=calculator:2`。

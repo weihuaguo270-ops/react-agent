@@ -230,6 +230,25 @@ def execute_tool_call(tool_call):
     return _GUARDED_EXECUTE(tool_call)
 
 
+def _normalize_tool_args(args) -> str:
+    """规范化工具参数，便于检测相邻完全重复调用。"""
+    if args is None:
+        return ""
+    if isinstance(args, dict):
+        try:
+            return json.dumps(args, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        except (TypeError, ValueError):
+            return str(args)
+    text = str(args).strip()
+    try:
+        parsed = json.loads(text)
+        if isinstance(parsed, dict):
+            return json.dumps(parsed, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return text
+
+
 def _resolve_max_steps(max_steps) -> int:
     if max_steps is not None:
         return int(max_steps)
@@ -250,7 +269,9 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
 2. 最终答案用 FINAL ANSWER: 开头
 3. 根据用户问题选择最合适的工具——包括本地工具和 MCP 远程工具
 4. 搜索2次没结果就直接回答，不要继续搜
-5. 若工具返回含 [Harness自修] 或 error，请修正参数后重试，或换工具；勿盲目重复同一失败调用"""
+5. 若工具返回含 [Harness自修] 或 error，请修正参数后重试，或换工具；勿盲目重复同一失败调用
+6. 禁止连续两次调用「完全相同」的工具名+参数；应换 URL/查询词，或直接基于已有 OBSERVATION 作答
+7. 短问答（时间/计算/只要数字）请紧扣用户问题作答，勿跑题到无关话题"""
     # 角色注入 → CoT 注入（角色先定风格，CoT 再定推理方式）
     role_enhanced = ROLE_MANAGER.inject(base_prompt, query=user_query)
     system_prompt = COT.inject(role_enhanced, query=user_query)
@@ -280,6 +301,7 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
     last_content = ""
     tools_were_used = False
     search_count = 0
+    last_tool_key = None  # (name, normalized_args) 防相邻完全重复调用
     for step in range(1, max_steps + 1):
         print(f"--- Step {step}/{max_steps} ---")
         traj = current_trajectory()
@@ -339,8 +361,32 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
                     })
                     continue
 
+            # 相邻完全相同工具调用拦截（对抗 duplicate 失败模式）
+            norm_args = _normalize_tool_args(args)
+            tool_key = (name, norm_args)
+            if (
+                os.environ.get("REACT_AGENT_BLOCK_DUPLICATE_TOOLS", "1").strip().lower()
+                not in ("0", "false", "off", "no")
+                and last_tool_key is not None
+                and tool_key == last_tool_key
+            ):
+                block_msg = (
+                    f"[Harness] 已阻止重复调用 {name}（参数与上一次完全相同）。"
+                    "请更换参数，或基于已有 OBSERVATION 直接给出 FINAL ANSWER。"
+                )
+                print(f"  {block_msg}")
+                if traj:
+                    traj.add_tool_call(step, name, args, block_msg)
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc["id"],
+                    "content": block_msg,
+                })
+                continue
+
             result = execute_tool_call(tc)
             print(f"[工具返回] {result[:100]}")
+            last_tool_key = tool_key
 
             content_for_llm = result
             if _self_repair_enabled() and looks_like_tool_error(result):

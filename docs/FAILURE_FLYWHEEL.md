@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-07-16 — 真闭环 `flywheel_closed_loop_20260716`
+
+- 对照页: [flywheel_closed_loop_20260716.md](./flywheel_closed_loop_20260716.md)
+- delta: `{"duplicate": 0, "llm_offtrack": -5, "no_answer": 0, "tool_error": 0}`
+
+### 闭环状态
+
+- [x] 已落地代码/提示改动（duplicate 拦截 + offtrack grounded 跳过）
+- [x] 已重跑同批轨迹扫描对照
+- [ ] 下周对新产生轨迹再扫，确认 duplicate 增量下降
+
+---
 ## 2026-07-16 — `tdebug_failure_flywheel_20260716`
 
 - **source:** `D:/agent_learning/trace-debugger/examples/failure_bundle`
