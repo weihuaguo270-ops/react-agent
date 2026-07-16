@@ -101,11 +101,11 @@ jobs:
         Remove-Item Env:PYTHONIOENCODING -ErrorAction SilentlyContinue
         $env:REACT_AGENT_SKIP_RAG = "1"
         python -m pytest tests/test_console_io.py tests/test_final_answer_guard.py tests/test_eval_engine_contract.py tests/test_harness_schema.py -q
-    - name: Harness closed-loop fixture
+    - name: Schema validate fixture (siblings optional on Windows)
       shell: powershell
       run: |
         Remove-Item Env:PYTHONIOENCODING -ErrorAction SilentlyContinue
-        python examples/harness_closed_loop.py --fixture
+        python -c "from pathlib import Path; import json; from react_agent.harness.schema import validate_trajectory; errs=validate_trajectory(json.loads(Path('examples/fixtures/harness_closed_loop.json').read_text(encoding='utf-8'))); print(errs or 'schema OK'); raise SystemExit(1 if errs else 0)"
 
   typecheck:
     runs-on: ubuntu-latest
@@ -148,9 +148,9 @@ jobs:
     - name: pip-audit in clean venv
       run: |
         python -m venv .audit-venv
-        .audit-venv/bin/pip install -U pip
-        .audit-venv/bin/pip install -e ".[test]" pip-audit
-        .audit-venv/bin/pip-audit
+        .audit-venv/bin/python -m pip install -U pip "setuptools>=83"
+        .audit-venv/bin/python -m pip install -e ".[test]" pip-audit
+        .audit-venv/bin/pip-audit --progress-spinner off
 
   integration:
     runs-on: ubuntu-latest
