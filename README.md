@@ -131,7 +131,7 @@ python -m react_agent.eval --dataset capability
 python examples/run_execution_suite.py --publish
 ```
 
-与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 校准口径：**held_out live κ≈0.59**（n=11，CI[0.26,1.0]）— 见 [METRICS_TRUST](https://github.com/weihuaguo270-ops/llm-eval-engine/blob/master/docs/METRICS_TRUST.md)，勿引用旧 n=15/κ≈0.47。  
+与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 校准口径：**held_out live κ≈0.69**（n=20，CI[0.46,0.92]）— 见 [METRICS_TRUST](https://github.com/weihuaguo270-ops/llm-eval-engine/blob/master/docs/METRICS_TRUST.md)，勿引用旧 n=15/κ≈0.47 或扩容前 n=11/κ≈0.59。  
 失败归因：[trace-debugger FAILURE_INDEX](https://github.com/weihuaguo270-ops/trace-debugger/blob/master/docs/FAILURE_INDEX.md)。
 
 ### Harness 轨迹 Schema + 闭环 Demo
