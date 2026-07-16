@@ -1,0 +1,79 @@
+{
+  "report_id": "tdebug_failure_20260716_005430",
+  "timestamp": "2026-07-16T00:54:30.737751+00:00",
+  "source_dir": "D:/agent_learning/trace-debugger/examples/failure_bundle",
+  "n_trajectories": 5,
+  "distribution": {
+    "context_overflow": 1,
+    "duplicate": 1,
+    "search_empty": 1,
+    "llm_offtrack": 1,
+    "no_answer": 1,
+    "tool_error": 1
+  },
+  "distribution_labels": {
+    "context_overflow": "上下文窗口溢出",
+    "duplicate": "重复相同尝试",
+    "search_empty": "搜索无有效结果",
+    "llm_offtrack": "LLM 偏离用户意图",
+    "no_answer": "未给出最终答案",
+    "tool_error": "工具调用报错"
+  },
+  "trajectories": [
+    {
+      "file": "overflow.json",
+      "session_id": "fail_overflow",
+      "query": "summarize this long page",
+      "assessment": "❌ 执行问题较多（2/2 步），建议检查",
+      "failure_types": [
+        "context_overflow"
+      ],
+      "num_steps": 2
+    },
+    {
+      "file": "duplicate.json",
+      "session_id": "fail_duplicate",
+      "query": "搜索 Python 文档",
+      "assessment": "❌ 执行问题较多（2/3 步），建议检查",
+      "failure_types": [
+        "duplicate",
+        "search_empty"
+      ],
+      "num_steps": 3
+    },
+    {
+      "file": "offtrack.json",
+      "session_id": "fail_offtrack",
+      "query": "写一份关于人工智能行业趋势的详细分析报告",
+      "assessment": "❌ 执行问题较多（1/1 步），建议检查",
+      "failure_types": [
+        "llm_offtrack"
+      ],
+      "num_steps": 1
+    },
+    {
+      "file": "no_answer.json",
+      "session_id": "fail_no_answer",
+      "query": "北京今天天气如何？",
+      "assessment": "❌ 执行问题较多（1/1 步），建议检查",
+      "failure_types": [
+        "no_answer"
+      ],
+      "num_steps": 1
+    },
+    {
+      "file": "tool_error.json",
+      "session_id": "fail_tool_error",
+      "query": "计算 2+2",
+      "assessment": "❌ 执行问题较多（1/2 步），建议检查",
+      "failure_types": [
+        "tool_error"
+      ],
+      "num_steps": 2
+    }
+  ],
+  "meta": {
+    "git": "154d1c5",
+    "note": "启发式失败分类；非 LLM Judge"
+  }
+}

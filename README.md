@@ -223,7 +223,11 @@ python examples/publish_eval_snapshot.py --run capability   # 需 API Key
 | [Execution 离线工具集](docs/execution_snapshot_20260715.md) | 2026-07-15 | **8/8（100%）** | 不经 LLM；工具执行验收 |
 | [Execution Agent 端到端](docs/execution_agent_snapshot_20260715.md) | 2026-07-15 | **6/6（100%）** | DeepSeek live；`DISABLE_MCP=1` |
 | [Execution Agent 扩容 v2](docs/execution_agent_snapshot_20260715_v2.md) | 2026-07-15 | **24/24（100%）** | 易/中/难各 8；双工具/禁工具/算法 |
+| [Execution Agent 扩容 v3](docs/execution_agent_snapshot_20260716_v3.md) | 2026-07-16 | **36/36（100%）** | 易8/中12/难16 |
 | [Harness 可靠性对照](docs/reliability_snapshot_20260715.md) | 2026-07-15 | **4/4（100%）** | ToolGuard/自修注入故障 |
+| [Live 可靠性 ON/OFF](docs/reliability_live_live_20260716.md) | 2026-07-16 | flaky 6/6 vs 6/6 | **error_obs 0 vs 3**；tool_calls 1.0 vs 2.33 |
+| [Live 可靠性扩容 v2](docs/reliability_live_live_20260716_v2.md) | 2026-07-16 | flaky **20/20 vs 20/20** | **error_obs 0 vs 3.1**；calls **1.0 vs 2.25** |
+| [P0 证据地图](docs/P0_EVIDENCE_MAP.md) | 2026-07-16 | — | Execution × Reliability × Failure × Judge |
 | Capability 集规模 | 2026-07-13 | **24 条** | 原 18 + 新 6；索引见 [EVAL_INDEX](docs/EVAL_INDEX.md) |
 
 Execution / 可靠性复跑：
@@ -233,9 +237,12 @@ python examples/run_execution_suite.py --publish
 set REACT_AGENT_DISABLE_MCP=1
 python examples/run_execution_suite.py --modes agent --publish
 python examples/run_reliability_harness.py --publish
+python examples/run_reliability_live.py --mock          # CI
+python examples/run_reliability_live.py --live --publish
+python examples/run_failure_flywheel.py --fixture --publish
 ```
 
-Harness 长跑默认策略（可关）：`REACT_AGENT_TOOL_GUARD=1`、`REACT_AGENT_SELF_REPAIR=1`、`REACT_AGENT_MAX_STEPS` / `--max-steps`；评测默认 `REACT_AGENT_DISABLE_MCP=1`。
+Harness 长跑默认策略（可关）：`REACT_AGENT_TOOL_GUARD=1`、`REACT_AGENT_SELF_REPAIR=1`、`REACT_AGENT_MAX_STEPS` / `--max-steps`；评测默认 `REACT_AGENT_DISABLE_MCP=1`；live flaky 注入：`REACT_AGENT_INJECT_FLAKY=calculator:2`。
 
 与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 的 Process Reward / 人机校准打通见 `examples/agent_to_eval.py`；校准快照在 eval-engine 的 `docs/calibration_snapshot_*.md`。  
 失败归因周报见 [trace-debugger docs](https://github.com/weihuaguo270-ops/trace-debugger/blob/master/docs/FAILURE_INDEX.md)（含真实 100 条轨迹分布）。

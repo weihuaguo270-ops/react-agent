@@ -1,0 +1,937 @@
+{
+  "report_id": "reliability_live_live_20260716_v2",
+  "timestamp": "2026-07-16T01:20:53.065266+00:00",
+  "mode": "live",
+  "kind": "harness_reliability_live_guard_ab",
+  "aggregate": {
+    "flaky_on": {
+      "total": 20,
+      "passed": 20,
+      "pass_rate": 100.0,
+      "mean_error_obs": 0.0,
+      "mean_tool_calls": 1.0,
+      "self_repair_rate": 0.0
+    },
+    "flaky_off": {
+      "total": 20,
+      "passed": 20,
+      "pass_rate": 100.0,
+      "mean_error_obs": 3.1,
+      "mean_tool_calls": 2.25,
+      "self_repair_rate": 0.0
+    },
+    "baseline_on": {
+      "total": 4,
+      "passed": 4,
+      "pass_rate": 100.0,
+      "mean_error_obs": 0.0,
+      "mean_tool_calls": 1.5,
+      "self_repair_rate": 0.0
+    },
+    "baseline_off": {
+      "total": 4,
+      "passed": 4,
+      "pass_rate": 100.0,
+      "mean_error_obs": 0.0,
+      "mean_tool_calls": 1.25,
+      "self_repair_rate": 0.0
+    },
+    "on_better_count": 0,
+    "flaky_n": 20
+  },
+  "scenarios": [
+    {
+      "id": "live_flaky_calc_17x19",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 17*19，给出数字答案。",
+      "expected_answer": "323",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 20.82,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "323"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 20.68,
+        "self_repair_seen": false,
+        "tool_calls": 3,
+        "error_obs": 4,
+        "steps": 4,
+        "final_preview": "323"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 3
+      }
+    },
+    {
+      "id": "live_flaky_calc_8x7",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 8*7，给出数字。",
+      "expected_answer": "56",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 17.69,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "56"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 18.46,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 4,
+        "steps": 3,
+        "final_preview": "56**"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_calc_15x16",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 15*16，只给最终数字。",
+      "expected_answer": "240",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 16.79,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "240"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 22.72,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 4,
+        "steps": 3,
+        "final_preview": "240"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_calc_12x12",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 12*12，给出数字。",
+      "expected_answer": "144",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 18.16,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "144"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 22.2,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 4,
+        "steps": 3,
+        "final_preview": "144"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_calc_9x9",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 9*9，给出数字。",
+      "expected_answer": "81",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 17.77,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "81"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 42.21,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 4,
+        "steps": 3,
+        "final_preview": "81"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_calc_25x4",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 25*4，给出数字。",
+      "expected_answer": "100",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 17.91,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "100"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 20.2,
+        "self_repair_seen": false,
+        "tool_calls": 3,
+        "error_obs": 4,
+        "steps": 4,
+        "final_preview": "100"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 3
+      }
+    },
+    {
+      "id": "live_flaky_calc_33x3",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 33*3，给出数字。",
+      "expected_answer": "99",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 16.96,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "99"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 23.31,
+        "self_repair_seen": false,
+        "tool_calls": 3,
+        "error_obs": 4,
+        "steps": 4,
+        "final_preview": "99"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 3
+      }
+    },
+    {
+      "id": "live_flaky_calc_48_div_6",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 48/6，给出数字。",
+      "expected_answer": "8",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 17.73,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "8.0"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 18.87,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 2,
+        "steps": 3,
+        "final_preview": "8.0"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_calc_7x8",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 7*8，给出数字。",
+      "expected_answer": "56",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 16.95,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "56"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 19.0,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 4,
+        "steps": 3,
+        "final_preview": "56"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_calc_21x5",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 21*5，给出数字。",
+      "expected_answer": "105",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 24.54,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "105"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 20.74,
+        "self_repair_seen": false,
+        "tool_calls": 3,
+        "error_obs": 4,
+        "steps": 4,
+        "final_preview": "105"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 3
+      }
+    },
+    {
+      "id": "live_flaky_calc_13x14",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 13*14，给出数字。",
+      "expected_answer": "182",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 17.3,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "182"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 19.82,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 4,
+        "steps": 3,
+        "final_preview": "182"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_calc_16x16",
+      "kind": "flaky",
+      "inject": "calculator:2",
+      "question": "请用 calculator 计算 16*16，给出数字。",
+      "expected_answer": "256",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 16.47,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "256"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 17.08,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 4,
+        "steps": 3,
+        "final_preview": "256"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_py_fact5",
+      "kind": "flaky",
+      "inject": "execute_python:1",
+      "question": "请用 execute_python 计算 5 的阶乘，输出数字。",
+      "expected_answer": "120",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 23.23,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "120"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 18.07,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 2,
+        "steps": 3,
+        "final_preview": "120"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_py_sum",
+      "kind": "flaky",
+      "inject": "execute_python:1",
+      "question": "请用 execute_python 打印 1+2+3+4+5 的结果。",
+      "expected_answer": "15",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 19.71,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "已执行成功。`1+2+3+4+5` 的结果为 **15**，已在标准输出中打印。"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 20.21,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 2,
+        "steps": 3,
+        "final_preview": "执行成功，1+2+3+4+5 = **15**。"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_py_pow",
+      "kind": "flaky",
+      "inject": "execute_python:1",
+      "question": "请用 execute_python 计算 2 的 8 次方，输出数字。",
+      "expected_answer": "256",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 16.5,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "256"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 24.51,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 2,
+        "steps": 3,
+        "final_preview": "256"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_py_fact4",
+      "kind": "flaky",
+      "inject": "execute_python:1",
+      "question": "请用 execute_python 计算 4 的阶乘，输出数字。",
+      "expected_answer": "24",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 19.75,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "24"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 19.06,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 2,
+        "steps": 3,
+        "final_preview": "24"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_py_sum10",
+      "kind": "flaky",
+      "inject": "execute_python:1",
+      "question": "请用 execute_python 打印 sum(range(1,11)) 的结果。",
+      "expected_answer": "55",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 19.37,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "```python\nprint(sum(range(1, 11)))  # 输出：55\n```\n\n`range(1, 11)` 生成 1 到 10 的整数序列，`sum()` 计算其和为 **55**。"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 23.49,
+        "self_repair_seen": false,
+        "tool_calls": 3,
+        "error_obs": 2,
+        "steps": 4,
+        "final_preview": "```python\nprint(sum(range(1,11)))  # 输出: 55\n```\n\n**执行结果：`55`**\n\n说明：`range(1, 11)` 生成 1 到 10 的整数序列，`sum()` 将其求和，即 1+2+3+."
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 3
+      }
+    },
+    {
+      "id": "live_flaky_py_pow3",
+      "kind": "flaky",
+      "inject": "execute_python:1",
+      "question": "请用 execute_python 计算 3 的 5 次方，输出数字。",
+      "expected_answer": "243",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 17.17,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "243"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 26.68,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 2,
+        "steps": 3,
+        "final_preview": "243"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_py_len",
+      "kind": "flaky",
+      "inject": "execute_python:1",
+      "question": "请用 execute_python 打印 len('harness')。",
+      "expected_answer": "7",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 21.53,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "`len('harness')` 的结果为 **7**。"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 19.2,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 2,
+        "steps": 3,
+        "final_preview": "7"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_flaky_py_abs",
+      "kind": "flaky",
+      "inject": "execute_python:1",
+      "question": "请用 execute_python 打印 abs(-42)。",
+      "expected_answer": "42",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 18.86,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "已执行 Python 代码 `print(abs(-42))`，输出结果为 **42**。"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 21.81,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 2,
+        "steps": 3,
+        "final_preview": "代码 `print(abs(-42))` 执行成功，输出结果为 **42**。"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": true,
+        "on_tool_calls": 1,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_baseline_calc",
+      "kind": "baseline",
+      "inject": "",
+      "question": "请用 calculator 计算 100-37，给出数字。",
+      "expected_answer": "63",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 18.64,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "63"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 17.28,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "63"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": false,
+        "on_tool_calls": 1,
+        "off_tool_calls": 1
+      }
+    },
+    {
+      "id": "live_baseline_time_calc",
+      "kind": "baseline",
+      "inject": "",
+      "question": "请先调用 get_time，再用 calculator 计算 100/4，答案须含计算结果。",
+      "expected_answer": "25",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 21.17,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "** 当前时间为 **2026-07-16 09:19:14**，100/4 的计算结果为 **25.0**。"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 21.32,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "- **当前时间**：2026-07-16 09:19:35\n- **计算结果**：100 ÷ 4 = **25.0**"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": false,
+        "on_tool_calls": 2,
+        "off_tool_calls": 2
+      }
+    },
+    {
+      "id": "live_baseline_py_sum",
+      "kind": "baseline",
+      "inject": "",
+      "question": "请用 execute_python 打印 2+2，给出数字。",
+      "expected_answer": "4",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 19.03,
+        "self_repair_seen": false,
+        "tool_calls": 2,
+        "error_obs": 0,
+        "steps": 3,
+        "final_preview": "4"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 17.1,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "4"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": false,
+        "on_tool_calls": 2,
+        "off_tool_calls": 1
+      }
+    },
+    {
+      "id": "live_baseline_calc_99",
+      "kind": "baseline",
+      "inject": "",
+      "question": "请用 calculator 计算 50+49，给出数字。",
+      "expected_answer": "99",
+      "on": {
+        "guard_on": true,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 20.39,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "99"
+      },
+      "off": {
+        "guard_on": false,
+        "passed": true,
+        "exit_code": 0,
+        "duration_seconds": 16.53,
+        "self_repair_seen": false,
+        "tool_calls": 1,
+        "error_obs": 0,
+        "steps": 2,
+        "final_preview": "99"
+      },
+      "delta": {
+        "on_passed": true,
+        "off_passed": true,
+        "on_better_pass": false,
+        "on_fewer_errors": false,
+        "on_tool_calls": 1,
+        "off_tool_calls": 1
+      }
+    }
+  ],
+  "meta": {
+    "git": "98817ff",
+    "provider": "deepseek",
+    "scale": "24 scenarios x 2 settings"
+  }
+}

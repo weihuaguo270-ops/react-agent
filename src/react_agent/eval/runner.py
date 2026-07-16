@@ -21,7 +21,8 @@ TRAJECTORY_DIR = os.path.join(BASE_DIR, "trajectories")
 
 def run_single_case(question: str, timeout: int = 60,
                     provider: Optional[str] = None,
-                    max_steps: Optional[int] = None) -> tuple:
+                    max_steps: Optional[int] = None,
+                    extra_env: Optional[dict] = None) -> tuple:
     """执行单条测试用例
 
     返回:
@@ -44,7 +45,8 @@ def run_single_case(question: str, timeout: int = 60,
     env.setdefault("REACT_AGENT_DISABLE_MCP", "1")
     if max_steps is not None:
         env["REACT_AGENT_MAX_STEPS"] = str(int(max_steps))
-
+    if extra_env:
+        env.update({str(k): str(v) for k, v in extra_env.items()})
     before_files = _list_traj_files()
 
     start_time = time.time()

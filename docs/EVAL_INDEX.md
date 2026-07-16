@@ -12,7 +12,12 @@
 | [execution_snapshot_20260715.md](./execution_snapshot_20260715.md) | execution 离线工具集 8 条 | **8/8（100%）** | [snapshots/…](./snapshots/execution_snapshot_20260715.json) |
 | [execution_agent_snapshot_20260715.md](./execution_agent_snapshot_20260715.md) | execution **agent** 端到端 6 条 | **6/6（100%）** | DeepSeek；`DISABLE_MCP=1`；[归档](./snapshots/execution_agent_snapshot_20260715.json) |
 | [execution_agent_snapshot_20260715_v2.md](./execution_agent_snapshot_20260715_v2.md) | agent 扩容 **24** 条（易/中/难各 8） | **24/24（100%）** | 含双工具/禁工具/算法；[归档](./snapshots/execution_agent_snapshot_20260715_v2.json) |
+| [execution_agent_snapshot_20260716_v3.md](./execution_agent_snapshot_20260716_v3.md) | agent 再扩至 **36** 条（易8/中12/难16） | **36/36（100%）** | [归档](./snapshots/execution_agent_snapshot_20260716_v3.json) |
 | [reliability_snapshot_20260715.md](./reliability_snapshot_20260715.md) | ToolGuard/自修注入对照 4 场景 | **4/4（100%）** | [snapshots/…](./snapshots/reliability_snapshot_20260715.json) |
+| [reliability_live_live_20260716.md](./reliability_live_live_20260716.md) | live Guard ON/OFF × 8 场景 | flaky 皆 6/6；**error_obs 0 vs 3** | [归档](./snapshots/reliability_live_live_20260716.json) |
+| [reliability_live_live_20260716_v2.md](./reliability_live_live_20260716_v2.md) | live 扩容 **20 flaky + 4 baseline** | flaky 20/20 vs 20/20；**error_obs 0 vs 3.1**；calls **1.0 vs 2.25** | [归档](./snapshots/reliability_live_live_20260716_v2.json) |
+| [P0_EVIDENCE_MAP.md](./P0_EVIDENCE_MAP.md) | 四层证据串联 | — | Execution × Reliability × Failure × Judge |
+| [FAILURE_FLYWHEEL.md](./FAILURE_FLYWHEEL.md) | 失败→动作→复测飞轮 | 已追加首条 | 配合 tdebug 扫描 |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 
@@ -31,13 +36,19 @@ python examples/run_execution_suite.py --modes agent --publish
 # 可按难度过滤：--difficulty easy,medium,hard
 ```
 
-说明：`offline_tools`（现 12 条）≠ `agent`（现 24 条，easy/medium/hard 各 8）；勿混谈为同一指标。
+说明：`offline_tools`（现 12 条）≠ `agent`（现 **36** 条，easy8/medium12/hard16）；勿混谈为同一指标。
 
 ## Harness 可靠性对照
 
 ```bash
 python examples/run_reliability_harness.py --publish
+python examples/run_reliability_live.py --mock
+set REACT_AGENT_DISABLE_MCP=1
+python examples/run_reliability_live.py --live --publish
+python examples/run_failure_flywheel.py --fixture --publish
 ```
+
+证据总图见 [P0_EVIDENCE_MAP.md](./P0_EVIDENCE_MAP.md)。
 
 ## 失败归因周报
 

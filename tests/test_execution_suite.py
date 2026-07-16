@@ -17,7 +17,7 @@ def test_dataset_has_both_modes_and_difficulties():
     assert "offline_tools" in modes
     assert "agent" in modes
     agent = [t for t in tasks if t.get("mode") == "agent"]
-    assert len(agent) >= 20
+    assert len(agent) >= 36
     diffs = {t.get("difficulty") for t in agent}
     assert {"easy", "medium", "hard"} <= diffs
 

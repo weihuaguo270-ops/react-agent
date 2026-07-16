@@ -57,6 +57,18 @@ jobs:
       run: |
         export REACT_AGENT_SKIP_RAG=1
         python examples/run_reliability_harness.py
+    - name: Reliability live (mock)
+      run: |
+        export REACT_AGENT_SKIP_RAG=1
+        python examples/run_reliability_live.py --mock
+    - name: Failure flywheel (fixture)
+      run: |
+        # optional sibling; skip if trace-debugger not cloned beside
+        if [ -d ../trace-debugger ]; then
+          python examples/run_failure_flywheel.py --fixture --publish
+        else
+          echo "skip flywheel: no sibling trace-debugger"
+        fi
 
   integration:
     runs-on: ubuntu-latest

@@ -4,8 +4,10 @@
 
 ### Added
 - Execution-based 离线任务集：`execution_dataset.json` + `execution_scorer` + `examples/run_execution_suite.py`（8/8 公开快照）
-- **Agent 端到端 execution**：`--modes agent`；扩容至 **24** 条易/中/难分层（公开快照 24/24）；评测默认 `REACT_AGENT_DISABLE_MCP=1`
+- **Agent 端到端 execution**：`--modes agent`；扩至 **36** 条（易8/中12/难16，公开 36/36）；评测默认 `REACT_AGENT_DISABLE_MCP=1`
 - Harness 可靠性注入对照：`examples/run_reliability_harness.py`（4/4 公开快照）
+- **Live 可靠性 ON/OFF**：扩至 **20 flaky + 4 baseline**（error_obs 0 vs 3.1；tool_calls 1.0 vs 2.25）
+- 失败飞轮：`examples/run_failure_flywheel.py` + `docs/FAILURE_FLYWHEEL.md`；证据总图 `docs/P0_EVIDENCE_MAP.md`
 - Harness 长跑：默认接通 `ToolGuard`（超时/重试/熔断）与工具失败自修提示；评测透传 `max_steps`
 
 ## 0.1.0 (2026-07-13)

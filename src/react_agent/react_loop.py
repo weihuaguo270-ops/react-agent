@@ -32,6 +32,10 @@ from react_agent.harness import start_trajectory, current_trajectory, finish_tra
 from react_agent.harness import SANDBOX
 from react_agent.llm import LLM_DEFAULT, LLM, get_default_llm
 from react_agent.tools import TOOL_REGISTRY, TOOL_DEFINITIONS
+from react_agent.harness.flaky_inject import install_flaky_tools
+
+# 可选：REACT_AGENT_INJECT_FLAKY=calculator:2 用于 live 可靠性对照
+install_flaky_tools(TOOL_REGISTRY)
 
 # 供外部读取的上一次轨迹步骤数据（Orchestrator 共享数据用）
 last_trajectory_steps = []
@@ -194,10 +198,8 @@ def _execute_tool_call_raw(tool_call):
             if sandbox_result != "__SANDBOX_DISABLED__":
                 return sandbox_result
         # 直接执行（沙箱关闭或 safe 工具）
-        try:
-            return str(TOOL_REGISTRY[func_name](**arguments))
-        except Exception as e:
-            return json.dumps({"error": f"执行错误: {e}"})
+        # 故意不吞异常：让 ToolGuard 能对 timeout 等做重试
+        return str(TOOL_REGISTRY[func_name](**arguments))
     # 不在本地注册表 → 尝试遍历所有 MCP Client
     for _mcp_client in MCP_CLIENTS:
         if func_name in [t["name"] for t in _mcp_client.tools]:
@@ -213,10 +215,14 @@ def execute_tool_call(tool_call):
     """执行工具调用；默认经 ToolGuard（超时/重试/熔断）。
 
     关闭: REACT_AGENT_TOOL_GUARD=0
+    Guard OFF 时本地捕获异常并转为 error JSON，避免拖垮整轮 loop。
     """
     global _TOOL_GUARD, _GUARDED_EXECUTE
     if not _tool_guard_enabled():
-        return _execute_tool_call_raw(tool_call)
+        try:
+            return _execute_tool_call_raw(tool_call)
+        except Exception as e:
+            return json.dumps({"error": f"执行错误: {e}"})
     if _GUARDED_EXECUTE is None:
         from react_agent.resilience import ToolGuard
         _TOOL_GUARD = ToolGuard()
