@@ -9,8 +9,64 @@
 返回格式：{score, max_score, details: {维度: {passed, detail}}}
 """
 
+import logging
 import re
-from typing import Optional, Callable
+from typing import Any, Optional, Callable
+
+logger = logging.getLogger(__name__)
+
+# 跨仓 Python API 契约版本（CI test_eval_engine_contract 会校验）
+EVAL_ENGINE_API_CONTRACT = "ProcessRewardScorer.extra_contracts@0.1"
+
+
+class EvalIntegrationError(RuntimeError):
+    """react-agent ↔ llm-eval-engine 集成失败（非「未安装」场景）。"""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        cause: Optional[BaseException] = None,
+        details: Optional[dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(message)
+        self.cause = cause
+        self.details = details or {}
+
+
+def _normalize_judge_output(result: dict) -> dict:
+    """把 JudgeExecutor 等返回的 ``score`` 字段映射到 fast_mode 期望的三维分。"""
+    if result.get("overall_score") is not None:
+        return result
+    if result.get("score") is not None:
+        s = float(result["score"])
+        return {
+            **result,
+            "overall_score": s,
+            "efficiency_score": s,
+            "tool_usage_score": s,
+            "needs_revision": result.get("needs_revision", s < 3),
+        }
+    return result
+
+
+def _wrap_judge(judge_fn: Callable) -> Callable:
+    def _inner(prompt: str) -> dict:
+        return _normalize_judge_output(judge_fn(prompt))
+
+    return _inner
+
+
+def _default_mock_judge(_prompt: str) -> dict:
+    """与 ProcessRewardScorer._score_fast 期望的 JSON 字段对齐。"""
+    return {
+        "overall_score": 4.0,
+        "efficiency_score": 4.0,
+        "tool_usage_score": 4.0,
+        "reasoning": "评分完成（mock）",
+        "needs_revision": False,
+        "details": [],
+    }
 
 
 def score_result(case, stdout: str, trajectory: Optional[dict]) -> dict:
@@ -179,48 +235,74 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
     """使用 llm-eval-engine 的 Process Reward 评分
 
     需安装 llm-eval-engine: pip install -e /path/to/llm-eval-engine
-    未安装时自动回退到关键词评分（score_result）
+    未安装时返回 None（调用方应回退 score_result）。
+
+    成功返回含 ``status: success`` 的报告；集成/API 失败抛出 EvalIntegrationError，
+    不再把异常包装成 ``eval_engine=True`` 的 0 分字典。
 
     参数:
-        case: TestCase 对象
+        case: TestCase 对象或带 expected_tool 的 dict
         trajectory: Harness 格式的轨迹字典
 
     返回:
-        eval-engine 评分报告，或 None（回退到关键词评分时）
+        评分报告 dict，或 None（未安装 eval-engine）
     """
     try:
         from eval_engine.core.trajectory_parser import parse_trajectory
         from eval_engine.core.process_reward import ProcessRewardScorer
         from eval_engine.core.contract import VerifierContract
     except ImportError:
-        return None  # 未安装 llm-eval-engine，回退
+        return None
+
+    effective_judge = _wrap_judge(judge_fn or _default_mock_judge)
 
     try:
         dag = parse_trajectory(trajectory)
 
-        # 从测试用例中提取预期工具作为评分标准
         contracts = []
         expected_tool = getattr(case, "expected_tool", None)
+        if expected_tool is None and isinstance(case, dict):
+            expected_tool = case.get("expected_tool")
         if expected_tool:
-            contracts.append(VerifierContract(
-                name="tool_selection",
-                rubric=f"Agent 应该调用 {expected_tool} 工具",
-                min_score=3, weight=1.0,
-            ))
+            contracts.append(
+                VerifierContract(
+                    name="tool_selection",
+                    rubric=f"Agent 应该调用 {expected_tool} 工具",
+                    min_score=3,
+                    weight=1.0,
+                )
+            )
 
-        # 使用传入的 judge_fn，或回退到 mock
-        if judge_fn is None:
-            def judge_fn(prompt: str) -> dict:
-                return {"score": 4.0, "reasoning": "评分完成（mock）", "details": []}
-
-        scorer = ProcessRewardScorer(judge_fn=judge_fn, verifiers=contracts or None)
+        scorer = ProcessRewardScorer(
+            judge_fn=effective_judge,
+            extra_contracts=contracts or None,
+        )
         report = scorer.score_trajectory(dag, fast_mode=True)
 
+        if report.num_steps <= 0:
+            raise EvalIntegrationError(
+                "eval-engine 返回空轨迹步数",
+                details={"api_contract": EVAL_ENGINE_API_CONTRACT},
+            )
+
+        total = int(round(report.overall_score * 2))
+        if total <= 0:
+            raise EvalIntegrationError(
+                "eval-engine 评分为 0（可能是 Judge 输出字段与 fast_mode 不兼容）",
+                details={
+                    "api_contract": EVAL_ENGINE_API_CONTRACT,
+                    "overall_score": report.overall_score,
+                    "num_steps": report.num_steps,
+                },
+            )
+
         return {
-            "total": int(report.overall_score * 2),
+            "status": "success",
+            "total": total,
             "max_score": 10,
             "passed": not report.needs_revision,
             "eval_engine": True,
+            "api_contract": EVAL_ENGINE_API_CONTRACT,
             "overall_score": report.overall_score,
             "num_steps": report.num_steps,
             "failed_steps": report.num_failed_steps,
@@ -232,11 +314,16 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
                 for s in report.per_step
             },
         }
+    except EvalIntegrationError:
+        raise
     except Exception as e:
-        return {
-            "total": 0,
-            "max_score": 10,
-            "passed": False,
-            "eval_engine": True,
-            "error": str(e),
-        }
+        logger.exception(
+            "score_with_eval_engine failed (%s): %s",
+            EVAL_ENGINE_API_CONTRACT,
+            e,
+        )
+        raise EvalIntegrationError(
+            f"eval-engine 集成调用失败: {e}",
+            cause=e,
+            details={"api_contract": EVAL_ENGINE_API_CONTRACT, "exc_type": type(e).__name__},
+        ) from e

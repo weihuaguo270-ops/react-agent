@@ -94,7 +94,9 @@ jobs:
     - name: Run Harness closed-loop demo (schema → tdebug → eval)
       run: python examples/harness_closed_loop.py --fixture
     - name: Verify eval-engine scoring path
-      run: python tests/ci_verify_integration.py
+      run: |
+        python tests/ci_verify_integration.py
+        pytest tests/test_eval_engine_contract.py -q
 
   # Probe secret without exposing it in job-level `if` (secrets context is invalid there).
   real-llm-gate:

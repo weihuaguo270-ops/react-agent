@@ -18,3 +18,5 @@ Shared **Format B** JSON across:
 File: [`harness_trajectory.schema.json`](harness_trajectory.schema.json)
 
 Demo: `python examples/harness_closed_loop.py`
+
+契约测试（防 API 漂移）：`pytest tests/test_eval_engine_contract.py`（`ProcessRewardScorer.extra_contracts`）

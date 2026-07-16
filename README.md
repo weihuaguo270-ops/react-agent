@@ -260,7 +260,15 @@ Harness 长跑默认策略（可关）：`REACT_AGENT_TOOL_GUARD=1`、`REACT_AGE
 | 离线 fixture | `examples/fixtures/harness_closed_loop.json` |
 | 一键 demo | `python examples/harness_closed_loop.py` |
 
-闭环：`Agent 记录 → Trace Debugger 失败分类 → Eval Engine Process Reward`（CI `integration` job 会 clone 两仓并跑 demo）。
+闭环：`Agent 记录 → Trace Debugger 失败分类 → Eval Engine Process Reward`（CI `integration` job 会 clone 两仓并跑 demo + **契约测试**）。
+
+**可信度绑定（勿口头宣称「已打通」而无测试）：**
+
+| 验证 | 命令 / CI |
+|------|-----------|
+| 跨仓评分 API | `pytest tests/test_eval_engine_contract.py` |
+| Agent→Eval 路径 | `python tests/ci_verify_integration.py`（integration job） |
+| Schema→tdebug→eval | `python examples/harness_closed_loop.py --fixture` |
 
 ```bash
 pip install -e ../trace-debugger -e ../llm-eval-engine   # 本地旁路仓
