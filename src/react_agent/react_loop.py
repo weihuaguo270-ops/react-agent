@@ -19,6 +19,7 @@ import os
 import json
 import re
 import time
+from typing import Optional
 from urllib import request as req
 from urllib.error import URLError
 from urllib.parse import urlparse, quote
@@ -258,6 +259,46 @@ def _resolve_max_steps(max_steps) -> int:
     return 10
 
 
+def _extract_final_answer(text: str) -> Optional[str]:
+    """从 LLM 文本中提取 FINAL ANSWER；无标记则返回 None。"""
+    if not text:
+        return None
+    fa_match = re.search(r"FINAL ANSWER:\s*(.*)", text, re.IGNORECASE | re.DOTALL)
+    if not fa_match:
+        return None
+    return fa_match.group(1).strip() or None
+
+
+def _force_finalize(messages: list, *, reason: str) -> str:
+    """无工具强制总结：用于步数用尽或最后一步仍只有 tool_calls 的场景。"""
+    print(f"\n(强制总结: {reason})")
+    messages.append({
+        "role": "user",
+        "content": (
+            "你已不能再调用工具（步数上限或收尾步）。"
+            "请仅基于已有 OBSERVATION / 对话内容给出最终答案。"
+            "必须用 FINAL ANSWER: 开头作答，不要调用任何工具。"
+        ),
+    })
+    msg = call_llm(messages, tool_defs=[])
+    content = (msg.get("content") or "").strip()
+    if content:
+        print(f"[强制总结LLM] {content[:200]}")
+    messages.append(msg)
+    fa = _extract_final_answer(content)
+    answer = fa if fa else content
+    traj = current_trajectory()
+    if traj:
+        # 记为额外一步，便于轨迹复盘
+        step_id = (traj.steps[-1]["step"] + 1) if traj.steps else 1
+        try:
+            traj.start_step(step_id)
+            traj.add_thought(step_id, content or f"(force finalize: {reason})")
+        except Exception:
+            pass
+    return answer
+
+
 # ============================================================
 # 第五步：ReAct Loop 主循环（核心！）
 # ============================================================
@@ -271,7 +312,8 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
 4. 搜索2次没结果就直接回答，不要继续搜
 5. 若工具返回含 [Harness自修] 或 error，请修正参数后重试，或换工具；勿盲目重复同一失败调用
 6. 禁止连续两次调用「完全相同」的工具名+参数；应换 URL/查询词，或直接基于已有 OBSERVATION 作答
-7. 短问答（时间/计算/只要数字）请紧扣用户问题作答，勿跑题到无关话题"""
+7. 短问答（时间/计算/只要数字）请紧扣用户问题作答，勿跑题到无关话题
+8. 最后一步不再调用工具，必须基于已有观测给出 FINAL ANSWER"""
     # 角色注入 → CoT 注入（角色先定风格，CoT 再定推理方式）
     role_enhanced = ROLE_MANAGER.inject(base_prompt, query=user_query)
     system_prompt = COT.inject(role_enhanced, query=user_query)
@@ -308,8 +350,28 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
         if traj:
             traj.start_step(step)
 
+        # 预留最后一步给 FINAL ANSWER：max_steps>1 时末步禁止工具
+        reserve_final = (
+            max_steps > 1
+            and step == max_steps
+            and os.environ.get("REACT_AGENT_RESERVE_FINAL_STEP", "1")
+            .strip()
+            .lower()
+            not in ("0", "false", "off", "no")
+        )
+        step_tool_defs = [] if reserve_final else tool_defs
+        if reserve_final:
+            print("  [Harness] 收尾步：禁止工具，强制 FINAL ANSWER")
+            messages.append({
+                "role": "user",
+                "content": (
+                    "这是最后一步，禁止再调用工具。"
+                    "请基于已有 OBSERVATION 直接给出 FINAL ANSWER。"
+                ),
+            })
+
         # (1) 调 LLM（支持传入自定义工具列表）
-        msg = call_llm(messages, tool_defs=tool_defs)
+        msg = call_llm(messages, tool_defs=step_tool_defs)
         last_content = msg.get("content", "") or ""
         if last_content.strip():
             print(f"[LLM思考] {last_content[:200]}")
@@ -320,21 +382,37 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
         messages.append(msg)
 
         # (3) 检查 LLM 是否要调工具
-        tool_calls = msg.get("tool_calls", [])
+        tool_calls = msg.get("tool_calls", []) or []
+        if reserve_final and tool_calls:
+            # 个别模型忽略空 tools，仍发 tool_calls → 拒绝并强制总结
+            print("  [Harness] 收尾步仍请求工具，已拒绝并强制总结")
+            answer = _force_finalize(messages, reason="reserve_final_step_blocked_tools")
+            if answer.strip():
+                print(f"\n>>> 最终答案: {answer.strip()}")
+            _finish_with_save(answer.strip())
+            return answer
 
         if not tool_calls:
             # 检查是否有最终答案标记（大小写不敏感）
-            fa_match = re.search(r'FINAL ANSWER:\s*(.*)', last_content, re.IGNORECASE | re.DOTALL)
-            if fa_match:
-                final = fa_match.group(1).strip()
-                print(f"\n>>> 最终答案: {final}")
-                _finish_with_save(final)
-                return final
+            fa = _extract_final_answer(last_content)
+            if fa is not None:
+                print(f"\n>>> 最终答案: {fa}")
+                _finish_with_save(fa)
+                return fa
             # 上一步用了工具，这一步没调但给出了实质内容 → 作为答案
             if tools_were_used and len(last_content.strip()) > 10:
                 print(f"\n>>> 最终答案: {last_content.strip()}")
                 _finish_with_save(last_content.strip())
                 return last_content
+            # 收尾步无工具也无标记：若有实质内容直接收；否则强制总结
+            if reserve_final:
+                if len(last_content.strip()) > 10:
+                    print(f"\n>>> 最终答案: {last_content.strip()}")
+                    _finish_with_save(last_content.strip())
+                    return last_content
+                answer = _force_finalize(messages, reason="reserve_final_empty")
+                _finish_with_save(answer.strip())
+                return answer
             # 连续 4 步寒暄（没调工具也不是明确答案）→ 结束
             if not tools_were_used and len(last_content.strip()) > 5 and step >= 4:
                 print(f"\n(连续 {step} 步寒暄未调用工具，自动结束)")
@@ -409,6 +487,17 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
             if CONTEXT.last_action:
                 print(f"  [上下文] {CONTEXT.last_action}")
 
+        # max_steps==1 且本步调了工具：循环将结束，立即强制总结
+        if step == max_steps:
+            answer = _force_finalize(
+                messages,
+                reason=f"max_steps={max_steps}_after_tools",
+            )
+            if answer.strip():
+                print(f"\n>>> 最终答案: {answer.strip()}")
+            _finish_with_save(answer.strip())
+            return answer
+
     print(f"\n(达到最大步骤 {max_steps}，停止)")
     # 最后一步若只有 tool_calls、content 为空，回退到此前有文本的 assistant 思考
     if not (last_content or "").strip():
@@ -418,6 +507,21 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
                 if text:
                     last_content = text
                     break
+
+    fa = _extract_final_answer(last_content)
+    if fa:
+        print(f">>> 最终答案: {fa}")
+        _finish_with_save(fa)
+        return fa
+
+    # 工具成功但无最终答案 → 强制无工具总结（核心修复）
+    if tools_were_used or not (last_content or "").strip():
+        answer = _force_finalize(messages, reason="max_steps_no_final_answer")
+        if answer.strip():
+            print(f">>> 最终答案: {answer.strip()}")
+        _finish_with_save(answer.strip())
+        return answer
+
     if last_content.strip():
         print(f">>> 最终答案: {last_content.strip()}")
     _finish_with_save(last_content.strip() if last_content.strip() else "")

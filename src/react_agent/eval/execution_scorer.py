@@ -270,6 +270,17 @@ def score_agent_task(
     })
     ok = ok and has_answer
 
+    # 分项：工具是否成功调用（有 expected 时看命中；否则有任意 tool call 即算）
+    tool_success = False
+    if expected_tools or require_all or groups:
+        tool_success = all(
+            c["passed"]
+            for c in checks
+            if c["name"] in ("tools", "require_all_tools", "require_all_tool_groups")
+        )
+    else:
+        tool_success = bool(tools)
+
     self_repair = "[Harness自修]" in (stdout or "")
     return {
         "id": task_id,
@@ -282,6 +293,8 @@ def score_agent_task(
         "duration_seconds": duration,
         "exit_code": exit_code,
         "tools_called": sorted(tools),
+        "tool_success": tool_success,
+        "has_final_answer": has_answer,
         "self_repair_seen": self_repair,
         "checks": checks,
         "stdout_preview": (stdout or "")[:400],
@@ -350,6 +363,11 @@ def run_execution_suite(
     total = len(scored)
     rate = round(100.0 * passed / total, 1) if total else 0.0
 
+    agent_scored = [r for r in scored if r.get("mode") == "agent"]
+    n_agent = len(agent_scored)
+    tool_ok_n = sum(1 for r in agent_scored if r.get("tool_success"))
+    final_ok_n = sum(1 for r in agent_scored if r.get("has_final_answer"))
+
     by_tag: dict[str, dict[str, int]] = defaultdict(lambda: {"total": 0, "passed": 0})
     by_mode: dict[str, dict[str, int]] = defaultdict(lambda: {"total": 0, "passed": 0})
     by_diff: dict[str, dict[str, int]] = defaultdict(lambda: {"total": 0, "passed": 0})
@@ -387,6 +405,15 @@ def run_execution_suite(
             "failed": total - passed,
             "pass_rate": rate,
             "skipped": sum(1 for r in results if r.get("skipped")),
+            # 分项（勿与 pass_rate 混谈）：任务完成率 / 工具成功率 / 最终回答率
+            "task_completion_rate": rate,
+            "tool_success_rate": (
+                round(100.0 * tool_ok_n / n_agent, 1) if n_agent else None
+            ),
+            "final_answer_rate": (
+                round(100.0 * final_ok_n / n_agent, 1) if n_agent else None
+            ),
+            "agent_n": n_agent,
         },
         "by_mode": _rate_map(by_mode),
         "by_difficulty": _rate_map(by_diff),
