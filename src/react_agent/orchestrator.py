@@ -104,17 +104,12 @@ class Orchestrator:
             task_with_context = task
         needed = classify_tool_needs(task_with_context if context else task, self.call_llm)
         print(f"  需要工具类型: {', '.join(needed) if needed else '默认'}\n")
-        old_tools = None
-        if needed and self.all_tools:
-            old_tools = self.all_tools[:]
-            filtered = filter_tools(self.all_tools, needed)
-            self.all_tools[:] = filtered
-            print(f"  暴露 {len(filtered)}/{len(old_tools)} 个工具")
-        result = self.react_loop(task_with_context)
+        worker_tools = filter_tools(self.all_tools, needed) if self.all_tools else None
+        if worker_tools is not None:
+            print(f"  暴露 {len(worker_tools)}/{len(self.all_tools)} 个工具")
+        result = self.react_loop(task_with_context, tool_defs=worker_tools)
         if task_obj:
             self._capture_worker_outputs(task_obj, result)
-        if old_tools:
-            self.all_tools[:] = old_tools
         return result
 
     def _capture_worker_outputs(self, task, result):
@@ -185,15 +180,15 @@ class Orchestrator:
         for level_idx, level in enumerate(self._levels):
             print(f"\n{'='*50}")
             print(f"[层级 {level_idx + 1}/{len(self._levels)}] {len(level)} 个任务")
-            if len(level) == 1:
-                t = level[0]
+            if parallel and len(level) > 1:
+                self._execute_level_parallel(level, completed_ids)
+                continue
+            for t in level:
                 context = self._build_context(t, completed_ids)
                 result = self.run_worker(t.description, context=context, task_obj=t)
                 t.result = result
                 self.results.append(f"[#{t.id}] {t.description}\n{result}")
                 completed_ids.add(t.id)
-            else:
-                self._execute_level_parallel(level, completed_ids)
         return self.synthesize()
 
     def _execute_level_parallel(self, level: list, completed_ids: set[str]):
