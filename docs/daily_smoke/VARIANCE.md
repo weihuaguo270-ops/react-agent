@@ -6,6 +6,7 @@
 | date (UTC) | git | exec offline | exec ok | reliability harness | reliability mock | agent smoke | overall |
 |------------|-----|-------------:|:-------:|:-------------------:|:----------------:|:-----------:|:-------:|
 | 2026-07-17 | `ff06d08` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-07-17 | `556c9da` | 12/12 | PASS | PASS | PASS | skip | PASS |
 
 ## 怎么读
 
