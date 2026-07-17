@@ -36,6 +36,9 @@ agent = "react_agent.react_loop:cli_entry"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+react_agent = ["eval/*.json", "eval/**/*.json"]
+
 [tool.pytest.ini_options]
 markers = [
     "real_llm: live LLM integration tests (need DEEPSEEK_API_KEY)",

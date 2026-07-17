@@ -20,6 +20,7 @@
 | [daily_smoke/VARIANCE.md](./daily_smoke/VARIANCE.md) | 跨日 smoke | 自动追加 | Actions `daily-smoke`（UTC 01:00） |
 | [FAILURE_FLYWHEEL.md](./FAILURE_FLYWHEEL.md) | 失败→动作→复测飞轮 | 真闭环已勾选 | 配合 tdebug 扫描 |
 | [flywheel_closed_loop_20260716.md](./flywheel_closed_loop_20260716.md) | 同批 100 条改前/改后 | **llm_offtrack 6→1** | [snapshots/…](./snapshots/flywheel_closed_loop_20260716.json) |
+| [public_benchmark_snapshot_offline.md](./public_benchmark_snapshot_offline.md) | GSM8K×10 + HotpotQA×10 | offline 匹配器 20/20 | [归档](./snapshots/public_benchmark_snapshot_offline.json) |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 
@@ -39,6 +40,20 @@ python examples/run_execution_suite.py --modes agent --publish
 ```
 
 说明：`offline_tools`（现 12 条）≠ `agent`（现 **36** 条，easy8/medium12/hard16）；勿混谈为同一指标。
+
+## 公开 Agent benchmark 子集
+
+冻结 **GSM8K test×10 + HotpotQA validation×10**（非全量榜）：
+
+```bash
+# CI / 无 Key：匹配器自检
+python examples/run_public_benchmark.py
+# 真实 Agent（需 API Key）
+set REACT_AGENT_DISABLE_MCP=1
+python examples/run_public_benchmark.py --modes agent --publish
+```
+
+数据集：`src/react_agent/eval/public_benchmark_subset.json`。agent 数字绑定模型与日期；offline 只证明打分链路。
 
 ## Harness 可靠性对照
 

@@ -1,0 +1,430 @@
+{
+  "report_id": "public_bench_20260717_015153",
+  "timestamp": "2026-07-17T01:51:53.252241+00:00",
+  "dataset": "public_benchmark_subset.json",
+  "bundle_name": "public_agent_benchmark_subset_v1",
+  "bundle_version": "1",
+  "modes": [
+    "offline"
+  ],
+  "summary": {
+    "total": 20,
+    "passed": 20,
+    "failed": 0,
+    "pass_rate": 100.0,
+    "pass_rate_wilson_95": {
+      "point": 100.0,
+      "low": 83.9,
+      "high": 100.0
+    },
+    "agent_n": 0,
+    "agent_with_tools_n": 0,
+    "honesty": "公开子集 n=20（GSM8K×10 + HotpotQA×10）；offline 只验证匹配器；agent 数字绑定模型/日期，勿当全量榜"
+  },
+  "by_benchmark": {
+    "gsm8k": {
+      "passed": 10,
+      "total": 10,
+      "pass_rate": 100.0
+    },
+    "hotpotqa": {
+      "passed": 10,
+      "total": 10,
+      "pass_rate": 100.0
+    }
+  },
+  "by_mode": {
+    "offline": {
+      "passed": 20,
+      "total": 20,
+      "pass_rate": 100.0
+    }
+  },
+  "license_notes": "GSM8K: MIT (OpenAI). HotpotQA: CC BY-SA 4.0. Redistributed subset for evaluation only.",
+  "results": [
+    {
+      "id": "gsm8k_test_0000",
+      "name": "gsm8k_test_0000",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "easy",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=18 gold=18",
+      "gold_answer": "18",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 18",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "gsm8k_test_0001",
+      "name": "gsm8k_test_0001",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "easy",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=3 gold=3",
+      "gold_answer": "3",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 3",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "gsm8k_test_0002",
+      "name": "gsm8k_test_0002",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "easy",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=70000 gold=70000",
+      "gold_answer": "70000",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 70000",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "gsm8k_test_0003",
+      "name": "gsm8k_test_0003",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "easy",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=540 gold=540",
+      "gold_answer": "540",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 540",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "gsm8k_test_0004",
+      "name": "gsm8k_test_0004",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "easy",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=20 gold=20",
+      "gold_answer": "20",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 20",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "gsm8k_test_0005",
+      "name": "gsm8k_test_0005",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=64 gold=64",
+      "gold_answer": "64",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 64",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "gsm8k_test_0006",
+      "name": "gsm8k_test_0006",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=260 gold=260",
+      "gold_answer": "260",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 260",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "gsm8k_test_0007",
+      "name": "gsm8k_test_0007",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=160 gold=160",
+      "gold_answer": "160",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 160",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "gsm8k_test_0008",
+      "name": "gsm8k_test_0008",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=45 gold=45",
+      "gold_answer": "45",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 45",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "gsm8k_test_0009",
+      "name": "gsm8k_test_0009",
+      "benchmark": "gsm8k",
+      "tags": [
+        "public_benchmark",
+        "gsm8k"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "pred=460 gold=460",
+      "gold_answer": "460",
+      "prediction_preview": "Reasoning...\nFINAL ANSWER: 460",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0000",
+      "name": "hotpot_val_0000",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "Chief of Protocol",
+      "prediction_preview": "Based on sources, the answer is Chief of Protocol.\nFINAL ANSWER: Chief of Protocol",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0001",
+      "name": "hotpot_val_0001",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "Animorphs",
+      "prediction_preview": "Based on sources, the answer is Animorphs.\nFINAL ANSWER: Animorphs",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0002",
+      "name": "hotpot_val_0002",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "Greenwich Village, New York City",
+      "prediction_preview": "Based on sources, the answer is Greenwich Village, New York City.\nFINAL ANSWER: Greenwich Village, New York City",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0003",
+      "name": "hotpot_val_0003",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "YG Entertainment",
+      "prediction_preview": "Based on sources, the answer is YG Entertainment.\nFINAL ANSWER: YG Entertainment",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0004",
+      "name": "hotpot_val_0004",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "Eenasul Fateh",
+      "prediction_preview": "Based on sources, the answer is Eenasul Fateh.\nFINAL ANSWER: Eenasul Fateh",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0005",
+      "name": "hotpot_val_0005",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "3,677 seated",
+      "prediction_preview": "Based on sources, the answer is 3,677 seated.\nFINAL ANSWER: 3,677 seated",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0006",
+      "name": "hotpot_val_0006",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "Terry Richardson",
+      "prediction_preview": "Based on sources, the answer is Terry Richardson.\nFINAL ANSWER: Terry Richardson",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0007",
+      "name": "hotpot_val_0007",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "Kansas Song",
+      "prediction_preview": "Based on sources, the answer is Kansas Song.\nFINAL ANSWER: Kansas Song",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0008",
+      "name": "hotpot_val_0008",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "David Weissman",
+      "prediction_preview": "Based on sources, the answer is David Weissman.\nFINAL ANSWER: David Weissman",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    },
+    {
+      "id": "hotpot_val_0009",
+      "name": "hotpot_val_0009",
+      "benchmark": "hotpotqa",
+      "tags": [
+        "public_benchmark",
+        "hotpotqa"
+      ],
+      "difficulty": "medium",
+      "mode": "offline",
+      "passed": true,
+      "skipped": false,
+      "reason": "contains",
+      "gold_answer": "1999",
+      "prediction_preview": "Based on sources, the answer is 1999.\nFINAL ANSWER: 1999",
+      "tools_called": [],
+      "tool_success": null,
+      "has_final_answer": true
+    }
+  ],
+  "meta": {
+    "git": "e9b1bb4",
+    "reproduce_cmd": "python examples/run_public_benchmark.py --modes offline --publish"
+  }
+}

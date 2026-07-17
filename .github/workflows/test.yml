@@ -74,6 +74,10 @@ jobs:
         else
           echo "skip flywheel: no sibling trace-debugger"
         fi
+    - name: Public benchmark subset (offline matcher)
+      run: |
+        python examples/run_public_benchmark.py --modes offline
+        pytest tests/test_public_benchmark.py -q
 
   # Windows: default console often GBK — catch emoji/encoding regressions early
   test-windows:

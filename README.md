@@ -129,6 +129,8 @@ Web 面板（实验）：`REACT_AGENT_EXPERIMENTAL_TOOLS=1` 后 `python -m react
 ```bash
 python -m react_agent.eval --dataset capability
 python examples/run_execution_suite.py --publish
+python examples/run_public_benchmark.py              # GSM8K×10 + HotpotQA×10 offline
+# python examples/run_public_benchmark.py --modes agent --publish  # 需 API Key
 ```
 
 与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 校准口径：**held_out live κ≈0.69**（n=20，CI[0.46,0.92]）— 见 [METRICS_TRUST](https://github.com/weihuaguo270-ops/llm-eval-engine/blob/master/docs/METRICS_TRUST.md)，勿引用旧 n=15/κ≈0.47 或扩容前 n=11/κ≈0.59。  
