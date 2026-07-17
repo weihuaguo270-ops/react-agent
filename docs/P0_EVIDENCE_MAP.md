@@ -31,6 +31,10 @@ python examples/run_reliability_live.py --live --publish
 # Failure flywheel（观察→修复→同批对照）
 python examples/run_failure_flywheel.py --fixture --publish
 python examples/run_flywheel_closed_loop.py --publish
+
+# 跨日 variance（P0 软尾；GitHub Actions 每天 UTC 01:00 ≈ 北京 09:00）
+python examples/run_daily_smoke.py
+# 表：docs/daily_smoke/VARIANCE.md
 ```
 
 ## 诚实边界
@@ -40,3 +44,4 @@ python examples/run_flywheel_closed_loop.py --publish
 - κ：**分栏引用** — held_out live 优先；live 与 offline 勿混谈；单人标注、第二标注者 protocol_ready  
 - execution 报告含 Wilson 95% CI 与 tool/final 分项率，勿只甩「36/36」  
 - 飞轮 `llm_offtrack` 下降含假阳性修复；`duplicate` 历史 traj 不变，需新跑才体现 Harness 拦截
+- **跨日 variance**：见 [`daily_smoke/VARIANCE.md`](./daily_smoke/VARIANCE.md)（定时 workflow `daily-smoke`）；单日大快照仍看上表

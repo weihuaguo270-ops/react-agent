@@ -1,0 +1,59 @@
+name: Daily smoke
+
+# Cross-day variance for P0 soft-tail: offline execution + reliability mock.
+# UTC 01:00 ≈ Asia/Shanghai 09:00.
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+    inputs:
+      with_agent:
+        description: "Also run easy agent smoke (uses DEEPSEEK_API_KEY)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  daily-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Needed so the job can push variance log commits.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: pip install -e ".[test]"
+
+      - name: Run daily smoke (offline / mock)
+        env:
+          REACT_AGENT_SKIP_RAG: "1"
+          REACT_AGENT_DISABLE_MCP: "1"
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          set -e
+          EXTRA=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.with_agent }}" = "true" ]; then
+            EXTRA="--with-agent"
+          fi
+          python examples/run_daily_smoke.py $EXTRA
+
+      - name: Commit variance log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/daily_smoke/log.jsonl docs/daily_smoke/VARIANCE.md
+          if git diff --staged --quiet; then
+            echo "No variance log changes"
+            exit 0
+          fi
+          git commit -m "chore(daily-smoke): append $(date -u +%Y-%m-%d) variance row"
+          git push
