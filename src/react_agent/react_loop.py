@@ -1,8 +1,10 @@
 
 """
-手写 ReAct Loop - 最小可用版本
-不用任何框架，纯 Python + OpenAI 兼容 API
-理解这个代码 = 理解了 Agent 最核心的机制
+ReAct 主循环（Core 参考实现）
+
+过程式控制流：LLM → tool_calls → observation → 直至最终答案。
+不绑死某一家 Agent 框架，便于看清运行时机制；框架对照见
+``experiments/langgraph/``（StateGraph / checkpoint / HITL）。
 
 LLM 配置：通过 llm_config.json + LLM_PROVIDER 环境变量控制。
   export LLM_PROVIDER=deepseek    # 使用 DeepSeek

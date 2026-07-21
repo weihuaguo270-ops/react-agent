@@ -1,7 +1,6 @@
 """resilience — Agent 运行时容错基础设施
 
-提供重试、熔断、错误分类、降级策略。
-不依赖任何外部框架，纯 Python 实现。
+提供重试、熔断、错误分类、降级策略（Core 路径实现）。
 """
 from __future__ import annotations
 import json

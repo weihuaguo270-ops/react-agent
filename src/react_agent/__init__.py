@@ -1,5 +1,6 @@
-"""ReAct Agent — 手写学习运行时（非生产）
+"""ReAct Agent — learning-oriented runtime (not production).
 
-Core：ReAct 循环、工具、Harness 轨迹、学习级权限。
-实验模块（RAG/MCP/多 Agent 等）见 docs/EXPERIMENTAL.md。
+Core path: ``react_loop`` + tools + harness + ToolGuard.
+Framework twin: ``experiments/langgraph`` (optional ``[langgraph]`` extras).
+Experimental modules (RAG / MCP / multi-agent): see ``docs/EXPERIMENTAL.md``.
 """

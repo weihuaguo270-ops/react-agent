@@ -2,16 +2,16 @@
 
 [![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![learning](https://img.shields.io/badge/status-learning%20%2F%20not%20production-lightgrey)](docs/EXPERIMENTAL.md)
 
-**手写 ReAct 学习运行时** — 透明循环、工具注册、轨迹录制/回放（Format B）、学习级权限提示与 ToolGuard。  
-可选实验（RAG / MCP / 多 Agent / LangGraph）与评测证据见下方链接，**不进默认产品叙事**。
+**学习向 Agent 运行时** — 把 ReAct 控制流、工具调用、轨迹（Format B）、学习级权限与 ToolGuard 做成可跑、可测、可复盘的参考实现；并用 LangGraph 对照理解框架编排。  
+可选能力（RAG / MCP / 多 Agent）与评测证据见下方链接，**默认叙事以 Core 路径 + 证据链为准**。
 
 ## 范围与定位
 
 | 是 | 不是 |
 |----|------|
-| 教学用 ReAct + Harness 轨迹 | 生产级 Agent 运行时或安全产品 |
-| Core 路径可本地跑通、可测 | 微服务切分 / SLA |
-| 离线 CI + 可选真实 LLM 冒烟 | 不可信代码隔离保证 |
+| 弄清 Agent 怎么跑：循环、工具、失败与观测 | 生产级 Agent 平台或安全产品 |
+| Core 与 LangGraph 两条路径可对照 | 「只会手写」或「只会调框架」 |
+| 离线 CI + 可选真实 LLM 冒烟 | 微服务切分 / SLA / 不可信代码隔离保证 |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
@@ -19,11 +19,14 @@
 
 ## 架构概览
 
-| 维度 | Core（`src/react_agent/`） | 对照实验 |
-|------|---------------------------|----------|
-| **入口** | `react_loop()` | LangGraph：`experiments/langgraph/` |
-| **依赖** | 标准库 + LLM API | LangChain / LangGraph（可选） |
-| **目标** | 完全透明、可录轨迹 | 框架编排对照（无严格等价测试） |
+理解 Agent 运行时不止一种方式：本仓库用 **过程式参考实现（Core）** 看清控制流，用 **LangGraph 对照** 看清图编排 / checkpoint；两者共享轨迹约定，不追求逐步行为等价。
+
+| 维度 | Core（`src/react_agent/`） | LangGraph（`experiments/langgraph/`） |
+|------|---------------------------|--------------------------------------|
+| **入口** | `react_loop()` | StateGraph + `MemorySaver` |
+| **依赖** | 标准库 + LLM API | 可选 `[langgraph]` extras |
+| **侧重点** | 控制流透明、Harness / ToolGuard 深耦合 | 图边、续跑、团队常见编排模型 |
+| **关系** | 默认演示与评测主路径 | 对照实验（见 Demo） |
 
 ### 执行流程（Core）
 
@@ -110,7 +113,16 @@ pip install -e ".[rag]"                # 语义检索依赖
 
 ## LangGraph 对照（`experiments/langgraph/`）
 
-框架图编排的**对照实验**；未做与手写版的严格等价性测试，不保证行为一致。
+用框架路径对照 Core：图编排、checkpoint、HITL gate。  
+不与 Core 做严格行为等价；轨迹侧对齐 **Harness Format B**。
+
+- 无 Key Demo（StateGraph + Checkpoint + HITL）:
+
+```bash
+pip install -e ".[langgraph]"
+python experiments/langgraph/demo_checkpoint_hitl.py
+pytest tests/test_langgraph_harness_contract.py -q
+```
 
 ## 快速开始
 
@@ -200,7 +212,7 @@ gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DE
 
 - Python 3.10+
 - LLM API key（运行 Agent / 真实评测时需要）
-- LangChain + LangGraph（仅 `experiments/langgraph/` 需要，可选）
+- LangChain + LangGraph（可选）：`pip install -e ".[langgraph]"`，仅对照实验需要
 
 ## 相关项目
 

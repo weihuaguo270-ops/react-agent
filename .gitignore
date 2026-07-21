@@ -12,6 +12,12 @@ handwritten_react_agent.egg-info/
 *.egg-info/
 src/**/*.egg-info/
 
+# Local interview notes (do not publish)
+docs/LANGGRAPH_CONTRAST.md
+**/LANGGRAPH_CONTRAST.md
+.coverage
+htmlcov/
+
 # Local data files
 trajectories/
 rag_index.json

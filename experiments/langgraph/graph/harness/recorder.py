@@ -147,6 +147,7 @@ class TrajectoryRecorder:
         return {
             "session_id": self.session_id,
             "source": self._source,
+            "schema_version": "1",  # Harness Format B — 与手写版 / tdebug / eval 对齐
             "query": self.query[:500],
             "model": self.model,
             "timestamp": self.timestamp,

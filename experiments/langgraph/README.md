@@ -1,48 +1,65 @@
-# LangGraph 版本 — 框架实现
+# LangGraph 版本 — 框架对照路径
 
-`experiments/langgraph/` 将 Agent 核心能力用 **LangChain + LangGraph** 重新实现。
+`experiments/langgraph/` 用 **LangChain + LangGraph** 实现与 Core 平行的编排路径。  
+用来理解图模型 / checkpoint / HITL；**不是**「第二套手写拷贝」，也**不是**默认唯一正确写法。
 
 ## 设计思路
 
 ```
-核心运行时（src/）            LangGraph 版（experiments/langgraph/）
-─────────────────────       ─────────────────────────────────────
-ReAct Loop                   StateGraph（call_model ⇄ tools）
-LLM API 调用                 ChatOpenAI（复用 llm_config.json）
-工具注册                     @tool 装饰器
-字符串 prompt 构建           角色模板 + SystemMessage
-执行沙箱                     harness/sandbox.py
-轨迹录制                     harness/recorder.py
+Core（src/react_agent/）              LangGraph（experiments/langgraph/）
+─────────────────────────            ─────────────────────────────────
+过程式 ReAct 循环                      StateGraph（call_model ⇄ tools）
+直接 LLM API                           ChatOpenAI（复用 llm_config.json）
+TOOL_REGISTRY                          @tool + bind_tools
+Harness 过程式插桩                     节点前后插桩（Format B, source=graph）
+ToolGuard / safety                     retry_call + HITL / gate demo
+                                       MemorySaver + thread_id
 ```
 
-两者**不共享代码**——LangGraph 版从零实现，只在配置层（`llm_config.json`）和轨迹文件格式上保持一致，便于两种架构的对比。
+两条路径**不共享实现代码**，对齐的是 `llm_config.json` 与 **Harness Format B**，便于对比「机制在哪一层」。
+
+## 无 Key 框架 Demo（优先）
+
+```bash
+pip install -e ".[langgraph]"
+python experiments/langgraph/demo_checkpoint_hitl.py
+```
+
+展示：条件边、HITL gate、同 `thread_id` 检查点续跑。
+
+## 完整 Agent（需 API Key）
+
+```bash
+pip install -e ".[langgraph]"
+python experiments/langgraph/graph/main.py "用计算器算 1+1"
+```
+
+或在代码中：
+
+```python
+from agent import run  # 在 graph/ 目录下，或自行调整 sys.path
+
+print(run("用计算器算 1+1", thread_id="demo"))
+```
+
+`run(..., hitl=...)` 可将 `safety.HumanInTheLoop` 传入 tools 节点。
 
 ## 模块映射
 
-| 核心模块 | LangGraph 文件 | 说明 |
-|---------|---------------|------|
-| Agent 运行时 | `graph/agent.py` | StateGraph 定义，call_model ⇄ tools 循环 |
-| 上下文管理 | `graph/context.py` | 角色注入、CoT 策略 |
-| 工具注册 | `graph/tools.py` | 内建工具集的 @tool 封装 |
-| MCP 工具 | `graph/mcp.py` | MCP Client 集成 |
-| RAG | `graph/rag.py` | 检索增强生成 |
-| 记忆 | `graph/memory.py` | 对话记忆管理 |
-| 多 Agent 编排 | `graph/orchestrator.py` | 任务分解 + Worker 并行 |
-| 轨迹录制 | `graph/harness/recorder.py` | 完整执行录制 |
-| 回放 | `graph/harness/replay.py` | 逐步骤回放 |
-| 沙箱 | `graph/harness/sandbox.py` | 隔离执行 |
-| Prompt 管理 | `graph/prompts.py` | 模板化 system prompt |
+| 能力 | LangGraph 文件 | 说明 |
+|------|----------------|------|
+| Agent 运行时 | `graph/agent.py` | StateGraph + MemorySaver |
+| 框架 Demo | `demo_checkpoint_hitl.py` | 无 Key：图边 / checkpoint / HITL |
+| 工具 / HITL | `graph/tools.py` · `graph/safety.py` | `@tool` + 权限审批 |
+| 轨迹 | `graph/harness/recorder.py` | Format B，`schema_version=1` |
+| 其他 | context / memory / mcp / rag / orchestrator | 可选旁路 |
 
-## 使用
+## 契约测试
 
-```python
-from experiments.langgraph.graph.main import create_agent
-
-agent = create_agent()
-result = agent.invoke({"input": "分析这份数据"})
-print(result["output"])
+```bash
+pytest tests/test_langgraph_harness_contract.py -q
 ```
 
 ## 配置
 
-复用顶层 `llm_config.json` 和 `.env`，无需额外配置。
+复用顶层 `llm_config.json` 和 `.env`。完整 Agent 需要可用的 LLM API Key。

@@ -316,11 +316,12 @@ def _get_harness(config: dict | None) -> Harness | None:
 # ============================================================
 
 def run(query: str, max_steps: int = 10, thread_id: str = "default",
-        mcp_clients: list = None, harness: Harness | None = None) -> str:
+        mcp_clients: list = None, harness: Harness | None = None,
+        hitl: "HumanInTheLoop | None" = None) -> str:
     """
     运行单 Agent。
 
-    1. 构建 LangGraph 应用
+    1. 构建 LangGraph 应用（compile 时挂 MemorySaver checkpointer）
     2. 注入 system prompt（含 CoT 推理引导）
     3. 执行图：call_model → tools（循环）→ extract_memory → END
     4. 从结果中提取最终答案
@@ -328,14 +329,18 @@ def run(query: str, max_steps: int = 10, thread_id: str = "default",
     参数:
         query: 用户问题
         max_steps: 最大迭代步数（默认 10）
-        thread_id: LangGraph checkpoint 线程 ID
+        thread_id: LangGraph checkpoint 线程 ID（同 ID 可跨轮续跑）
         mcp_clients: MCP 客户端列表（可选）
         harness: Harness 实例（可选）。传入后自动记录轨迹。
+        hitl: 人工审批（可选）。CONFIRM/DENY 工具在 tools 节点内拦截。
 
     返回:
         最终答案字符串
+
+    无 Key 的框架能力演示见::
+        python experiments/langgraph/demo_checkpoint_hitl.py
     """
-    app = build_agent(mcp_clients=mcp_clients, harness=harness)
+    app = build_agent(mcp_clients=mcp_clients, harness=harness, hitl=hitl)
     system_prompt = build_system_prompt(query)
 
     config = {

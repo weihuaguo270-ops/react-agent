@@ -13,7 +13,11 @@ set REACT_AGENT_EXPERIMENTAL_TOOLS=1
 | Multi-agent | `orchestrator.py` / `planner.py` | 演示编排；`multi_agent_chain` 懒导入 |
 | ToT | `tot.py` | 教学推理工具 |
 | Dashboard | `dashboard/` | 本地可视化 |
-| LangGraph twin | `experiments/langgraph/` | 对照实现；**无严格等价性测试** |
+| LangGraph twin | `experiments/langgraph/` | 框架对照路径；**无严格行为等价测试**；见 `demo_checkpoint_hitl.py` |
+
+安装框架对照依赖：`pip install -e ".[langgraph]"`。  
+无 Key 演示：`python experiments/langgraph/demo_checkpoint_hitl.py`。  
+契约：`pytest tests/test_langgraph_harness_contract.py`（recorder → Format B；demo 需已装 langgraph）。
 
 `import react_agent.react_loop` 不应拉起 MCP / Orchestrator / RAG（见 `tests/test_core_lazy_imports.py`）。
 
