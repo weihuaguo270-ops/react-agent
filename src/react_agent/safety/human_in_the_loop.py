@@ -2,6 +2,9 @@
 
 在 Agent 执行高风险操作或 Eval Loop 要调整方向前，暂停并询问用户。
 
+与 ``permission_gate`` 配合：Harness 先 ``evaluate_tool_permission``（deny→ask→allow），
+ASK/DENY 覆盖场景再进入本模块。模型想调工具 ≠ 运行时允许。
+
 优化 v2：
   1. 临时授权过期（"仅此一次"5分钟后自动失效）
   2. 上下文展示（附 Agent 当前思考过程）

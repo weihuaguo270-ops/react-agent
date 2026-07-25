@@ -5,13 +5,19 @@
 等级划分：
   SAFE     — 纯读取，无需审批
   NOTIFY   — 读取敏感信息，通知用户但不阻塞
-  CONFIRM  — 写入/执行，需用户确认
-  DENY     — 表内登记的高风险工具名，默认拒绝（可被覆盖配置）
+  CONFIRM  — 写入/执行，需用户确认（ask）
+  DENY     — 表内登记的高风险工具名，默认拒绝
+
+评估顺序（Harness 强制，模型 prompt 改不了允许集）：
+  1. DENY  — 参数级 DENY 规则，或工具默认 DENY
+  2. ASK   — CONFIRM（及参数级抬升到 CONFIRM）
+  3. ALLOW — SAFE / NOTIFY（及参数级放宽）
 
 诚实边界：
   - 主要按 **工具名查表**；不是对 shell/路径的通配拦截（不会解析 “rm -rf”）
   - 未登记的工具名不自动 DENY
   - 本模块是 HITL 提示层，不是 OS 权限系统
+  - 与 ``harness.sandbox`` 是两层：权限决定「能不能调」；沙箱只隔离崩溃/超时
 
 v2 新增：参数级权限（Argument Rules）
   根据工具参数动态调整权限等级：
@@ -20,8 +26,9 @@ v2 新增：参数级权限（Argument Rules）
     execute_python 含 os.system → 自动提升为 CONFIRM
 """
 from __future__ import annotations
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Literal, Optional
 
 
 class PermissionLevel(Enum):
@@ -38,6 +45,19 @@ class Category(Enum):
     DIRECTION_CHANGE = "direction"
     RETRY = "retry"
     CORRECT = "correct"
+
+
+Outcome = Literal["deny", "ask", "allow"]
+
+
+@dataclass(frozen=True)
+class PermissionDecision:
+    """一次工具调用的权限裁决（供 Harness 闸门使用）。"""
+
+    level: PermissionLevel
+    outcome: Outcome
+    reason: str
+    source: str  # "arg_rule" | "tool_table" | "default"
 
 
 # ── 工具权限表（工具名 → 默认等级） ──
@@ -104,9 +124,7 @@ DIRECTION_CHANGE_LEVELS: dict[str, PermissionLevel] = {
 
 
 # ── 参数级规则（v2） ──
-# (工具名, 参数匹配函数, 覆盖后的等级)
-# 匹配函数返回 True 时，使用该等级覆盖默认等级
-# 从上到下匹配，返回第一个匹配的规则
+# DENY 规则在 evaluate 的 deny 阶段统一扫描，始终优先于 SAFE 放宽
 
 ArgChecker = Callable[[dict[str, Any]], bool]
 
@@ -119,39 +137,29 @@ def _path_contains(substring: str) -> ArgChecker:
     return check
 
 
-def _code_contains(keyword: str) -> ArgChecker:
-    """代码参数包含指定关键词"""
+def _key_contains(substring: str) -> ArgChecker:
     def check(args: dict) -> bool:
-        code = str(args.get("code", "") or args.get("command", "") or "")
-        return keyword in code
+        blob = " ".join(f"{k}={v}" for k, v in args.items()).lower()
+        return substring.lower() in blob
     return check
 
 
-def _key_contains(keyword: str) -> ArgChecker:
-    """任意参数值包含指定关键词"""
+def _code_contains(substring: str) -> ArgChecker:
     def check(args: dict) -> bool:
-        for v in args.values():
-            if keyword in str(v).lower():
-                return True
-        return False
+        code = str(args.get("code", "") or args.get("expression", "") or "")
+        return substring in code
     return check
 
 
-# 参数级规则表
 ARG_RULES: list[tuple[str, ArgChecker, PermissionLevel]] = [
-    # --- 敏感内容优先检测（高于路径规则）---
     ("write_file", _key_contains("password"), PermissionLevel.DENY),
     ("write_file", _key_contains("secret"), PermissionLevel.DENY),
     ("write_file", _key_contains("api_key"), PermissionLevel.DENY),
-
-    # write_file 路径级
     ("write_file", _path_contains("/tmp/"), PermissionLevel.SAFE),
     ("write_file", _path_contains("/Temp/"), PermissionLevel.SAFE),
     ("write_file", _path_contains("temp"), PermissionLevel.SAFE),
     ("write_file", _path_contains("/etc/"), PermissionLevel.CONFIRM),
     ("write_file", _path_contains("/usr/"), PermissionLevel.CONFIRM),
-
-    # execute_python 内容级
     ("execute_python", _code_contains("os.system"), PermissionLevel.CONFIRM),
     ("execute_python", _code_contains("subprocess"), PermissionLevel.CONFIRM),
     ("execute_python", _code_contains("shutil.rmtree"), PermissionLevel.DENY),
@@ -160,24 +168,67 @@ ARG_RULES: list[tuple[str, ArgChecker, PermissionLevel]] = [
 ]
 
 
-# ── 查询函数 ──
+def _level_to_outcome(level: PermissionLevel) -> Outcome:
+    if level == PermissionLevel.DENY:
+        return "deny"
+    if level == PermissionLevel.CONFIRM:
+        return "ask"
+    return "allow"
+
+
+def evaluate_tool_permission(
+    tool_name: str,
+    tool_args: Optional[dict] = None,
+) -> PermissionDecision:
+    """按 deny → ask → allow 顺序裁决工具调用。
+
+    模型产生 tool_call 不等于允许执行；本函数结果由 Harness 强制执行。
+    """
+    args = tool_args or {}
+    base = TOOL_PERMISSIONS.get(tool_name, PermissionLevel.SAFE)
+    base_source = "tool_table" if tool_name in TOOL_PERMISSIONS else "default"
+
+    # ── 1) DENY ──
+    for name, checker, level in ARG_RULES:
+        if name == tool_name and level == PermissionLevel.DENY and checker(args):
+            return PermissionDecision(
+                level=PermissionLevel.DENY,
+                outcome="deny",
+                reason=f"arg DENY rule matched for {tool_name}",
+                source="arg_rule",
+            )
+    if base == PermissionLevel.DENY:
+        return PermissionDecision(
+            level=PermissionLevel.DENY,
+            outcome="deny",
+            reason=f"tool {tool_name} is DENY in tool table",
+            source="tool_table",
+        )
+
+    # ── 2/3) ASK / ALLOW via remaining arg rules, else base ──
+    for name, checker, level in ARG_RULES:
+        if name == tool_name and level != PermissionLevel.DENY and checker(args):
+            return PermissionDecision(
+                level=level,
+                outcome=_level_to_outcome(level),
+                reason=f"arg rule set {tool_name} → {level.value}",
+                source="arg_rule",
+            )
+
+    return PermissionDecision(
+        level=base,
+        outcome=_level_to_outcome(base),
+        reason=f"default level {base.value} ({base_source})",
+        source=base_source,
+    )
 
 
 def get_tool_permission(
     tool_name: str,
     tool_args: Optional[dict] = None,
 ) -> PermissionLevel:
-    """获取工具的权限等级（支持参数级覆盖）
-
-    先检查参数级规则，未命中则返回默认等级。
-    不在表中的工具默认 SAFE。
-    """
-    if tool_args:
-        for name, checker, level in ARG_RULES:
-            if name == tool_name and checker(tool_args):
-                return level
-
-    return TOOL_PERMISSIONS.get(tool_name, PermissionLevel.SAFE)
+    """获取工具的权限等级（deny-first；兼容旧调用方）。"""
+    return evaluate_tool_permission(tool_name, tool_args).level
 
 
 def get_direction_permission(action: str) -> PermissionLevel:

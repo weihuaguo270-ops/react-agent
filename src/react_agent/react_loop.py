@@ -192,9 +192,18 @@ def _execute_tool_call_raw(tool_call):
         arguments = json.loads(tool_call["function"]["arguments"])
     except json.JSONDecodeError:
         return '{"error": "参数解析失败"}'
+
+    # 权限闸门（Harness）：模型 tool_call ≠ 允许执行；先于沙箱
+    from react_agent.safety.permission_gate import permission_block_message
+
+    blocked = permission_block_message(func_name, arguments)
+    if blocked is not None:
+        print(f"  [Permission] blocked {func_name}: {blocked[:120]}")
+        return blocked
+
     # 先查本地注册的工具
     if func_name in TOOL_REGISTRY:
-        # 沙箱判断（off/auto/on 三策略）
+        # 沙箱：崩溃/超时隔离（不是权限层；见 harness/sandbox.py）
         if SANDBOX.strategy != "off" and SANDBOX.should_sandbox(func_name):
             sandbox_result = SANDBOX.run(tool_call)
             if sandbox_result != "__SANDBOX_DISABLED__":

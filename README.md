@@ -68,20 +68,35 @@ react_agent/                    # CORE
 export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 ```
 
-### 权限与沙箱（学习级，非生产隔离）
+### 权限与沙箱（两层 · 学习级）
 
-工具调用采用 **名称表 + 可选参数规则** 的四级提示策略（`safety/permissions.py`）：
+**Permissions（准不准）** 与 **Sandbox（崩不崩）** 是两层，互不替代：
+
+| 层 | 模块 | 职责 |
+|----|------|------|
+| 权限闸门 | `safety/permissions.py` + `permission_gate.py` | deny → ask → allow；**模型 tool_call ≠ 允许执行** |
+| 进程沙箱 | `harness/sandbox.py` | 子进程 + 超时，降低崩溃拖死主循环的概率 |
+
+权限评估顺序（Harness 强制）：
+
+1. **DENY** — 参数 DENY 规则或工具表 DENY（默认拦截）
+2. **ASK** — CONFIRM（有 HITL 则询问；非交互学习默认放行，可用 `REACT_AGENT_STRICT_CONFIRM=1` 收紧）
+3. **ALLOW** — SAFE / NOTIFY
+
+关闭权限闸门：`REACT_AGENT_PERMISSION_GATE=0`。
+
+工具名表 + 参数规则示例（`safety/permissions.py`）：
 
 | 等级 | 行为 | 适用场景（示例） |
 |------|------|------------------|
 | SAFE | 自动放行 | web_search、calculator |
 | NOTIFY | 记录后继续 | 部分读信息工具 |
-| CONFIRM | 询问用户 | write_file、execute_python |
-| DENY | 默认拦截 | 表内登记的破坏性工具名 |
+| CONFIRM | 询问 / 非交互默许 | write_file、execute_python |
+| DENY | 默认拦截 | delete_directory、install_package |
 
-说明（诚实边界）：
-- **不是** OS / 容器级沙箱；未知工具名默认不在 DENY 表内。
-- `execute_python` / `harness/sandbox` 主要是 **子进程 + 超时**，用于隔离崩溃与卡住，**不能**当作安全边界（代码仍可访问本机网络/文件权限范围内资源）。
+诚实边界：
+- 权限层 **不是** OS ACL；未知工具名默认不 DENY。
+- 沙箱 **不是** 容器/seccomp；`execute_python` 仍可能访问本机权限内资源。
 - 危险 shell 字符串（如 `rm -rf`）**不会**被逐字解析拦截；请勿用生产不可信代码跑本项目的执行工具。
 
 `harness/sandbox.py` 支持 `off` / `auto` / `on`；子进程内禁止再次预热沙箱，避免递归拉起进程。
