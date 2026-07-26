@@ -2,12 +2,12 @@
   "default": "deepseek",
   "providers": {
     "deepseek": {
-      "description": "DeepSeek 官方 API",
+      "description": "DeepSeek 官方 API（2026-07-24 起请用 v4 模型名；旧 deepseek-chat 已退役）",
       "base_url": "https://api.deepseek.com",
       "api_key_env": "DEEPSEEK_API_KEY",
       "api_key": "",
       "model_env": "LLM_MODEL",
-      "model": "deepseek-chat",
+      "model": "deepseek-v4-flash",
       "temperature": 0.7,
       "max_tokens": 2000
     },

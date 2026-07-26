@@ -37,7 +37,7 @@ class Harness:
         # auto 模式（默认）——get_current_time 直接跑，web_search 自动走子进程
         harness = Harness(sandbox_strategy="auto")
 
-        harness.start_trajectory(query="今天日期", model="deepseek-chat")
+        harness.start_trajectory(query="今天日期", model="deepseek-v4-flash")
 
         # 在 call_model 节点后：
         harness.record_thought(step=1, thought="用户想知道日期", tokens=120)

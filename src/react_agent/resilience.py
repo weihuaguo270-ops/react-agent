@@ -38,7 +38,20 @@ def classify_error(error: Exception | str) -> str:
         return ErrorCategory.TIMEOUT
     if any(k in msg for k in ("connection", "dns", "resolve")):
         return ErrorCategory.NETWORK
-    if any(k in msg for k in ("参数解析", "validation", "invalid")):
+    # 400 / 退役模型名等：重试无意义
+    if any(
+        k in msg
+        for k in (
+            "400",
+            "bad request",
+            "validation",
+            "invalid",
+            "参数解析",
+            "model not found",
+            "unknown model",
+            "does not exist",
+        )
+    ):
         return ErrorCategory.VALIDATION
     if any(k in msg for k in ("500", "502", "503", "service")):
         return ErrorCategory.API_ERROR

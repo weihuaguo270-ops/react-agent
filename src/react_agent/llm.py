@@ -156,6 +156,75 @@ def _list_providers() -> list[str]:
     return list(config.get("providers", {}).keys())
 
 
+# 2026-07-24 15:59 UTC 起 deepseek-chat / deepseek-reasoner 退役
+_LEGACY_DEEPSEEK_MODELS = {
+    "deepseek-chat": ("deepseek-v4-flash", "disabled"),
+    "deepseek-reasoner": ("deepseek-v4-flash", "enabled"),
+}
+
+
+def _normalize_api_key(key: str) -> str:
+    key = (key or "").strip().strip('"').strip("'")
+    if key.lower().startswith("bearer "):
+        key = key[7:].strip()
+    return key
+
+
+def _resolve_model_and_thinking(model: str) -> tuple[str, Optional[str]]:
+    """返回 (model_id, thinking_type|None)。thinking 由 LLM_THINKING 可覆盖。"""
+    model = (model or "").strip()
+    legacy = _LEGACY_DEEPSEEK_MODELS.get(model)
+    thinking: Optional[str] = None
+    if legacy:
+        model, thinking = legacy
+        print(f"[LLM] 旧模型名已映射为 {model} (thinking={thinking})")
+    env_think = os.environ.get("LLM_THINKING", "").strip().lower()
+    if env_think in ("enabled", "disabled", "on", "off", "1", "0"):
+        thinking = {
+            "enabled": "enabled",
+            "on": "enabled",
+            "1": "enabled",
+            "disabled": "disabled",
+            "off": "disabled",
+            "0": "disabled",
+        }[env_think]
+    elif thinking is None and model.startswith("deepseek-v4"):
+        # 对齐旧 deepseek-chat：默认非 thinking，降低 tool 多轮 400 风险
+        thinking = "disabled"
+    return model, thinking
+
+
+def _sanitize_messages(messages: list) -> list:
+    """规范化 messages：None content→\"\"；保留 reasoning_content（DeepSeek thinking 多轮必需）。"""
+    out = []
+    for m in messages:
+        if not isinstance(m, dict):
+            continue
+        msg = dict(m)
+        if msg.get("content") is None and not msg.get("tool_calls"):
+            msg["content"] = ""
+        out.append(msg)
+    return out
+
+
+def _http_error_detail(err: Exception) -> str:
+    """尽量附带 HTTP 响应体，便于诊断 400 model / thinking 问题。"""
+    from urllib.error import HTTPError
+
+    if isinstance(err, HTTPError):
+        body = ""
+        try:
+            raw = err.read()
+            body = raw.decode("utf-8", errors="replace") if raw else ""
+        except Exception:
+            body = ""
+        detail = f"HTTP Error {err.code}: {err.reason}"
+        if body:
+            detail = f"{detail} | {body[:500]}"
+        return detail
+    return str(err)
+
+
 class LLM:
     """LLM 调用封装，支持任意 OpenAI 兼容 API"""
 
@@ -173,8 +242,10 @@ class LLM:
 
         resolved = _resolve_provider(provider)
         self.base_url = resolved["base_url"].rstrip("/")
-        self.api_key = resolved["api_key"]
-        self.model = resolved["model"]
+        self.api_key = _normalize_api_key(resolved["api_key"])
+        model, thinking = _resolve_model_and_thinking(resolved.get("model", ""))
+        self.model = model
+        self.thinking = thinking  # "enabled" | "disabled" | None
         self.temperature = resolved.get("temperature", 0.7)
         self.max_tokens = resolved.get("max_tokens", 2000)
         self.provider_name = provider
@@ -188,6 +259,28 @@ class LLM:
             print(f"      Linux:   export {config['providers'][provider]['api_key_env']}=sk-xxx")
             print(f"    方式二：请在 llm_config.json 中对应的 provider 下设置 api_key 字段")
             print()
+
+    def build_payload(
+        self,
+        messages: list,
+        tool_defs: Optional[list] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> dict:
+        """构造 chat/completions 请求体（供测试与调用共用）。"""
+        payload = {
+            "model": self.model,
+            "messages": _sanitize_messages(messages),
+            "temperature": temperature if temperature is not None else self.temperature,
+            "max_tokens": max_tokens if max_tokens is not None else self.max_tokens,
+        }
+        # 空列表表示「本步禁用工具」；勿发送 tools:[]（部分 API 会 400）
+        if tool_defs:
+            payload["tools"] = tool_defs
+            payload["tool_choice"] = "auto"
+        if self.thinking in ("enabled", "disabled"):
+            payload["thinking"] = {"type": self.thinking}
+        return payload
 
     def chat(self, messages: list, tool_defs: Optional[list] = None,
              temperature: Optional[float] = None,
@@ -206,16 +299,9 @@ class LLM:
         返回:
             LLM 返回的消息对象 {"role": "assistant", "content": "...", "tool_calls": [...]}
         """
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": temperature if temperature is not None else self.temperature,
-            "max_tokens": max_tokens if max_tokens is not None else self.max_tokens,
-        }
-        if tool_defs is not None:
-            payload["tools"] = tool_defs
-            payload["tool_choice"] = "auto"
+        from urllib.error import HTTPError
 
+        payload = self.build_payload(messages, tool_defs, temperature, max_tokens)
         url = f"{self.base_url}/chat/completions"
         headers = {
             "Content-Type": "application/json",
@@ -224,17 +310,22 @@ class LLM:
             headers["Authorization"] = f"Bearer {self.api_key}"
 
         body = json.dumps(payload).encode("utf-8")
-        r = req.Request(url, data=body, headers=headers, method="POST")
 
         # 使用 resilience 模块的 retry 机制
-        from react_agent.resilience import retry, classify_error
+        from react_agent.resilience import retry
 
         @retry(max_attempts=3, base_delay=1.0, max_delay=10.0,
                on_retry=lambda a, m, w, c, e: print(f"  [重试] {a}/{m} ({c}) 等待 {w:.0f}s"))
         def _do_request():
-            with req.urlopen(r, timeout=60) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
-                return result["choices"][0]["message"]
+            # 每次重试新建 Request（避免已读 body / 连接状态问题）
+            r = req.Request(url, data=body, headers=headers, method="POST")
+            try:
+                with req.urlopen(r, timeout=60) as resp:
+                    result = json.loads(resp.read().decode("utf-8"))
+                    return result["choices"][0]["message"]
+            except HTTPError as e:
+                # 包装为带响应体的 URLError，便于 classify / 上层展示
+                raise URLError(_http_error_detail(e)) from e
 
         try:
             return _do_request()
