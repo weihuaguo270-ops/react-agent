@@ -1,32 +1,32 @@
 # ReAct Agent
 
-[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![learning](https://img.shields.io/badge/status-learning%20%2F%20not%20production-lightgrey)](docs/EXPERIMENTAL.md)
+[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/scope-reproducible%20runtime%20·%20not%20a%20platform-lightgrey)](docs/EXPERIMENTAL.md)
 
-**学习向 Agent 运行时** — 把 ReAct 控制流、工具调用、轨迹（Format B）、学习级权限与 ToolGuard 做成可跑、可测、可复盘的参考实现；并用 LangGraph 对照理解框架编排。  
-可选能力（RAG / MCP / 多 Agent）与评测证据见下方链接，**默认叙事以 Core 路径 + 证据链为准**。
+**可复现的 Agent 运行时原型** — ReAct 控制流、工具调用、轨迹（Format B）、权限闸门与 ToolGuard、评测/失败飞轮闭环；并用 LangGraph 对照框架编排。  
+默认叙事以 **Core 路径 + 证据链** 为准；RAG / MCP / 多 Agent 为可选能力。
 
 ## 范围与定位
 
 | 是 | 不是 |
 |----|------|
-| 弄清 Agent 怎么跑：循环、工具、失败与观测 | 生产级 Agent 平台或安全产品 |
+| 可跑、可测、可复盘的 Agent 执行与观测 | 生产级 Agent 平台或安全产品 |
 | Core 与 LangGraph 两条路径可对照 | 「只会手写」或「只会调框架」 |
-| 离线 CI + 可选真实 LLM 冒烟 | 微服务切分 / SLA / 不可信代码隔离保证 |
+| 离线 CI + 可选真实 LLM 冒烟；公开评测快照 | 微服务切分 / SLA / 多租户 / 不可信代码强隔离 |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
-求职/证据地图（与运行时功能分开）：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md)。
+证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md)。
 
 ## 架构概览
 
-理解 Agent 运行时不止一种方式：本仓库用 **过程式参考实现（Core）** 看清控制流，用 **LangGraph 对照** 看清图编排 / checkpoint；两者共享轨迹约定，不追求逐步行为等价。
+本仓库用 **过程式 Core** 把控制流写透，用 **LangGraph 对照** 对齐团队常见的图编排 / checkpoint；两者共享轨迹约定，不追求逐步行为等价。
 
 | 维度 | Core（`src/react_agent/`） | LangGraph（`experiments/langgraph/`） |
 |------|---------------------------|--------------------------------------|
 | **入口** | `react_loop()` | StateGraph + `MemorySaver` |
 | **依赖** | 标准库 + LLM API | 可选 `[langgraph]` extras |
 | **侧重点** | 控制流透明、Harness / ToolGuard 深耦合 | 图边、续跑、团队常见编排模型 |
-| **关系** | 默认演示与评测主路径 | 对照实验（见 Demo） |
+| **关系** | 默认运行与评测主路径 | 框架对照（见 Demo） |
 
 ### 执行流程（Core）
 
@@ -49,8 +49,8 @@ react_agent/                    # CORE
 ├── tools/                      默认工具（计算/搜索/抓取/摘要/时间/执行）
 ├── context.py / memory.py
 ├── harness/                    录制 · 回放 · Schema · 沙箱超时
-├── safety/                     学习级权限提示 + HITL
-├── resilience.py               ToolGuard（超时/重试；非安全边界）
+├── safety/                     权限闸门（deny→ask→allow）+ HITL
+├── resilience.py               ToolGuard（超时/重试；非 OS 安全边界）
 └── eval/                       EVAL-ONLY：capability 规则打分
 
 # EXPERIMENTAL（默认不注册进工具表）— 见 docs/EXPERIMENTAL.md
@@ -68,7 +68,7 @@ react_agent/                    # CORE
 export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 ```
 
-### 权限与沙箱（两层 · 学习级）
+### 权限与沙箱（两层）
 
 **Permissions（准不准）** 与 **Sandbox（崩不崩）** 是两层，互不替代：
 
@@ -80,7 +80,7 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 权限评估顺序（Harness 强制）：
 
 1. **DENY** — 参数 DENY 规则或工具表 DENY（默认拦截）
-2. **ASK** — CONFIRM（有 HITL 则询问；非交互学习默认放行，可用 `REACT_AGENT_STRICT_CONFIRM=1` 收紧）
+2. **ASK** — CONFIRM（有 HITL 则询问；非交互默认放行，可用 `REACT_AGENT_STRICT_CONFIRM=1` 收紧）
 3. **ALLOW** — SAFE / NOTIFY
 
 关闭权限闸门：`REACT_AGENT_PERMISSION_GATE=0`。
@@ -94,10 +94,10 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 | CONFIRM | 询问 / 非交互默许 | write_file、execute_python |
 | DENY | 默认拦截 | delete_directory、install_package |
 
-诚实边界：
+范围边界（非生产平台承诺）：
 - 权限层 **不是** OS ACL；未知工具名默认不 DENY。
 - 沙箱 **不是** 容器/seccomp；`execute_python` 仍可能访问本机权限内资源。
-- 危险 shell 字符串（如 `rm -rf`）**不会**被逐字解析拦截；请勿用生产不可信代码跑本项目的执行工具。
+- 危险 shell 字符串（如 `rm -rf`）**不会**被逐字解析拦截；请勿对不可信代码开放执行工具。
 
 `harness/sandbox.py` 支持 `off` / `auto` / `on`；子进程内禁止再次预热沙箱，避免递归拉起进程。
 

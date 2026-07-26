@@ -1,6 +1,6 @@
 # Experimental modules
 
-这些模块可跑、可学，**不是**核心 ReAct 学习运行时的一部分。默认工具表不注册实验工具；需要时：
+这些模块可跑、可测，**默认不进入 Core 工具表**（避免与主路径叙事混杂）。需要时：
 
 ```bash
 set REACT_AGENT_EXPERIMENTAL_TOOLS=1
