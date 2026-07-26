@@ -143,6 +143,13 @@ def _tot_llm_wrapper(prompt: str) -> str:
 set_tot_llm_call(_tot_llm_wrapper)
 
 
+def _context_llm_wrapper(prompt: str) -> str:
+    """Context summarize/auto 策略需要的 (prompt → text) 适配器。"""
+    messages = [{"role": "user", "content": prompt}]
+    result = call_llm(messages, tool_defs=[])
+    return result.get("content", "") or ""
+
+
 # ============================================================
 # 第四步：执行工具（含 ToolGuard 超时/重试/熔断）
 # ============================================================
@@ -491,8 +498,9 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
             })
 
         # (5) 每步结束：检查上下文窗口，超限则自动管理
+        # summarize/auto 需要 llm_call；未接线时会静默回退 truncate
         before = len(messages)
-        messages = CONTEXT.manage(messages)
+        messages = CONTEXT.manage(messages, llm_call=_context_llm_wrapper)
         if len(messages) != before or CONTEXT.last_action:
             if CONTEXT.last_action:
                 print(f"  [上下文] {CONTEXT.last_action}")
@@ -773,16 +781,15 @@ def main():
         if idx + 1 < len(_sys_argv):
             _mcp_args_list.append(_sys_argv[idx + 1].split())
         _sys_argv = _sys_argv[:idx] + _sys_argv[idx + 2:]
-    if not _mcp_args_list:
-        _mcp_args_list = load_mcp_server_commands()
-    for mcp_args in _mcp_args_list:
-        cmd = mcp_args[0]
-        args = mcp_args[1:]
-        print("  [MCP] connect")
+    _mcp_mock = os.environ.get("REACT_AGENT_MCP_MOCK", "").strip().lower() in (
+        "1", "true", "yes", "on",
+    )
+    if _mcp_mock:
+        print("  [MCP] connect (mock)")
         try:
-            from react_agent.mcp_client import MCPClient
+            from react_agent.mcp_client import MockMCPClient
 
-            client = MCPClient(cmd, args)
+            client = MockMCPClient()
             client.connect()
             client.discover_tools()
             mcp_defs = client.to_tool_definitions()
@@ -790,10 +797,30 @@ def main():
             TOOL_DEFINITIONS = [t for t in TOOL_DEFINITIONS if t["function"]["name"] not in _suppress]
             TOOL_DEFINITIONS.extend(mcp_defs)
             MCP_CLIENTS.append(client)
-            print(f"  -> 隐藏本地重复工具，合并 {len(mcp_defs)} 个 MCP 工具")
+            print(f"  -> 隐藏本地重复工具，合并 {len(mcp_defs)} 个 MCP 工具（mock）")
         except Exception as e:
-            print(f"  -> 连接失败: {e}\n")
+            print(f"  -> mock 连接失败: {e}\n")
+    else:
+        if not _mcp_args_list:
+            _mcp_args_list = load_mcp_server_commands()
+        for mcp_args in _mcp_args_list:
+            cmd = mcp_args[0]
+            args = mcp_args[1:]
+            print("  [MCP] connect")
+            try:
+                from react_agent.mcp_client import MCPClient
 
+                client = MCPClient(cmd, args)
+                client.connect()
+                client.discover_tools()
+                mcp_defs = client.to_tool_definitions()
+                _suppress = {"get_time"}
+                TOOL_DEFINITIONS = [t for t in TOOL_DEFINITIONS if t["function"]["name"] not in _suppress]
+                TOOL_DEFINITIONS.extend(mcp_defs)
+                MCP_CLIENTS.append(client)
+                print(f"  -> 隐藏本地重复工具，合并 {len(mcp_defs)} 个 MCP 工具")
+            except Exception as e:
+                print(f"  -> 连接失败: {e}\n")
     _skip_query = False
     if _sys_argv:
         q = " ".join(_sys_argv)

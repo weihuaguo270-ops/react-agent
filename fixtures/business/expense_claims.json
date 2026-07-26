@@ -1,0 +1,46 @@
+{
+  "claims": [
+    {
+      "id": "C-001",
+      "category": "餐饮",
+      "amount": 128,
+      "has_receipt": true,
+      "pre_approved": false,
+      "note": "客户午餐",
+      "expect": "approve_manager"
+    },
+    {
+      "id": "C-002",
+      "category": "餐饮",
+      "amount": 260,
+      "has_receipt": true,
+      "pre_approved": false,
+      "note": "超餐饮额度",
+      "expect": "reject_over_limit"
+    },
+    {
+      "id": "C-003",
+      "category": "交通",
+      "amount": 80,
+      "has_receipt": false,
+      "pre_approved": false,
+      "note": "打车无票",
+      "expect": "reject_no_receipt"
+    },
+    {
+      "id": "C-004",
+      "category": "住宿",
+      "amount": 1500,
+      "has_receipt": true,
+      "pre_approved": true,
+      "note": "超住宿需总监",
+      "expect": "approve_director"
+    }
+  ],
+  "limits": {
+    "餐饮": 200,
+    "交通": 500,
+    "住宿": 600,
+    "办公采购": 1000
+  }
+}

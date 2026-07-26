@@ -118,15 +118,26 @@ class RAG:
         # 去重：不重复加载已有片段
         existing = set(self.chunks)
         added = 0
+        use_vectors = _HAS_VECTOR and self._rag_mode() != "keyword"
         for chunk, src in zip(new_chunks, new_sources):
             if chunk not in existing:
                 self.chunks.append(chunk)
                 self.sources.append(src)
-                vec = self._get_model().encode(chunk)
-                self.vecs.append(vec)
+                if use_vectors:
+                    try:
+                        vec = self._get_model().encode(chunk)
+                        self.vecs.append(vec)
+                    except Exception:
+                        self.vecs.append([])
+                else:
+                    self.vecs.append([])
                 added += 1
 
-        print(f"[RAG] 从 {os.path.basename(file_path)} 加载了 {added}/{len(new_chunks)} 个片段")
+        mode = "keyword" if not use_vectors else "semantic"
+        print(
+            f"[RAG] 从 {os.path.basename(file_path)} 加载了 "
+            f"{added}/{len(new_chunks)} 个片段（{mode}）"
+        )
         self._prune()
         self._save()
         return added > 0
@@ -149,14 +160,58 @@ class RAG:
     # ================================================================
     # 检索
     # ================================================================
+    @staticmethod
+    def _rag_mode() -> str:
+        """semantic | keyword | auto（缺依赖时 keyword）"""
+        return os.environ.get("REACT_AGENT_RAG_MODE", "auto").strip().lower() or "auto"
+
+    def _keyword_query(self, question, top_k=5):
+        """无向量依赖的离线检索（与 Memory 关键词策略同类）。"""
+        q = (question or "").strip().lower()
+        if not q or not self.chunks:
+            return []
+        # 中英：空白词 + 中文二元组（无空格查询也能命中）
+        tokens = [t for t in q.replace("？", " ").replace("?", " ").split() if len(t) > 1]
+        cjk = [c for c in q if "\u4e00" <= c <= "\u9fff"]
+        for i in range(len(cjk) - 1):
+            tokens.append(cjk[i] + cjk[i + 1])
+        tokens = list(dict.fromkeys(tokens))  # 保序去重
+        scored = []
+        for i, chunk in enumerate(self.chunks):
+            cl = chunk.lower()
+            hit = sum(1 for t in tokens if t in cl) if tokens else 0
+            if q and q in cl:
+                hit += 2
+            if hit > 0:
+                scored.append((hit, i))
+        scored.sort(key=lambda x: -x[0])
+        out = []
+        for hit, idx in scored[:top_k]:
+            out.append({
+                "content": self.chunks[idx],
+                "source": self.sources[idx] if idx < len(self.sources) else "",
+                "score": float(hit),
+            })
+        return out
+
     def query(self, question, top_k=5, min_score=0.25):
         """
-        根据问题语义搜索最相关的文档片段。
+        根据问题搜索最相关的文档片段。
         返回: [{"content": str, "source": str, "score": float}, ...]
+
+        模式：
+          - REACT_AGENT_RAG_MODE=keyword → 仅关键词
+          - semantic / auto + 已装 [rag] → 向量检索，失败回退关键词
         """
         if not self.chunks:
             return []
+        mode = self._rag_mode()
+        force_kw = mode == "keyword" or not _HAS_VECTOR
+        if force_kw:
+            return self._keyword_query(question, top_k=top_k)
         try:
+            if not self.vecs or len(self.vecs) != len(self.chunks):
+                return self._keyword_query(question, top_k=top_k)
             q_vec = self._get_model().encode(question)
             scores = cosine_similarity([q_vec], self.vecs)[0]
 
@@ -170,11 +225,10 @@ class RAG:
                         "source": self.sources[idx],
                         "score": float(scores[idx]),
                     })
-            return results
+            return results or self._keyword_query(question, top_k=top_k)
         except Exception as e:
-            print(f"[RAG] 检索出错: {e}")
-            return []
-
+            print(f"[RAG] 语义检索出错，回退关键词: {e}")
+            return self._keyword_query(question, top_k=top_k)
     def format_context(self, results):
         """将检索结果格式化为 LLM 可用的上下文字符串"""
         if not results:
@@ -252,17 +306,18 @@ def rag_query(query: str, top_k: int = 3) -> str:
     """
     Agent 工具函数：从本地文档库中检索与问题相关的知识。
     当用户问到产品文档、API 文档、项目知识库内容时使用。
+
+    无 [rag] 依赖时自动走关键词检索（REACT_AGENT_RAG_MODE=keyword）。
     """
-    if not _HAS_VECTOR:
+    if not RAG_INDEX.chunks:
         return (
-            '[RAG] 未安装语义检索依赖。请运行: pip install -e ".[rag]"\n'
-            "（核心 Agent 循环不依赖 RAG，可先用 web_search / 本地文件工具。）"
+            "[RAG] 文档库为空。可用 examples/demo_rag.py 加载 fixtures/rag_corpus，"
+            "或调用 ingest / ingest_directory。"
         )
     results = RAG_INDEX.query(query, top_k=top_k)
     if not results:
         return "未在本地文档中找到相关信息"
     return RAG_INDEX.format_context(results)
-
 
 RAG_TOOL_DEFINITION = {
     "type": "function",

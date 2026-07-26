@@ -143,13 +143,103 @@ class MCPClient:
         self.proc.stdin.flush()
 
 
+class MockMCPClient:
+    """离线 MCP 替身：不启子进程，接口与 MCPClient 对齐。
+
+    开启方式：``REACT_AGENT_MCP_MOCK=1``（见 react_loop CLI / demo_mcp_mock.py）。
+    用于 CI、面试 Demo、无 uvx 环境证明「工具协议合并」路径。
+    """
+
+    def __init__(self, command="mock", args=None, env=None):
+        self.command = command
+        self.args = args or []
+        self.env = env or {}
+        self.proc = None
+        self.tools = []
+        self._connected = False
+
+    def connect(self, timeout=15):
+        self._connected = True
+        print("  [MCP] 已连接: mock-mcp-server v0.1.0 (REACT_AGENT_MCP_MOCK=1)")
+
+    def close(self):
+        self._connected = False
+        self.proc = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def discover_tools(self):
+        self.tools = [
+            {
+                "name": "get_current_time",
+                "description": "Mock: return a fixed timezone timestamp",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "timezone": {"type": "string", "description": "IANA timezone"},
+                    },
+                },
+            },
+            {
+                "name": "echo_note",
+                "description": "Mock: echo a note back (protocol smoke)",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string"},
+                    },
+                    "required": ["text"],
+                },
+            },
+        ]
+        for t in self.tools:
+            print(f"  [MCP] {t['name']} - {t.get('description', '')[:60]}")
+        print(f"  [MCP] 共 {len(self.tools)} 个工具（mock）")
+        return self.tools
+
+    def call_tool(self, name, arguments=None):
+        arguments = arguments or {}
+        if name == "get_current_time":
+            tz = arguments.get("timezone") or "Asia/Shanghai"
+            return f"2026-07-19T09:00:00+08:00 ({tz}) [mock]"
+        if name == "echo_note":
+            return f"echo: {arguments.get('text', '')}"
+        raise RuntimeError(f"MCP 错误 [-32601]: Unknown mock tool: {name}")
+
+    def to_tool_definitions(self):
+        defs = []
+        for t in self.tools:
+            defs.append({
+                "type": "function",
+                "function": {
+                    "name": t["name"],
+                    "description": t.get("description", ""),
+                    "parameters": t.get("inputSchema", {
+                        "type": "object", "properties": {}
+                    }),
+                },
+            })
+        return defs
+
+
 # ================================================================
 # 命令行测试
 # ================================================================
 if __name__ == "__main__":
     import sys
+    if len(sys.argv) >= 2 and sys.argv[1] in ("--mock", "mock"):
+        with MockMCPClient() as c:
+            c.connect()
+            c.discover_tools()
+            print(c.call_tool("get_current_time", {"timezone": "UTC"}))
+        sys.exit(0)
     if len(sys.argv) < 2:
         print("用法: python mcp_client.py uvx mcp-server-time")
+        print("      python mcp_client.py --mock")
         sys.exit(1)
     with MCPClient(sys.argv[1], sys.argv[2:]) as c:
         c.connect()

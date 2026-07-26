@@ -116,14 +116,20 @@ from react_agent.harness.replay import replay_trajectory
 replay_trajectory(trajectory)
 ```
 
-### RAG / MCP / 多 Agent（实验）
+### RAG / MCP / Context / 业务 Demo（实验）
 
-默认关闭。详见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
+默认工具表不注册实验工具。工作流总览：[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)。
 
 ```bash
 set REACT_AGENT_EXPERIMENTAL_TOOLS=1   # 注册 rag_query / tot / dashboard
-pip install -e ".[rag]"                # 语义检索依赖
-# MCP：cp mcp_servers.example.json mcp_servers.json 或 --mcp ...
+set REACT_AGENT_RAG_MODE=keyword      # 无向量依赖也可检索
+set REACT_AGENT_MCP_MOCK=1            # 无 uvx 时演示 MCP 合并路径
+python examples/demo_context.py
+python examples/demo_rag.py
+python examples/demo_expense_workflow.py
+python examples/demo_mcp_mock.py
+# 可选语义检索: pip install -e ".[rag]"
+# 真 MCP: cp mcp_servers.example.json mcp_servers.json 或 --mcp ...
 ```
 
 ## LangGraph 对照（`experiments/langgraph/`）
