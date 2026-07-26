@@ -2,24 +2,33 @@
 
 ## Unreleased
 
+（下一批变更写在这里。）
+
+## 0.2.0 (2026-07-26)
+
 ### Added
-- **P2 跨仓版本化**：`SCHEMA_VERSION` / `EVAL_API_VERSION`；缺省轨迹兼容 major `1`；不兼容 major 校验失败
-- **Core 懒加载**：`react_loop` 不再顶层导入 MCP / Orchestrator / RAG；`tests/test_core_lazy_imports.py`
+- **权限闸门**：deny → ask → allow（`safety/permissions.py` + `permission_gate.py`），在沙箱前强制评估；与进程沙箱分层说明
+- **Context LLM 接线**：`CONTEXT.manage(..., llm_call=)`；离线 `demo_context.py` + `tests/test_context_manage.py`
+- **RAG 关键词离线路径**：`REACT_AGENT_RAG_MODE=keyword`；`fixtures/rag_corpus` + `demo_rag.py`
+- **业务多步 Demo**：报销政策检索与裁决 `demo_expense_workflow.py`
+- **MCP mock**：`MockMCPClient` / `REACT_AGENT_MCP_MOCK=1`；`demo_mcp_mock.py`
+- **工作流文档**：`docs/AGENT_WORKFLOW.md`
+- **LangGraph 对照**：Core + twin 叙事；`experiments/langgraph/demo_checkpoint_hitl.py`；Format B 契约测试
+- **P2 跨仓版本化**：`SCHEMA_VERSION` / `EVAL_API_VERSION`；缺省轨迹兼容 major `1`
+- **Core 懒加载**：`react_loop` 不再顶层导入 MCP / Orchestrator / RAG
 - **tdebug↔eval 契约**：`tests/test_tdebug_eval_contract.py`（integration CI）
 - **公开 Agent benchmark 子集**：GSM8K×10 + HotpotQA×10；`run_public_benchmark.py` + offline CI
-- Execution-based 离线任务集：`execution_dataset.json` + `execution_scorer` + `examples/run_execution_suite.py`（8/8 公开快照）
-- **Agent 端到端 execution**：`--modes agent`；扩至 **36** 条（易8/中12/难16，公开 36/36）；评测默认 `REACT_AGENT_DISABLE_MCP=1`
-- Harness 可靠性注入对照：`examples/run_reliability_harness.py`（4/4 公开快照）
-- **Live 可靠性 ON/OFF**：扩至 **20 flaky + 4 baseline**（error_obs 0 vs 3.1；tool_calls 1.0 vs 2.25）
-- 失败飞轮：`examples/run_failure_flywheel.py` + `docs/FAILURE_FLYWHEEL.md`；证据总图 `docs/P0_EVIDENCE_MAP.md`
-- **飞轮真闭环**：相邻同参工具拦截（`REACT_AGENT_BLOCK_DUPLICATE_TOOLS`）+ `run_flywheel_closed_loop.py`；同批 100 条 `llm_offtrack` **6→1**
-- **跨仓评分契约**：`score_with_eval_engine` 对齐 `extra_contracts`；`EvalIntegrationError` + `tests/test_eval_engine_contract.py`
-- **收尾强制 FINAL ANSWER**：预留末步禁工具（`REACT_AGENT_RESERVE_FINAL_STEP`）+ max_steps 后无工具强制总结；回归 `tests/test_final_answer_guard.py`
-- **Windows 控制台安全输出**：`console_io.safe_print` + `[PASS]/[FAIL]`；CI 增加 `windows-latest` × 3.10/3.11
-- **指标可信度**：execution Wilson CI；Judge 口径统一为 held_out live κ≈0.69（n=20，见 eval-engine METRICS_TRUST）
-- **Core 收窄**：默认工具表去掉 RAG/ToT/Dashboard；`docs/EXPERIMENTAL.md`；README 去实验/评测混杂
-- **CI**：coverage / mypy / pip-audit（venv）
-- Harness 长跑：默认接通 `ToolGuard`（超时/重试/熔断）与工具失败自修提示；评测透传 `max_steps`
+- Execution-based 离线任务集与 **Agent 端到端 execution**（公开 36/36）
+- Harness 可靠性注入 / Live 可靠性 ON/OFF；失败飞轮与真闭环（`llm_offtrack` 6→1）
+- **收尾强制 FINAL ANSWER**；Windows 控制台安全输出；日烟 `daily-smoke` 方差日志
+
+### Changed
+- DeepSeek 默认模型：`deepseek-chat` → **`deepseek-v4-flash`**（旧名自动映射；`LLM_THINKING=disabled`）
+- Core 收窄：默认工具表去掉 RAG/ToT/Dashboard；实验能力见 `docs/EXPERIMENTAL.md`
+- 空 `tools:[]` 不再写入请求体；HTTP 错误带响应体；400 不重试
+
+### Infrastructure
+- CI：coverage / mypy / pip-audit；`windows-latest`；Real LLM smoke 使用 v4 模型环境变量
 
 ## 0.1.0 (2026-07-13)
 
