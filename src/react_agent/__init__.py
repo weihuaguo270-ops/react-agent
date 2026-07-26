@@ -1,6 +1,6 @@
-"""ReAct Agent — learning-oriented runtime (not production).
+"""ReAct Agent — reproducible runtime prototype (not a production platform).
 
-Core path: ``react_loop`` + tools + harness + ToolGuard.
+Core path: ``react_loop`` + tools + harness + ToolGuard + permission gate.
 Framework twin: ``experiments/langgraph`` (optional ``[langgraph]`` extras).
-Experimental modules (RAG / MCP / multi-agent): see ``docs/EXPERIMENTAL.md``.
+Optional modules (RAG / MCP / multi-agent): see ``docs/EXPERIMENTAL.md``.
 """
