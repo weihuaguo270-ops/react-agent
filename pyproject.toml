@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "react-agent"
 version = "0.2.0"
-description = "Reproducible ReAct agent runtime (Core loop + harness/eval + LangGraph twin; not a production platform)"
+description = "可复现的 ReAct Agent 运行时（Core 循环 + Harness/评测 + LangGraph 对照；非生产平台）"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

@@ -1,6 +1,6 @@
 # ReAct Agent
 
-[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/scope-reproducible%20runtime%20·%20not%20a%20platform-lightgrey)](docs/EXPERIMENTAL.md)
+[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-可复现运行时·非生产平台-lightgrey)](docs/EXPERIMENTAL.md)
 
 **可复现的 Agent 运行时原型** — ReAct 控制流、工具调用、轨迹（Format B）、权限闸门与 ToolGuard、评测/失败飞轮闭环；并用 LangGraph 对照框架编排。  
 默认叙事以 **Core 路径 + 证据链** 为准；RAG / MCP / 多 Agent 为可选能力。
