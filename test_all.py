@@ -293,10 +293,14 @@ from react_agent.tools import TOOL_REGISTRY as TR, TOOL_DEFINITIONS as TDS
 
 expected_tools = [
     "get_time", "calculator", "web_search", "fetch_page", "summarize",
-    "rag_query", "switch_cot_strategy", "tot_reasoning", "switch_role",
-    "switch_context_strategy", "toggle_sandbox", "start_dashboard", "clear_trajectories",
-    "execute_python",
+    "switch_cot_strategy", "switch_role",
+    "switch_context_strategy", "toggle_sandbox", "clear_trajectories",
+    "execute_python", "list_workflows", "run_workflow",
 ]
+if os.environ.get("REACT_AGENT_EXPERIMENTAL_TOOLS", "").strip().lower() in (
+    "1", "true", "yes", "on",
+):
+    expected_tools.extend(["rag_query", "tot_reasoning", "start_dashboard"])
 for name in expected_tools:
     check(f"TOOL_REGISTRY 含 {name}", name in TR)
 check(f"TOOL_DEFINITIONS 数量 {len(expected_tools)}", len(TDS) == len(expected_tools))
@@ -417,3 +421,5 @@ if errors:
 else:
     safe_print(f"{PASS} 全部测试通过!")
 print(f"{'='*50}")
+if errors:
+    sys.exit(1)

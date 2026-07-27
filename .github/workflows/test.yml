@@ -82,6 +82,8 @@ jobs:
       run: |
         python examples/eval/run_public_rag_benchmark.py --modes offline,rag
         pytest tests/test_public_rag_benchmark.py -q
+    - name: Docs troubleshoot golden (offline)
+      run: python examples/eval/run_docs_troubleshoot_eval.py
 
   # Windows: default console often GBK — catch emoji/encoding regressions early
   test-windows:

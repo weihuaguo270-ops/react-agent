@@ -1,10 +1,5 @@
 """Flaky inject + live reliability mock 测试"""
 import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "examples", "eval"))
 
 os.environ["REACT_AGENT_SKIP_RAG"] = "1"
 
@@ -44,7 +39,10 @@ def test_parse_and_install_flaky():
 
 
 def test_reliability_live_mock():
-    from run_reliability_live import SCENARIOS, run_pair, aggregate
+    from tests._load_eval_script import load_eval_script
+
+    mod = load_eval_script("run_reliability_live")
+    SCENARIOS, run_pair, aggregate = mod.SCENARIOS, mod.run_pair, mod.aggregate
 
     pairs = [run_pair(s, live=False) for s in SCENARIOS]
     agg = aggregate(pairs)
