@@ -24,30 +24,40 @@
 
 ### 工作流实质
 
-默认路径为 **检索 → 拼接文档片段 → 引用 / 拒答策略**（`workflow/builtins.py` → `apps/docs_troubleshoot/draft.py`），不是多步根因推理。
+默认路径为 **检索 → 句级要点合成 → 引用 / 拒答策略**（`synthesize.py` + `draft.py` + `policy.py`），诊断步骤由 `cause_rules.py` / `diagnosis.py` 结构化输出，不是开放式多轮根因推理。
 
 ### 起草能力
 
-`draft.py` 从命中结果截取片段（单段约 280 字）拼成回答，**不会**综合多源原因、验证诊断假设或生成排查步骤清单。
+`synthesize.py` 从命中结果抽取与问题相关的句子并标注来源；`cause_rules.py` 将现场 HTTP 错误映射为候选原因与修复步骤。**不会**在无文档/证据支撑时臆造根因。
 
 ### 检索与语料
 
 - 当前语料为 **14 篇** 内置 md；排序含针对固定问法的 domain boost。
 - 在黄金集上表现好，**不能**等同证明对真实企业文档库、OpenAPI 全量或多版本混部有效。
 
-### 未接入的现场证据
+### 未接入 / 未自动采集的现场证据
 
-当前**不读取**：
+当前**不会自动抓取**线上流量，但 Workflow **支持**调用方传入：
 
-- 真实 HTTP 请求 / 响应体与响应头（除语料描述外）
-- 应用日志、分布式 Trace、配置快照
-- OpenAPI / JSON Schema 自动解析与健康检查执行
+- HTTP 错误 JSON + 状态码（`error_response`）
+- 请求头（脱敏，`request_headers`）
+- **日志片段**（`log_excerpt`）与 **Trace JSON**（`trace_context`）
+- 配置快照（`read_config_snapshot`）、健康探测（`probe_service_health`）
 
-因此不能声称「自动定位线上根因」或「替代 SRE 值班诊断」。
+仍**不读取**：未传入的应用日志流、分布式 Trace 后端、自动 OpenAPI 拉取（需 `REACT_AGENT_INGEST_OPENAPI=1` 与 spec 路径）。
 
 ## 下一阶段唯一主线：三个闭环
 
 **不继续扩张通用 Agent 功能**（多 Agent、ToT、Dashboard 等保持实验态）。集中补齐：
+
+### 实现状态（2026-07）
+
+| 闭环 | 状态 | 入口 |
+|------|------|------|
+| ① 真实资料 | **增强** | 递归 ingest + Git · **生产盲测语料** `fixtures/.../production_corpus` |
+| ② 现场证据 | **增强** | error / headers / log / trace / **Trace MCP** / config / health |
+| ③ 结构化诊断 | **增强** | `cause_infer` + **`fix_policy` 权限闸门**（`pending_fix_steps`） |
+| 评测 | **增强** | golden 34 · fault 12 · production 5 · **git docs 5** |
 
 ### 1. 接入真实资料
 
@@ -89,6 +99,8 @@ Workflow 版本演进：`docs_troubleshoot` v3+ 在保留引用 / 拒答 policy 
 | 阶段 | 指标 | 数据集 |
 |------|------|--------|
 | **现在** | pass_rate、by_tag、引用命中、拒答正确 | `golden.json` 34 条 + leakage guards |
+| **仿真故障** | 答案 + `diagnosis` + 根因/禁词指标 | `fault_cases.json` 12 条 · `run_fault_eval.py` |
+| **生产盲测** | 仅外部 ingest 语料可答 | `production_cases.json` 5 条 · `run_production_eval.py` |
 | **下一阶** | 根因命中率、错误建议率、证据充分率 | 真实 / 仿真历史故障盲测集（held_out 冻结） |
 | **运营** | 平均解决时间、正确升级率 | 脱敏工单回放（需单独治理） |
 

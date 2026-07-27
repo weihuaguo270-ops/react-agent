@@ -47,6 +47,7 @@ def run_workflow_tool(name: str, query: str = "", payload_json: str = "") -> str
     data["answer"] = result.answer
     data["refused"] = result.refused
     data["citations"] = result.citations
+    data["diagnosis"] = result.diagnosis
     return json.dumps(data, ensure_ascii=False)
 
 

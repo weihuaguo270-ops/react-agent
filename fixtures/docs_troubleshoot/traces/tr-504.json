@@ -1,0 +1,14 @@
+{
+  "trace_id": "tr-504",
+  "spans": [
+    {
+      "name": "gateway.proxy",
+      "service": "edge-gateway",
+      "status": 504,
+      "error": "upstream_timeout"
+    }
+  ],
+  "logs": [
+    "2026-07-27T11:00:00Z trace_id=tr-504 level=ERROR upstream_timeout gateway=504"
+  ]
+}

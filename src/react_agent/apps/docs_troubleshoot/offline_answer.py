@@ -1,28 +1,28 @@
-"""Offline answer path (same retrieve → draft → policy as HTTP /v1/chat default)."""
+"""Offline answer path via Workflow v4 (unified with /v1/workflows/run)."""
 from __future__ import annotations
 
-import json
+import os
 from typing import Any
 
-from react_agent.apps.docs_troubleshoot.draft import build_draft_from_hits
-from react_agent.apps.docs_troubleshoot.policy import enforce_answer_policy
-from react_agent.apps.docs_troubleshoot.tools import lookup_api, search_docs
+from react_agent.tools import enable_app_tools
 
 
-def answer_offline(query: str) -> dict[str, Any]:
+def answer_offline(query: str, **state: Any) -> dict[str, Any]:
     """Deterministic docs troubleshoot answer without LLM."""
-    search = json.loads(search_docs(query, top_k=3))
-    api = json.loads(lookup_api(query, top_k=2))
-    draft_out = build_draft_from_hits(query, search, api)
-    out = enforce_answer_policy(
-        draft_out["draft"],
-        allowed_sources=draft_out.get("allowed_sources") or None,
-        must_refuse=bool(draft_out.get("need_refuse")),
-    )
+    os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
+    os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
+    enable_app_tools()
+    from react_agent.apps.docs_troubleshoot.index import reset_index
+    from react_agent.workflow import run_workflow
+
+    reset_index()
+    initial = {"query": query, **state}
+    result = run_workflow("docs_troubleshoot", initial)
     return {
-        "ok": True,
-        "answer": out["answer"],
-        "refused": bool(out.get("refused")),
-        "citations": out.get("citations") or [],
-        "policy": out.get("policy"),
+        "ok": result.ok,
+        "answer": result.answer,
+        "refused": bool(result.refused),
+        "citations": result.citations or [],
+        "diagnosis": result.diagnosis or {},
+        "policy": result.state.get("policy"),
     }

@@ -4,6 +4,36 @@
 
 （下一批变更写在这里。）
 
+## 0.3.0 (2026-07-27)
+
+### Added — 证据化文档排障（docs_troubleshoot）
+
+- **Workflow v5**：现场证据 → 检索 → 句级合成 → 引用/拒答 → 结构化诊断
+- **现场证据**：HTTP 错误、请求头、日志片段、Trace JSON；`trace_id` 自动拉取（mock / MCP）
+- **结构化诊断**：`cause_rules` + `cause_infer`（文档推断）、`schemas/diagnosis.schema.json`
+- **fix_steps 权限闸门**：可执行修复进 `pending_fix_steps`（`apply_fix_step` CONFIRM）；破坏性步骤拦截
+- **资料 ingest**：递归目录、Git `ls-files`、OpenAPI `$ref`、增量 manifest
+- **起草**：`synthesize.py` 句级要点合成（替代硬拼接片段）
+
+### Eval（CI 四门禁）
+
+| 套件 | 规模 |
+|------|------|
+| golden | 34 |
+| fault_sim | 12（含 log / trace 场景） |
+| production_blind | 5（外部 fixtures 语料） |
+| git_docs_held_out | 5（本仓库 `docs/` via Git ingest） |
+
+- 指标：`root_cause_hit_rate`、`evidence_sufficiency_rate`、`wrong_suggestion_rate`
+- 脚本：`run_fault_eval.py`、`run_production_eval.py`、`run_git_docs_eval.py`
+- Trace MCP：`fixtures/docs_troubleshoot/mcp_trace_server.py` + `REACT_AGENT_TRACE_BACKEND=mcp`
+
+### Changed
+
+- `draft.py` / `ranking.py`：证据扩展 query、domain boost（含 git/prod 语料）
+- `permissions.py`：注册 `apply_fix_step`、`fetch_trace`
+- HTTP `/v1/chat`：支持 `error_response` / `trace_id`，返回 `diagnosis`
+
 ## 0.2.0 (2026-07-26)
 
 ### Added

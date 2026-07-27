@@ -2,7 +2,7 @@
 
 主场景 **docs_troubleshoot** 的**当前能力**是：基于内部文档 / Runbook、答案可引用、无依据可拒答的问答后端（**不是**完整 API 根因诊断 Agent）。产品定位与路线图见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)。
 
-本页描述**现有**黄金集回归；下一阶段评测指标（根因命中率等）在路线图中有定义，尚未实现。
+本页描述**现有**黄金集回归与生产盲测；仿真故障指标已实现，历史工单盲测仍规划。
 
 ## 测试集
 
@@ -46,6 +46,58 @@ python examples/eval/run_docs_troubleshoot_eval.py --gate non_held_out
 
 CI：`tests/test_docs_troubleshoot.py` — Workflow 与 chat_offline 全量 PASS。
 
+## 仿真故障集（field evidence）
+
+```bash
+python examples/eval/run_fault_eval.py
+```
+
+**12 条**（`fault_sim` + `fault_held_out`）：携带 `error_response` / `request_headers` / **`log_excerpt`** / **`trace_context`**。
+
+报告额外输出 `metrics`：
+
+| 指标 | 含义 |
+|------|------|
+| `root_cause_hit_rate` | 期望根因 hint 是否出现在 diagnosis |
+| `evidence_sufficiency_rate` | 现场证据与规则匹配的平均充分度（0–1） |
+| `wrong_suggestion_rate` | 是否出现 `forbid_any` 禁词（fix_steps / answer） |
+
+## 生产盲测（外部语料）
+
+```bash
+python examples/eval/run_production_eval.py
+```
+
+**5 条**（`prod_blind` + `prod_held_out`）：通过 `REACT_AGENT_DOCS_INGEST_DIRS` 注入 `fixtures/docs_troubleshoot/production_corpus/`，问题**不能**仅靠内置 14 篇 corpus 回答。
+
+| 指标 | 含义 |
+|------|------|
+| `production_source_hit_rate` | 回答引用 `prod_*.md` 的比例 |
+| `avg_evidence_sufficiency` | 诊断证据充分度均值 |
+
+CI 已门禁：golden + fault + production + **git docs** 四套离线 eval。
+
+### Trace 后端（MCP）
+
+```bash
+# mock（默认，读 fixtures/docs_troubleshoot/traces/）
+set REACT_AGENT_TRACE_BACKEND=mock
+
+# MCP stdio 服务器
+set REACT_AGENT_TRACE_BACKEND=mcp
+set REACT_AGENT_MCP_CONFIG=fixtures/docs_troubleshoot/mcp_servers.trace.json
+```
+
+Workflow 传入 `trace_id` 时自动拉取 Trace（`fetch_trace` 工具亦可手动调用）。
+
+### Git 文档 held_out
+
+```bash
+python examples/eval/run_git_docs_eval.py
+```
+
+通过 `REACT_AGENT_DOCS_GIT_ROOT` + `ls-files docs/`  ingest 本仓库真实文档，**5 条**冻结用例（`git_held_out` 1 条）。
+
 ## 与周边评测
 
 | 评测 | 关系 |
@@ -59,7 +111,7 @@ CI：`tests/test_docs_troubleshoot.py` — Workflow 与 chat_offline 全量 PASS
 | 指标 | 状态 |
 |------|------|
 | pass_rate、引用、拒答 | **已实现**（本页） |
-| 根因命中率、错误建议率、证据充分率 | 规划；需历史故障盲测集 |
+| 根因命中率、错误建议率、证据充分率 | **仿真集已实现**（`run_fault_eval.py` metrics）；历史盲测集仍规划 |
 | MTTR、正确升级率 | 规划；需脱敏工单回放 |
 
 实现顺序见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md) 三闭环主线。

@@ -84,6 +84,12 @@ jobs:
         pytest tests/test_public_rag_benchmark.py -q
     - name: Docs troubleshoot golden (offline)
       run: python examples/eval/run_docs_troubleshoot_eval.py
+    - name: Docs troubleshoot fault sim (offline)
+      run: python examples/eval/run_fault_eval.py
+    - name: Docs troubleshoot production blind (offline)
+      run: python examples/eval/run_production_eval.py
+    - name: Docs troubleshoot git docs held-out (offline)
+      run: python examples/eval/run_git_docs_eval.py
 
   # Windows: default console often GBK — catch emoji/encoding regressions early
   test-windows:

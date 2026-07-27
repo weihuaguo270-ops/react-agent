@@ -1,0 +1,33 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "ReAct Agent API", "version": "1.0.0"},
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {"200": {"description": "OK"}}
+      }
+    },
+    "/v1/chat": {
+      "post": {
+        "summary": "Chat completion",
+        "responses": {
+          "401": {"description": "unauthorized — missing bearer token"},
+          "429": {"description": "rate_limited"}
+        }
+      }
+    },
+    "/v1/items": {
+      "get": {
+        "summary": "List items with cursor pagination",
+        "parameters": [
+          {"name": "cursor", "in": "query"},
+          {"name": "limit", "in": "query", "schema": {"default": 20, "maximum": 100}}
+        ],
+        "responses": {
+          "400": {"description": "invalid_request — bad cursor"}
+        }
+      }
+    }
+  }
+}

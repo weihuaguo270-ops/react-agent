@@ -1,0 +1,47 @@
+[
+  {
+    "id": "git01",
+    "tag": "git_blind",
+    "question": "对外名称建议收敛为什么？",
+    "expect": "answer",
+    "must_any": ["证据化文档排障"],
+    "must_cite": true,
+    "prefer_sources": ["EVIDENCE_DOCS_TROUBLESHOOT.md"]
+  },
+  {
+    "id": "git02",
+    "tag": "git_blind",
+    "question": "黄金集测试规模是多少条？",
+    "expect": "answer",
+    "must_any": ["34"],
+    "must_cite": true,
+    "prefer_sources": ["DOCS_TROUBLESHOOT_EVAL.md"]
+  },
+  {
+    "id": "git03",
+    "tag": "git_blind",
+    "question": "运行时默认以什么作为 Core 实现？",
+    "expect": "answer",
+    "must_any": ["自建 Core"],
+    "must_cite": true,
+    "prefer_sources": ["CORE_ARCHITECTURE.md"]
+  },
+  {
+    "id": "git04",
+    "tag": "git_blind",
+    "question": "DOCS_TROUBLESHOOT_EVAL 难度分层里「单文档标准问答」档有多少条？",
+    "expect": "answer",
+    "must_any": ["13"],
+    "must_cite": true,
+    "prefer_sources": ["DOCS_TROUBLESHOOT_EVAL.md"]
+  },
+  {
+    "id": "git05",
+    "tag": "git_held_out",
+    "question": "严格评测是否允许向 draft 注入 must_* 期望关键词？",
+    "expect": "answer",
+    "must_any": ["不", "不向 draft"],
+    "must_cite": true,
+    "prefer_sources": ["DOCS_TROUBLESHOOT_EVAL.md"]
+  }
+]

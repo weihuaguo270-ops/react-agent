@@ -1,0 +1,21 @@
+{
+  "trace_id": "tr-12",
+  "spans": [
+    {
+      "name": "api.call",
+      "service": "gateway",
+      "status": 429,
+      "error": "rate_limited"
+    },
+    {
+      "name": "rate_limit.check",
+      "service": "gateway",
+      "status": 429,
+      "error": "rate_limited"
+    }
+  ],
+  "logs": [
+    "2026-07-27T10:01:00Z trace_id=tr-12 level=WARN error.code=rate_limited HTTP 429",
+    "2026-07-27T10:01:00Z trace_id=tr-12 Retry-After: 60"
+  ]
+}

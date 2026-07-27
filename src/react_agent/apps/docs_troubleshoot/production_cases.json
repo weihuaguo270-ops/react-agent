@@ -1,0 +1,53 @@
+[
+  {
+    "id": "p01",
+    "tag": "prod_blind",
+    "question": "线上日志里如何用 trace_id 串联同一请求？",
+    "expect": "answer",
+    "must_any": ["trace_id", "request_id"],
+    "must_cite": true,
+    "prefer_sources": ["prod_observability.md"],
+    "require_production_corpus": true
+  },
+  {
+    "id": "p02",
+    "tag": "prod_blind",
+    "question": "网关返回 504 时文档建议的第一步排查是什么？",
+    "expect": "answer",
+    "must_any": ["504", "upstream_timeout", "日志"],
+    "must_cite": true,
+    "prefer_sources": ["prod_gateway_timeout.md"],
+    "require_production_corpus": true
+  },
+  {
+    "id": "p03",
+    "tag": "prod_blind",
+    "question": "生产写操作缺少幂等键会返回什么 HTTP 状态与错误码？",
+    "expect": "answer",
+    "must_all": ["409", "missing_idempotency_key"],
+    "must_any": ["Idempotency-Key"],
+    "must_cite": true,
+    "prefer_sources": ["prod_idempotency.md"],
+    "require_production_corpus": true
+  },
+  {
+    "id": "p04",
+    "tag": "prod_blind",
+    "question": "429 限流响应头里应读取哪个字段做退避？",
+    "expect": "answer",
+    "must_any": ["Retry-After", "429"],
+    "must_cite": true,
+    "prefer_sources": ["prod_rate_limit_headers.md"],
+    "require_production_corpus": true
+  },
+  {
+    "id": "p05",
+    "tag": "prod_held_out",
+    "question": "核心 API 全量 5xx 属于什么事故级别？",
+    "expect": "answer",
+    "must_any": ["P1", "on-call", "SRE"],
+    "must_cite": true,
+    "prefer_sources": ["prod_incident_playbook.md"],
+    "require_production_corpus": true
+  }
+]

@@ -3,17 +3,26 @@ from __future__ import annotations
 
 from typing import Any
 
-from react_agent.apps.docs_troubleshoot.draft import build_draft_from_hits
+from react_agent.apps.docs_troubleshoot.diagnosis import build_diagnosis
+from react_agent.apps.docs_troubleshoot.draft import as_results, build_draft_from_hits
+from react_agent.apps.docs_troubleshoot.evidence import collect_evidence_bundle
 from react_agent.workflow.engine import Step, StepKind, WorkflowDef
 from react_agent.workflow.registry import register_workflow
 
 
+def _parse_evidence(state: dict[str, Any], **_: Any) -> dict[str, Any]:
+    bundle = collect_evidence_bundle(state)
+    return {"evidence_bundle": bundle}
+
+
 def _draft_from_hits(state: dict[str, Any], **_: Any) -> dict[str, Any]:
-    return build_draft_from_hits(
+    out = build_draft_from_hits(
         str(state.get("query") or ""),
         state.get("search_hits"),
         state.get("api_hits"),
+        evidence_bundle=state.get("evidence_bundle"),
     )
+    return out
 
 
 def _apply_policy(state: dict[str, Any], **_: Any) -> dict[str, Any]:
@@ -32,11 +41,27 @@ def _apply_policy(state: dict[str, Any], **_: Any) -> dict[str, Any]:
     }
 
 
+def _build_diagnosis(state: dict[str, Any], **_: Any) -> dict[str, Any]:
+    hits = as_results(state.get("search_hits")) + as_results(state.get("api_hits"))
+    diag = build_diagnosis(
+        query=str(state.get("query") or ""),
+        evidence_bundle=state.get("evidence_bundle") or {},
+        draft=str(state.get("answer") or state.get("draft") or ""),
+        ranked_sources=list(state.get("ranked_sources") or []),
+        refused=bool(state.get("refused")),
+        retrieval_hits=hits,
+    )
+    diag["answer_summary"] = str(state.get("answer") or diag.get("answer_summary") or "")
+    return {"diagnosis": diag}
+
+
 def _finalize(state: dict[str, Any], **_: Any) -> dict[str, Any]:
+    diagnosis = dict(state.get("diagnosis") or {})
     return {
         "answer": state.get("answer") or "",
         "refused": bool(state.get("refused")),
         "citations": list(state.get("citations") or []),
+        "diagnosis": diagnosis,
         "done": True,
     }
 
@@ -44,14 +69,22 @@ def _finalize(state: dict[str, Any], **_: Any) -> dict[str, Any]:
 def build_docs_troubleshoot_workflow() -> WorkflowDef:
     return WorkflowDef(
         name="docs_troubleshoot",
-        description="证据化文档排障：检索 → 片段 draft → 引用/拒答（非根因诊断 Agent）",
-        version="3",
+        description="证据化文档排障 v5：日志/Trace + 现场证据 → 检索 → 文档推断诊断",
+        version="5",
         handlers={
+            "parse_evidence": _parse_evidence,
             "draft_from_hits": _draft_from_hits,
             "apply_policy": _apply_policy,
+            "build_diagnosis": _build_diagnosis,
             "finalize": _finalize,
         },
         steps=[
+            Step(
+                id="parse_evidence",
+                kind=StepKind.POLICY,
+                description="解析现场证据（error/headers/log/trace/config/health）",
+                handler="parse_evidence",
+            ),
             Step(
                 id="search",
                 kind=StepKind.TOOL,
@@ -59,6 +92,7 @@ def build_docs_troubleshoot_workflow() -> WorkflowDef:
                 tool="search_docs",
                 args={"query": "$query", "top_k": 3},
                 output_key="search_hits",
+                depends_on=["parse_evidence"],
             ),
             Step(
                 id="lookup_api",
@@ -73,23 +107,30 @@ def build_docs_troubleshoot_workflow() -> WorkflowDef:
             Step(
                 id="draft",
                 kind=StepKind.POLICY,
-                description="按 query 相关性排序命中并起草带引用回答",
+                description="检索排序 + 片段 draft",
                 handler="draft_from_hits",
-                depends_on=["search", "lookup_api"],
+                depends_on=["search", "lookup_api", "parse_evidence"],
             ),
             Step(
                 id="policy",
                 kind=StepKind.POLICY,
-                description="无依据拒答 / 引用校验",
+                description="引用校验 / 无依据拒答",
                 handler="apply_policy",
                 depends_on=["draft"],
+            ),
+            Step(
+                id="build_diagnosis",
+                kind=StepKind.POLICY,
+                description="结构化诊断（现象/原因/证据/验证/升级）",
+                handler="build_diagnosis",
+                depends_on=["policy", "parse_evidence"],
             ),
             Step(
                 id="final",
                 kind=StepKind.FINAL,
                 description="定稿输出",
                 handler="finalize",
-                depends_on=["policy"],
+                depends_on=["build_diagnosis"],
             ),
         ],
     )

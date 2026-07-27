@@ -1,0 +1,111 @@
+"""Production blind-set evaluation: external corpus via INGEST_DIRS."""
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+from typing import Any
+
+from react_agent.apps.docs_troubleshoot.eval_golden import score_workflow_case
+from react_agent.apps.docs_troubleshoot.index import reset_index
+
+_APP = Path(__file__).resolve().parent
+_REPO = _APP.resolve().parents[3]
+_PRODUCTION_CORPUS = _REPO / "fixtures" / "docs_troubleshoot" / "production_corpus"
+_CASES = _APP / "production_cases.json"
+
+
+def production_corpus_dir() -> Path:
+    return _PRODUCTION_CORPUS
+
+
+def load_production_cases() -> list[dict[str, Any]]:
+    return json.loads(_CASES.read_text(encoding="utf-8"))
+
+
+def _configure_production_ingest() -> None:
+    os.environ["REACT_AGENT_DOCS_INGEST_DIRS"] = str(_PRODUCTION_CORPUS)
+    os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
+    os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
+
+
+def _initial_state(case: dict[str, Any]) -> dict[str, Any]:
+    state: dict[str, Any] = {"query": case["question"]}
+    for key in (
+        "error_response",
+        "request_headers",
+        "log_excerpt",
+        "trace_context",
+        "trace_id",
+    ):
+        if case.get(key) is not None:
+            state[key] = case[key]
+    return state
+
+
+def run_production_eval(*, include_held_out: bool = True) -> dict[str, Any]:
+    _configure_production_ingest()
+
+    from react_agent.tools import enable_app_tools
+    from react_agent.workflow import run_workflow
+
+    enable_app_tools()
+    reset_index()
+
+    cases = load_production_cases()
+    if not include_held_out:
+        cases = [c for c in cases if c.get("tag") != "prod_held_out"]
+
+    rows: list[dict[str, Any]] = []
+    for case in cases:
+        result = run_workflow("docs_troubleshoot", _initial_state(case))
+        row = score_workflow_case(
+            case,
+            answer=result.answer,
+            refused=bool(result.refused),
+            ok_run=bool(result.ok),
+        )
+        row["diagnosis"] = result.diagnosis
+        if result.diagnosis:
+            row["evidence_sufficiency"] = result.diagnosis.get("evidence_sufficiency")
+            row["field_doc_aligned"] = result.diagnosis.get("field_doc_aligned")
+        rows.append(row)
+
+    passed = sum(1 for r in rows if r["passed"])
+    total = len(rows)
+    by_tag: dict[str, dict[str, int]] = {}
+    for case, row in zip(cases, rows):
+        tag = str(case.get("tag") or "prod_blind")
+        bucket = by_tag.setdefault(tag, {"passed": 0, "total": 0})
+        bucket["total"] += 1
+        if row["passed"]:
+            bucket["passed"] += 1
+
+    prod_hits = sum(
+        1
+        for r in rows
+        if r.get("passed") and "prod_" in (r.get("answer") or "")
+    )
+
+    return {
+        "suite": "production_blind",
+        "corpus": str(_PRODUCTION_CORPUS),
+        "passed": passed,
+        "total": total,
+        "pass_rate": round(passed / total, 3) if total else 0.0,
+        "by_tag": by_tag,
+        "metrics": {
+            "production_source_hit_rate": round(prod_hits / total, 3) if total else 0.0,
+            "avg_evidence_sufficiency": round(
+                sum(float(r.get("evidence_sufficiency") or 0.0) for r in rows) / (total or 1),
+                3,
+            ),
+        },
+        "rows": rows,
+    }
+
+
+if __name__ == "__main__":
+    report = run_production_eval()
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    raise SystemExit(0 if report["passed"] == report["total"] else 1)

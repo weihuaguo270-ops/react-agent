@@ -14,6 +14,12 @@ os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
 def _reset_index():
     from react_agent.apps.docs_troubleshoot.index import reset_index
 
+    for key in (
+        "REACT_AGENT_DOCS_GIT_ROOT",
+        "REACT_AGENT_DOCS_GIT_PREFIX",
+        "REACT_AGENT_DOCS_INGEST_DIRS",
+    ):
+        os.environ.pop(key, None)
     reset_index()
     yield
 

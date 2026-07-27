@@ -77,7 +77,17 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
     # Deterministic offline path (default for CI / local smoke)
     from react_agent.apps.docs_troubleshoot.offline_answer import answer_offline
 
-    out = answer_offline(message)
+    extra: dict[str, Any] = {}
+    if body.get("error_response") is not None:
+        extra["error_response"] = body.get("error_response")
+    if body.get("request_headers") is not None:
+        extra["request_headers"] = body.get("request_headers")
+    if body.get("run_health_check"):
+        extra["run_health_check"] = True
+        if body.get("health_url"):
+            extra["health_url"] = body.get("health_url")
+
+    out = answer_offline(message, **extra)
     sources = [c.get("source", "") for c in (out.get("citations") or []) if c.get("source")]
     return 200, {
         "request_id": request_id,
@@ -85,6 +95,7 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
         "trajectory_id": trajectory_id or f"offline-{request_id[:8]}",
         "citations": out.get("citations") or [{"source": s} for s in sources[:3]],
         "refused": out.get("refused", False),
+        "diagnosis": out.get("diagnosis") or {},
         "mode": "offline",
         "session_id": body.get("session_id") or "",
     }

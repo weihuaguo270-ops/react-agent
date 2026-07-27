@@ -59,6 +59,13 @@ def extract_claimed_sources(answer: str) -> list[str]:
     for pat in patterns:
         for m in pat.finditer(answer or ""):
             found.append(m.group(1).split("/")[-1])
+    tail = re.search(r"来源\s*[:：]\s*(.+?)\s*$", answer or "", re.I | re.M)
+    if tail:
+        for part in re.split(r"[,，]", tail.group(1)):
+            part = part.strip()
+            m2 = re.search(r"([a-zA-Z0-9_\-./]+\.(?:md|json|ya?ml|txt))", part, re.I)
+            if m2:
+                found.append(m2.group(1).split("/")[-1])
     return list(dict.fromkeys(found))
 
 

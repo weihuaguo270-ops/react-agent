@@ -62,6 +62,8 @@ TOOL_PERMISSIONS: dict[str, PermissionLevel] = {
     "verify_citations": PermissionLevel.SAFE,
     "list_workflows": PermissionLevel.SAFE,
     "run_workflow": PermissionLevel.SAFE,
+    "apply_fix_step": PermissionLevel.CONFIRM,
+    "fetch_trace": PermissionLevel.SAFE,
     "search_files": PermissionLevel.SAFE,
     "read_text_file": PermissionLevel.SAFE,
     "list_directory": PermissionLevel.SAFE,

@@ -36,10 +36,12 @@ def test_docs_workflow_answers_401():
     assert result.refused is False
     assert "401" in result.answer or "unauthorized" in result.answer.lower()
     assert [s.step_id for s in result.steps] == [
+        "parse_evidence",
         "search",
         "lookup_api",
         "draft",
         "policy",
+        "build_diagnosis",
         "final",
     ]
 
@@ -80,6 +82,8 @@ def test_workflow_to_trajectory():
     assert traj["schema"] == "harness_trajectory_format_b"
     assert len(traj["steps"]) >= 5
     assert traj["final_answer"]
+    assert isinstance(result.diagnosis, dict)
+    assert result.diagnosis.get("phenomenon")
 
 
 def test_workflow_tools_registered():

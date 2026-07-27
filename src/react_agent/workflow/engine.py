@@ -74,6 +74,7 @@ class WorkflowResult:
     answer: str = ""
     refused: bool = False
     citations: list[dict[str, Any]] = field(default_factory=list)
+    diagnosis: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -83,6 +84,7 @@ class WorkflowResult:
             "answer": self.answer,
             "refused": self.refused,
             "citations": self.citations,
+            "diagnosis": self.diagnosis,
             "state_keys": sorted(self.state.keys()),
             "steps": [
                 {
@@ -268,6 +270,7 @@ class WorkflowRunner:
                             answer=str(state.get("answer") or state.get("error") or rec.error),
                             refused=bool(state.get("refused")),
                             citations=list(state.get("citations") or []),
+                            diagnosis=dict(state.get("diagnosis") or {}),
                         )
                 rec.ended_at = time.time()
                 records.append(rec)
@@ -281,4 +284,5 @@ class WorkflowRunner:
             answer=str(state.get("answer") or ""),
             refused=bool(state.get("refused")),
             citations=list(state.get("citations") or []),
+            diagnosis=dict(state.get("diagnosis") or {}),
         )

@@ -1,0 +1,170 @@
+[
+  {
+    "id": "f01",
+    "tag": "fault_sim",
+    "question": "POST /v1/chat 返回 401 missing bearer token，最可能原因是什么？",
+    "error_response": {
+      "status_code": 401,
+      "body": {
+        "error": {
+          "code": "unauthorized",
+          "message": "missing bearer token",
+          "request_id": "req-f01"
+        }
+      }
+    },
+    "expect": "answer",
+    "must_any": ["401", "Authorization", "Bearer", "unauthorized"],
+    "must_cite": true,
+    "expect_root_cause": ["Authorization", "Bearer"],
+    "prefer_sources": ["api_auth.md"]
+  },
+  {
+    "id": "f02",
+    "tag": "fault_sim",
+    "question": "客户端收到 429 rate_limited，应如何理解？",
+    "error_response": {
+      "status_code": 429,
+      "body": {"error": {"code": "rate_limited", "message": "too many requests"}}
+    },
+    "expect": "answer",
+    "must_any": ["429", "rate_limited", "速率"],
+    "must_cite": true,
+    "expect_root_cause": ["rate_limited", "429"],
+    "prefer_sources": ["api_rate_limit.md", "api_errors.md"]
+  },
+  {
+    "id": "f03",
+    "tag": "fault_sim",
+    "question": "分页请求返回 400 invalid_request，cursor 可能有什么问题？",
+    "error_response": {
+      "status_code": 400,
+      "body": {"error": {"code": "invalid_request", "message": "invalid cursor"}}
+    },
+    "expect": "answer",
+    "must_any": ["400", "invalid_request", "cursor"],
+    "must_cite": true,
+    "expect_root_cause": ["cursor", "400"],
+    "prefer_sources": ["api_pagination.md", "api_errors.md"]
+  },
+  {
+    "id": "f04",
+    "tag": "fault_sim",
+    "question": "Webhook 回调一直失败，文档里最多重试几次？",
+    "error_response": {
+      "status_code": 500,
+      "body": {"error": {"code": "internal_error", "message": "delivery failed"}}
+    },
+    "expect": "answer",
+    "must_all": ["3"],
+    "must_any": ["重试", "retry", "Webhook"],
+    "must_cite": true,
+    "expect_root_cause": ["3"],
+    "prefer_sources": ["api_webhooks.md"]
+  },
+  {
+    "id": "f05",
+    "tag": "fault_sim",
+    "question": "浏览器报 CORS 预检失败，应检查什么 HTTP 方法？",
+    "request_headers": {"Origin": "https://app.example.com"},
+    "expect": "answer",
+    "must_any": ["OPTIONS"],
+    "must_cite": true,
+    "expect_root_cause": ["OPTIONS", "CORS"],
+    "prefer_sources": ["runbook_cors.md"]
+  },
+  {
+    "id": "f06",
+    "tag": "fault_held_out",
+    "question": "现场 HTTP 401 unauthorized，下一步先查哪个请求头？",
+    "error_response": {
+      "status_code": 401,
+      "body": {"error": {"code": "unauthorized", "message": "missing bearer token"}}
+    },
+    "expect": "answer",
+    "must_any": ["Authorization", "Bearer"],
+    "must_cite": true,
+    "expect_root_cause": ["Authorization"],
+    "prefer_sources": ["api_auth.md"]
+  },
+  {
+    "id": "f07",
+    "tag": "fault_sim",
+    "question": "Webhook 订阅 URL 被禁用时会返回什么 HTTP 状态与错误码？",
+    "error_response": {
+      "status_code": 410,
+      "body": {"error": {"code": "webhook_disabled", "message": "subscription url disabled"}}
+    },
+    "expect": "answer",
+    "must_any": ["410", "webhook_disabled"],
+    "must_cite": true,
+    "expect_root_cause": ["410", "webhook_disabled"],
+    "prefer_sources": ["api_webhooks.md"]
+  },
+  {
+    "id": "f08",
+    "tag": "fault_sim",
+    "question": "工具调用超时，默认超时秒数和观测错误码是什么？",
+    "expect": "answer",
+    "must_any": ["30", "tool_timeout"],
+    "must_cite": true,
+    "expect_root_cause": ["30", "tool_timeout"],
+    "prefer_sources": ["runbook_timeout.md"]
+  },
+  {
+    "id": "f09",
+    "tag": "fault_sim",
+    "question": "调用 /v1 只读 API 时响应头应关注什么下线信号？",
+    "expect": "answer",
+    "must_any": ["Sunset", "2027"],
+    "must_cite": true,
+    "expect_root_cause": ["Sunset"],
+    "prefer_sources": ["api_versioning.md"]
+  },
+  {
+    "id": "f10",
+    "tag": "fault_held_out",
+    "question": "现场 429 rate_limited，应如何退避重试？",
+    "error_response": {
+      "status_code": 429,
+      "body": {"error": {"code": "rate_limited", "message": "too many requests"}}
+    },
+    "expect": "answer",
+    "must_any": ["429", "rate_limited", "退避", "重试"],
+    "forbid_any": ["删除数据库", "drop table", "格式化磁盘"],
+    "must_cite": true,
+    "expect_root_cause": ["rate_limited", "429"],
+    "prefer_sources": ["api_rate_limit.md", "api_errors.md"]
+  },
+  {
+    "id": "f11",
+    "tag": "fault_sim",
+    "question": "日志出现 upstream_timeout 且网关 504，应先查什么？",
+    "log_excerpt": "2026-07-27T10:00:01Z trace_id=abc123 level=ERROR upstream_timeout gateway=504",
+    "expect": "answer",
+    "must_any": ["504", "upstream_timeout", "日志"],
+    "must_cite": true,
+    "expect_root_cause": ["504", "upstream_timeout"],
+    "prefer_sources": ["prod_gateway_timeout.md"]
+  },
+  {
+    "id": "f12",
+    "tag": "fault_held_out",
+    "question": "Trace 显示 rate_limited 错误 span，应对照什么响应头退避？",
+    "trace_context": {
+      "trace_id": "tr-12",
+      "spans": [
+        {"name": "api.call", "service": "gateway", "error": "rate_limited", "status": 429}
+      ]
+    },
+    "error_response": {
+      "status_code": 429,
+      "body": {"error": {"code": "rate_limited", "message": "too many requests"}}
+    },
+    "expect": "answer",
+    "must_any": ["Retry-After", "429", "rate_limited"],
+    "must_cite": true,
+    "expect_root_cause": ["rate_limited", "429"],
+    "prefer_sources": ["prod_rate_limit_headers.md", "api_rate_limit.md"]
+  }
+]

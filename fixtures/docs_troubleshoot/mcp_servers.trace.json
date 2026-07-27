@@ -1,0 +1,5 @@
+{
+  "servers": [
+    ["python", "fixtures/docs_troubleshoot/mcp_trace_server.py"]
+  ]
+}

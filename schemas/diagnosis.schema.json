@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/react-agent/schemas/diagnosis.schema.json",
+  "title": "DocsTroubleshootDiagnosis",
+  "description": "Structured API fault diagnosis output for docs_troubleshoot workflow v4.",
+  "type": "object",
+  "required": [
+    "phenomenon",
+    "candidate_causes",
+    "evidence",
+    "verify_actions",
+    "fix_steps",
+    "risks",
+    "escalation",
+    "answer_summary",
+    "refused",
+    "citations",
+    "evidence_sufficiency"
+  ],
+  "properties": {
+    "phenomenon": { "type": "string" },
+    "candidate_causes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["cause", "confidence"],
+        "properties": {
+          "cause": { "type": "string" },
+          "confidence": { "enum": ["high", "medium", "low"] },
+          "doc_hints": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": {
+          "kind": { "enum": ["field", "document"] },
+          "source": { "type": "string" },
+          "detail": { "type": "object" }
+        }
+      }
+    },
+    "verify_actions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "fix_steps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "escalation": { "type": "string" },
+    "answer_summary": { "type": "string" },
+    "refused": { "type": "boolean" },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source"],
+        "properties": {
+          "source": { "type": "string" }
+        }
+      }
+    },
+    "evidence_sufficiency": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "field_doc_aligned": { "type": "boolean" },
+    "blocked_fix_steps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "fix_steps_gated": { "type": "boolean" },
+    "pending_fix_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": { "type": "string" },
+          "outcome": { "type": "string" },
+          "level": { "type": "string" },
+          "reason": { "type": "string" },
+          "requires": { "type": "string" }
+        }
+      }
+    },
+    "inferred_from_docs": { "type": "integer", "minimum": 0 },
+    "matched_rules": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

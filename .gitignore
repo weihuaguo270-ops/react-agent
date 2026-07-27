@@ -22,6 +22,7 @@ htmlcov/
 trajectories/
 rag_index.json
 **/_index_cache.json
+**/_index_manifest.json
 memory.json
 llm_config.json
 .env
