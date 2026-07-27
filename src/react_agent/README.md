@@ -8,7 +8,7 @@ Python import 路径不变。本页为模块职责分区；仓库总览见 [`doc
 |------|------|
 | `react_loop.py` | ReAct 循环 |
 | `workflow/` | 声明式 Workflow 引擎 + builtins |
-| `apps/docs_troubleshoot/` | 证据化文档排障（语料 / 黄金集 / draft+policy） |
+| `apps/docs_troubleshoot/` | 证据化文档排障（语料 / eval / synthesize / diagnosis） |
 | `server/` | HTTP：`/health` `/v1/chat` `/v1/workflows` |
 | `tools/` | 工具注册表（含 `list/run_workflow`） |
 | `safety/` | 权限闸门 + HITL |

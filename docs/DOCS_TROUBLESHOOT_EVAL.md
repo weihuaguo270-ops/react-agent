@@ -1,8 +1,8 @@
 # 证据化文档排障 — 评测
 
-主场景 **docs_troubleshoot** 的**当前能力**是：基于内部文档 / Runbook、答案可引用、无依据可拒答的问答后端（**不是**完整 API 根因诊断 Agent）。产品定位与路线图见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)。
+主场景 **docs_troubleshoot** 的**当前能力**：基于内部文档 / Runbook 的问答后端——能引用就引用，没依据就拒答（**不是**完整 API 根因诊断 Agent）。边界与路线图见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)。
 
-本页描述**现有**黄金集回归与生产盲测；仿真故障指标已实现，历史工单盲测仍规划。
+本页是 eval 命令和门禁说明：黄金集、仿真故障、生产盲测、Git 文档 held-out。
 
 ## 测试集
 

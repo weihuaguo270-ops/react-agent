@@ -2,8 +2,10 @@
 
 [![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-证据化文档排障-lightgrey)](docs/EVIDENCE_DOCS_TROUBLESHOOT.md)
 
-**可服务化、可回归的 Agent 运行时** — ReAct、声明式 Workflow、权限闸门、ToolGuard、Format B 与评测闭环。  
-**主场景（当前）**：[证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 内部文档 / Runbook 问答，答案可引用、无依据可拒答（**非**自动 API 根因诊断）。  
+个人维护的 Agent 运行时原型。默认入口是 `docs_troubleshoot` Workflow；探索路径是 `react_loop` + Harness 轨迹（Format B JSON）。
+
+**主场景**：[证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 内部文档 / Runbook 问答，能引用就引用、没依据就拒答（**不是**自动 API 根因诊断）。v0.3 起可传入 HTTP 错误、日志、Trace，并输出结构化 `diagnosis`；底层仍是检索 + 规则，不是多轮推理 Agent。
+
 结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
 ## 主场景：证据化文档排障
@@ -123,9 +125,9 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 
 `harness/sandbox.py` 支持 `off` / `auto` / `on`；子进程内禁止再次预热沙箱，避免递归拉起进程。
 
-### 执行轨迹录制
+### 执行轨迹（Harness）
 
-完整录制每步 thought/action/observation，支持事后分析和回放：
+每步 thought / action / observation 写入 Format B JSON，供回放和跨仓对接（`harness/recorder.py` → `schemas/harness_trajectory.schema.json`）。
 
 ```python
 from react_agent.harness.recorder import current_trajectory
