@@ -1,15 +1,15 @@
-# `react_agent` 包地图
+# `react_agent` 包
 
-Python **import 路径不变**。本页只说明职责分区。仓库总览见 [`docs/STRUCTURE.md`](../../docs/STRUCTURE.md)。
+Python import 路径不变。本页为模块职责分区；仓库总览见 [`docs/STRUCTURE.md`](../../docs/STRUCTURE.md)。
 
-## Core（默认主路径）
+## Core
 
 | 模块 | 职责 |
 |------|------|
 | `react_loop.py` | ReAct 循环 |
 | `workflow/` | 声明式 Workflow 引擎 + builtins |
-| `apps/docs_troubleshoot/` | 主场景语料 / 工具 / 严格黄金集 |
-| `server/` | 薄 HTTP：`/health` `/v1/chat` `/v1/workflows` |
+| `apps/docs_troubleshoot/` | 证据化文档排障（语料 / 黄金集 / draft+policy） |
+| `server/` | HTTP：`/health` `/v1/chat` `/v1/workflows` |
 | `tools/` | 工具注册表（含 `list/run_workflow`） |
 | `safety/` | 权限闸门 + HITL |
 | `harness/` | 轨迹录制 / 回放 / Schema / 沙箱超时 |
@@ -22,17 +22,17 @@ Python **import 路径不变**。本页只说明职责分区。仓库总览见 [
 |------|------|
 | `eval/` | capability / execution / public agent & RAG 基准 |
 
-入口脚本在 `examples/eval/`。
+入口脚本：`examples/eval/`。
 
-## Experimental（默认不进工具表）
+## Experimental
 
-见 [`docs/EXPERIMENTAL.md`](../../docs/EXPERIMENTAL.md)：
+默认不注册进工具表。清单见 [`docs/EXPERIMENTAL.md`](../../docs/EXPERIMENTAL.md)：
 
 - `rag.py` · `mcp_client.py` · `mcp_config.py`
 - `orchestrator.py` · `planner.py` · `tot.py`
 - `dashboard/`
 
-对照实现：`experiments/langgraph/`（仓根，非本包）。
+LangGraph 对照：`experiments/langgraph/`（仓根，非本包）。
 
 ## 运行产物（已 gitignore）
 

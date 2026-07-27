@@ -2,13 +2,13 @@
 
 | 目录 | 用途 |
 |------|------|
-| [`demos/`](demos/) | 功能演示（Workflow / 排障 / RAG / MCP / Context…） |
+| [`demos/`](demos/) | Workflow、排障、RAG、MCP、Context 等演示 |
 | [`eval/`](eval/) | 回归、公开基准、快照发布、daily smoke |
 | [`fixtures/`](fixtures/) | 评测夹具（如 Format B 轨迹样例） |
 
-仓库地图：[`docs/STRUCTURE.md`](../docs/STRUCTURE.md)。
+仓库结构：[`docs/STRUCTURE.md`](../docs/STRUCTURE.md)。
 
-## 常用
+## 常用命令
 
 ```bash
 # 主场景

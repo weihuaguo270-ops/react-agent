@@ -14,7 +14,7 @@ os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
 
 from react_agent.apps.docs_troubleshoot.eval_golden import run_golden_eval
 from react_agent.apps.docs_troubleshoot.index import reset_index
-from react_agent.apps.docs_troubleshoot.policy import enforce_answer_policy
+from react_agent.apps.docs_troubleshoot.policy import enforce_answer_policy, should_refuse_query
 from react_agent.apps.docs_troubleshoot.tools import lookup_api, search_docs, verify_citations_tool
 
 
@@ -40,7 +40,7 @@ def main():
         else:
             draft = "没有相关文档。"
         # Out-of-domain heuristic
-        must_refuse = any(k in q for k in ("股价", "删库", "生产数据库"))
+        must_refuse = should_refuse_query(q)
         out = enforce_answer_policy(
             draft, allowed_sources=sources or None, must_refuse=must_refuse
         )

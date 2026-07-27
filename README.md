@@ -1,44 +1,42 @@
 # ReAct Agent
 
-[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-自建Core·生产向原型-lightgrey)](docs/CORE_ARCHITECTURE.md)
+[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-证据化文档排障-lightgrey)](docs/EVIDENCE_DOCS_TROUBLESHOOT.md)
 
-**自建 Core 优先的生产向 Agent 运行时** — ReAct 循环、**声明式 Workflow**、权限闸门、ToolGuard、Format B 与评测闭环；**主场景：文档/API 排障**。  
-结构地图：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。  
-LangGraph 仅在 `experiments/langgraph/` 作可选对照，**不进入默认依赖与主叙事**。
+**可服务化、可回归的 Agent 运行时** — ReAct、声明式 Workflow、权限闸门、ToolGuard、Format B 与评测闭环。  
+**主场景（当前）**：[证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 内部文档 / Runbook 问答，答案可引用、无依据可拒答（**非**自动 API 根因诊断）。  
+结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
-## 主场景 + Workflow
+## 主场景：证据化文档排障
 
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
-python examples/demos/demo_workflow.py                   # 确定性流水线（推荐）
+python examples/demos/demo_workflow.py                   # 确定性 Workflow（默认入口）
 python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么？"
-python examples/demos/demo_docs_troubleshoot.py          # 工具级演示
-python examples/eval/run_docs_troubleshoot_eval.py      # 黄金集
+python examples/eval/run_docs_troubleshoot_eval.py      # 黄金集 34 条
 python -m react_agent.server --port 8765           # /health /v1/chat /v1/workflows
 ```
 
-Workflow：`search → lookup_api → draft → policy → final`（可审计 step 记录）。Agent 亦可调用 `run_workflow` / `list_workflows`。
+Workflow：`search → lookup_api → draft（片段拼接）→ policy（引用/拒答）→ final`。详见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](docs/EVIDENCE_DOCS_TROUBLESHOOT.md)。
 
 ## 范围与定位
 
 | 是 | 不是 |
 |----|------|
-| 自建 Core（ReAct + Workflow + 权限/Harness）可服务化、可回归 | 多租户 Agent 平台 / 完整鉴权网关 |
-| 垂直主场景（文档排障）+ 证据链 | 以 LangGraph 为默认实现 |
-| 离线 CI + 可选真实 LLM 冒烟 | SLA / Docker 全家桶（本阶段未做） |
+| 证据化文档 / Runbook 问答（引用 + 拒答 + 34 条黄金集） | 自动 API 根因诊断 / 读日志 Trace 定位 |
+| 自建 Core（Workflow + ReAct + 权限/Harness）可服务化、可回归 | 多租户 Agent 平台 |
+| 确定性工作流 + 分层评测 | 以 LangGraph 为默认实现 |
+| 离线 CI + 可选 LLM 探索路径 | 已接入企业 Git / OpenAPI 全量 ingest（下一阶段） |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
 证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md)。
 
-## 架构概览（Core 主路径）
-
-默认只讲 **自建 Core**。LangGraph 对照见文末一小节，非必装。
+## 架构概览
 
 ```
 query
-  ├─ Workflow（确定性：docs_troubleshoot）     ← 推荐主路径
+  ├─ Workflow（确定性：docs_troubleshoot）     ← 默认路径
   └─ react_loop（自由 ReAct + 工具）
         → permission gate → tools / ToolGuard
         → CONTEXT.manage → Format B 轨迹
@@ -54,7 +52,7 @@ query
 
 ```
 query
-  ├─ run_workflow("docs_troubleshoot")     ← 确定性主路径（推荐）
+  ├─ run_workflow("docs_troubleshoot")     ← 确定性路径（黄金集同此）
   │     search → lookup_api → draft → policy → final
   └─ react_loop()                          ← 自由探索
           ├── system prompt / LLM
@@ -62,7 +60,7 @@ query
           └── Format B 轨迹
 ```
 
-多 Agent / MCP / RAG / LangGraph：**可选**，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
+多 Agent / MCP / RAG / LangGraph 为实验能力，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
 
 ### 模块清单
 
@@ -115,7 +113,7 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 | CONFIRM | 询问 / 非交互默许 | write_file、execute_python |
 | DENY | 默认拦截 | delete_directory、install_package |
 
-范围边界（非生产平台承诺）：
+范围与限制：
 - 权限层 **不是** OS ACL；未知工具名默认不 DENY。
 - 沙箱 **不是** 容器/seccomp；`execute_python` 仍可能访问本机权限内资源。
 - 危险 shell 字符串（如 `rm -rf`）**不会**被逐字解析拦截；请勿对不可信代码开放执行工具。
@@ -137,9 +135,9 @@ from react_agent.harness.replay import replay_trajectory
 replay_trajectory(trajectory)
 ```
 
-### RAG / MCP / Context / 业务 Demo（辅）
+### RAG / MCP / Context / 业务 Demo
 
-主场景请用上文「文档/API 排障」。下列为补充能力；工作流总览：[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)。
+主场景见上文「文档/API 排障」。实验模块与工作流总览：[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)、[`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
 
 ```bash
 set REACT_AGENT_EXPERIMENTAL_TOOLS=1
@@ -151,9 +149,9 @@ python examples/demos/demo_expense_workflow.py
 python examples/demos/demo_mcp_mock.py
 ```
 
-## LangGraph 对照（可选，非默认）
+## LangGraph 对照
 
-`experiments/langgraph/`：图编排 / checkpoint 学习对照，**不进入默认依赖与 CI 主路径**。
+`experiments/langgraph/`：图编排与 checkpoint 对照实现，不参与 Core 依赖与 CI 主路径。
 
 ```bash
 pip install -e ".[langgraph]"
@@ -178,11 +176,11 @@ Web 面板（实验）：`REACT_AGENT_EXPERIMENTAL_TOOLS=1` 后 `python -m react
 python -m react_agent.eval --dataset capability
 python examples/eval/run_execution_suite.py --publish
 python examples/eval/run_public_benchmark.py              # GSM8K×10 + HotpotQA×10 offline
-python examples/eval/run_public_rag_benchmark.py           # 分层 RAG：看 by_tier，勿只报 smoke
+python examples/eval/run_public_rag_benchmark.py           # 分层 RAG：引用 by_tier + drop-off
 # python examples/eval/run_public_benchmark.py --modes agent --publish  # 需 API Key
 ```
 
-与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 校准口径：**held_out live κ≈0.69**（n=20，CI[0.46,0.92]）— 见 [METRICS_TRUST](https://github.com/weihuaguo270-ops/llm-eval-engine/blob/master/docs/METRICS_TRUST.md)，勿引用旧 n=15/κ≈0.47 或扩容前 n=11/κ≈0.59。  
+与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 校准口径：**held_out live κ≈0.69**（n=20，CI[0.46,0.92]）— 见 [METRICS_TRUST](https://github.com/weihuaguo270-ops/llm-eval-engine/blob/master/docs/METRICS_TRUST.md)；有效口径以该文档为准。  
 失败归因：[trace-debugger FAILURE_INDEX](https://github.com/weihuaguo270-ops/trace-debugger/blob/master/docs/FAILURE_INDEX.md)。
 
 ### Harness 轨迹 Schema + 闭环 Demo
@@ -198,10 +196,10 @@ python examples/eval/run_public_rag_benchmark.py           # 分层 RAG：看 by
 
 闭环：`Agent 记录 → Trace Debugger 失败分类 → Eval Engine Process Reward`（CI `integration` job 会 clone 两仓并跑 demo + **契约测试**）。
 
-**可信度绑定（勿口头宣称「已打通」而无测试）：**
+**跨仓集成验证：**
 
-| 验证 | 命令 / CI |
-|------|-----------|
+| 验证项 | 命令 / CI |
+|--------|-----------|
 | 跨仓评分 API | `pytest tests/test_eval_engine_contract.py` |
 | Agent→Eval 路径 | `python tests/ci_verify_integration.py`（integration job） |
 | Schema→tdebug→eval | `python examples/eval/harness_closed_loop.py --fixture` |

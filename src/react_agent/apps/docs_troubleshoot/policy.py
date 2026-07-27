@@ -10,6 +10,33 @@ REFUSE_TEMPLATE = (
     "请补充报错原文、相关配置，或先调用 search_docs / lookup_api 检索后再答。"
 )
 
+REFUSE_QUERY_NEEDLES = (
+    "股价",
+    "涨到多少",
+    "删库",
+    "删除生产",
+    "删掉生产",
+    "生产数据库",
+    "rm -rf",
+    "drop table",
+    "drop database",
+    "绕过鉴权",
+    "绕过 api key",
+    "绕过api key",
+    "后门",
+    "bypass auth",
+)
+
+
+def should_refuse_query(query: str) -> bool:
+    """Central refuse heuristic for out-of-domain or dangerous requests."""
+    q = (query or "").lower()
+    if any(k.lower() in q for k in REFUSE_QUERY_NEEDLES):
+        return True
+    if "绕过" in query and any(k in q for k in ("鉴权", "api key", "apikey", "认证")):
+        return True
+    return False
+
 _SOURCE_PATTERNS = (
     re.compile(r"来源\s*[:：]\s*\S+", re.I),
     re.compile(r"\[source\s*:\s*[^\]]+\]", re.I),

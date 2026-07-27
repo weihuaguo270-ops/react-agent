@@ -70,9 +70,19 @@ def test_golden_eval_full_pass():
     assert report["passed"] == report["total"], [
         (r["id"], r.get("fail_reason")) for r in report["rows"] if not r["passed"]
     ]
-    assert report["total"] >= 18
-    assert report["by_tag"]["hard"]["total"] >= 7
+    assert report["total"] >= 30
+    assert report["by_tag"]["core"]["total"] >= 13
+    assert report["by_tag"]["hard"]["total"] >= 10
     assert report["by_tag"]["refuse"]["passed"] == report["by_tag"]["refuse"]["total"]
+    assert report["by_tag"]["held_out"]["total"] >= 6
+
+
+def test_golden_chat_offline_path():
+    from react_agent.apps.docs_troubleshoot.eval_golden import run_golden_eval
+
+    report = run_golden_eval(path="chat_offline")
+    assert report["path"] == "chat_offline"
+    assert report["passed"] == report["total"]
 
 
 def test_golden_scores_answer_only_not_blob():

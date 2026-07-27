@@ -43,7 +43,7 @@ python examples/eval/run_execution_suite.py --modes agent --publish
 # 可按难度过滤：--difficulty easy,medium,hard
 ```
 
-说明：`offline_tools`（现 12 条）≠ `agent`（现 **36** 条，easy8/medium12/hard16）；勿混谈为同一指标。
+说明：`offline_tools`（现 12 条）与 `agent`（现 **36** 条，easy8/medium12/hard16）为不同指标，须分栏引用。
 
 ## 公开 Agent benchmark 子集
 
@@ -59,11 +59,11 @@ python examples/eval/run_public_benchmark.py --modes agent --publish
 
 ## 公开 RAG/Agent 子集（外部可比性 · 分层）
 
-| tier | 含义 | 怎么引用 |
+| tier | 含义 | 引用规则 |
 |------|------|----------|
-| `smoke` | 协议冒烟（易） | **禁止单独当能力** |
+| `smoke` | 协议冒烟（易） | 不可单独代表 RAG 能力 |
 | `hard` | 强干扰 + recall=1.0@k=2 | 主参考信号 |
-| `held_out` | 设计后冻结 | 不对它调参 |
+| `held_out` | 设计后冻结 | 不对其调参 |
 
 ```bash
 python examples/eval/run_public_rag_benchmark.py
@@ -89,7 +89,7 @@ python examples/eval/run_flywheel_closed_loop.py --publish
 
 轨迹失败分布见姊妹仓 [trace-debugger/docs/FAILURE_INDEX.md](https://github.com/weihuaguo270-ops/trace-debugger/blob/master/docs/FAILURE_INDEX.md)。
 
-## 一键发布（推荐）
+## 快照发布
 
 ```bash
 python examples/eval/publish_eval_snapshot.py --from-report src/react_agent/eval/reports/eval_XXXX.json
@@ -105,9 +105,9 @@ python examples/eval/publish_eval_snapshot.py --run capability --only-new --stem
 | **react-agent** | 任务通过率、工具/答案规则打分、capability 五维 |
 | **llm-eval-engine** | Process Reward、动态 rubric、人机校准（κ） |
 
-## 诚实边界
+## 指标说明与限制
 
-- 公开数字绑定具体 `report_id` / 归档 JSON；换模型后需重跑
+- 公开数字绑定具体 `report_id` / 归档 JSON；换模型后须重跑
 - 角色类功能用例曾因 `must_contain` 过严出现假阴性（见功能报告）
 - 一致性用例会多次调用 LLM，费用与耗时更高
-- **公开 RAG**：勿单独引用 smoke 100%；看 `by_tier` + drop-off
+- **公开 RAG**：须引用 `by_tier` 与 drop-off；smoke 100% 不能单独代表能力

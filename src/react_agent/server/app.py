@@ -75,26 +75,10 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
             return _error("internal_error", str(e)[:300], request_id, 500)
 
     # Deterministic offline path (default for CI / local smoke)
-    from react_agent.apps.docs_troubleshoot.policy import enforce_answer_policy
-    from react_agent.apps.docs_troubleshoot.tools import lookup_api, search_docs
+    from react_agent.apps.docs_troubleshoot.offline_answer import answer_offline
 
-    data = json.loads(search_docs(message, top_k=2))
-    results = data.get("results") or []
-    if not results:
-        data = json.loads(lookup_api(message, top_k=2))
-        results = data.get("results") or []
-
-    sources = [r.get("source", "") for r in results if r.get("source")]
-    if results:
-        snippet = (results[0].get("content") or "").replace("\n", " ")[:220]
-        draft = f"根据 {sources[0]}：{snippet} 来源: {sources[0]}"
-    else:
-        draft = "未检索到相关文档。"
-
-    must_refuse = any(k in message for k in ("股价", "删库", "删除生产", "rm -rf"))
-    out = enforce_answer_policy(
-        draft, allowed_sources=sources or None, must_refuse=must_refuse
-    )
+    out = answer_offline(message)
+    sources = [c.get("source", "") for c in (out.get("citations") or []) if c.get("source")]
     return 200, {
         "request_id": request_id,
         "answer": out["answer"],

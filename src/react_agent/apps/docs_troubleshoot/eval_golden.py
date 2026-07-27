@@ -1,7 +1,7 @@
 """Offline golden-set evaluation — Workflow primary path, no score leakage.
 
 Rules (strict):
-- Run `docs_troubleshoot` Workflow on the raw question only (no must_* hint injection).
+- Run eval path on the raw question only (no must_* hint injection).
 - Score **final answer text only** (never retrieval blob).
 - Do not force refuse / do not stuff expected keywords into drafts.
 - Optionally require preferred sources and forbid wrong tokens.
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,7 @@ from react_agent.apps.docs_troubleshoot.policy import (
 )
 
 _GOLDEN = Path(__file__).resolve().parent / "golden.json"
+_APP_ROOT = Path(__file__).resolve().parent
 
 
 def load_golden() -> list[dict[str, Any]]:
@@ -43,6 +45,7 @@ def score_workflow_case(case: dict[str, Any], *, answer: str, refused: bool, ok_
 
     details: dict[str, Any] = {
         "id": case["id"],
+        "tag": case.get("tag") or "core",
         "expect": expect,
         "answer": text[:280],
         "refused": refused,
@@ -80,8 +83,11 @@ def score_workflow_case(case: dict[str, Any], *, answer: str, refused: bool, ok_
     claimed = {c.lower() for c in extract_claimed_sources(text)}
     ok_src = True
     if prefer:
-        # Prefer: at least one preferred source must be cited
-        ok_src = bool(claimed & prefer) or any(p in text_l for p in prefer)
+        ok_src = bool(claimed & prefer)
+        if not ok_src and must_cite and claimed:
+            ok_src = False
+        elif not ok_src and must_cite and not claimed:
+            ok_src = any(p in text_l for p in prefer)
 
     passed = bool(ok_any and ok_all and ok_forbid and ok_cite and ok_src)
     fail = []
@@ -111,22 +117,45 @@ def score_workflow_case(case: dict[str, Any], *, answer: str, refused: bool, ok_
     return details
 
 
+def _run_one_case(case: dict[str, Any], *, path: str) -> dict[str, Any]:
+    if path == "workflow":
+        from react_agent.workflow import run_workflow
+
+        result = run_workflow("docs_troubleshoot", {"query": case["question"]})
+        return score_workflow_case(
+            case,
+            answer=result.answer,
+            refused=bool(result.refused),
+            ok_run=bool(result.ok),
+        )
+    if path == "chat_offline":
+        from react_agent.apps.docs_troubleshoot.offline_answer import answer_offline
+
+        out = answer_offline(case["question"])
+        return score_workflow_case(
+            case,
+            answer=str(out.get("answer") or ""),
+            refused=bool(out.get("refused")),
+            ok_run=bool(out.get("ok")),
+        )
+    raise ValueError(f"unsupported eval path: {path}")
+
+
 def run_golden_eval(*, path: str = "workflow") -> dict[str, Any]:
     """
     Run golden set.
 
     path:
-      - workflow (default): Core Workflow — primary production-like path
-      - (reserved) other paths may be added later
+      - workflow (default): Core Workflow
+      - chat_offline: HTTP /v1/chat 默认离线路径（retrieve → draft → policy）
     """
-    if path != "workflow":
+    if path not in ("workflow", "chat_offline"):
         raise ValueError(f"unsupported eval path: {path}")
 
     os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
     os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
 
     from react_agent.tools import enable_app_tools
-    from react_agent.workflow import run_workflow
 
     enable_app_tools()
     reset_index()
@@ -134,16 +163,7 @@ def run_golden_eval(*, path: str = "workflow") -> dict[str, Any]:
     cases = load_golden()
     rows: list[dict[str, Any]] = []
     for case in cases:
-        # Strict: raw question only — no must_* leakage into retrieval
-        result = run_workflow("docs_troubleshoot", {"query": case["question"]})
-        rows.append(
-            score_workflow_case(
-                case,
-                answer=result.answer,
-                refused=bool(result.refused),
-                ok_run=bool(result.ok),
-            )
-        )
+        rows.append(_run_one_case(case, path=path))
 
     passed = sum(1 for r in rows if r["passed"])
     total = len(rows)
@@ -155,12 +175,20 @@ def run_golden_eval(*, path: str = "workflow") -> dict[str, Any]:
         if row["passed"]:
             bucket["passed"] += 1
 
+    held = by_tag.get("held_out", {"passed": 0, "total": 0})
+
     return {
         "path": path,
         "passed": passed,
         "total": total,
         "pass_rate": round(passed / total, 3) if total else 0.0,
         "by_tag": by_tag,
+        "non_held_out": {
+            "passed": sum(
+                1 for c, r in zip(cases, rows) if c.get("tag") != "held_out" and r["passed"]
+            ),
+            "total": sum(1 for c in cases if c.get("tag") != "held_out"),
+        },
         "rows": rows,
         "leakage_guards": {
             "no_must_in_query": True,
@@ -168,7 +196,68 @@ def run_golden_eval(*, path: str = "workflow") -> dict[str, Any]:
             "no_forced_refuse": True,
             "no_keyword_stuffing": True,
         },
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
+
+
+def eval_gate_ok(report: dict[str, Any], *, gate: str = "all") -> bool:
+    if gate == "all":
+        return report["passed"] == report["total"]
+    if gate == "non_held_out":
+        nh = report.get("non_held_out") or {}
+        return nh.get("passed") == nh.get("total")
+    raise ValueError(f"unknown gate: {gate}")
+
+
+def publish_golden_snapshot(report: dict[str, Any], *, stem: str | None = None) -> tuple[Path, Path]:
+    """Write JSON archive + markdown summary under docs/."""
+    repo = _APP_ROOT.parents[4]
+    docs = repo / "docs"
+    snap_dir = docs / "snapshots"
+    reports_dir = docs / "reports"
+    snap_dir.mkdir(parents=True, exist_ok=True)
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    day = datetime.now(timezone.utc).strftime("%Y%m%d")
+    stem = stem or f"docs_troubleshoot_golden_{day}"
+    archived = snap_dir / f"{stem}.json"
+    archived.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    by_tag = report.get("by_tag") or {}
+    lines = [
+        f"# 文档/API 排障黄金集快照（{stem}）",
+        "",
+        f"- **路径:** `{report.get('path')}`",
+        f"- **结果:** {report['passed']}/{report['total']}（pass_rate={report.get('pass_rate')}）",
+        f"- **生成:** {report.get('generated_at')}",
+        f"- **归档 JSON:** [`snapshots/{archived.name}`](../snapshots/{archived.name})",
+        "",
+        "## 分 tag",
+        "",
+        "| tag | passed | total |",
+        "|-----|--------|-------|",
+    ]
+    for tag in ("core", "hard", "refuse", "held_out"):
+        b = by_tag.get(tag)
+        if b:
+            lines.append(f"| {tag} | {b['passed']} | {b['total']} |")
+    lines += [
+        "",
+        "## 复现",
+        "",
+        "```bash",
+        "python examples/eval/run_docs_troubleshoot_eval.py",
+        "```",
+        "",
+    ]
+    md_path = reports_dir / f"{stem}.md"
+    md_path.write_text("\n".join(lines), encoding="utf-8")
+    stub = docs / f"{stem}.md"
+    stub.write_text(
+        f"Moved → [`reports/{stem}.md`](reports/{stem}.md)\n",
+        encoding="utf-8",
+    )
+    return archived, md_path
 
 
 # Back-compat alias used by older imports/tests
@@ -176,18 +265,8 @@ def score_case(case: dict[str, Any]) -> dict[str, Any]:
     """Run a single case via Workflow (strict)."""
     os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
     os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
-    from react_agent.tools import enable_app_tools
-    from react_agent.workflow import run_workflow
-
-    enable_app_tools()
     reset_index()
-    result = run_workflow("docs_troubleshoot", {"query": case["question"]})
-    return score_workflow_case(
-        case,
-        answer=result.answer,
-        refused=bool(result.refused),
-        ok_run=bool(result.ok),
-    )
+    return _run_one_case(case, path="workflow")
 
 
 if __name__ == "__main__":
