@@ -14,19 +14,22 @@ set REACT_AGENT_RAG_MODE=keyword
 python examples/demos/demo_workflow.py                   # 确定性 Workflow（默认入口）
 python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么？"
 python examples/eval/run_docs_troubleshoot_eval.py      # 黄金集 34 条
+python examples/eval/run_fault_eval.py                  # 故障模拟 12 条
+python examples/eval/run_production_eval.py             # 生产盲测 5 条
+python examples/eval/run_git_docs_eval.py               # Git 文档 held-out 5 条
 python -m react_agent.server --port 8765           # /health /v1/chat /v1/workflows
 ```
 
-Workflow：`search → lookup_api → draft（片段拼接）→ policy（引用/拒答）→ final`。详见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](docs/EVIDENCE_DOCS_TROUBLESHOOT.md)。
+Workflow v5：`现场证据 → search → lookup_api → synthesize（句级要点）→ policy（引用/拒答）→ diagnosis`。详见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) · 评测：[`DOCS_TROUBLESHOOT_EVAL.md`](docs/DOCS_TROUBLESHOOT_EVAL.md) · **Since v0.3.0**。
 
 ## 范围与定位
 
 | 是 | 不是 |
 |----|------|
-| 证据化文档 / Runbook 问答（引用 + 拒答 + 34 条黄金集） | 自动 API 根因诊断 / 读日志 Trace 定位 |
-| 自建 Core（Workflow + ReAct + 权限/Harness）可服务化、可回归 | 多租户 Agent 平台 |
-| 确定性工作流 + 分层评测 | 以 LangGraph 为默认实现 |
-| 离线 CI + 可选 LLM 探索路径 | 已接入企业 Git / OpenAPI 全量 ingest（下一阶段） |
+| 证据化文档 / Runbook 问答（引用 + 拒答 + 四套离线 eval） | 自动 API 根因诊断 Agent（无证据不臆造根因） |
+| 现场证据 + 结构化 diagnosis（HTTP / log / trace；fix_steps 权限闸门） | 多租户 Agent 平台 |
+| 自建 Core（Workflow + ReAct + 权限/Harness）可服务化、可回归 | 以 LangGraph 为默认实现 |
+| 确定性工作流 + 分层评测（golden / fault / production / git） | 企业级全量 Git / OpenAPI 生产 ingest |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
@@ -53,7 +56,7 @@ query
 ```
 query
   ├─ run_workflow("docs_troubleshoot")     ← 确定性路径（黄金集同此）
-  │     search → lookup_api → draft → policy → final
+  │     证据 → search → lookup_api → synthesize → policy → diagnosis
   └─ react_loop()                          ← 自由探索
           ├── system prompt / LLM
           ├── 工具（含 list/run_workflow）
@@ -137,7 +140,7 @@ replay_trajectory(trajectory)
 
 ### RAG / MCP / Context / 业务 Demo
 
-主场景见上文「文档/API 排障」。实验模块与工作流总览：[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)、[`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
+主场景见上文「证据化文档排障」。实验模块与工作流总览：[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)、[`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
 
 ```bash
 set REACT_AGENT_EXPERIMENTAL_TOOLS=1
@@ -170,9 +173,13 @@ Web 面板（实验）：`REACT_AGENT_EXPERIMENTAL_TOOLS=1` 后 `python -m react
 
 ## 评测（EVAL-ONLY）
 
-能力规则打分与公开快照索引：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md)。
+文档排障四套离线门禁 + capability 规则打分：[`docs/DOCS_TROUBLESHOOT_EVAL.md`](docs/DOCS_TROUBLESHOOT_EVAL.md) · [`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md)。
 
 ```bash
+python examples/eval/run_docs_troubleshoot_eval.py         # golden 34
+python examples/eval/run_fault_eval.py                     # fault 12
+python examples/eval/run_production_eval.py                # production 5
+python examples/eval/run_git_docs_eval.py                  # git docs 5
 python -m react_agent.eval --dataset capability
 python examples/eval/run_execution_suite.py --publish
 python examples/eval/run_public_benchmark.py              # GSM8K×10 + HotpotQA×10 offline
