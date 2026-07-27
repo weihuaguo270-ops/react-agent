@@ -1,29 +1,14 @@
-"""permissions — 操作权限等级与工具分类（学习用提示策略）
+"""permissions — 操作权限等级与工具分类（生产向：deny→ask→allow）
 
 为 Agent 的每次操作定义风险等级，控制哪些操作需要人工审批。
+本模块是运行时权限闸门依据，不是 OS ACL。
 
-等级划分：
-  SAFE     — 纯读取，无需审批
-  NOTIFY   — 读取敏感信息，通知用户但不阻塞
-  CONFIRM  — 写入/执行，需用户确认（ask）
-  DENY     — 表内登记的高风险工具名，默认拒绝
+等级：SAFE / NOTIFY / CONFIRM / DENY
+评估顺序：DENY → ASK(CONFIRM) → ALLOW
 
-评估顺序（Harness 强制，模型 prompt 改不了允许集）：
-  1. DENY  — 参数级 DENY 规则，或工具默认 DENY
-  2. ASK   — CONFIRM（及参数级抬升到 CONFIRM）
-  3. ALLOW — SAFE / NOTIFY（及参数级放宽）
-
-诚实边界：
-  - 主要按 **工具名查表**；不是对 shell/路径的通配拦截（不会解析 “rm -rf”）
-  - 未登记的工具名不自动 DENY
-  - 本模块是 HITL 提示层，不是 OS 权限系统
-  - 与 ``harness.sandbox`` 是两层：权限决定「能不能调」；沙箱只隔离崩溃/超时
-
-v2 新增：参数级权限（Argument Rules）
-  根据工具参数动态调整权限等级：
-    write_file /tmp/* → SAFE（临时文件）
-    write_file /etc/* → CONFIRM（系统配置）
-    execute_python 含 os.system → 自动提升为 CONFIRM
+v2：参数级权限（Argument Rules）
+  write_file /tmp/* → SAFE；write_file /etc/* → CONFIRM；
+  execute_python 含 os.system → 抬升 CONFIRM
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -72,6 +57,9 @@ TOOL_PERMISSIONS: dict[str, PermissionLevel] = {
     "fetch_page": PermissionLevel.SAFE,
     "summarize": PermissionLevel.SAFE,
     "rag_query": PermissionLevel.SAFE,
+    "search_docs": PermissionLevel.SAFE,
+    "lookup_api": PermissionLevel.SAFE,
+    "verify_citations": PermissionLevel.SAFE,
     "search_files": PermissionLevel.SAFE,
     "read_text_file": PermissionLevel.SAFE,
     "list_directory": PermissionLevel.SAFE,

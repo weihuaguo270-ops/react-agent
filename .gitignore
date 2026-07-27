@@ -21,6 +21,7 @@ htmlcov/
 # Local data files
 trajectories/
 rag_index.json
+**/_index_cache.json
 memory.json
 llm_config.json
 .env

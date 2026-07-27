@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "react-agent"
 version = "0.2.0"
-description = "可复现的 ReAct Agent 运行时（Core 循环 + Harness/评测 + LangGraph 对照；非生产平台）"
+description = "生产向 ReAct Agent 运行时原型（文档/API 排障主场景 + Harness/评测 + HTTP 服务面；非多租户平台）"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -37,12 +37,18 @@ dev = [
 
 [project.scripts]
 agent = "react_agent.react_loop:cli_entry"
+react-agent-server = "react_agent.server.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-react_agent = ["eval/*.json", "eval/**/*.json"]
+react_agent = [
+    "eval/*.json",
+    "eval/**/*.json",
+    "apps/docs_troubleshoot/golden.json",
+    "apps/docs_troubleshoot/corpus/*.md",
+]
 
 [tool.pytest.ini_options]
 markers = [

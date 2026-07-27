@@ -98,3 +98,20 @@ def _enable_experimental_tools() -> None:
 
 
 _enable_experimental_tools()
+
+
+def enable_app_tools() -> None:
+    """Mount vertical-app tools when REACT_AGENT_APP is set (idempotent)."""
+    from react_agent.apps import load_app_tools
+
+    registry, defs = load_app_tools()
+    if not registry:
+        return
+    TOOL_REGISTRY.update(registry)
+    for defn in defs:
+        names = {d["function"]["name"] for d in TOOL_DEFINITIONS if "function" in d}
+        if defn["function"]["name"] not in names:
+            TOOL_DEFINITIONS.append(defn)
+
+
+enable_app_tools()

@@ -1,17 +1,29 @@
 # ReAct Agent
 
-[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-可复现运行时·非生产平台-lightgrey)](docs/EXPERIMENTAL.md)
+[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-生产向运行时原型-lightgrey)](docs/PRODUCTION_MATURITY.md)
 
-**可复现的 Agent 运行时原型** — ReAct 控制流、工具调用、轨迹（Format B）、权限闸门与 ToolGuard、评测/失败飞轮闭环；并用 LangGraph 对照框架编排。  
-默认叙事以 **Core 路径 + 证据链** 为准；RAG / MCP / 多 Agent 为可选能力。
+**生产向 Agent 运行时原型** — ReAct 控制流、权限闸门、ToolGuard、Format B 轨迹与评测闭环；**主场景为内部文档/API 排障**（检索 → 引用 → 拒答策略）。  
+成熟度与边界见 [`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。默认叙事以 **Core + 主场景 + 证据链** 为准。
+
+## 主场景：文档 / API 排障
+
+```bash
+set REACT_AGENT_APP=docs_troubleshoot
+set REACT_AGENT_RAG_MODE=keyword
+python examples/demo_docs_troubleshoot.py          # 无 Key
+python examples/run_docs_troubleshoot_eval.py      # 黄金集 10/10
+python -m react_agent.server --port 8765           # GET /health  POST /v1/chat
+```
+
+能力：`search_docs` / `lookup_api` / `verify_citations`；无依据拒答。语料与黄金集在 `src/react_agent/apps/docs_troubleshoot/`。
 
 ## 范围与定位
 
 | 是 | 不是 |
 |----|------|
-| 可跑、可测、可复盘的 Agent 执行与观测 | 生产级 Agent 平台或安全产品 |
+| 可服务化、可回归、可观测的 Agent 运行时 + 垂直场景 | 多租户 Agent 平台 / 完整鉴权网关 |
 | Core 与 LangGraph 两条路径可对照 | 「只会手写」或「只会调框架」 |
-| 离线 CI + 可选真实 LLM 冒烟；公开评测快照 | 微服务切分 / SLA / 多租户 / 不可信代码强隔离 |
+| 离线 CI + 可选真实 LLM 冒烟；公开评测快照 | SLA / Docker 全家桶（本阶段未做） |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
@@ -46,7 +58,9 @@ query → react_loop()
 react_agent/                    # CORE
 ├── react_loop.py               ReAct 循环
 ├── llm.py / prompts.py / cot.py
-├── tools/                      默认工具（计算/搜索/抓取/摘要/时间/执行）
+├── tools/                      默认工具 + enable_app_tools()
+├── apps/docs_troubleshoot/     主场景后端（语料/工具/黄金集）
+├── server/                     薄 HTTP：/health /v1/chat
 ├── context.py / memory.py
 ├── harness/                    录制 · 回放 · Schema · 沙箱超时
 ├── safety/                     权限闸门（deny→ask→allow）+ HITL
@@ -116,20 +130,18 @@ from react_agent.harness.replay import replay_trajectory
 replay_trajectory(trajectory)
 ```
 
-### RAG / MCP / Context / 业务 Demo（实验）
+### RAG / MCP / Context / 业务 Demo（辅）
 
-默认工具表不注册实验工具。工作流总览：[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)。
+主场景请用上文「文档/API 排障」。下列为补充能力；工作流总览：[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)。
 
 ```bash
-set REACT_AGENT_EXPERIMENTAL_TOOLS=1   # 注册 rag_query / tot / dashboard
-set REACT_AGENT_RAG_MODE=keyword      # 无向量依赖也可检索
-set REACT_AGENT_MCP_MOCK=1            # 无 uvx 时演示 MCP 合并路径
+set REACT_AGENT_EXPERIMENTAL_TOOLS=1
+set REACT_AGENT_RAG_MODE=keyword
+set REACT_AGENT_MCP_MOCK=1
 python examples/demo_context.py
 python examples/demo_rag.py
 python examples/demo_expense_workflow.py
 python examples/demo_mcp_mock.py
-# 可选语义检索: pip install -e ".[rag]"
-# 真 MCP: cp mcp_servers.example.json mcp_servers.json 或 --mcp ...
 ```
 
 ## LangGraph 对照（`experiments/langgraph/`）

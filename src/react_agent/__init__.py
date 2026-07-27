@@ -1,6 +1,7 @@
-"""ReAct Agent — 可复现的运行时原型（非生产平台）。
+"""ReAct Agent — 生产向运行时原型（可服务化 / 可回归；非多租户平台）。
 
 Core：``react_loop`` + 工具 + harness + ToolGuard + 权限闸门。
-框架对照：``experiments/langgraph``（可选 ``[langgraph]`` extras）。
-可选模块（RAG / MCP / 多 Agent）：见 ``docs/EXPERIMENTAL.md``。
+主场景：``REACT_AGENT_APP=docs_troubleshoot``（文档/API 排障）。
+框架对照：``experiments/langgraph``（可选 ``[langgraph]``）。
+成熟度：``docs/PRODUCTION_MATURITY.md``。
 """

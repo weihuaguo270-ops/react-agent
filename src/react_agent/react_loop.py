@@ -321,6 +321,9 @@ def _force_finalize(messages: list, *, reason: str) -> str:
 # ============================================================
 def react_loop(user_query, max_steps=None, tool_defs=None):
     _ensure_rag_loaded()
+    from react_agent.tools import enable_app_tools
+
+    enable_app_tools()
     max_steps = _resolve_max_steps(max_steps)
     base_prompt = """你是一个可以使用工具的 AI 助手。规则：
 1. 用 THOUGHT / ACTION / OBSERVATION / FINAL ANSWER 格式
@@ -331,10 +334,17 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
 6. 禁止连续两次调用「完全相同」的工具名+参数；应换 URL/查询词，或直接基于已有 OBSERVATION 作答
 7. 短问答（时间/计算/只要数字）请紧扣用户问题作答，勿跑题到无关话题
 8. 最后一步不再调用工具，必须基于已有观测给出 FINAL ANSWER"""
-    # 角色注入 → CoT 注入（角色先定风格，CoT 再定推理方式）
-    role_enhanced = ROLE_MANAGER.inject(base_prompt, query=user_query)
-    system_prompt = COT.inject(role_enhanced, query=user_query)
-    print(f"[角色] {ROLE_MANAGER.current_role_name()}")
+    # 垂直应用 prompt（如文档排障）优先；否则角色 + CoT
+    from react_agent.apps import app_system_prompt
+
+    app_prompt = app_system_prompt(user_query)
+    if app_prompt:
+        system_prompt = app_prompt + "\n\n---\n运行时补充规则：\n" + base_prompt
+        print("[应用] docs_troubleshoot")
+    else:
+        role_enhanced = ROLE_MANAGER.inject(base_prompt, query=user_query)
+        system_prompt = COT.inject(role_enhanced, query=user_query)
+        print(f"[角色] {ROLE_MANAGER.current_role_name()}")
 
     llm = _active_llm()
     if llm is None or (
