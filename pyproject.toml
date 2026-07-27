@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "react-agent"
 version = "0.2.0"
-description = "生产向 ReAct Agent 运行时原型（文档/API 排障主场景 + Harness/评测 + HTTP 服务面；非多租户平台）"
+description = "自建 Core 优先的生产向 Agent 运行时：ReAct + 声明式 Workflow、文档/API 排障、分层公开 RAG 评测（smoke/hard/held_out）；LangGraph 仅可选对照"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

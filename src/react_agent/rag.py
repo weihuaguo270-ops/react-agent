@@ -142,6 +142,31 @@ class RAG:
         self._save()
         return added > 0
 
+    def ingest_text(self, text: str, source: str = "inline.txt") -> bool:
+        """Ingest a raw string as one or more chunks (for ephemeral RAG eval)."""
+        if not (text or "").strip():
+            return False
+        new_chunks, new_sources = self._chunk_text(text, source)
+        existing = set(self.chunks)
+        added = 0
+        use_vectors = _HAS_VECTOR and self._rag_mode() != "keyword"
+        for chunk, src in zip(new_chunks, new_sources):
+            if chunk not in existing:
+                self.chunks.append(chunk)
+                self.sources.append(src)
+                if use_vectors:
+                    try:
+                        vec = self._get_model().encode(chunk)
+                        self.vecs.append(vec)
+                    except Exception:
+                        self.vecs.append([])
+                else:
+                    self.vecs.append([])
+                added += 1
+        self._prune()
+        # Ephemeral corpora: avoid writing eval docs into the default on-disk index
+        return added > 0
+
     def ingest_directory(self, dir_path):
         """批量加载目录中所有支持的文档 (.md .py .txt .yaml .yml)"""
         if not os.path.exists(dir_path):

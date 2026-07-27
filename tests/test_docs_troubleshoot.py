@@ -48,7 +48,7 @@ def test_verify_citations_accepts_source():
     from react_agent.apps.docs_troubleshoot.tools import verify_citations_tool
 
     check = json.loads(
-        verify_citations_tool("缺少 Token 返回 401。来源: api_reference.md")
+        verify_citations_tool("缺少 Token 返回 401。来源: api_auth.md")
     )
     assert check["ok"] is True
 
@@ -64,7 +64,37 @@ def test_golden_eval_full_pass():
     from react_agent.apps.docs_troubleshoot.eval_golden import run_golden_eval
 
     report = run_golden_eval()
-    assert report["passed"] == report["total"], report["rows"]
+    assert report["path"] == "workflow"
+    assert report["leakage_guards"]["no_must_in_query"] is True
+    assert report["leakage_guards"]["score_answer_only"] is True
+    assert report["passed"] == report["total"], [
+        (r["id"], r.get("fail_reason")) for r in report["rows"] if not r["passed"]
+    ]
+    assert report["total"] >= 18
+    assert report["by_tag"]["hard"]["total"] >= 7
+    assert report["by_tag"]["refuse"]["passed"] == report["by_tag"]["refuse"]["total"]
+
+
+def test_golden_scores_answer_only_not_blob():
+    """Regression: keyword in retrieval blob alone must not pass."""
+    from react_agent.apps.docs_troubleshoot.eval_golden import score_workflow_case
+
+    case = {
+        "id": "x",
+        "expect": "answer",
+        "must_any": ["401"],
+        "must_cite": True,
+        "prefer_sources": ["api_auth.md"],
+    }
+    # Answer lacks 401; previously blob could fake a pass
+    row = score_workflow_case(
+        case,
+        answer="根据 api_auth.md：请检查请求头。来源: api_auth.md",
+        refused=False,
+        ok_run=True,
+    )
+    assert row["passed"] is False
+    assert "must_any" in row["fail_reason"]
 
 
 def test_app_tools_registered(monkeypatch):

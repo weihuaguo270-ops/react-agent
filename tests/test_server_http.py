@@ -46,6 +46,25 @@ def test_health_and_chat_offline():
         assert "401" in body.get("answer", "") or "unauthorized" in body.get("answer", "").lower()
         assert body.get("mode") == "offline"
 
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/workflows", timeout=5) as resp:
+            wfs = json.loads(resp.read().decode("utf-8"))
+        assert any(w["name"] == "docs_troubleshoot" for w in wfs.get("workflows", []))
+
+        req2 = urllib.request.Request(
+            f"http://127.0.0.1:{port}/v1/workflows/run",
+            data=json.dumps(
+                {"name": "docs_troubleshoot", "query": "缺少 Authorization 返回什么?"}
+            ).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req2, timeout=10) as resp:
+            wf_body = json.loads(resp.read().decode("utf-8"))
+        assert wf_body.get("ok") is True
+        assert "401" in wf_body.get("answer", "") or "unauthorized" in wf_body.get(
+            "answer", ""
+        ).lower()
+
         # invalid path
         try:
             urllib.request.urlopen(f"http://127.0.0.1:{port}/nope", timeout=5)

@@ -22,6 +22,7 @@
 | [flywheel_closed_loop_20260716.md](./flywheel_closed_loop_20260716.md) | 同批 100 条改前/改后 | **llm_offtrack 6→1** | [snapshots/…](./snapshots/flywheel_closed_loop_20260716.json) |
 | [public_benchmark_snapshot_offline.md](./public_benchmark_snapshot_offline.md) | GSM8K×10 + HotpotQA×10 | offline 匹配器 20/20 | [归档](./snapshots/public_benchmark_snapshot_offline.json) |
 | [public_benchmark_snapshot_agent_20260717.md](./public_benchmark_snapshot_agent_20260717.md) | 同上 · DeepSeek agent | **19/20（95%）** · GSM8K 10/10 · Hotpot 9/10 · Wilson [76.4, 99.1] | [归档](./snapshots/public_benchmark_snapshot_agent_20260717.json) |
+| 公开 RAG 子集（分层 v2） | HotpotQA-RAG smoke/hard/held_out | `run_public_rag_benchmark.py`（看 by_tier + dropoff） | `public_rag_benchmark_subset.json` |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 
@@ -55,6 +56,26 @@ python examples/run_public_benchmark.py --modes agent --publish
 ```
 
 数据集：`src/react_agent/eval/public_benchmark_subset.json`。agent 数字绑定模型与日期；offline 只证明打分链路。
+
+## 公开 RAG/Agent 子集（外部可比性 · 分层）
+
+协议 **HotpotQA distractor-style RAG**，**v2 分层**：
+
+| tier | 含义 | 怎么引用 |
+|------|------|----------|
+| `smoke` | 协议冒烟（易） | **禁止单独当能力** |
+| `hard` | 强干扰 + recall=1.0@k=2 | 主参考信号 |
+| `held_out` | 设计后冻结 | 不对它调参 |
+
+指标：answer / retrieval recall@k / faithfulness；并自动跑 **drop-off controls**（无上下文 / 仅干扰段 / top_k=1）。
+
+```bash
+python examples/run_public_rag_benchmark.py
+# 只看参考信号
+python examples/run_public_rag_benchmark.py --tiers hard,held_out --modes rag
+```
+
+数据集：`src/react_agent/eval/public_rag_benchmark_subset.json`。与垂类 docs 黄金集互补。
 
 ## Harness 可靠性对照
 

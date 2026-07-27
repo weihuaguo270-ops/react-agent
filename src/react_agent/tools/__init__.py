@@ -115,3 +115,17 @@ def enable_app_tools() -> None:
 
 
 enable_app_tools()
+
+
+def enable_workflow_tools() -> None:
+    """Core Workflow tools are always-on (self-built orchestration surface)."""
+    from react_agent.workflow.tools import WORKFLOW_TOOL_DEFINITIONS, WORKFLOW_TOOL_REGISTRY
+
+    TOOL_REGISTRY.update(WORKFLOW_TOOL_REGISTRY)
+    names = {d["function"]["name"] for d in TOOL_DEFINITIONS if "function" in d}
+    for defn in WORKFLOW_TOOL_DEFINITIONS:
+        if defn["function"]["name"] not in names:
+            TOOL_DEFINITIONS.append(defn)
+
+
+enable_workflow_tools()

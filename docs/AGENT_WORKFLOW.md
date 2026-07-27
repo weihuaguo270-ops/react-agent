@@ -1,28 +1,46 @@
 # Agent 工作流
 
-Core 循环 + **主场景 docs_troubleshoot** + 可选实验能力。生产成熟度见 [`PRODUCTION_MATURITY.md`](PRODUCTION_MATURITY.md)。
+**自建 Core** = ReAct + **声明式 Workflow** + 主场景 docs_troubleshoot。架构见 [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)。
 
-## 主路径（Core + 主场景）
+## 推荐主路径：Workflow（确定性）
+
+```
+query → run_workflow("docs_troubleshoot")
+        → search_docs → lookup_api → draft → policy → final
+        → 可审计 step 记录 / to_trajectory()
+```
+
+```bash
+python examples/demo_workflow.py
+python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么？"
+```
+
+HTTP：`GET /v1/workflows`，`POST /v1/workflows/run`。
+
+严格黄金集（无 must_* 泄漏、只评最终 answer）：
+
+```bash
+python examples/run_docs_troubleshoot_eval.py
+```
+
+## 探索路径：react_loop（自由 ReAct）
 
 ```
 query → react_loop (REACT_AGENT_APP=docs_troubleshoot)
-        → 场景 system prompt
-        → LLM (thought / tool_calls)
-        → permission gate (deny→ask→allow)
-        → search_docs / lookup_api / verify_citations
-        → citation policy（无依据拒答）
-        → CONTEXT.manage(llm_call=…)
+        → LLM (thought / tool_calls；可调用 run_workflow)
+        → permission gate → tools
         → FINAL ANSWER + Format B 轨迹
 ```
 
-HTTP：`python -m react_agent.server` → `POST /v1/chat`（默认离线检索路径；`REACT_AGENT_SERVER_LLM=1` 走真循环）。
+HTTP：`POST /v1/chat`（默认离线；`REACT_AGENT_SERVER_LLM=1` 走真循环）。
 
 ## 入口一览
 
 | 能力 | 离线 Demo / 评测 | 环境变量 |
 |------|------------------|----------|
-| 文档排障（主） | `demo_docs_troubleshoot.py` / `run_docs_troubleshoot_eval.py` | `REACT_AGENT_APP=docs_troubleshoot` |
-| HTTP 服务 | `python -m react_agent.server` | 同上 + `DISABLE_MCP=1` |
+| **Workflow 排障（推荐）** | `demo_workflow.py` / `python -m react_agent.workflow` | `REACT_AGENT_APP=docs_troubleshoot` |
+| 文档排障（工具级） | `demo_docs_troubleshoot.py` / `run_docs_troubleshoot_eval.py` | 同上 |
+| HTTP 服务 | `python -m react_agent.server` | 同上 |
 | Context | `examples/demo_context.py` | — |
 | RAG 通用 | `examples/demo_rag.py` | `REACT_AGENT_RAG_MODE=keyword` |
 | 报销（辅） | `examples/demo_expense_workflow.py` | keyword |

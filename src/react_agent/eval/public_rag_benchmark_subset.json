@@ -1,0 +1,1067 @@
+{
+  "name": "public_rag_agent_benchmark_subset_v2",
+  "description": "Stratified public RAG subset: smoke (protocol check) + hard + held_out. Do NOT cite smoke pass-rate alone as capability. Metrics: answer, recall@k, faithfulness. Not a full leaderboard.",
+  "protocol": "hotpotqa_rag_distractor_v2_stratified",
+  "inspired_by": [
+    "HotpotQA (Yang et al., EMNLP 2018) — multi-hop QA with distractors",
+    "RAGAS faithfulness / context-grounding pattern (rule-based proxy)",
+    "Existing repo public_agent_benchmark_subset_v1 Hotpot questions"
+  ],
+  "license_notes": "Questions/answers derived from HotpotQA (CC BY-SA 4.0). Supporting/distractor passages are short frozen paraphrases for offline RAG eval only; not a redistribution of full Wikipedia dumps.",
+  "version": "2",
+  "defaults": {
+    "top_k": 3,
+    "min_retrieval_recall": 0.5,
+    "hard_top_k": 2,
+    "hard_min_retrieval_recall": 1.0
+  },
+  "cases": [
+    {
+      "id": "rag_hotpot_0000",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "split": "validation",
+      "question": "What government position was held by the woman who portrayed Corliss Archer in the film Kiss and Tell?",
+      "gold_answer": "Chief of Protocol",
+      "supporting_ids": [
+        "ctx_temple",
+        "ctx_kiss"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_kiss",
+          "title": "Kiss and Tell (1945 film)",
+          "is_supporting": true,
+          "text": "Kiss and Tell is a 1945 American comedy film. Shirley Temple portrays the teenage character Corliss Archer."
+        },
+        {
+          "id": "ctx_temple",
+          "title": "Shirley Temple",
+          "is_supporting": true,
+          "text": "Shirley Temple Black later served as U.S. Chief of Protocol. She is known for early film roles including Corliss Archer."
+        },
+        {
+          "id": "ctx_distract_a",
+          "title": "Protocol (diplomacy)",
+          "is_supporting": false,
+          "text": "Diplomatic protocol covers ceremonial rules between states. Many ambassadors study protocol manuals."
+        },
+        {
+          "id": "ctx_distract_b",
+          "title": "Corliss Archer (radio)",
+          "is_supporting": false,
+          "text": "A Date with Judy and other radio comedies featured teenage protagonists in the 1940s."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "medium",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hotpot_0001",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "question": "What science fantasy young adult series, told in first person, has a set of companion books narrating the stories of enslaved worlds and alien species?",
+      "gold_answer": "Animorphs",
+      "supporting_ids": [
+        "ctx_animorphs",
+        "ctx_companions"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_animorphs",
+          "title": "Animorphs",
+          "is_supporting": true,
+          "text": "Animorphs is a science fantasy young adult book series told largely in first person, about teenagers who morph into animals."
+        },
+        {
+          "id": "ctx_companions",
+          "title": "Animorphs companion books",
+          "is_supporting": true,
+          "text": "Companion books in the Animorphs universe narrate stories of enslaved worlds and alien species connected to the main conflict."
+        },
+        {
+          "id": "ctx_distract_harry",
+          "title": "Harry Potter",
+          "is_supporting": false,
+          "text": "Harry Potter is a fantasy series about a young wizard at Hogwarts School of Witchcraft and Wizardry."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "medium",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hotpot_0002",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "question": "The director of the romantic comedy \"Big Stone Gap\" is based in what New York city?",
+      "gold_answer": "Greenwich Village, New York City",
+      "supporting_ids": [
+        "ctx_bsg",
+        "ctx_trigiani"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_bsg",
+          "title": "Big Stone Gap (film)",
+          "is_supporting": true,
+          "text": "Big Stone Gap is a romantic comedy film written and directed by Adriana Trigiani."
+        },
+        {
+          "id": "ctx_trigiani",
+          "title": "Adriana Trigiani",
+          "is_supporting": true,
+          "text": "Adriana Trigiani is based in Greenwich Village, New York City, where she has lived and worked as a novelist and filmmaker."
+        },
+        {
+          "id": "ctx_distract_nyc",
+          "title": "New York City boroughs",
+          "is_supporting": false,
+          "text": "Brooklyn and Queens are populous boroughs of New York City with large film production facilities."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "medium",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hotpot_0003",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "question": "2014 S/S is the debut album of a South Korean boy group that was formed by who?",
+      "gold_answer": "YG Entertainment",
+      "supporting_ids": [
+        "ctx_2014ss",
+        "ctx_winner"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_2014ss",
+          "title": "2014 S/S",
+          "is_supporting": true,
+          "text": "2014 S/S is the debut studio album of the South Korean boy group WINNER."
+        },
+        {
+          "id": "ctx_winner",
+          "title": "WINNER (band)",
+          "is_supporting": true,
+          "text": "WINNER is a South Korean boy group formed by YG Entertainment through a survival program."
+        },
+        {
+          "id": "ctx_distract_sm",
+          "title": "SM Entertainment",
+          "is_supporting": false,
+          "text": "SM Entertainment is a major South Korean entertainment company known for groups such as EXO and Red Velvet."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "medium",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hotpot_0004",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "question": "Who was known by his stage name Aladin and helped organizations improve their performance as a consultant?",
+      "gold_answer": "Eenasul Fateh",
+      "supporting_ids": [
+        "ctx_aladin",
+        "ctx_fateh"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_aladin",
+          "title": "Aladin (stage name)",
+          "is_supporting": true,
+          "text": "The stage name Aladin was used by magician and performer Eenasul Fateh."
+        },
+        {
+          "id": "ctx_fateh",
+          "title": "Eenasul Fateh",
+          "is_supporting": true,
+          "text": "Eenasul Fateh worked as a consultant helping organizations improve their performance, in addition to his entertainment career."
+        },
+        {
+          "id": "ctx_distract_magic",
+          "title": "Stage magic",
+          "is_supporting": false,
+          "text": "Stage magicians often adopt theatrical names when performing illusion shows for large audiences."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "medium",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hotpot_0005",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "question": "The arena where the Lewiston Maineiacs played their home games can seat how many people?",
+      "gold_answer": "3,677 seated",
+      "supporting_ids": [
+        "ctx_maineiacs",
+        "ctx_colisee"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_maineiacs",
+          "title": "Lewiston Maineiacs",
+          "is_supporting": true,
+          "text": "The Lewiston Maineiacs were a junior ice hockey team that played home games at the Androscoggin Bank Colisée."
+        },
+        {
+          "id": "ctx_colisee",
+          "title": "Androscoggin Bank Colisée",
+          "is_supporting": true,
+          "text": "The Androscoggin Bank Colisée arena can seat 3,677 seated spectators for hockey configurations."
+        },
+        {
+          "id": "ctx_distract_nhl",
+          "title": "NHL arenas",
+          "is_supporting": false,
+          "text": "Many NHL arenas seat more than 15,000 fans and host concerts as well as hockey."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "medium",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hotpot_0006",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "question": "Who is older, Annie Morton or Terry Richardson?",
+      "gold_answer": "Terry Richardson",
+      "supporting_ids": [
+        "ctx_morton",
+        "ctx_richardson"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_morton",
+          "title": "Annie Morton",
+          "is_supporting": true,
+          "text": "Annie Morton is an American model born in 1970."
+        },
+        {
+          "id": "ctx_richardson",
+          "title": "Terry Richardson",
+          "is_supporting": true,
+          "text": "Terry Richardson is an American photographer born in 1965, making him older than Annie Morton."
+        },
+        {
+          "id": "ctx_distract_fashion",
+          "title": "Fashion photography",
+          "is_supporting": false,
+          "text": "Fashion photographers often collaborate with models for magazine editorials and advertising campaigns."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "medium",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hotpot_0007",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "question": "What is the name of the fight song of the university whose main campus is in Lawrence, Kansas and whose branch campuses are in the Kansas City metropolitan area?",
+      "gold_answer": "Kansas Song",
+      "supporting_ids": [
+        "ctx_ku",
+        "ctx_fight"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_ku",
+          "title": "University of Kansas",
+          "is_supporting": true,
+          "text": "The University of Kansas has its main campus in Lawrence, Kansas, with branch campuses in the Kansas City metropolitan area."
+        },
+        {
+          "id": "ctx_fight",
+          "title": "University of Kansas traditions",
+          "is_supporting": true,
+          "text": "The fight song associated with the University of Kansas is commonly known as Kansas Song (I'm a Jayhawk)."
+        },
+        {
+          "id": "ctx_distract_kstate",
+          "title": "Kansas State University",
+          "is_supporting": false,
+          "text": "Kansas State University is based in Manhattan, Kansas and has its own athletic fight songs."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "hard",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hotpot_0008",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "question": "What screenwriter with credits for \"Evolution\" co-wrote a film starring Nicolas Cage and Téa Leoni?",
+      "gold_answer": "David Weissman",
+      "supporting_ids": [
+        "ctx_evolution",
+        "ctx_family"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_evolution",
+          "title": "Evolution (2001 film)",
+          "is_supporting": true,
+          "text": "Evolution is a science-fiction comedy; screenwriter David Weissman has credits associated with the film."
+        },
+        {
+          "id": "ctx_family",
+          "title": "The Family Man",
+          "is_supporting": true,
+          "text": "David Weissman co-wrote The Family Man, a film starring Nicolas Cage and Téa Leoni."
+        },
+        {
+          "id": "ctx_distract_cage",
+          "title": "Nicolas Cage films",
+          "is_supporting": false,
+          "text": "Nicolas Cage has starred in numerous action and drama films across several decades."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "medium",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hotpot_0009",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "question": "What year did Guns N Roses perform a promo for a movie starring Arnold Schwarzenegger as a former New York Police detective?",
+      "gold_answer": "1999",
+      "supporting_ids": [
+        "ctx_eod",
+        "ctx_gnr"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_eod",
+          "title": "End of Days (film)",
+          "is_supporting": true,
+          "text": "End of Days is a 1999 film starring Arnold Schwarzenegger as a former New York Police detective."
+        },
+        {
+          "id": "ctx_gnr",
+          "title": "Guns N' Roses promo",
+          "is_supporting": true,
+          "text": "Guns N' Roses performed a promotional piece tied to End of Days around the film's 1999 release."
+        },
+        {
+          "id": "ctx_distract_terminator",
+          "title": "Terminator (franchise)",
+          "is_supporting": false,
+          "text": "Arnold Schwarzenegger is also widely known for the Terminator franchise beginning in the 1980s."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "hotpotqa",
+        "multi_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "medium",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_nq_0000",
+      "source": "inspired_by/natural_questions",
+      "benchmark": "nq_rag",
+      "question": "Who wrote the novel Pride and Prejudice?",
+      "gold_answer": "Jane Austen",
+      "supporting_ids": [
+        "ctx_pp"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_pp",
+          "title": "Pride and Prejudice",
+          "is_supporting": true,
+          "text": "Pride and Prejudice is a novel written by Jane Austen, first published in 1813."
+        },
+        {
+          "id": "ctx_distract_bronte",
+          "title": "Jane Eyre",
+          "is_supporting": false,
+          "text": "Jane Eyre is a novel by Charlotte Brontë published in 1847."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "nq_style",
+        "single_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "easy",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_nq_0001",
+      "source": "inspired_by/natural_questions",
+      "benchmark": "nq_rag",
+      "question": "What is the capital of France?",
+      "gold_answer": "Paris",
+      "supporting_ids": [
+        "ctx_france"
+      ],
+      "contexts": [
+        {
+          "id": "ctx_france",
+          "title": "France",
+          "is_supporting": true,
+          "text": "France is a country in Western Europe. Its capital and largest city is Paris."
+        },
+        {
+          "id": "ctx_distract_lyon",
+          "title": "Lyon",
+          "is_supporting": false,
+          "text": "Lyon is a major city in east-central France known for cuisine and history."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "nq_style",
+        "single_hop",
+        "tier_smoke"
+      ],
+      "difficulty": "easy",
+      "tier": "smoke"
+    },
+    {
+      "id": "rag_hard_0000",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "hard",
+      "question": "What government position was held by the woman who portrayed Corliss Archer in the film Kiss and Tell?",
+      "gold_answer": "Chief of Protocol",
+      "supporting_ids": [
+        "h0_kiss",
+        "h0_role"
+      ],
+      "contexts": [
+        {
+          "id": "h0_kiss",
+          "title": "Kiss and Tell",
+          "is_supporting": true,
+          "text": "Kiss and Tell (1945): Shirley Temple portrays teenage Corliss Archer."
+        },
+        {
+          "id": "h0_role",
+          "title": "Later career",
+          "is_supporting": true,
+          "text": "Shirley Temple Black later served as U.S. Chief of Protocol in the State Department."
+        },
+        {
+          "id": "h0_d1",
+          "title": "Diplomatic protocol manuals",
+          "is_supporting": false,
+          "text": "Diplomatic protocol manuals describe ceremonial government position etiquette for ambassadors and chiefs of mission. Kiss and Tell is unrelated training material."
+        },
+        {
+          "id": "h0_d2",
+          "title": "Corliss Archer radio",
+          "is_supporting": false,
+          "text": "Corliss Archer also appeared in radio adaptations. Many actresses portrayed teenage film and radio roles in the 1940s."
+        },
+        {
+          "id": "h0_d3",
+          "title": "Protocol office trivia",
+          "is_supporting": false,
+          "text": "The Chief of Protocol office hosts foreign dignitaries. Several women held related ceremonial government positions."
+        },
+        {
+          "id": "h0_d4",
+          "title": "Kiss and Tell reviews",
+          "is_supporting": false,
+          "text": "Film critics reviewing Kiss and Tell discussed Corliss Archer as a comic character, not politics."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_hard",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    },
+    {
+      "id": "rag_hard_0001",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "hard",
+      "question": "What science fantasy young adult series, told in first person, has companion books about enslaved worlds and alien species?",
+      "gold_answer": "Animorphs",
+      "supporting_ids": [
+        "h1_main",
+        "h1_comp"
+      ],
+      "contexts": [
+        {
+          "id": "h1_main",
+          "title": "Series form",
+          "is_supporting": true,
+          "text": "Animorphs is a science fantasy young adult series narrated largely in first person."
+        },
+        {
+          "id": "h1_comp",
+          "title": "Companions",
+          "is_supporting": true,
+          "text": "Animorphs companion volumes narrate enslaved worlds and alien species tied to the main war."
+        },
+        {
+          "id": "h1_d1",
+          "title": "Young adult fantasy lists",
+          "is_supporting": false,
+          "text": "Young adult science fantasy series told in first person include many titles beyond one franchise; companion books are common."
+        },
+        {
+          "id": "h1_d2",
+          "title": "Alien species encyclopedias",
+          "is_supporting": false,
+          "text": "Reference books catalog alien species and enslaved worlds in assorted science fantasy universes."
+        },
+        {
+          "id": "h1_d3",
+          "title": "Harry Potter companions",
+          "is_supporting": false,
+          "text": "Harry Potter has companion books, but it is magic fantasy rather than science fantasy about morphing teens."
+        },
+        {
+          "id": "h1_d4",
+          "title": "First-person YA",
+          "is_supporting": false,
+          "text": "First-person young adult narration is a popular style across romance, dystopia, and science fantasy series."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_hard",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    },
+    {
+      "id": "rag_hard_0002",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "hard",
+      "question": "The director of the romantic comedy Big Stone Gap is based in what New York city?",
+      "gold_answer": "Greenwich Village, New York City",
+      "supporting_ids": [
+        "h2_film",
+        "h2_home"
+      ],
+      "contexts": [
+        {
+          "id": "h2_film",
+          "title": "Big Stone Gap",
+          "is_supporting": true,
+          "text": "Big Stone Gap is a romantic comedy written and directed by Adriana Trigiani."
+        },
+        {
+          "id": "h2_home",
+          "title": "Trigiani residence",
+          "is_supporting": true,
+          "text": "Adriana Trigiani is based in Greenwich Village, New York City."
+        },
+        {
+          "id": "h2_d1",
+          "title": "NYC film directors",
+          "is_supporting": false,
+          "text": "Many romantic comedy directors are based in New York City neighborhoods such as Brooklyn and Queens."
+        },
+        {
+          "id": "h2_d2",
+          "title": "Greenwich Village arts",
+          "is_supporting": false,
+          "text": "Greenwich Village, New York City has long hosted writers and filmmakers unrelated to Big Stone Gap."
+        },
+        {
+          "id": "h2_d3",
+          "title": "Big Stone Gap tourism",
+          "is_supporting": false,
+          "text": "Big Stone Gap, Virginia is a town that inspired the novel and film title; tourism pages rarely mention New York."
+        },
+        {
+          "id": "h2_d4",
+          "title": "Romantic comedy hubs",
+          "is_supporting": false,
+          "text": "Los Angeles and New York City both host romantic comedy productions and director offices."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_hard",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    },
+    {
+      "id": "rag_hard_0003",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "hard",
+      "question": "2014 S/S is the debut album of a South Korean boy group formed by which company?",
+      "gold_answer": "YG Entertainment",
+      "supporting_ids": [
+        "h3_album",
+        "h3_co"
+      ],
+      "contexts": [
+        {
+          "id": "h3_album",
+          "title": "2014 S/S",
+          "is_supporting": true,
+          "text": "2014 S/S is the debut studio album of South Korean boy group WINNER."
+        },
+        {
+          "id": "h3_co",
+          "title": "WINNER formation",
+          "is_supporting": true,
+          "text": "WINNER was formed by YG Entertainment via a survival program."
+        },
+        {
+          "id": "h3_d1",
+          "title": "K-pop debut albums",
+          "is_supporting": false,
+          "text": "South Korean boy group debut albums in 2014 came from several companies including SM Entertainment and JYP."
+        },
+        {
+          "id": "h3_d2",
+          "title": "YG roster trivia",
+          "is_supporting": false,
+          "text": "YG Entertainment formed multiple acts; not every 2014 release belongs to WINNER."
+        },
+        {
+          "id": "h3_d3",
+          "title": "Survival programs",
+          "is_supporting": false,
+          "text": "Survival programs in Korea formed boy groups for different entertainment companies throughout the 2010s."
+        },
+        {
+          "id": "h3_d4",
+          "title": "Album title collisions",
+          "is_supporting": false,
+          "text": "Fashion-season album titles like S/S appear across K-pop marketing copy and are easy to confuse."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_hard",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    },
+    {
+      "id": "rag_hard_0004",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "hard",
+      "question": "Who is older, Annie Morton or Terry Richardson?",
+      "gold_answer": "Terry Richardson",
+      "supporting_ids": [
+        "h4_a",
+        "h4_t"
+      ],
+      "contexts": [
+        {
+          "id": "h4_a",
+          "title": "Annie Morton",
+          "is_supporting": true,
+          "text": "Model Annie Morton was born in 1970."
+        },
+        {
+          "id": "h4_t",
+          "title": "Terry Richardson",
+          "is_supporting": true,
+          "text": "Photographer Terry Richardson was born in 1965."
+        },
+        {
+          "id": "h4_d1",
+          "title": "Fashion ages",
+          "is_supporting": false,
+          "text": "Comparing who is older among models and photographers is a common trivia format with many name pairs."
+        },
+        {
+          "id": "h4_d2",
+          "title": "Annie name collisions",
+          "is_supporting": false,
+          "text": "Several public figures named Annie worked in fashion; birth years differ widely."
+        },
+        {
+          "id": "h4_d3",
+          "title": "Terry name collisions",
+          "is_supporting": false,
+          "text": "Multiple photographers named Terry were active in fashion; do not assume a single birth year."
+        },
+        {
+          "id": "h4_d4",
+          "title": "1970s cohort",
+          "is_supporting": false,
+          "text": "People born in 1965 versus 1970 are often compared in celebrity age quizzes with distractor names."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_hard",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    },
+    {
+      "id": "rag_hard_0005",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "hard",
+      "question": "What year did Guns N Roses perform a promo for a movie starring Arnold Schwarzenegger as a former New York Police detective?",
+      "gold_answer": "1999",
+      "supporting_ids": [
+        "h5_film",
+        "h5_promo"
+      ],
+      "contexts": [
+        {
+          "id": "h5_film",
+          "title": "End of Days",
+          "is_supporting": true,
+          "text": "End of Days stars Arnold Schwarzenegger as a former New York Police detective and was released in 1999."
+        },
+        {
+          "id": "h5_promo",
+          "title": "GNR promo",
+          "is_supporting": true,
+          "text": "Guns N Roses performed a promotional piece tied to End of Days around that film release year."
+        },
+        {
+          "id": "h5_d1",
+          "title": "Schwarzenegger detective roles",
+          "is_supporting": false,
+          "text": "Arnold Schwarzenegger played several action roles involving police and detectives across the 1980s and 1990s."
+        },
+        {
+          "id": "h5_d2",
+          "title": "Guns N Roses timeline",
+          "is_supporting": false,
+          "text": "Guns N Roses performed many promos and tours in the 1990s; years are easy to mix up."
+        },
+        {
+          "id": "h5_d3",
+          "title": "1991 vs 1999",
+          "is_supporting": false,
+          "text": "Some fans confuse 1991 Use Your Illusion promotion with later 1999 soundtrack/promo work."
+        },
+        {
+          "id": "h5_d4",
+          "title": "NYPD film tropes",
+          "is_supporting": false,
+          "text": "Former New York Police detective characters appear in multiple 1990s films unrelated to Guns N Roses."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_hard",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    },
+    {
+      "id": "rag_hold_0000",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "held_out",
+      "question": "The arena where the Lewiston Maineiacs played their home games can seat how many people?",
+      "gold_answer": "3,677 seated",
+      "supporting_ids": [
+        "ho0_team",
+        "ho0_arena"
+      ],
+      "contexts": [
+        {
+          "id": "ho0_team",
+          "title": "Lewiston Maineiacs",
+          "is_supporting": true,
+          "text": "The Lewiston Maineiacs played home games at the Androscoggin Bank Colisée."
+        },
+        {
+          "id": "ho0_arena",
+          "title": "Colisée capacity",
+          "is_supporting": true,
+          "text": "Androscoggin Bank Colisée can seat 3,677 seated fans in its hockey setup."
+        },
+        {
+          "id": "ho0_d1",
+          "title": "Junior hockey arenas",
+          "is_supporting": false,
+          "text": "Junior hockey arenas often seat between 3,000 and 6,000 people; capacities vary by configuration."
+        },
+        {
+          "id": "ho0_d2",
+          "title": "Lewiston venues",
+          "is_supporting": false,
+          "text": "Lewiston has hosted multiple sports venues; seating figures are frequently misquoted online."
+        },
+        {
+          "id": "ho0_d3",
+          "title": "Colisée events",
+          "is_supporting": false,
+          "text": "The Colisée hosts concerts and hockey; seated capacity for concerts differs from hockey."
+        },
+        {
+          "id": "ho0_d4",
+          "title": "QHJL teams",
+          "is_supporting": false,
+          "text": "Other QMJHL teams publish arena capacities that look similar to 3,677 seated."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_held_out",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    },
+    {
+      "id": "rag_hold_0001",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "held_out",
+      "question": "What is the name of the fight song of the university whose main campus is in Lawrence, Kansas and whose branch campuses are in the Kansas City metropolitan area?",
+      "gold_answer": "Kansas Song",
+      "supporting_ids": [
+        "ho1_uni",
+        "ho1_song"
+      ],
+      "contexts": [
+        {
+          "id": "ho1_uni",
+          "title": "University of Kansas",
+          "is_supporting": true,
+          "text": "The University of Kansas main campus is in Lawrence, Kansas, with branches in the Kansas City metropolitan area."
+        },
+        {
+          "id": "ho1_song",
+          "title": "Fight song",
+          "is_supporting": true,
+          "text": "That university fight song is known as Kansas Song (I'm a Jayhawk)."
+        },
+        {
+          "id": "ho1_d1",
+          "title": "Kansas colleges",
+          "is_supporting": false,
+          "text": "Several Kansas universities have fight songs; Lawrence and Kansas City references appear in many campus guides."
+        },
+        {
+          "id": "ho1_d2",
+          "title": "Kansas State fight songs",
+          "is_supporting": false,
+          "text": "Kansas State University in Manhattan has different fight songs often confused with Kansas Song."
+        },
+        {
+          "id": "ho1_d3",
+          "title": "Jayhawk trivia",
+          "is_supporting": false,
+          "text": "Jayhawk lore includes multiple songs and chants beyond a single official fight song name."
+        },
+        {
+          "id": "ho1_d4",
+          "title": "Metro campuses",
+          "is_supporting": false,
+          "text": "Universities with Kansas City metropolitan branch campuses are a frequent multi-hop quiz topic."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_held_out",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    },
+    {
+      "id": "rag_hold_0002",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "held_out",
+      "question": "What screenwriter with credits for Evolution co-wrote a film starring Nicolas Cage and Tea Leoni?",
+      "gold_answer": "David Weissman",
+      "supporting_ids": [
+        "ho2_ev",
+        "ho2_fm"
+      ],
+      "contexts": [
+        {
+          "id": "ho2_ev",
+          "title": "Evolution screenplay",
+          "is_supporting": true,
+          "text": "David Weissman has screenplay credits associated with the film Evolution."
+        },
+        {
+          "id": "ho2_fm",
+          "title": "The Family Man",
+          "is_supporting": true,
+          "text": "David Weissman co-wrote The Family Man, starring Nicolas Cage and Tea Leoni."
+        },
+        {
+          "id": "ho2_d1",
+          "title": "Nicolas Cage collaborators",
+          "is_supporting": false,
+          "text": "Many screenwriters worked on Nicolas Cage films with romantic co-stars in the early 2000s."
+        },
+        {
+          "id": "ho2_d2",
+          "title": "Evolution creature features",
+          "is_supporting": false,
+          "text": "Evolution (2001) has multiple writing credits; trivia pages list several names."
+        },
+        {
+          "id": "ho2_d3",
+          "title": "Tea Leoni filmography",
+          "is_supporting": false,
+          "text": "Tea Leoni starred in multiple films with different co-writers and leading men."
+        },
+        {
+          "id": "ho2_d4",
+          "title": "Screenwriter name lists",
+          "is_supporting": false,
+          "text": "Lists of comedy screenwriters active around 2000 include names often mixed with Weissman."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_held_out",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    },
+    {
+      "id": "rag_hold_0003",
+      "source": "hotpotqa/hotpot_qa",
+      "benchmark": "hotpotqa_rag",
+      "tier": "held_out",
+      "question": "Who was known by his stage name Aladin and helped organizations improve their performance as a consultant?",
+      "gold_answer": "Eenasul Fateh",
+      "supporting_ids": [
+        "ho3_stage",
+        "ho3_job"
+      ],
+      "contexts": [
+        {
+          "id": "ho3_stage",
+          "title": "Stage name Aladin",
+          "is_supporting": true,
+          "text": "The stage name Aladin was used by Eenasul Fateh as a performer."
+        },
+        {
+          "id": "ho3_job",
+          "title": "Consulting work",
+          "is_supporting": true,
+          "text": "Eenasul Fateh also worked as a consultant helping organizations improve performance."
+        },
+        {
+          "id": "ho3_d1",
+          "title": "Aladdin spellings",
+          "is_supporting": false,
+          "text": "Stage names Aladin/Aladdin are common among magicians; biographies diverge."
+        },
+        {
+          "id": "ho3_d2",
+          "title": "Performance consultants",
+          "is_supporting": false,
+          "text": "Many consultants help organizations improve performance after entertainment careers."
+        },
+        {
+          "id": "ho3_d3",
+          "title": "Magic consultants",
+          "is_supporting": false,
+          "text": "Corporate magicians sometimes rebrand as performance consultants; names are frequently confused."
+        },
+        {
+          "id": "ho3_d4",
+          "title": "South Asian performers",
+          "is_supporting": false,
+          "text": "Profiles of South Asian stage performers list multiple Aladin-like stage names."
+        }
+      ],
+      "tags": [
+        "public_rag",
+        "tier_held_out",
+        "multi_hop"
+      ],
+      "difficulty": "hard",
+      "min_retrieval_recall": 1.0,
+      "top_k": 2
+    }
+  ],
+  "honesty": {
+    "smoke": "Protocol / wiring check; contexts are easy; high scores expected and NOT external capability claims.",
+    "hard": "Stronger distractors + stricter recall; keyword RAG may fail — this is the reference signal.",
+    "held_out": "Frozen after hard design; do not tune retrieval prompts against this split.",
+    "reporting_rule": "Always report by_tier. Never advertise smoke-only 100% as SOTA."
+  }
+}

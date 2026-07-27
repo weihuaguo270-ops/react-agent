@@ -7,12 +7,14 @@
 | 能力 | 状态 | 说明 |
 |------|------|------|
 | ReAct 控制流 + Tool Calling | 已具备 | Core `react_loop` |
+| **声明式 Workflow** | 已具备 | `react_agent.workflow`（docs_troubleshoot 内置） |
 | 权限闸门 deny→ask→allow | 已具备 | 非 OS ACL |
 | ToolGuard 超时/重试 | 已具备 | 非容器隔离 |
-| Format B 轨迹 | 已具备 | 跨仓契约 |
+| Format B 轨迹 | 已具备 | 跨仓契约；Workflow 可 `to_trajectory()` |
 | 主场景：文档/API 排障 | 已具备 | `REACT_AGENT_APP=docs_troubleshoot` |
-| 黄金集离线回归 | 已具备 | `examples/run_docs_troubleshoot_eval.py` |
-| HTTP `/health` + `/v1/chat` | 已具备 | `python -m react_agent.server` |
+| 黄金集离线回归 | 已具备 | **Workflow 主路径**；无泄漏；core/hard/refuse；`run_docs_troubleshoot_eval.py` |
+| 公开 RAG/Agent 子集 | 已具备 | **分层** smoke/hard/held_out + drop-off；勿单独引 smoke |
+| HTTP `/health` + `/v1/chat` + `/v1/workflows` | 已具备 | `python -m react_agent.server` |
 | 结构化错误 + request_id | 已具备 | 统一 error envelope |
 | 引用校验 / 无依据拒答 | 已具备 | `verify_citations` + policy |
 | 离线 CI（Ubuntu/Windows） | 已具备 | 见 GitHub Actions |
@@ -27,11 +29,14 @@
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
+python examples/demo_workflow.py                  # 推荐：确定性 Workflow
 python examples/demo_docs_troubleshoot.py
 python examples/run_docs_troubleshoot_eval.py
 python -m react_agent.server --port 8765
-# GET http://127.0.0.1:8765/health
-# POST http://127.0.0.1:8765/v1/chat  {"message":"..."}
+# GET  /health
+# GET  /v1/workflows
+# POST /v1/workflows/run  {"name":"docs_troubleshoot","query":"..."}
+# POST /v1/chat  {"message":"..."}
 ```
 
 Live LLM 服务模式：`REACT_AGENT_SERVER_LLM=1`（需配置 API Key）。

@@ -137,6 +137,14 @@ class AgentHandler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if path in ("/v1/workflows", "/v1/workflows/list"):
+            from react_agent.workflow import list_workflows
+
+            self._send(
+                200,
+                {"request_id": request_id, "workflows": list_workflows()},
+            )
+            return
         status, payload = _error("not_found", f"unknown path {path}", request_id, 404)
         self._send(status, payload)
 
@@ -163,6 +171,35 @@ class AgentHandler(BaseHTTPRequestHandler):
                     payload["request_id"] = request_id
                 self._send(status, payload)
                 return
+            if path in ("/v1/workflows", "/v1/workflows/list"):
+                from react_agent.workflow import list_workflows
+
+                self._send(
+                    200,
+                    {"request_id": request_id, "workflows": list_workflows()},
+                )
+                return
+            if path == "/v1/workflows/run":
+                name = (body.get("name") or "").strip()
+                if not name:
+                    status, payload = _error(
+                        "invalid_request", "name is required", request_id, 400
+                    )
+                    self._send(status, payload)
+                    return
+                from react_agent.workflow.tools import run_workflow_tool
+
+                raw = run_workflow_tool(
+                    name=name,
+                    query=str(body.get("query") or ""),
+                    payload_json=json.dumps(body.get("state") or {})
+                    if isinstance(body.get("state"), dict)
+                    else str(body.get("payload_json") or ""),
+                )
+                data = json.loads(raw)
+                data["request_id"] = request_id
+                self._send(200 if data.get("ok", True) else 500, data)
+                return
             status, payload = _error("not_found", f"unknown path {path}", request_id, 404)
             self._send(status, payload)
         except Exception as e:
@@ -179,7 +216,8 @@ def serve(host: str = "127.0.0.1", port: int = 8765):
     reset_index()
     httpd = ThreadingHTTPServer((host, port), AgentHandler)
     print(f"[server] listening on http://{host}:{port}")
-    print("[server] GET /health  POST /v1/chat  (REACT_AGENT_SERVER_LLM=1 for live LLM)")
+    print("[server] GET /health  GET /v1/workflows  POST /v1/workflows/run  POST /v1/chat")
+    print("[server] REACT_AGENT_SERVER_LLM=1 for live LLM on /v1/chat")
     httpd.serve_forever()
 
 

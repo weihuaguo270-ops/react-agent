@@ -1,75 +1,82 @@
 # ReAct Agent
 
-[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-生产向运行时原型-lightgrey)](docs/PRODUCTION_MATURITY.md)
+[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-自建Core·生产向原型-lightgrey)](docs/CORE_ARCHITECTURE.md)
 
-**生产向 Agent 运行时原型** — ReAct 控制流、权限闸门、ToolGuard、Format B 轨迹与评测闭环；**主场景为内部文档/API 排障**（检索 → 引用 → 拒答策略）。  
-成熟度与边界见 [`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。默认叙事以 **Core + 主场景 + 证据链** 为准。
+**自建 Core 优先的生产向 Agent 运行时** — ReAct 循环、**声明式 Workflow**、权限闸门、ToolGuard、Format B 与评测闭环；**主场景：文档/API 排障**。  
+架构说明：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。  
+LangGraph 仅在 `experiments/langgraph/` 作可选对照，**不进入默认依赖与主叙事**。
 
-## 主场景：文档 / API 排障
+## 主场景 + Workflow
 
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
-python examples/demo_docs_troubleshoot.py          # 无 Key
-python examples/run_docs_troubleshoot_eval.py      # 黄金集 10/10
-python -m react_agent.server --port 8765           # GET /health  POST /v1/chat
+python examples/demo_workflow.py                   # 确定性流水线（推荐）
+python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么？"
+python examples/demo_docs_troubleshoot.py          # 工具级演示
+python examples/run_docs_troubleshoot_eval.py      # 黄金集
+python -m react_agent.server --port 8765           # /health /v1/chat /v1/workflows
 ```
 
-能力：`search_docs` / `lookup_api` / `verify_citations`；无依据拒答。语料与黄金集在 `src/react_agent/apps/docs_troubleshoot/`。
+Workflow：`search → lookup_api → draft → policy → final`（可审计 step 记录）。Agent 亦可调用 `run_workflow` / `list_workflows`。
 
 ## 范围与定位
 
 | 是 | 不是 |
 |----|------|
-| 可服务化、可回归、可观测的 Agent 运行时 + 垂直场景 | 多租户 Agent 平台 / 完整鉴权网关 |
-| Core 与 LangGraph 两条路径可对照 | 「只会手写」或「只会调框架」 |
-| 离线 CI + 可选真实 LLM 冒烟；公开评测快照 | SLA / Docker 全家桶（本阶段未做） |
+| 自建 Core（ReAct + Workflow + 权限/Harness）可服务化、可回归 | 多租户 Agent 平台 / 完整鉴权网关 |
+| 垂直主场景（文档排障）+ 证据链 | 以 LangGraph 为默认实现 |
+| 离线 CI + 可选真实 LLM 冒烟 | SLA / Docker 全家桶（本阶段未做） |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
 证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md)。
 
-## 架构概览
+## 架构概览（Core 主路径）
 
-本仓库用 **过程式 Core** 把控制流写透，用 **LangGraph 对照** 对齐团队常见的图编排 / checkpoint；两者共享轨迹约定，不追求逐步行为等价。
+默认只讲 **自建 Core**。LangGraph 对照见文末一小节，非必装。
 
-| 维度 | Core（`src/react_agent/`） | LangGraph（`experiments/langgraph/`） |
-|------|---------------------------|--------------------------------------|
-| **入口** | `react_loop()` | StateGraph + `MemorySaver` |
-| **依赖** | 标准库 + LLM API | 可选 `[langgraph]` extras |
-| **侧重点** | 控制流透明、Harness / ToolGuard 深耦合 | 图边、续跑、团队常见编排模型 |
-| **关系** | 默认运行与评测主路径 | 框架对照（见 Demo） |
+```
+query
+  ├─ Workflow（确定性：docs_troubleshoot）     ← 推荐主路径
+  └─ react_loop（自由 ReAct + 工具）
+        → permission gate → tools / ToolGuard
+        → CONTEXT.manage → Format B 轨迹
+```
+
+| 维度 | Core（默认） |
+|------|----------------|
+| **入口** | `react_loop()` / `run_workflow()` / `python -m react_agent.server` |
+| **依赖** | 标准库 + LLM API（Workflow 离线可不需 Key） |
+| **侧重点** | 控制流透明、Workflow、Harness、评测证据 |
 
 ### 执行流程（Core）
 
 ```
-query → react_loop()
-          ├── system prompt（角色 / CoT）
-          ├── LLM → thought / action
-          ├── 工具执行（权限提示 + ToolGuard）
-          └── 观测回填 → 直至最终答案
+query
+  ├─ run_workflow("docs_troubleshoot")     ← 确定性主路径（推荐）
+  │     search → lookup_api → draft → policy → final
+  └─ react_loop()                          ← 自由探索
+          ├── system prompt / LLM
+          ├── 工具（含 list/run_workflow）
+          └── Format B 轨迹
 ```
 
-多 Agent / MCP / RAG：**可选**，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
+多 Agent / MCP / RAG / LangGraph：**可选**，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
 
 ### 模块清单
 
 ```
-react_agent/                    # CORE
+react_agent/                    # CORE（默认）
 ├── react_loop.py               ReAct 循环
-├── llm.py / prompts.py / cot.py
-├── tools/                      默认工具 + enable_app_tools()
+├── workflow/                   声明式 Workflow 引擎 + builtins
 ├── apps/docs_troubleshoot/     主场景后端（语料/工具/黄金集）
-├── server/                     薄 HTTP：/health /v1/chat
-├── context.py / memory.py
-├── harness/                    录制 · 回放 · Schema · 沙箱超时
-├── safety/                     权限闸门（deny→ask→allow）+ HITL
-├── resilience.py               ToolGuard（超时/重试；非 OS 安全边界）
-└── eval/                       EVAL-ONLY：capability 规则打分
+├── server/                     HTTP：/health /v1/chat /v1/workflows
+├── tools/                      工具表（含 list/run_workflow）
+├── harness/ · safety/ · resilience.py · eval/
+└── ...
 
-# EXPERIMENTAL（默认不注册进工具表）— 见 docs/EXPERIMENTAL.md
-#   rag.py · mcp_*.py · orchestrator.py · tot.py · dashboard/
-#   experiments/langgraph/
+# 可选对照（非默认）— experiments/langgraph/ ，pip install -e ".[langgraph]"
 ```
 
 ## 核心功能
@@ -144,17 +151,13 @@ python examples/demo_expense_workflow.py
 python examples/demo_mcp_mock.py
 ```
 
-## LangGraph 对照（`experiments/langgraph/`）
+## LangGraph 对照（可选，非默认）
 
-用框架路径对照 Core：图编排、checkpoint、HITL gate。  
-不与 Core 做严格行为等价；轨迹侧对齐 **Harness Format B**。
-
-- 无 Key Demo（StateGraph + Checkpoint + HITL）:
+`experiments/langgraph/`：图编排 / checkpoint 学习对照，**不进入默认依赖与 CI 主路径**。
 
 ```bash
 pip install -e ".[langgraph]"
 python experiments/langgraph/demo_checkpoint_hitl.py
-pytest tests/test_langgraph_harness_contract.py -q
 ```
 
 ## 快速开始
@@ -175,6 +178,7 @@ Web 面板（实验）：`REACT_AGENT_EXPERIMENTAL_TOOLS=1` 后 `python -m react
 python -m react_agent.eval --dataset capability
 python examples/run_execution_suite.py --publish
 python examples/run_public_benchmark.py              # GSM8K×10 + HotpotQA×10 offline
+python examples/run_public_rag_benchmark.py           # 分层 RAG：看 by_tier，勿只报 smoke
 # python examples/run_public_benchmark.py --modes agent --publish  # 需 API Key
 ```
 
