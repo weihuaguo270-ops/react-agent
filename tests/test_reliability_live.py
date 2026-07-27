@@ -4,6 +4,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "examples", "eval"))
 
 os.environ["REACT_AGENT_SKIP_RAG"] = "1"
 
@@ -43,7 +44,7 @@ def test_parse_and_install_flaky():
 
 
 def test_reliability_live_mock():
-    from examples.run_reliability_live import SCENARIOS, run_pair, aggregate
+    from run_reliability_live import SCENARIOS, run_pair, aggregate
 
     pairs = [run_pair(s, live=False) for s in SCENARIOS]
     agg = aggregate(pairs)

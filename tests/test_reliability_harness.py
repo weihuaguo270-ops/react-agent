@@ -4,10 +4,11 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "examples", "eval"))
 
 os.environ["REACT_AGENT_SKIP_RAG"] = "1"
 
-from examples.run_reliability_harness import run_harness  # noqa: E402
+from run_reliability_harness import run_harness  # noqa: E402
 
 
 def test_reliability_harness_all_pass():
