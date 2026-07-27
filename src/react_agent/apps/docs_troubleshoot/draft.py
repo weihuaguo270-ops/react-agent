@@ -50,6 +50,22 @@ def needs_multi_doc(query: str) -> bool:
     return False
 
 
+def _pick_unique_by_source(
+    ranked: list[dict[str, Any]], limit: int
+) -> list[dict[str, Any]]:
+    selected: list[dict[str, Any]] = []
+    seen_sources: set[str] = set()
+    for r in ranked:
+        src = str(r.get("source") or "")
+        if src in seen_sources:
+            continue
+        selected.append(r)
+        seen_sources.add(src)
+        if len(selected) >= limit:
+            break
+    return selected
+
+
 def select_hits(ranked: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
     if not ranked:
         return []
@@ -57,32 +73,14 @@ def select_hits(ranked: list[dict[str, Any]], query: str) -> list[dict[str, Any]
     if "不要猜" in ql or ("不要" in ql and "别的" in ql):
         return ranked[:1]
     if needs_multi_doc(query):
-        selected: list[dict[str, Any]] = []
-        seen_sources: set[str] = set()
-        for r in ranked:
-            src = str(r.get("source") or "")
-            if src in seen_sources:
-                continue
-            selected.append(r)
-            seen_sources.add(src)
-            if len(selected) >= 3:
-                break
+        selected = _pick_unique_by_source(ranked, 3)
         return selected or ranked[:1]
     if _MULTI_HINT.search(ql):
         top_src = str(ranked[0].get("source") or "")
         same_source = [r for r in ranked if str(r.get("source") or "") == top_src][:3]
         if len(same_source) >= 2:
             return same_source
-        selected: list[dict[str, Any]] = []
-        seen_sources: set[str] = set()
-        for r in ranked:
-            src = str(r.get("source") or "")
-            if src in seen_sources:
-                continue
-            selected.append(r)
-            seen_sources.add(src)
-            if len(selected) >= 2:
-                break
+        selected = _pick_unique_by_source(ranked, 2)
         return selected or ranked[:1]
     return ranked[:1]
 
