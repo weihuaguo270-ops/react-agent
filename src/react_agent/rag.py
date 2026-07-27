@@ -336,7 +336,7 @@ def rag_query(query: str, top_k: int = 3) -> str:
     """
     if not RAG_INDEX.chunks:
         return (
-            "[RAG] 文档库为空。可用 examples/demo_rag.py 加载 fixtures/rag_corpus，"
+            "[RAG] 文档库为空。可用 examples/demos/demo_rag.py 加载 fixtures/rag_corpus，"
             "或调用 ingest / ingest_directory。"
         )
     results = RAG_INDEX.query(query, top_k=top_k)

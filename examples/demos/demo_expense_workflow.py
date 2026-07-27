@@ -4,7 +4,7 @@
 不是完整 ReAct 循环，而是可口述的「业务落点」骨架。
 
 用法:
-  python examples/demo_expense_workflow.py
+  python examples/demos/demo_expense_workflow.py
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 import os

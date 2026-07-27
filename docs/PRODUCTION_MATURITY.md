@@ -29,9 +29,9 @@
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
-python examples/demo_workflow.py                  # 推荐：确定性 Workflow
-python examples/demo_docs_troubleshoot.py
-python examples/run_docs_troubleshoot_eval.py
+python examples/demos/demo_workflow.py                  # 推荐：确定性 Workflow
+python examples/demos/demo_docs_troubleshoot.py
+python examples/eval/run_docs_troubleshoot_eval.py
 python -m react_agent.server --port 8765
 # GET  /health
 # GET  /v1/workflows

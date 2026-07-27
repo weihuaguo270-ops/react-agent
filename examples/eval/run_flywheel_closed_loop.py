@@ -1,8 +1,8 @@
 """失败飞轮闭环：改前/改后对照（duplicate 拦截 + offtrack 假阳性修复）。
 
 用法：
-  python examples/run_flywheel_closed_loop.py
-  python examples/run_flywheel_closed_loop.py --traj-dir src/react_agent/trajectories --n 100 --publish
+  python examples/eval/run_flywheel_closed_loop.py
+  python examples/eval/run_flywheel_closed_loop.py --traj-dir src/react_agent/trajectories --n 100 --publish
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TDEBUG = ROOT.parent / "trace-debugger"
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(TDEBUG))
@@ -257,7 +257,7 @@ def main() -> int:
             "## 复现",
             "",
             "```bash",
-            "python examples/run_flywheel_closed_loop.py --publish",
+            "python examples/eval/run_flywheel_closed_loop.py --publish",
             "```",
             "",
         ])

@@ -2,6 +2,8 @@
 
 感谢关注本仓库。这是个人维护的 **生产向 Agent 运行时原型**（可服务化、可回归；非多租户平台），欢迎 Issue 与小范围 PR。
 
+仓库怎么读：[`docs/STRUCTURE.md`](docs/STRUCTURE.md)。
+
 ## 开发环境
 
 ```bash

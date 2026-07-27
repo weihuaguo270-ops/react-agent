@@ -21,7 +21,7 @@ Eval API constant: `react_agent.eval.scorer.EVAL_API_VERSION` (`0.1`, mirrored i
 
 File: [`harness_trajectory.schema.json`](harness_trajectory.schema.json)
 
-Demo: `python examples/harness_closed_loop.py`
+Demo: `python examples/eval/harness_closed_loop.py`
 
 契约测试（防 API 漂移）：
 

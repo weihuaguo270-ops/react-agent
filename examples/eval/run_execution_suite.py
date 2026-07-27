@@ -1,9 +1,9 @@
 """跑 Execution 任务集（offline_tools / agent）并可选发布 docs 快照。
 
 用法：
-  python examples/run_execution_suite.py
-  python examples/run_execution_suite.py --modes agent --publish
-  python examples/run_execution_suite.py --modes offline_tools,agent --stem execution_all_YYYYMMDD
+  python examples/eval/run_execution_suite.py
+  python examples/eval/run_execution_suite.py --modes agent --publish
+  python examples/eval/run_execution_suite.py --modes offline_tools,agent --stem execution_all_YYYYMMDD
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 # 加载 .env（API Key）
@@ -105,7 +105,7 @@ def main() -> int:
         report["meta"] = {
             "git": _git_sha(),
             "reproduce_cmd": (
-                f"python examples/run_execution_suite.py --modes {','.join(modes)} --publish"
+                f"python examples/eval/run_execution_suite.py --modes {','.join(modes)} --publish"
             ),
         }
         json_path.write_text(
@@ -114,7 +114,7 @@ def main() -> int:
         notes = [
             f"git: `{_git_sha()}`",
             f"archived_json: `docs/snapshots/{json_path.name}`",
-            f"reproduce: `python examples/run_execution_suite.py --modes {','.join(modes)} --publish`",
+            f"reproduce: `python examples/eval/run_execution_suite.py --modes {','.join(modes)} --publish`",
         ]
         md = report_to_markdown(report, title=f"Execution 公开快照（{stem}）")
         parts = md.split("\n", 2)

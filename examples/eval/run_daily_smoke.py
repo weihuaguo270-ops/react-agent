@@ -4,8 +4,8 @@ Default (CI / free): offline execution + injected reliability + mock live A/B.
 Optional: --with-agent when DEEPSEEK_API_KEY is set (costs API).
 
 Usage:
-  python examples/run_daily_smoke.py
-  python examples/run_daily_smoke.py --with-agent
+  python examples/eval/run_daily_smoke.py
+  python examples/eval/run_daily_smoke.py --with-agent
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 LOG_DIR = ROOT / "docs" / "daily_smoke"
@@ -111,7 +111,7 @@ def _render_variance(rows: list[dict]) -> str:
     lines = [
         "# Daily smoke variance（跨日）",
         "",
-        "自动由 `examples/run_daily_smoke.py` + GitHub Actions `daily-smoke` 追加。",
+        "自动由 `examples/eval/run_daily_smoke.py` + GitHub Actions `daily-smoke` 追加。",
         "默认 **offline / mock**（不耗 API）；带 Key 时可选 `--with-agent`。",
         "",
         "| date (UTC) | git | exec offline | exec ok | reliability harness | reliability mock | agent smoke | overall |",
@@ -148,7 +148,7 @@ def _render_variance(rows: list[dict]) -> str:
             "",
             "- 看的是**跨日是否稳定**，不是再刷一次公开大快照。",
             "- `agent smoke` 默认 skip；只有 workflow / 本地显式开 `--with-agent` 才跑。",
-            "- 复现：`python examples/run_daily_smoke.py`",
+            "- 复现：`python examples/eval/run_daily_smoke.py`",
             "",
         ]
     )

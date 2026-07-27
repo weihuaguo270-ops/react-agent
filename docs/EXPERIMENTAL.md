@@ -8,8 +8,8 @@ set REACT_AGENT_EXPERIMENTAL_TOOLS=1
 
 | Module | Entry | Notes |
 |--------|-------|-------|
-| RAG | `rag.py`；离线 `REACT_AGENT_RAG_MODE=keyword` | 可选 `pip install -e ".[rag]"` 语义检索；`examples/demo_rag.py` |
-| MCP | `mcp_client.py` / `--mcp`；`REACT_AGENT_MCP_MOCK=1` | 评测 `DISABLE_MCP=1`；mock 见 `examples/demo_mcp_mock.py` |
+| RAG | `rag.py`；离线 `REACT_AGENT_RAG_MODE=keyword` | 可选 `pip install -e ".[rag]"` 语义检索；`examples/demos/demo_rag.py` |
+| MCP | `mcp_client.py` / `--mcp`；`REACT_AGENT_MCP_MOCK=1` | 评测 `DISABLE_MCP=1`；mock 见 `examples/demos/demo_mcp_mock.py` |
 | Multi-agent | `orchestrator.py` / `planner.py` | 演示编排；`multi_agent_chain` 懒导入 |
 | ToT | `tot.py` | 教学推理工具 |
 | Dashboard | `dashboard/` | 本地可视化 |

@@ -2,10 +2,10 @@
 
 用法：
   # 演示样例（CI）
-  python examples/run_failure_flywheel.py --fixture
+  python examples/eval/run_failure_flywheel.py --fixture
 
   # 真实本地轨迹
-  python examples/run_failure_flywheel.py --dir src/react_agent/trajectories --n 50 --publish
+  python examples/eval/run_failure_flywheel.py --dir src/react_agent/trajectories --n 50 --publish
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TDEBUG_ROOT = ROOT.parent / "trace-debugger"
 
 
@@ -123,7 +123,7 @@ def append_flywheel(
         header = [
             "# 失败归因飞轮（Failure → Fix → Retest）",
             "",
-            "本页由 `examples/run_failure_flywheel.py` 追加。每次扫描后记录假设动作，",
+            "本页由 `examples/eval/run_failure_flywheel.py` 追加。每次扫描后记录假设动作，",
             "并在下一周期勾选是否完成改动与复测。",
             "",
             "---",

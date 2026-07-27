@@ -2,13 +2,13 @@
 
 用法：
   # CI / 无 Key：校验匹配器（默认）
-  python examples/run_public_benchmark.py
+  python examples/eval/run_public_benchmark.py
 
   # 真实 Agent（需 DEEPSEEK_API_KEY）
-  python examples/run_public_benchmark.py --modes agent --publish
+  python examples/eval/run_public_benchmark.py --modes agent --publish
 
   # 只跑某一基准
-  python examples/run_public_benchmark.py --benchmarks gsm8k --modes offline
+  python examples/eval/run_public_benchmark.py --benchmarks gsm8k --modes offline
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 try:
@@ -110,7 +110,7 @@ def main() -> int:
         snap_dir.mkdir(exist_ok=True)
         json_path = snap_dir / f"{stem}.json"
         md_path = docs / f"{stem}.md"
-        cmd = f"python examples/run_public_benchmark.py --modes {','.join(modes)}"
+        cmd = f"python examples/eval/run_public_benchmark.py --modes {','.join(modes)}"
         if benchmarks:
             cmd += f" --benchmarks {','.join(benchmarks)}"
         cmd += " --publish"

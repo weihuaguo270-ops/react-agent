@@ -369,7 +369,7 @@ def report_to_markdown(
             "",
             "```bash",
             reproduce_cmd,
-            "python examples/publish_eval_snapshot.py --from-report <json路径>",
+            "python examples/eval/publish_eval_snapshot.py --from-report <json路径>",
             "```",
             "",
             "> 学习用途快照：样本量有限，不代表生产基准。",

@@ -44,7 +44,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.with_agent }}" = "true" ]; then
             EXTRA="--with-agent"
           fi
-          python examples/run_daily_smoke.py $EXTRA
+          python examples/eval/run_daily_smoke.py $EXTRA
 
       - name: Commit variance log
         run: |

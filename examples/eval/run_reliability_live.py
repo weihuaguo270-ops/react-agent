@@ -2,11 +2,11 @@
 
 用法：
   # mock（CI，不调 LLM）
-  python examples/run_reliability_live.py --mock
+  python examples/eval/run_reliability_live.py --mock
 
   # live（需 DEEPSEEK_API_KEY）
   set REACT_AGENT_DISABLE_MCP=1
-  python examples/run_reliability_live.py --live --publish
+  python examples/eval/run_reliability_live.py --live --publish
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 os.environ.setdefault("REACT_AGENT_SKIP_RAG", "1")
@@ -378,9 +378,9 @@ def to_markdown(report: dict, *, title: str) -> str:
         "## 复现",
         "",
         "```bash",
-        "python examples/run_reliability_live.py --mock",
+        "python examples/eval/run_reliability_live.py --mock",
         "set REACT_AGENT_DISABLE_MCP=1",
-        "python examples/run_reliability_live.py --live --publish",
+        "python examples/eval/run_reliability_live.py --live --publish",
         "```",
         "",
         "## 诚实边界",

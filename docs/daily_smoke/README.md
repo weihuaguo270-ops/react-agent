@@ -11,10 +11,10 @@
 
 ```bash
 # 本地（与 CI 相同，不耗 API）
-python examples/run_daily_smoke.py
+python examples/eval/run_daily_smoke.py
 
 # 可选：easy agent 子集（需 Key）
-python examples/run_daily_smoke.py --with-agent
+python examples/eval/run_daily_smoke.py --with-agent
 ```
 
 ## 定时

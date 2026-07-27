@@ -2,13 +2,13 @@
 
 用法：
   # 推荐对外口径：全部分层 + 自动 controls
-  python examples/run_public_rag_benchmark.py
+  python examples/eval/run_public_rag_benchmark.py
 
   # 只看 hard / held_out
-  python examples/run_public_rag_benchmark.py --tiers hard,held_out --modes rag
+  python examples/eval/run_public_rag_benchmark.py --tiers hard,held_out --modes rag
 
   # Agent（需 Key）
-  python examples/run_public_rag_benchmark.py --modes agent --tiers hard --publish
+  python examples/eval/run_public_rag_benchmark.py --modes agent --tiers hard --publish
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 try:
@@ -139,7 +139,7 @@ def main() -> int:
         snap.mkdir(parents=True, exist_ok=True)
         report["git"] = _git_sha()
         report["reproduce_cmd"] = (
-            "python examples/run_public_rag_benchmark.py "
+            "python examples/eval/run_public_rag_benchmark.py "
             f"--modes {','.join(modes)} --publish"
         )
         json_path = snap / f"{stem}.json"

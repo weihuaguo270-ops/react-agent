@@ -1,5 +1,7 @@
 # Core 自建架构（主路径）
 
+结构地图：[`STRUCTURE.md`](STRUCTURE.md)。
+
 本仓默认叙事以 **自建 Core** 为准；LangGraph 仅作可选对照，不参与主路径依赖与默认演示。
 
 ## 分层
@@ -20,8 +22,8 @@ Apps (docs_troubleshoot)
 ```bash
 python -m react_agent.workflow list
 python -m react_agent.workflow run docs_troubleshoot --query "401 怎么返回？"
-python examples/demo_workflow.py
-python examples/run_docs_troubleshoot_eval.py   # 严格黄金集：Workflow + 无泄漏
+python examples/demos/demo_workflow.py
+python examples/eval/run_docs_troubleshoot_eval.py   # 严格黄金集：Workflow + 无泄漏
 ```
 
 Agent 工具：`list_workflows` / `run_workflow`（默认注册）。

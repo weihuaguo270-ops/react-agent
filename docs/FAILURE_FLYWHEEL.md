@@ -1,6 +1,6 @@
 # 失败归因飞轮（Failure → Fix → Retest）
 
-本页由 `examples/run_failure_flywheel.py` 追加。每次扫描后记录假设动作，
+本页由 `examples/eval/run_failure_flywheel.py` 追加。每次扫描后记录假设动作，
 并在下一周期勾选是否完成改动与复测。
 
 ---

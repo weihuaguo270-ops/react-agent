@@ -2,7 +2,7 @@
 
 用法:
   set REACT_AGENT_MCP_MOCK=1
-  python examples/demo_mcp_mock.py
+  python examples/demos/demo_mcp_mock.py
 
 接入 CLI:
   set REACT_AGENT_MCP_MOCK=1
@@ -14,7 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from react_agent.mcp_client import MockMCPClient

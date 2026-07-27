@@ -3,7 +3,7 @@
 [![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-自建Core·生产向原型-lightgrey)](docs/CORE_ARCHITECTURE.md)
 
 **自建 Core 优先的生产向 Agent 运行时** — ReAct 循环、**声明式 Workflow**、权限闸门、ToolGuard、Format B 与评测闭环；**主场景：文档/API 排障**。  
-架构说明：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。  
+结构地图：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。  
 LangGraph 仅在 `experiments/langgraph/` 作可选对照，**不进入默认依赖与主叙事**。
 
 ## 主场景 + Workflow
@@ -11,10 +11,10 @@ LangGraph 仅在 `experiments/langgraph/` 作可选对照，**不进入默认依
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
-python examples/demo_workflow.py                   # 确定性流水线（推荐）
+python examples/demos/demo_workflow.py                   # 确定性流水线（推荐）
 python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么？"
-python examples/demo_docs_troubleshoot.py          # 工具级演示
-python examples/run_docs_troubleshoot_eval.py      # 黄金集
+python examples/demos/demo_docs_troubleshoot.py          # 工具级演示
+python examples/eval/run_docs_troubleshoot_eval.py      # 黄金集
 python -m react_agent.server --port 8765           # /health /v1/chat /v1/workflows
 ```
 
@@ -66,17 +66,17 @@ query
 
 ### 模块清单
 
-```
-react_agent/                    # CORE（默认）
-├── react_loop.py               ReAct 循环
-├── workflow/                   声明式 Workflow 引擎 + builtins
-├── apps/docs_troubleshoot/     主场景后端（语料/工具/黄金集）
-├── server/                     HTTP：/health /v1/chat /v1/workflows
-├── tools/                      工具表（含 list/run_workflow）
-├── harness/ · safety/ · resilience.py · eval/
-└── ...
+完整地图见 [`docs/STRUCTURE.md`](docs/STRUCTURE.md)。精简树：
 
-# 可选对照（非默认）— experiments/langgraph/ ，pip install -e ".[langgraph]"
+```
+src/react_agent/          # Core 默认
+├── workflow/ · react_loop.py · apps/docs_troubleshoot/ · server/
+├── tools/ · safety/ · harness/ · resilience.py · eval/
+examples/
+├── demos/                # 演示
+└── eval/                 # 回归与公开基准
+docs/                     # STRUCTURE · CORE · EVAL_INDEX；报告在 reports/
+experiments/langgraph/    # 可选对照（非默认）
 ```
 
 ## 核心功能
@@ -145,10 +145,10 @@ replay_trajectory(trajectory)
 set REACT_AGENT_EXPERIMENTAL_TOOLS=1
 set REACT_AGENT_RAG_MODE=keyword
 set REACT_AGENT_MCP_MOCK=1
-python examples/demo_context.py
-python examples/demo_rag.py
-python examples/demo_expense_workflow.py
-python examples/demo_mcp_mock.py
+python examples/demos/demo_context.py
+python examples/demos/demo_rag.py
+python examples/demos/demo_expense_workflow.py
+python examples/demos/demo_mcp_mock.py
 ```
 
 ## LangGraph 对照（可选，非默认）
@@ -176,10 +176,10 @@ Web 面板（实验）：`REACT_AGENT_EXPERIMENTAL_TOOLS=1` 后 `python -m react
 
 ```bash
 python -m react_agent.eval --dataset capability
-python examples/run_execution_suite.py --publish
-python examples/run_public_benchmark.py              # GSM8K×10 + HotpotQA×10 offline
-python examples/run_public_rag_benchmark.py           # 分层 RAG：看 by_tier，勿只报 smoke
-# python examples/run_public_benchmark.py --modes agent --publish  # 需 API Key
+python examples/eval/run_execution_suite.py --publish
+python examples/eval/run_public_benchmark.py              # GSM8K×10 + HotpotQA×10 offline
+python examples/eval/run_public_rag_benchmark.py           # 分层 RAG：看 by_tier，勿只报 smoke
+# python examples/eval/run_public_benchmark.py --modes agent --publish  # 需 API Key
 ```
 
 与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 校准口径：**held_out live κ≈0.69**（n=20，CI[0.46,0.92]）— 见 [METRICS_TRUST](https://github.com/weihuaguo270-ops/llm-eval-engine/blob/master/docs/METRICS_TRUST.md)，勿引用旧 n=15/κ≈0.47 或扩容前 n=11/κ≈0.59。  
@@ -194,7 +194,7 @@ python examples/run_public_rag_benchmark.py           # 分层 RAG：看 by_tier
 | JSON Schema | [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json) |
 | 校验 / 归一化 | `react_agent.harness.schema` |
 | 离线 fixture | `examples/fixtures/harness_closed_loop.json` |
-| 一键 demo | `python examples/harness_closed_loop.py` |
+| 一键 demo | `python examples/eval/harness_closed_loop.py` |
 
 闭环：`Agent 记录 → Trace Debugger 失败分类 → Eval Engine Process Reward`（CI `integration` job 会 clone 两仓并跑 demo + **契约测试**）。
 
@@ -204,12 +204,12 @@ python examples/run_public_rag_benchmark.py           # 分层 RAG：看 by_tier
 |------|-----------|
 | 跨仓评分 API | `pytest tests/test_eval_engine_contract.py` |
 | Agent→Eval 路径 | `python tests/ci_verify_integration.py`（integration job） |
-| Schema→tdebug→eval | `python examples/harness_closed_loop.py --fixture` |
+| Schema→tdebug→eval | `python examples/eval/harness_closed_loop.py --fixture` |
 
 ```bash
 pip install -e ../trace-debugger -e ../llm-eval-engine   # 本地旁路仓
-python examples/harness_closed_loop.py --fixture
-python examples/harness_closed_loop.py --mock-agent
+python examples/eval/harness_closed_loop.py --fixture
+python examples/eval/harness_closed_loop.py --mock-agent
 ```
 
 ## 测试

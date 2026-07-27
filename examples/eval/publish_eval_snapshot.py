@@ -2,13 +2,13 @@
 
 用法：
   # 从已有 JSON 报告生成 docs 快照（无需 API，可复现）
-  python examples/publish_eval_snapshot.py --from-report src/react_agent/eval/reports/eval_20260713_140216.json
+  python examples/eval/publish_eval_snapshot.py --from-report src/react_agent/eval/reports/eval_20260713_140216.json
 
   # 先跑 capability 再发布（需 DEEPSEEK_API_KEY）
-  python examples/publish_eval_snapshot.py --run capability
+  python examples/eval/publish_eval_snapshot.py --run capability
 
   # 只跑扩大后的新用例（更快验证）
-  python examples/publish_eval_snapshot.py --run capability --only-new
+  python examples/eval/publish_eval_snapshot.py --run capability --only-new
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from react_agent.eval.report import load_report, report_to_markdown  # noqa: E402

@@ -1,14 +1,14 @@
 """Offline demo: Context truncate / summarize / drop（无需 API Key）。
 
 用法:
-  python examples/demo_context.py
+  python examples/demos/demo_context.py
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from react_agent.context import ContextManager, ContextStrategy, estimate_messages_tokens

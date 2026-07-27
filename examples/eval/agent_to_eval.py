@@ -2,7 +2,7 @@
 End-to-end integration: Agent -> Trajectory Recording -> Eval Scoring
 
 Prefer the full closed loop (schema + tdebug + eval):
-  python examples/harness_closed_loop.py
+  python examples/eval/harness_closed_loop.py
 
 This script keeps a minimal Agent → Eval path for CI compatibility.
 """
@@ -10,7 +10,7 @@ import json
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from react_agent.harness import start_trajectory, finish_trajectory
 from react_agent.harness.schema import assert_valid, normalize_trajectory

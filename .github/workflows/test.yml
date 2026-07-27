@@ -57,30 +57,30 @@ jobs:
       run: |
         set -e
         export REACT_AGENT_SKIP_RAG=1
-        python examples/run_execution_suite.py
+        python examples/eval/run_execution_suite.py
     - name: Reliability harness (injected)
       run: |
         export REACT_AGENT_SKIP_RAG=1
-        python examples/run_reliability_harness.py
+        python examples/eval/run_reliability_harness.py
     - name: Reliability live (mock)
       run: |
         export REACT_AGENT_SKIP_RAG=1
-        python examples/run_reliability_live.py --mock
+        python examples/eval/run_reliability_live.py --mock
     - name: Failure flywheel (fixture)
       run: |
         # optional sibling; skip if trace-debugger not cloned beside
         if [ -d ../trace-debugger ]; then
-          python examples/run_failure_flywheel.py --fixture --publish
+          python examples/eval/run_failure_flywheel.py --fixture --publish
         else
           echo "skip flywheel: no sibling trace-debugger"
         fi
     - name: Public benchmark subset (offline matcher)
       run: |
-        python examples/run_public_benchmark.py --modes offline
+        python examples/eval/run_public_benchmark.py --modes offline
         pytest tests/test_public_benchmark.py -q
     - name: Public RAG benchmark subset (offline + rag)
       run: |
-        python examples/run_public_rag_benchmark.py --modes offline,rag
+        python examples/eval/run_public_rag_benchmark.py --modes offline,rag
         pytest tests/test_public_rag_benchmark.py -q
 
   # Windows: default console often GBK — catch emoji/encoding regressions early
@@ -180,9 +180,9 @@ jobs:
         git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
         pip install -e /tmp/trace-debugger
     - name: Run Agent → Eval integration
-      run: python examples/agent_to_eval.py
+      run: python examples/eval/agent_to_eval.py
     - name: Run Harness closed-loop demo (schema → tdebug → eval)
-      run: python examples/harness_closed_loop.py --fixture
+      run: python examples/eval/harness_closed_loop.py --fixture
     - name: Verify eval-engine scoring path
       run: |
         python tests/ci_verify_integration.py

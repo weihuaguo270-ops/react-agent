@@ -3,8 +3,8 @@
 不依赖 LLM：注入故障工具，度量重试恢复、超时阻断、自修提示附着率。
 
 用法：
-  python examples/run_reliability_harness.py
-  python examples/run_reliability_harness.py --publish
+  python examples/eval/run_reliability_harness.py
+  python examples/eval/run_reliability_harness.py --publish
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 os.environ.setdefault("REACT_AGENT_SKIP_RAG", "1")
@@ -285,7 +285,7 @@ def to_markdown(report: dict, *, title: str) -> str:
         "## 复现",
         "",
         "```bash",
-        "python examples/run_reliability_harness.py --publish",
+        "python examples/eval/run_reliability_harness.py --publish",
         "```",
         "",
         "## 诚实边界",

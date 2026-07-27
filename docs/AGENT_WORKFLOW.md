@@ -11,7 +11,7 @@ query → run_workflow("docs_troubleshoot")
 ```
 
 ```bash
-python examples/demo_workflow.py
+python examples/demos/demo_workflow.py
 python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么？"
 ```
 
@@ -20,7 +20,7 @@ HTTP：`GET /v1/workflows`，`POST /v1/workflows/run`。
 严格黄金集（无 must_* 泄漏、只评最终 answer）：
 
 ```bash
-python examples/run_docs_troubleshoot_eval.py
+python examples/eval/run_docs_troubleshoot_eval.py
 ```
 
 ## 探索路径：react_loop（自由 ReAct）
@@ -41,10 +41,10 @@ HTTP：`POST /v1/chat`（默认离线；`REACT_AGENT_SERVER_LLM=1` 走真循环�
 | **Workflow 排障（推荐）** | `demo_workflow.py` / `python -m react_agent.workflow` | `REACT_AGENT_APP=docs_troubleshoot` |
 | 文档排障（工具级） | `demo_docs_troubleshoot.py` / `run_docs_troubleshoot_eval.py` | 同上 |
 | HTTP 服务 | `python -m react_agent.server` | 同上 |
-| Context | `examples/demo_context.py` | — |
-| RAG 通用 | `examples/demo_rag.py` | `REACT_AGENT_RAG_MODE=keyword` |
-| 报销（辅） | `examples/demo_expense_workflow.py` | keyword |
-| MCP mock | `examples/demo_mcp_mock.py` | `REACT_AGENT_MCP_MOCK=1` |
+| Context | `examples/demos/demo_context.py` | — |
+| RAG 通用 | `examples/demos/demo_rag.py` | `REACT_AGENT_RAG_MODE=keyword` |
+| 报销（辅） | `examples/demos/demo_expense_workflow.py` | keyword |
+| MCP mock | `examples/demos/demo_mcp_mock.py` | `REACT_AGENT_MCP_MOCK=1` |
 
 ## Context / RAG / MCP
 

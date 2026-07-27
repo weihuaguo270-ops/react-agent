@@ -2,7 +2,7 @@
 
 用法:
   set REACT_AGENT_RAG_MODE=keyword
-  python examples/demo_rag.py
+  python examples/demos/demo_rag.py
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")

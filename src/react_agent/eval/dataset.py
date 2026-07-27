@@ -148,7 +148,7 @@ def load_dataset(path: Optional[str] = None) -> list[TestCase]:
     if name_or_path_is_execution(path):
         print(
             "[Eval] execution 数据集请用: "
-            "python examples/run_execution_suite.py "
+            "python examples/eval/run_execution_suite.py "
             "（或 react_agent.eval.execution_scorer）"
         )
         return []
