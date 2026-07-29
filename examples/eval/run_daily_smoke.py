@@ -62,7 +62,7 @@ def _run_execution_offline() -> dict:
 def _run_reliability_harness() -> dict:
     # Reuse CLI for a stable contract
     proc = subprocess.run(
-        [sys.executable, str(ROOT / "examples" / "run_reliability_harness.py")],
+        [sys.executable, str(ROOT / "examples" / "eval" / "run_reliability_harness.py")],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -78,7 +78,7 @@ def _run_reliability_harness() -> dict:
 
 def _run_reliability_mock() -> dict:
     proc = subprocess.run(
-        [sys.executable, str(ROOT / "examples" / "run_reliability_live.py"), "--mock"],
+        [sys.executable, str(ROOT / "examples" / "eval" / "run_reliability_live.py"), "--mock"],
         cwd=ROOT,
         capture_output=True,
         text=True,
