@@ -1,0 +1,109 @@
+{
+  "report_id": "step_watcher_evidence_20260729_054105",
+  "timestamp": "2026-07-29T05:41:05.498638+00:00",
+  "n_scenarios": 6,
+  "n_passed": 6,
+  "pass_rate": 1.0,
+  "scenarios": [
+    {
+      "id": "live_tool_error",
+      "query": "计算 2+2",
+      "expected_failures": [
+        "tool_error"
+      ],
+      "detected_tags": [
+        "tool_error"
+      ],
+      "jsonl_event_types": [
+        "tool_error"
+      ],
+      "jsonl_count": 1,
+      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_0\\traj_20260729_134104_kjgb.json",
+      "pass": true
+    },
+    {
+      "id": "live_search_empty_then_ok",
+      "query": "search AI trends",
+      "expected_failures": [
+        "search_empty"
+      ],
+      "detected_tags": [
+        "search_empty"
+      ],
+      "jsonl_event_types": [
+        "search_empty"
+      ],
+      "jsonl_count": 1,
+      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_1\\traj_20260729_134104_3hj6.json",
+      "pass": true
+    },
+    {
+      "id": "live_duplicate_blocked",
+      "query": "搜索文档",
+      "expected_failures": [
+        "duplicate",
+        "search_empty"
+      ],
+      "detected_tags": [
+        "duplicate",
+        "search_empty"
+      ],
+      "jsonl_event_types": [
+        "duplicate",
+        "search_empty"
+      ],
+      "jsonl_count": 2,
+      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_2\\traj_20260729_134104_eb14.json",
+      "pass": true
+    },
+    {
+      "id": "live_pass_clean",
+      "query": "What is Python?",
+      "expected_failures": [],
+      "detected_tags": [],
+      "jsonl_event_types": [],
+      "jsonl_count": 0,
+      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_3\\traj_20260729_134104_y0td.json",
+      "pass": true
+    },
+    {
+      "id": "live_no_answer",
+      "query": "复杂任务",
+      "expected_failures": [
+        "no_answer"
+      ],
+      "detected_tags": [
+        "no_answer"
+      ],
+      "jsonl_event_types": [
+        "no_answer"
+      ],
+      "jsonl_count": 1,
+      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_4\\traj_20260729_134104_jhai.json",
+      "pass": true
+    },
+    {
+      "id": "live_offtrack",
+      "query": "写一份关于人工智能行业趋势的详细分析报告",
+      "expected_failures": [
+        "llm_offtrack"
+      ],
+      "detected_tags": [
+        "llm_offtrack"
+      ],
+      "jsonl_event_types": [
+        "llm_offtrack"
+      ],
+      "jsonl_count": 1,
+      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_5\\traj_20260729_134104_athk.json",
+      "pass": true
+    }
+  ],
+  "golden_suite_pass_rate": 1.0,
+  "golden_suite_note": "....................                                   [100%]\n38 passed in 0.08s",
+  "meta": {
+    "git": "51bea35",
+    "react_agent": "D:\\agent_learning\\react-agent",
+    "trace_debugger": "D:\\agent_learning\\trace-debugger"
+  }
+}

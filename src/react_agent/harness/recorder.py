@@ -38,6 +38,28 @@ class Trajectory:
         self.total_tokens_estimated = 0
         self._start_time = time.time()
         self._step_durations: dict[int, float] = {}
+        self._watcher = None
+
+    def _ensure_watcher(self):
+        if self._watcher is not None:
+            return
+        from .step_watcher_bridge import create_watcher
+
+        self._watcher = create_watcher(self.session_id, self.query, self.model)
+
+    def _watch_step_entry(self, entry: dict):
+        self._ensure_watcher()
+        if not self._watcher:
+            return
+        from .step_watcher_bridge import notify_step
+
+        notify_step(self._watcher, entry)
+
+    def _find_step_entry(self, step: int) -> Optional[dict]:
+        for s in self.steps:
+            if s.get("step") == step:
+                return s
+        return None
 
     def start_step(self, step: int):
         self._step_durations[step] = time.time()
@@ -58,15 +80,22 @@ class Trajectory:
             entry["tokens_estimated"] = tokens
             self.total_tokens_estimated += tokens
         self.steps.append(entry)
+        self._watch_step_entry(entry)
 
     def add_thought(self, step: int, thought: str):
         self._update_step(step, thought=thought[:500])
+        entry = self._find_step_entry(step)
+        if entry:
+            self._watch_step_entry(entry)
 
     def add_tool_call(self, step: int, name: str, arguments: str,
                       result: str, duration: float = 0):
         self._update_step(step,
                           action={"name": name, "arguments": arguments[:300]},
                           observation=result[:500])
+        entry = self._find_step_entry(step)
+        if entry:
+            self._watch_step_entry(entry)
 
     def _update_step(self, step: int, **kwargs):
         for s in self.steps:
@@ -103,6 +132,10 @@ class Trajectory:
         }
 
     def save(self, directory: Optional[str] = None) -> str:
+        if self._watcher:
+            from .step_watcher_bridge import finalize_watcher
+
+            finalize_watcher(self._watcher, self)
         save_dir = directory or TRAJECTORY_DIR
         _ensure_dir(save_dir)
         filename = f"traj_{self.session_id}.json"

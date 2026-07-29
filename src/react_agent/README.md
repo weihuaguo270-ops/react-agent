@@ -12,7 +12,7 @@ Python import 路径不变。本页为模块职责分区；仓库总览见 [`doc
 | `server/` | HTTP：`/health` `/v1/chat` `/v1/workflows` |
 | `tools/` | 工具注册表（含 `list/run_workflow`） |
 | `safety/` | 权限闸门 + HITL |
-| `harness/` | 轨迹录制 / 回放 / Schema / 沙箱超时 |
+| `harness/` | 轨迹录制 / 回放 / Schema / 沙箱超时 / **StepWatcher 实时失败记录**（需 `trace-debugger`） |
 | `resilience.py` | ToolGuard（超时/重试） |
 | `llm.py` · `prompts.py` · `context.py` · `memory.py` · `cot.py` | LLM 与上下文 |
 
@@ -36,4 +36,27 @@ LangGraph 对照：`experiments/langgraph/`（仓根，非本包）。
 
 ## 运行产物（已 gitignore）
 
-`trajectories/` · `memory.json` · `rag_index.json` · `**/_index_cache.json`
+`trajectories/` · `.tdebug/` · `memory.json` · `rag_index.json` · `**/_index_cache.json`
+
+### StepWatcher（trace-debugger 集成）
+
+安装 sibling 仓库后，Harness 会在每步工具返回后实时检测失败并写入 JSONL：
+
+```bash
+pip install -e ../trace-debugger
+# 默认启用；关闭：REACT_AGENT_STEP_WATCHER=0
+# 失败日志：src/react_agent/.tdebug/failures.jsonl
+```
+
+轨迹 JSON 的 step 上会附带失败标记，例如：
+
+- `failure_tags` / `failure_summary` / `failure_label`
+- `failure_detail` / `failure_context` / `failure`（结构化块）
+
+失败日志默认目录 `src/react_agent/.tdebug/`（`failures.jsonl`、`failures.log`、`sessions/*.md`）。
+
+聚合统计（需安装 trace-debugger CLI）：
+
+```bash
+tdebug stats src/react_agent/.tdebug/failures.jsonl
+```

@@ -1,30 +1,29 @@
 # Harness Trajectory Schema
 
-Shared **Format B** JSON across:
+Shared **Format B** JSON for Agent run recordings.
+
+## Canonical source of truth
+
+**[trace-debugger/schemas/agent_trajectory.schema.json](https://github.com/weihuaguo270-ops/trace-debugger/blob/main/schemas/agent_trajectory.schema.json)**
+
+This repo keeps a **compatible subset** as `harness_trajectory.schema.json` for react-agent Harness validation. New fields (multi-path, failure tags) are defined in the trace-debugger schema.
+
+## Roles
 
 | Repo | Role |
 |------|------|
-| [react-agent](https://github.com/weihuaguo270-ops/react-agent) | Produce (`harness.recorder`) + validate (`harness.schema`) |
-| [trace-debugger](https://github.com/weihuaguo270-ops/trace-debugger) | Analyze failures |
-| [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) | Process reward / DAG score |
+| [trace-debugger](https://github.com/weihuaguo270-ops/trace-debugger) | **Schema owner** · analyze · record · stats |
+| [react-agent](https://github.com/weihuaguo270-ops/react-agent) | Reference runtime · produce trajectories · StepWatcher bridge |
+| [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) | Process reward / eval consumer |
 
-## Rules (interop)
+## Interop rules
 
-1. `step` is **1-based** (never emit `0` from new code).
-2. Prefer `action.arguments` as a **JSON string**; `args` object is accepted.
-3. Prefer singular `action`; use `actions[]` only for multi-tool steps.
-4. Required top-level: `session_id`, `query`, `steps`, `final_answer`.
-5. Optional top-level `schema_version` (current major: **`1`**). Absent ⇒ treated as major `1`. Incompatible major fails validation.
+See [trace-debugger/schemas/README.md](https://github.com/weihuaguo270-ops/trace-debugger/blob/main/schemas/README.md).
 
-Wire constant: `react_agent.harness.schema.SCHEMA_VERSION`  
-Eval API constant: `react_agent.eval.scorer.EVAL_API_VERSION` (`0.1`, mirrored in llm-eval-engine).
+1. `step` is **1-based**
+2. Prefer `action.arguments` as JSON string
+3. Required: `session_id`, `query`, `steps`, `final_answer`
 
-File: [`harness_trajectory.schema.json`](harness_trajectory.schema.json)
+Local alias file: [`harness_trajectory.schema.json`](harness_trajectory.schema.json)
 
 Demo: `python examples/eval/harness_closed_loop.py`
-
-契约测试（防 API 漂移）：
-
-- `pytest tests/test_harness_schema.py` — Format B + `schema_version`
-- `pytest tests/test_eval_engine_contract.py` — `ProcessRewardScorer.extra_contracts@{EVAL_API_VERSION}`
-- `pytest tests/test_tdebug_eval_contract.py` — fixture → schema → tdebug → eval（需 sibling 安装）

@@ -1,0 +1,144 @@
+{
+  "schema_version": "1",
+  "description": "StepWatcher 跨仓 E2E 场景 — react-agent Harness 录制 + trace-debugger 标签对照",
+  "scenarios": [
+    {
+      "id": "live_tool_error",
+      "query": "计算 2+2",
+      "model": "mock-gpt",
+      "expected_failures": ["tool_error"],
+      "expected_jsonl_types": ["step_failure"],
+      "steps": [
+        {
+          "step": 1,
+          "thought": "call calculator",
+          "action_name": "calculator",
+          "action_args": "{\"expression\": \"2++\"}",
+          "observation": "{\"error\": \"syntax error\"}",
+          "duration": 0.2
+        },
+        {
+          "step": 2,
+          "thought": "FINAL ANSWER: failed",
+          "observation": ""
+        }
+      ],
+      "final_answer": "failed"
+    },
+    {
+      "id": "live_search_empty_then_ok",
+      "query": "search AI trends",
+      "model": "mock-gpt",
+      "expected_failures": ["search_empty"],
+      "expected_jsonl_types": ["step_failure"],
+      "steps": [
+        {
+          "step": 1,
+          "thought": "search",
+          "action_name": "web_search",
+          "action_args": "{\"query\": \"AI trends 2026\"}",
+          "observation": "err",
+          "duration": 0.5
+        },
+        {
+          "step": 2,
+          "thought": "retry",
+          "action_name": "web_search",
+          "action_args": "{\"query\": \"artificial intelligence market 2026\"}",
+          "observation": "AI market is growing rapidly in 2026 with strong enterprise adoption worldwide.",
+          "duration": 1.2
+        },
+        {
+          "step": 3,
+          "thought": "FINAL ANSWER: AI market growing",
+          "observation": ""
+        }
+      ],
+      "final_answer": "AI market is growing in 2026."
+    },
+    {
+      "id": "live_duplicate_blocked",
+      "query": "搜索文档",
+      "model": "mock-gpt",
+      "expected_failures": ["duplicate", "search_empty"],
+      "expected_jsonl_types": ["step_failure"],
+      "steps": [
+        {
+          "step": 1,
+          "thought": "search",
+          "action_name": "web_search",
+          "action_args": "{\"query\": \"docs\"}",
+          "observation": "x",
+          "duration": 0.5
+        },
+        {
+          "step": 2,
+          "thought": "dup",
+          "action_name": "web_search",
+          "action_args": "{\"query\": \"docs\"}",
+          "observation": "[Harness] blocked duplicate",
+          "duration": 0.1
+        },
+        {
+          "step": 3,
+          "thought": "FINAL ANSWER: use docs",
+          "observation": ""
+        }
+      ],
+      "final_answer": "use docs"
+    },
+    {
+      "id": "live_pass_clean",
+      "query": "What is Python?",
+      "model": "mock-gpt",
+      "expected_failures": [],
+      "expected_jsonl_types": [],
+      "steps": [
+        {
+          "step": 1,
+          "thought": "search",
+          "action_name": "web_search",
+          "action_args": "{\"query\": \"Python programming\"}",
+          "observation": "Python is a programming language used for web development data science and automation tasks worldwide.",
+          "duration": 1.0
+        },
+        {
+          "step": 2,
+          "thought": "FINAL ANSWER: Python is a programming language.",
+          "observation": ""
+        }
+      ],
+      "final_answer": "Python is a programming language."
+    },
+    {
+      "id": "live_no_answer",
+      "query": "复杂任务",
+      "model": "mock-gpt",
+      "expected_failures": ["no_answer"],
+      "expected_jsonl_types": [],
+      "steps": [
+        {
+          "step": 1,
+          "thought": "thinking only",
+          "observation": ""
+        }
+      ],
+      "final_answer": ""
+    },
+    {
+      "id": "live_offtrack",
+      "query": "写一份关于人工智能行业趋势的详细分析报告",
+      "model": "mock-gpt",
+      "expected_failures": ["llm_offtrack"],
+      "expected_jsonl_types": [],
+      "steps": [
+        {
+          "step": 1,
+          "thought": "FINAL ANSWER: 今天天气很好，适合出门散步。",
+          "observation": ""
+        }
+      ],
+      "final_answer": "今天天气很好，适合出门散步。周末还可以去公园野餐，欣赏美丽的风景。"
+    }
+  ]
+}

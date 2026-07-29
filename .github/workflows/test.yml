@@ -74,6 +74,15 @@ jobs:
         else
           echo "skip flywheel: no sibling trace-debugger"
         fi
+    - name: StepWatcher evidence (trace-debugger)
+      run: |
+        if [ -d ../trace-debugger ]; then
+          pip install -e ../trace-debugger
+          pytest tests/test_step_watcher_golden_e2e.py -q
+          python examples/eval/run_step_watcher_evidence.py --publish
+        else
+          echo "skip step watcher evidence: no sibling trace-debugger"
+        fi
     - name: Public benchmark subset (offline matcher)
       run: |
         python examples/eval/run_public_benchmark.py --modes offline

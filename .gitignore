@@ -20,6 +20,8 @@ htmlcov/
 
 # Local data files
 trajectories/
+.tdebug/
+.evidence_tmp/
 rag_index.json
 **/_index_cache.json
 **/_index_manifest.json

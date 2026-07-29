@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/weihuaguo270-ops/react-agent/schemas/harness_trajectory.schema.json",
   "title": "Harness Trajectory (Format B)",
-  "description": "Shared Agent trajectory JSON across react-agent (recorder), trace-debugger, and llm-eval-engine. Canonical producer: react-agent Harness.",
+  "description": "Compatible subset of trace-debugger Format B. Canonical schema: https://github.com/weihuaguo270-ops/trace-debugger/schemas/agent_trajectory.schema.json",
   "type": "object",
   "required": ["session_id", "query", "steps", "final_answer"],
   "additionalProperties": true,
