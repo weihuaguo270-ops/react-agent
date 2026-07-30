@@ -49,6 +49,15 @@
       "description": "Format B wire version major (optional; absent ⇒ treat as \"1\")",
       "pattern": "^[0-9]+(\\.[0-9]+)*$"
     },
+    "task_episode_id": {
+      "type": "string",
+      "description": "Stable id for the eval task / acceptance boundary (maps to eval case id when present)"
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Human-readable done conditions for this Task Episode"
+    },
     "steps": {
       "type": "array",
       "minItems": 1,

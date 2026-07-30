@@ -5,6 +5,10 @@
     "tags": ["execution", "calculator"],
     "difficulty": "easy",
     "mode": "offline_tools",
+    "acceptance_criteria": [
+      "tool calculator with expression 17 * 19",
+      "observation equals 323"
+    ],
     "steps": [
       {
         "tool": "calculator",

@@ -27,12 +27,22 @@ def _ensure_dir(path: str):
 class Trajectory:
     """一次 ReAct 会话的完整轨迹"""
 
-    def __init__(self, query: str, model: str = "", system_prompt: str = ""):
+    def __init__(
+        self,
+        query: str,
+        model: str = "",
+        system_prompt: str = "",
+        *,
+        task_episode_id: str = "",
+        acceptance_criteria: Optional[list[str]] = None,
+    ):
         self.session_id = _generate_session_id()
         self.query = query
         self.model = model
         self.timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         self.system_prompt = system_prompt[:200] if system_prompt else ""
+        self.task_episode_id = task_episode_id
+        self.acceptance_criteria = list(acceptance_criteria or [])
         self.steps: list[dict] = []
         self.final_answer = ""
         self.total_tokens_estimated = 0
@@ -117,7 +127,7 @@ class Trajectory:
         from react_agent.harness.schema import SCHEMA_VERSION
 
         duration = round(time.time() - self._start_time, 2)
-        return {
+        out = {
             "schema_version": SCHEMA_VERSION,
             "session_id": self.session_id,
             "query": self.query[:500],
@@ -130,6 +140,11 @@ class Trajectory:
             "final_answer": self.final_answer,
             "steps": self.steps,
         }
+        if self.task_episode_id:
+            out["task_episode_id"] = self.task_episode_id
+        if self.acceptance_criteria:
+            out["acceptance_criteria"] = self.acceptance_criteria
+        return out
 
     def save(self, directory: Optional[str] = None) -> str:
         if self._watcher:
@@ -148,9 +163,22 @@ class Trajectory:
 _current_trajectory: Optional[Trajectory] = None
 
 
-def start_trajectory(query: str, model: str = "", system_prompt: str = "") -> Trajectory:
+def start_trajectory(
+    query: str,
+    model: str = "",
+    system_prompt: str = "",
+    *,
+    task_episode_id: str = "",
+    acceptance_criteria: Optional[list[str]] = None,
+) -> Trajectory:
     global _current_trajectory
-    _current_trajectory = Trajectory(query=query, model=model, system_prompt=system_prompt)
+    _current_trajectory = Trajectory(
+        query=query,
+        model=model,
+        system_prompt=system_prompt,
+        task_episode_id=task_episode_id,
+        acceptance_criteria=acceptance_criteria,
+    )
     return _current_trajectory
 
 

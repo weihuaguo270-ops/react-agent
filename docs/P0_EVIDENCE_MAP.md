@@ -2,6 +2,8 @@
 
 四层证据放在一页，方便对照引用。数字截至 2026-07-15/16；**分栏报，不要合成一个总分**。
 
+**Harness 五维视图：** [HARNESS_HEALTH.md](./HARNESS_HEALTH.md)（Agent Work Loop 映射 + findings CLI + intervention ledger）
+
 | 层 | 问题 | 证据 | 数字（截至 2026-07-15/16） |
 |----|------|------|---------------------------|
 | **能不能干成** | 工具 / Agent 任务成功率 | [execution offline](./execution_snapshot_20260715.md) · [agent v3](./execution_agent_snapshot_20260716_v3.md) | offline **12/12**；agent **36/36**（易8/中12/难16） |

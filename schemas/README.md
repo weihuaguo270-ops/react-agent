@@ -23,6 +23,7 @@ See [trace-debugger/schemas/README.md](https://github.com/weihuaguo270-ops/trace
 1. `step` is **1-based**
 2. Prefer `action.arguments` as JSON string
 3. Required: `session_id`, `query`, `steps`, `final_answer`
+4. Optional Task Episode: `task_episode_id`, `acceptance_criteria[]` — see [HARNESS_HEALTH.md](../docs/HARNESS_HEALTH.md)
 
 Local alias file: [`harness_trajectory.schema.json`](harness_trajectory.schema.json)
 

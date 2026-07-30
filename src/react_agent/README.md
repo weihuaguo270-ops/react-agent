@@ -12,7 +12,7 @@ Python import 路径不变。本页为模块职责分区；仓库总览见 [`doc
 | `server/` | HTTP：`/health` `/v1/chat` `/v1/workflows` |
 | `tools/` | 工具注册表（含 `list/run_workflow`） |
 | `safety/` | 权限闸门 + HITL |
-| `harness/` | 轨迹录制 / 回放 / Schema / 沙箱超时 / **StepWatcher 实时失败记录**（需 `trace-debugger`） |
+| `harness/` | 轨迹录制 / 回放 / Schema / 沙箱超时 / **StepWatcher 实时失败记录**（需 `trace-debugger`）· **Task Episode**（`task_episode_id` / `acceptance_criteria`） |
 | `resilience.py` | ToolGuard（超时/重试） |
 | `llm.py` · `prompts.py` · `context.py` · `memory.py` · `cot.py` | LLM 与上下文 |
 
@@ -52,6 +52,8 @@ pip install -e ../trace-debugger
 
 - `failure_tags` / `failure_summary` / `failure_label`
 - `failure_detail` / `failure_context` / `failure`（结构化块）
+
+轨迹根级可选字段：`task_episode_id`（eval case id）· `acceptance_criteria`（验收条件）。见 [`docs/HARNESS_HEALTH.md`](../../docs/HARNESS_HEALTH.md)。
 
 失败日志默认目录 `src/react_agent/.tdebug/`（`failures.jsonl`、`failures.log`、`sessions/*.md`）。
 

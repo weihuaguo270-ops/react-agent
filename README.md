@@ -33,9 +33,9 @@ Workflow v5：`现场证据 → search → lookup_api → synthesize（句级要
 | 自建 Core（Workflow + ReAct + 权限/Harness）可服务化、可回归 | 以 LangGraph 为默认实现 |
 | 确定性工作流 + 分层评测（golden / fault / production / git） | 企业级全量 Git / OpenAPI 生产 ingest |
 
-跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
+跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘 + Harness Health 门禁。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
-证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md)。
+证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md) · Harness 五维健康度：[`docs/HARNESS_HEALTH.md`](docs/HARNESS_HEALTH.md)。
 
 ## 架构概览
 
@@ -129,16 +129,25 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 
 每步 thought / action / observation 写入 Format B JSON，供回放和跨仓对接（`harness/recorder.py` → `schemas/harness_trajectory.schema.json`）。
 
-```python
-from react_agent.harness.recorder import current_trajectory
+**Task Episode**（v0.2.7+）：轨迹可携带 `task_episode_id` 与 `acceptance_criteria`，与 eval case 对齐，供 trace-debugger scan/compare 与 Process Reward 共用验收边界。详见 [`docs/HARNESS_HEALTH.md`](docs/HARNESS_HEALTH.md)。
 
-result = react_loop("分析这份数据")
+```python
+from react_agent.harness.recorder import start_trajectory, current_trajectory
+
+start_trajectory(
+    query="17 * 19",
+    task_episode_id="exec_calc_mul",
+    acceptance_criteria=["tool calculator returns 323"],
+)
+result = react_loop("17 * 19")
 trajectory = current_trajectory()
 
 # 逐步骤回放
 from react_agent.harness.replay import replay_trajectory
 replay_trajectory(trajectory)
 ```
+
+安装 sibling [trace-debugger](https://github.com/weihuaguo270-ops/trace-debugger) 后，Harness 默认启用 **StepWatcher** 实时失败记录；发版前可 `tdebug scan … --compare --findings-out` 做回归门禁。
 
 ### RAG / MCP / Context / 业务 Demo
 
