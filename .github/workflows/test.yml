@@ -186,7 +186,9 @@ jobs:
       run: docker build -t react-agent:ci .
     - name: Run container
       run: |
-        docker run -d --name react-agent-ci -p 8765:8765 react-agent:ci
+        docker run -d --name react-agent-ci -p 8765:8765 \
+          -e REACT_AGENT_SERVER_OFFLINE_REACT=1 \
+          react-agent:ci
         for i in $(seq 1 30); do
           if curl -sf http://127.0.0.1:8765/ready >/dev/null; then
             break

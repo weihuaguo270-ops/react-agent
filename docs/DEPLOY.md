@@ -48,6 +48,7 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 | `REACT_AGENT_APP` | — | 兼容旧变量；工具/workflow 挂载仍可读此值 |
 | `REACT_AGENT_RAG_MODE` | `keyword` | 离线检索模式 |
 | `REACT_AGENT_SERVER_LLM` | 未设 | `1` 时 `/v1/chat` 走 live ReAct（需 Key） |
+| `REACT_AGENT_SERVER_OFFLINE_REACT` | 未设 | `1` 时 `app=default` 走离线 ReAct smoke（CI/deploy，无 Key） |
 | `DEEPSEEK_API_KEY` | — | live 模式需要 |
 | `REACT_AGENT_DOCS_INGEST_DIRS` | — | 额外语料目录（逗号分隔，可 mount） |
 

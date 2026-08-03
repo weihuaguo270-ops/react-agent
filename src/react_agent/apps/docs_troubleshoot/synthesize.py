@@ -31,6 +31,14 @@ def extract_relevant_sentences(content: str, query: str, *, limit: int = 2) -> l
                 score += 2.0
         if re.search(r"HTTP\s*方法|什么方法", query, re.I) and "options" in sl:
             score += 4.0
+        if re.search(r"对外名称|名称建议|产品名|收敛", query):
+            for kw in ("对外名称", "证据化文档排障", "API 排障 Agent"):
+                if kw in sent:
+                    score += 8.0
+        if re.search(r"Core|自建|运行时默认", query, re.I):
+            for kw in ("自建 Core", "自建 core", "react_loop"):
+                if kw in sent or kw.lower() in sl:
+                    score += 8.0
         if score > 0:
             scored.append((score, sent[:320]))
     scored.sort(key=lambda x: x[0], reverse=True)

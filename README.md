@@ -10,7 +10,7 @@
 
 | 方向 | 做什么 | 快速入口 |
 |------|--------|----------|
-| **① 写代码 / 执行** | ReAct 调工具、多步任务、轨迹可回放 | `python -m react_agent "用 calculator 算 17*19"` · [`run_execution_suite.py`](examples/eval/run_execution_suite.py) |
+| **① 写代码 / 执行** | ReAct 调工具、多步任务、轨迹可回放 | `python -m react_agent "用 calculator 算 17*19"` · [`run_execution_suite.py`](examples/eval/run_execution_suite.py) · HTTP: [`run_execution_http_smoke.py`](examples/eval/run_execution_http_smoke.py) |
 | **② 客服 / 自动化** | 可部署 Chat API、政策/Runbook 问答、工作流 demo | `docker compose up` · [`demo_expense_workflow.py`](examples/demos/demo_expense_workflow.py) |
 | **③ RAG / 研究** | 检索增强、公开 QA 子集、multi-hop | [`demo_rag.py`](examples/demos/demo_rag.py) · [`run_public_benchmark.py`](examples/eval/run_public_benchmark.py) |
 

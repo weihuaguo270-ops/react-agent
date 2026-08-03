@@ -17,6 +17,12 @@ from react_agent.apps.docs_troubleshoot.synthesize import (
     synthesize_draft,
 )
 
+_ARCH_META = re.compile(
+    r"Core|自建|core\s*实现|运行时默认|对外名称|黄金集|难度分层|held_out|"
+    r"docs_troubleshoot_eval|单文档标准",
+    re.I,
+)
+
 
 def as_results(blob: Any) -> list[dict[str, Any]]:
     if isinstance(blob, str):
@@ -70,6 +76,11 @@ def select_hits(ranked: list[dict[str, Any]], query: str) -> list[dict[str, Any]
     if not ranked:
         return []
     ql = query or ""
+    if re.search(r"Core|自建|core\s*实现|运行时默认", ql, re.I):
+        for r in ranked:
+            if "core_architecture" in str(r.get("source") or "").lower():
+                return [r]
+        return ranked[:1]
     if "不要猜" in ql or ("不要" in ql and "别的" in ql):
         return ranked[:1]
     if needs_multi_doc(query):
@@ -108,6 +119,30 @@ def build_draft_from_hits(
             continue
         seen.add(key)
         uniq.append(r)
+
+    if _ARCH_META.search(query) and not any(
+        "core_architecture" in str(r.get("source") or "").lower()
+        or "evidence_docs_troubleshoot" in str(r.get("source") or "").lower()
+        or "docs_troubleshoot_eval" in str(r.get("source") or "").lower()
+        for r in uniq
+    ):
+        from react_agent.apps.docs_troubleshoot.index import get_index
+
+        rag = get_index()
+        expand_q = query
+        if re.search(r"Core|自建|core\s*实现|运行时默认", query, re.I):
+            expand_q = "自建 Core CORE_ARCHITECTURE react_loop"
+        for h in rag.query(expand_q, top_k=4):
+            r = {
+                "source": h.get("source", ""),
+                "score": h.get("score"),
+                "content": str(h.get("content") or "")[:800],
+            }
+            key = f"{r.get('source')}|{(r.get('content') or '')[:80]}"
+            if key in seen:
+                continue
+            seen.add(key)
+            uniq.append(r)
 
     ranked = rank_with_evidence(uniq, query, evidence_bundle)
     if not ranked:

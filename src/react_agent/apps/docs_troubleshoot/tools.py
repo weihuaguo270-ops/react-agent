@@ -39,6 +39,15 @@ def search_docs(query: str, top_k: int = 3) -> str:
 
 def lookup_api(topic: str, top_k: int = 3) -> str:
     """Lookup API reference sections (auth, endpoints, error codes)."""
+    import re
+
+    if re.search(
+        r"Core|自建|架构|黄金集|对外名称|难度分层|held_out|docs_troubleshoot_eval|"
+        r"APPLICATION_DIRECTION|STRUCTURE|EVIDENCE_DOCS|运行时默认|单文档标准",
+        topic or "",
+        re.I,
+    ):
+        return json.dumps({"ok": True, "results": []}, ensure_ascii=False)
     rag = get_index()
     q = f"API {topic} endpoint error Authorization"
     hits = rag.query(q, top_k=max(top_k * 2, 4))

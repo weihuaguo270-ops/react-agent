@@ -160,6 +160,7 @@ def serve(host: str = "127.0.0.1", port: int = 8765):
     print("[server] POST /v1/chat  app=default|docs_troubleshoot|expense")
     print("[server] GET /v1/info  /health /ready  /  /ui")
     print("[server] REACT_AGENT_SERVER_LLM=1 for app=default (general ReAct)")
+    print("[server] REACT_AGENT_SERVER_OFFLINE_REACT=1 for app=default smoke (no Key)")
     httpd.serve_forever()
 
 

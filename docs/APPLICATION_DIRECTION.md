@@ -4,7 +4,7 @@
 
 | 主线 | 典型任务 | 本仓入口 | 评测 / 证据 |
 |------|----------|----------|-------------|
-| **① 写代码 / 执行** | 工具调用、多步推理、Issue 式任务 | `react_loop` · `examples/eval/run_execution_suite.py` | execution 36 条 agent · capability 24 条 |
+| **① 写代码 / 执行** | 工具调用、多步推理、Issue 式任务 | `react_loop` · `run_execution_suite.py` · HTTP `app=default` | execution 36 条 agent · HTTP smoke 3 条 |
 | **② 客服 / 自动化** | 政策问答、工作流、可部署 Chat API | `demo_expense_workflow.py` · `server` · `apps/docs_troubleshoot` | docs 黄金集 34 · fault 12 · HTTP smoke |
 | **③ 通用 RAG / 研究** | 检索增强、公开 QA、Deep Research 形 | `demo_rag.py` · `run_public_rag_benchmark.py` | GSM8K+Hotpot 20 · public RAG 分层 |
 
@@ -29,11 +29,13 @@
 python -m react_agent "用 calculator 算 17*19"
 python examples/eval/run_execution_suite.py              # offline_tools
 python examples/eval/run_execution_suite.py --modes agent   # 需 API Key
+# HTTP（Pillar ① smoke，需 REACT_AGENT_SERVER_OFFLINE_REACT=1 或 SERVER_LLM=1）
+python examples/eval/run_execution_http_smoke.py --url http://127.0.0.1:8765
 ```
 
 **差异化（运行时，非应用）：** 权限闸门、StepWatcher、failure flywheel、Format B 轨迹 — 见 [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)。
 
-**下一步（v0.5+）：** 最小 sandbox 任务模板（读文件 → 改一行 → 测试）；与 trace-debugger 的 execution 门禁作为 **主 CI 叙事之一**。
+**下一步：** 扩 execution HTTP smoke 覆盖面；sandbox 读改测任务模板。
 
 ---
 
@@ -58,7 +60,9 @@ python examples/eval/run_docs_troubleshoot_eval.py
 
 **docs_troubleshoot 的位置：** 演示 **「有依据才答、没依据拒答」的客服/Runbook 后端**，不是完整 AIOps 平台。
 
-**下一步（v0.5+）：** 通用 `/v1/chat` 多 app 路由（`docs_troubleshoot` | `expense` | default `react_loop`）；结构化 JSON 日志 + Bearer 鉴权。
+**v0.5 已完成：** `/v1/chat` 多 app（`docs_troubleshoot` | `expense` | `default`）；`GET /v1/info` 列出 applications。
+
+**下一步：** 结构化 JSON 日志 + Bearer 鉴权；expense Live 路径；neutral 多 app UI。
 
 ---
 
@@ -82,7 +86,7 @@ python examples/eval/run_public_benchmark.py
 python examples/eval/run_public_rag_benchmark.py
 ```
 
-**下一步（v0.5+）：** 将 public RAG/agent 子集之一纳入 **与 docs 黄金集并列的 CI 门禁**（非主场景独占）。
+**下一步：** public RAG/agent 子集与 docs 黄金集 **并列** CI 门禁（execution HTTP smoke 已并列）。
 
 ---
 

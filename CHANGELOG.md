@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-（下一批变更写在这里。）
+### Added
+- **Pillar ① HTTP smoke**：`run_execution_http_smoke.py` — execution 子集经 `POST /v1/chat app=default`
+- **`REACT_AGENT_SERVER_OFFLINE_REACT=1`**：离线 ReAct smoke（deploy / docker-smoke，无 API Key）
 
 ## 0.5.0 (2026-08-03)
 

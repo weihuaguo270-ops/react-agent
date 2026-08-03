@@ -22,7 +22,7 @@ APPLICATIONS = [
     {
         "id": "default",
         "pillar": "coding_execution",
-        "description": "通用 ReAct（Live LLM）；离线请用 docs_troubleshoot 或 expense",
+        "description": "通用 ReAct（Live LLM 或 OFFLINE_REACT smoke）",
         "offline": False,
     },
     {
@@ -89,17 +89,45 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
         }
 
     if app == "default":
-        if not use_llm:
-            return error_response(
-                "invalid_request",
-                "app=default requires REACT_AGENT_SERVER_LLM=1; "
-                "use app=docs_troubleshoot or app=expense for offline",
-                request_id,
-                400,
-            )
+        use_offline_react = os.environ.get("REACT_AGENT_SERVER_OFFLINE_REACT", "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
         message = (body.get("message") or body.get("query") or "").strip()
         if not message:
             return error_response("invalid_request", "message is required", request_id, 400)
+
+        if use_offline_react:
+            from react_agent.server.offline_react import offline_react_loop
+
+            out = offline_react_loop(message, max_steps=int(body.get("max_steps") or 6))
+            if not out.get("ok"):
+                return error_response(
+                    "not_implemented",
+                    out.get("answer", "offline_react unsupported query"),
+                    request_id,
+                    501,
+                )
+            return 200, {
+                "request_id": request_id,
+                "app": "default",
+                "answer": out.get("answer", ""),
+                "tools_called": out.get("tools_called") or [],
+                "agent_steps": out.get("agent_steps") or [],
+                "mode": "offline_react",
+            }
+
+        if not use_llm:
+            return error_response(
+                "invalid_request",
+                "app=default requires REACT_AGENT_SERVER_LLM=1 or "
+                "REACT_AGENT_SERVER_OFFLINE_REACT=1; "
+                "use app=docs_troubleshoot or app=expense for other offline paths",
+                request_id,
+                400,
+            )
         try:
             os.environ.pop("REACT_AGENT_APP", None)
             from react_agent.harness.recorder import current_trajectory

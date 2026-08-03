@@ -7,6 +7,8 @@ import sys
 import urllib.error
 import urllib.request
 
+from react_agent.eval.http_execution import run_execution_http_smoke
+
 
 def _get(url: str) -> tuple[int, dict]:
     with urllib.request.urlopen(url, timeout=10) as resp:
@@ -65,6 +67,11 @@ def main() -> int:
     apps = [a["id"] for a in info.get("applications", [])]
     print(f"[deploy] info apps={apps}")
     ok &= status == 200 and "expense" in apps and "default" in apps
+
+    exec_http = run_execution_http_smoke(base)
+    s = exec_http["summary"]
+    print(f"[deploy] execution http {s['passed']}/{s['total']} app=default")
+    ok &= s.get("failed", 1) == 0
 
     status, wfs = _get(f"{base}/v1/workflows")
     names = [w.get("name") for w in wfs.get("workflows", [])]
