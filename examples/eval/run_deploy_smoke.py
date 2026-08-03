@@ -1,4 +1,7 @@
-"""Post-deploy smoke — health, ready, offline chat, workflow list."""
+"""Post-deploy smoke — health, ready, offline chat, workflow list.
+
+Runnable without pip install (docker-smoke host): inserts ``src/`` on sys.path.
+"""
 from __future__ import annotations
 
 import argparse
@@ -6,8 +9,12 @@ import json
 import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 
-from react_agent.eval.http_execution import run_execution_http_smoke
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+
+from react_agent.eval.http_execution import run_execution_http_smoke  # noqa: E402
 
 
 def _get(url: str) -> tuple[int, dict]:

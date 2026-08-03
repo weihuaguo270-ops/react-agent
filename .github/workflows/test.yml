@@ -196,7 +196,7 @@ jobs:
           sleep 1
         done
         curl -sf http://127.0.0.1:8765/ready
-        python examples/eval/run_deploy_smoke.py --url http://127.0.0.1:8765
+        PYTHONPATH=src python examples/eval/run_deploy_smoke.py --url http://127.0.0.1:8765
     - name: Stop container
       if: always()
       run: docker rm -f react-agent-ci || true

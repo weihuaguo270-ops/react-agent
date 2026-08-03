@@ -8,8 +8,12 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
-from react_agent.eval.http_execution import run_execution_http_smoke
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+
+from react_agent.eval.http_execution import run_execution_http_smoke  # noqa: E402
 
 
 def main() -> int:
