@@ -11,7 +11,7 @@ def package_version() -> str:
 
         return version("react-agent")
     except Exception:
-        return "0.5.0"
+        return "0.5.1"
 
 
 def _default_app() -> str:

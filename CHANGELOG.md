@@ -2,9 +2,24 @@
 
 ## Unreleased
 
-### Added
-- **Pillar ① HTTP smoke**：`run_execution_http_smoke.py` — execution 子集经 `POST /v1/chat app=default`
+（下一批变更写在这里。）
+
+## 0.5.1 (2026-08-03)
+
+### Added — Pillar ① HTTP smoke
+
+- **`run_execution_http_smoke.py`**：execution 子集经 `POST /v1/chat app=default`
 - **`REACT_AGENT_SERVER_OFFLINE_REACT=1`**：离线 ReAct smoke（deploy / docker-smoke，无 API Key）
+- **`offline_react.py`** + `http_execution.py`；docker-smoke 启用 offline_react
+
+### Fixed
+
+- **git docs eval 5/5**：git01（对外名称）、git03（Core 架构）检索/合成修复
+- `lookup_api` 跳过架构/评测类 meta 问题；`draft` 补充 CORE_ARCHITECTURE 检索
+
+### Changed
+
+- `APPLICATION_DIRECTION.md`：v0.5 已完成项同步，更新各 pillar 待办
 
 ## 0.5.0 (2026-08-03)
 
@@ -27,21 +42,20 @@
 - `tests/test_expense_app.py` — 规则裁决 + HTTP 路由
 - `tests/test_server_http.py` — 多应用 info 断言
 
+## 0.4.0 (2026-08-03)
 
 ### Added — Agent 默认路径与交付
 
-- **`agent_runner`**：离线 Agent 循环（观测驱动选工具 → 强制 `verify_citations` → Harness 轨迹）；默认引擎，`REACT_AGENT_DOCS_ENGINE=workflow` 可回退 legacy DAG
+- **`agent_runner`**：离线 Agent 循环（观测驱动选工具 → 强制 `verify_citations` → Harness 轨迹）；默认引擎
 - **产品 UI**：`GET /`、`/ui` — 证据链、拒答状态、结构化 diagnosis、Agent 工具步；`GET /v1/info`
-- **Docker 交付**：`Dockerfile`、`docker-compose.yml`、`docs/DEPLOY.md`；`/ready` 就绪探针（docs 索引 `chunks > 0`）
+- **Docker 交付**：`Dockerfile`、`docker-compose.yml`、`docs/DEPLOY.md`；`/ready` 就绪探针
 - **部署自检**：`examples/eval/run_deploy_smoke.py`；CI `docker-smoke` job
-- **HTTP**：`/v1/chat` 支持 `log_excerpt`、`trace_context`；返回 `agent_steps`、`engine`、`trajectory_id`
+- **HTTP**：`/v1/chat` 支持 `log_excerpt`、`trace_context`；返回 `agent_steps`、`engine`
 
 ### Changed
 
 - 黄金集 eval 默认路径：`agent`（原 `workflow` 仍可用）
-- `offline_answer` / `POST /v1/chat` 离线默认走 Agent 循环
-- 架构/成熟度文档：评判基准改为 **主流 ReAct + 工具 + HTTP**（不以 LangGraph 为 KPI）
-- README：默认叙事从 Workflow DAG 调整为 Agent 循环 + Live `react_loop`
+- 架构/成熟度文档：评判基准改为 **主流 ReAct + 工具 + HTTP**
 
 ### Tests
 
