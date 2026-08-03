@@ -15,13 +15,8 @@ os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
 os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
 
 
-def _version() -> str:
-    try:
-        from importlib.metadata import version
-
-        return version("react-agent")
-    except Exception:
-        return "0.2.0"
+from react_agent.server.health import liveness_payload, package_version, readiness_payload
+from react_agent.server.static_files import docs_troubleshoot_ui_html
 
 
 def _error(code: str, message: str, request_id: str, http_status: int = 400) -> tuple[int, dict]:
@@ -86,23 +81,30 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
         extra["run_health_check"] = True
         if body.get("health_url"):
             extra["health_url"] = body.get("health_url")
+    if body.get("log_excerpt") is not None:
+        extra["log_excerpt"] = body.get("log_excerpt")
+    if body.get("trace_context") is not None:
+        extra["trace_context"] = body.get("trace_context")
 
     out = answer_offline(message, **extra)
     sources = [c.get("source", "") for c in (out.get("citations") or []) if c.get("source")]
+    tid = out.get("trajectory_id") or trajectory_id or f"offline-{request_id[:8]}"
     return 200, {
         "request_id": request_id,
         "answer": out["answer"],
-        "trajectory_id": trajectory_id or f"offline-{request_id[:8]}",
+        "trajectory_id": tid,
         "citations": out.get("citations") or [{"source": s} for s in sources[:3]],
         "refused": out.get("refused", False),
         "diagnosis": out.get("diagnosis") or {},
         "mode": "offline",
+        "engine": out.get("engine") or "agent",
+        "agent_steps": out.get("agent_steps") or [],
         "session_id": body.get("session_id") or "",
     }
 
 
 class AgentHandler(BaseHTTPRequestHandler):
-    server_version = "react-agent-server/0.2"
+    server_version = f"react-agent-server/{package_version()}"
 
     def _send(self, status: int, payload: dict):
         raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -121,16 +123,41 @@ class AgentHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         request_id = self.headers.get("X-Request-Id") or str(uuid.uuid4())
         path = urlparse(self.path).path
-        if path in ("/health", "/v1/health"):
+        if path in ("/", "/ui", "/v1/ui"):
+            raw = docs_troubleshoot_ui_html()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+            return
+        if path == "/v1/info":
             self._send(
                 200,
                 {
-                    "status": "ok",
-                    "version": _version(),
+                    "product": "证据化文档排障",
+                    "version": package_version(),
                     "app": os.environ.get("REACT_AGENT_APP", ""),
+                    "default_mode": "offline",
+                    "features": [
+                        "agent_loop_offline",
+                        "react_loop_llm",
+                        "citation_verify_tool",
+                        "field_evidence",
+                        "structured_diagnosis",
+                        "harness_trajectory",
+                    ],
+                    "ui_paths": ["/", "/ui"],
                     "request_id": request_id,
                 },
             )
+            return
+        if path in ("/health", "/v1/health"):
+            self._send(200, liveness_payload(request_id=request_id))
+            return
+        if path in ("/ready", "/v1/ready"):
+            status, payload = readiness_payload(request_id=request_id)
+            self._send(status, payload)
             return
         if path in ("/v1/workflows", "/v1/workflows/list"):
             from react_agent.workflow import list_workflows
@@ -211,7 +238,7 @@ def serve(host: str = "127.0.0.1", port: int = 8765):
     reset_index()
     httpd = ThreadingHTTPServer((host, port), AgentHandler)
     print(f"[server] listening on http://{host}:{port}")
-    print("[server] GET /health  GET /v1/workflows  POST /v1/workflows/run  POST /v1/chat")
+    print("[server] GET /  /ui  /v1/info  /health /ready  POST /v1/chat  /v1/workflows/run")
     print("[server] REACT_AGENT_SERVER_LLM=1 for live LLM on /v1/chat")
     httpd.serve_forever()
 

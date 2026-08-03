@@ -24,9 +24,9 @@ def main():
     parser = argparse.ArgumentParser(description="Docs/API troubleshoot golden eval")
     parser.add_argument(
         "--path",
-        default="workflow",
-        choices=["workflow", "chat_offline"],
-        help="eval path: workflow (default) or chat_offline (/v1/chat offline)",
+        default="agent",
+        choices=["agent", "workflow", "chat_offline"],
+        help="eval path: agent (default) | workflow (legacy DAG) | chat_offline (alias)",
     )
     parser.add_argument(
         "--gate",

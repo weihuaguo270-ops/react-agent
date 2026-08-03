@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-证据化文档排障-lightgrey)](docs/EVIDENCE_DOCS_TROUBLESHOOT.md)
 
-个人维护的 Agent 运行时原型。默认入口是 `docs_troubleshoot` Workflow；探索路径是 `react_loop` + Harness 轨迹（Format B JSON）。
+个人维护的 **Agent 运行时**：默认入口是 `docs_troubleshoot` **离线 Agent 循环**（观测驱动选工具 → `verify_citations` → Harness 轨迹）；`react_loop` 为 Live LLM 路径；固定 DAG Workflow 仍可用（`REACT_AGENT_DOCS_ENGINE=workflow`）。
 
 **主场景**：[证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 内部文档 / Runbook 问答，能引用就引用、没依据就拒答（**不是**自动 API 根因诊断）。v0.3 起可传入 HTTP 错误、日志、Trace，并输出结构化 `diagnosis`；底层仍是检索 + 规则，不是多轮推理 Agent。
 
@@ -13,25 +13,28 @@
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
-python examples/demos/demo_workflow.py                   # 确定性 Workflow（默认入口）
+python examples/demos/demo_workflow.py                   # 确定性 Workflow（legacy DAG）
 python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么？"
-python examples/eval/run_docs_troubleshoot_eval.py      # 黄金集 34 条
+python examples/eval/run_docs_troubleshoot_eval.py      # 黄金集 34 条（默认 agent 路径）
 python examples/eval/run_fault_eval.py                  # 故障模拟 12 条
 python examples/eval/run_production_eval.py             # 生产盲测 5 条
 python examples/eval/run_git_docs_eval.py               # Git 文档 held-out 5 条
-python -m react_agent.server --port 8765           # /health /v1/chat /v1/workflows
+python -m react_agent.server --port 8765           # 浏览器 http://127.0.0.1:8765/ · 产品 UI
+docker compose up --build                         # 同上 · 见 docs/DEPLOY.md
 ```
 
-Workflow v5：`现场证据 → search → lookup_api → synthesize（句级要点）→ policy（引用/拒答）→ diagnosis`。详见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) · 评测：[`DOCS_TROUBLESHOOT_EVAL.md`](docs/DOCS_TROUBLESHOOT_EVAL.md) · **Since v0.3.0**。
+Workflow v5（legacy DAG）：`现场证据 → search → lookup_api → synthesize → policy → diagnosis`。  
+**默认运行时**为 **Agent 循环**（`agent_runner.py`）：根据观测选工具、强制 `verify_citations`、写 Harness 轨迹；Live 模式用 `react_loop` + LLM。详见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) · 评测：[`DOCS_TROUBLESHOOT_EVAL.md`](docs/DOCS_TROUBLESHOOT_EVAL.md) · **Since v0.4.0**。
+
+**产品特色 vs 可视化：** 差异化在 **Agent 运作本身** — 工具选择循环、引用校验工具步、权限闸门、Harness 轨迹与 failure flywheel；eval 是验收手段而非卖点。可视化 **中等**：内置 Web UI（`/`）展示证据链与 agent 步数；CLI + JSON + 轨迹文件仍是回归主路径。
 
 ## 范围与定位
 
 | 是 | 不是 |
 |----|------|
-| 证据化文档 / Runbook 问答（引用 + 拒答 + 四套离线 eval） | 自动 API 根因诊断 Agent（无证据不臆造根因） |
-| 现场证据 + 结构化 diagnosis（HTTP / log / trace；fix_steps 权限闸门） | 多租户 Agent 平台 |
-| 自建 Core（Workflow + ReAct + 权限/Harness）可服务化、可回归 | 以 LangGraph 为默认实现 |
-| 确定性工作流 + 分层评测（golden / fault / production / git） | 企业级全量 Git / OpenAPI 生产 ingest |
+| 主流 ReAct 服务 + 领域工具 + HTTP 交付（整体对齐常见 Runbook Agent） | 图编排 / Checkpoint / 多租户平台 |
+| Agent 循环 + 循环内治理（verify 工具步、duplicate 拦截、轨迹飞轮） | 以 LangGraph 为默认或评判标准 |
+| 自建 Core（agent_runner + react_loop + 权限/Harness）可服务化 | 企业级全量 Git / OpenAPI 生产 ingest |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘 + Harness Health 门禁。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
@@ -41,31 +44,31 @@ Workflow v5：`现场证据 → search → lookup_api → synthesize（句级要
 
 ```
 query
-  ├─ Workflow（确定性：docs_troubleshoot）     ← 默认路径
-  └─ react_loop（自由 ReAct + 工具）
+  ├─ agent_runner（默认：观测选工具 → verify → 轨迹）   ← 离线 / CI / /v1/chat
+  ├─ react_loop（Live ReAct + LLM）                     ← REACT_AGENT_SERVER_LLM=1
+  └─ Workflow DAG（legacy，REACT_AGENT_DOCS_ENGINE=workflow）
         → permission gate → tools / ToolGuard
-        → CONTEXT.manage → Format B 轨迹
+        → Format B 轨迹
 ```
 
 | 维度 | Core（默认） |
 |------|----------------|
-| **入口** | `react_loop()` / `run_workflow()` / `python -m react_agent.server` |
-| **依赖** | 标准库 + LLM API（Workflow 离线可不需 Key） |
-| **侧重点** | 控制流透明、Workflow、Harness、评测证据 |
+| **入口** | `agent_runner` / `react_loop()` / `python -m react_agent.server` |
+| **依赖** | 标准库 + LLM API（离线 Agent 可不需 Key） |
+| **侧重点** | 主流 ReAct 形态 + 循环内治理、Harness、评测验收 |
 
 ### 执行流程（Core）
 
 ```
 query
-  ├─ run_workflow("docs_troubleshoot")     ← 确定性路径（黄金集同此）
-  │     证据 → search → lookup_api → synthesize → policy → diagnosis
-  └─ react_loop()                          ← 自由探索
-          ├── system prompt / LLM
-          ├── 工具（含 list/run_workflow）
-          └── Format B 轨迹
+  ├─ run_docs() → agent_runner（默认）
+  │     观测 → search/lookup/parse_* → verify_citations → policy → diagnosis
+  ├─ react_loop()（Live）
+  │     LLM 选工具 → 同一套 docs 工具与 prompt
+  └─ run_workflow("docs_troubleshoot")（legacy DAG）
 ```
 
-多 Agent / MCP / RAG / LangGraph 为实验能力，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
+多 Agent / MCP / RAG / LangGraph 为**实验对照**，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。成熟度评判见 [`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
 ### 模块清单
 

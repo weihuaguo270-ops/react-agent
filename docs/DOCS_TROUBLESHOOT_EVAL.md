@@ -11,8 +11,9 @@
 | 数据集 | `src/react_agent/apps/docs_troubleshoot/golden.json` |
 | 规模 | **34 条**（g01–g28 + h01–h06） |
 | 语料 | `corpus/` **14 篇** md（演示用 API 参考 + runbook） |
-| 默认路径 | Workflow `docs_troubleshoot`（离线、无 LLM Key） |
-| 对照路径 | `chat_offline`（与 HTTP `POST /v1/chat` 默认离线路径一致） |
+| 默认路径 | **Agent 循环**（`agent_runner`：观测选工具 + `verify_citations` + Harness 轨迹） |
+| legacy 路径 | Workflow DAG（`REACT_AGENT_DOCS_ENGINE=workflow`） |
+| HTTP 对照 | `POST /v1/chat` 离线默认 = Agent 循环 |
 
 **局限**：黄金集衡量的是「问法 → 语料片段 → 引用 / 关键词 / 拒答」，不能代表真实企业文档规模、现场日志或 OpenAPI 自动诊断。
 
