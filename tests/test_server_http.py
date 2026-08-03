@@ -9,6 +9,7 @@ import urllib.error
 import urllib.request
 
 os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
+os.environ.setdefault("REACT_AGENT_DEFAULT_APP", "docs_troubleshoot")
 os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
 os.environ.setdefault("REACT_AGENT_DISABLE_MCP", "1")
 
@@ -36,8 +37,11 @@ def test_health_and_chat_offline():
 
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/info", timeout=5) as resp:
             info = json.loads(resp.read().decode("utf-8"))
-        assert info.get("product") == "证据化文档排障"
-        assert "citation_verify_tool" in (info.get("features") or []) or "agent_loop_offline" in (info.get("features") or [])
+        assert info.get("product") == "react-agent"
+        apps = [a["id"] for a in (info.get("applications") or [])]
+        assert "docs_troubleshoot" in apps
+        assert "expense" in apps
+        assert "default" in apps
 
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=5) as resp:
             health = json.loads(resp.read().decode("utf-8"))

@@ -42,10 +42,29 @@ def main() -> int:
     print(f"[deploy] ready  {status} -> {ready.get('status')} chunks={ready.get('chunks')}")
     ok &= status == 200 and ready.get("status") == "ready"
 
-    status, chat = _post(f"{base}/v1/chat", {"message": "缺少 Authorization 返回什么？"})
+    status, chat = _post(
+        f"{base}/v1/chat",
+        {"app": "docs_troubleshoot", "message": "缺少 Authorization 返回什么？"},
+    )
     ans = chat.get("answer", "")
-    print(f"[deploy] chat   {status} mode={chat.get('mode')} refused={chat.get('refused')}")
-    ok &= status == 200 and ("401" in ans or "unauthorized" in ans.lower())
+    print(f"[deploy] chat docs {status} mode={chat.get('mode')} app={chat.get('app')}")
+    ok &= status == 200 and chat.get("app") == "docs_troubleshoot"
+    ok &= "401" in ans or "unauthorized" in ans.lower()
+
+    status, exp = _post(
+        f"{base}/v1/chat",
+        {
+            "app": "expense",
+            "claim": {"category": "餐饮", "amount": 128, "has_receipt": True},
+        },
+    )
+    print(f"[deploy] chat expense {status} decision={exp.get('decision')}")
+    ok &= status == 200 and exp.get("decision") == "approve_manager"
+
+    status, info = _get(f"{base}/v1/info")
+    apps = [a["id"] for a in info.get("applications", [])]
+    print(f"[deploy] info apps={apps}")
+    ok &= status == 200 and "expense" in apps and "default" in apps
 
     status, wfs = _get(f"{base}/v1/workflows")
     names = [w.get("name") for w in wfs.get("workflows", [])]

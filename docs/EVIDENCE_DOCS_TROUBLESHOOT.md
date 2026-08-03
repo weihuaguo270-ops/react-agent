@@ -1,4 +1,7 @@
-# 证据化文档排障（主场景说明）
+# 证据化文档排障（垂直 demo · 客服/自动化线）
+
+> **仓库应用方向**已扩展为三类主流场景，见 [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。  
+> 本页仅描述 **② 客服/工作流自动化** 下的 Runbook/文档垂直 demo，不是全仓唯一产品定义。
 
 本页写 **docs_troubleshoot** 现在能做什么、不能说什么、接下来补什么。评测命令和门禁见 [`DOCS_TROUBLESHOOT_EVAL.md`](DOCS_TROUBLESHOOT_EVAL.md)。
 

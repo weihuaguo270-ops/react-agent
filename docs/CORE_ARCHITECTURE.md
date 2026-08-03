@@ -2,7 +2,7 @@
 
 结构地图：[`STRUCTURE.md`](STRUCTURE.md)。主场景说明：[`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)。
 
-运行时走 **自建 Core**（轻量 ReAct + 领域工具 + HTTP），**不以 LangGraph / 图编排为默认或评判标准**。主场景 **docs_troubleshoot** 默认 **离线 Agent 循环**（观测驱动选工具 + `verify_citations` + Harness 轨迹）；Live 为 `react_loop` + LLM；固定 DAG Workflow 为 legacy 对照。
+运行时走 **自建 Core**，服务 **三类主流 Agent 应用**（编码执行 · 客服自动化 · RAG/研究）。应用地图：[`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。`docs_troubleshoot` 为 **② 客服/自动化** 下的垂直 demo。
 
 ## 与主流 Agent 的对齐（实践共性）
 

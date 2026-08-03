@@ -11,21 +11,29 @@ def package_version() -> str:
 
         return version("react-agent")
     except Exception:
-        return "0.4.0"
+        return "0.5.0"
+
+
+def _default_app() -> str:
+    return (
+        os.environ.get("REACT_AGENT_DEFAULT_APP")
+        or os.environ.get("REACT_AGENT_APP")
+        or "docs_troubleshoot"
+    ).strip()
 
 
 def liveness_payload(*, request_id: str) -> dict[str, Any]:
     return {
         "status": "ok",
         "version": package_version(),
-        "app": os.environ.get("REACT_AGENT_APP", ""),
+        "default_app": _default_app(),
         "request_id": request_id,
     }
 
 
 def readiness_check() -> tuple[bool, dict[str, Any]]:
     """True when the docs_troubleshoot index is loaded with chunks."""
-    app = os.environ.get("REACT_AGENT_APP", "docs_troubleshoot")
+    app = _default_app()
     if app != "docs_troubleshoot":
         return True, {"app": app, "reason": "non_docs_app_skipped"}
 

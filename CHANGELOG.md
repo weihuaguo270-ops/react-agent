@@ -4,7 +4,27 @@
 
 （下一批变更写在这里。）
 
-## 0.4.0 (2026-08-03)
+## 0.5.0 (2026-08-03)
+
+### Added — 多应用 HTTP 与三类主流应用定位
+
+- **`/v1/chat` 多应用路由**：`app=default|docs_troubleshoot|expense`（`chat_router` + handlers）
+- **`expense` 应用**：离线政策检索 + 规则裁决 demo（`apps/expense/offline_answer.py`）
+- **`GET /v1/info`**：返回 `applications` 列表与 `pillars`（coding_execution / support_automation / rag_research）
+- **文档**：`docs/APPLICATION_DIRECTION.md` — 编码/执行 · 客服/自动化 · RAG/研究 三类映射
+
+### Changed
+
+- 产品定位：repo = Agent 运行时 + 三类主流应用；`docs_troubleshoot` 降为 ② 客服/自动化 垂直 demo
+- 默认环境变量：`REACT_AGENT_DEFAULT_APP`（替代 `REACT_AGENT_APP` 作为 HTTP 默认）
+- CI：按 pillar 标注 execution / docs troubleshoot / public benchmark 步骤
+- 部署自检：expense app + `/v1/info` applications 断言
+
+### Tests
+
+- `tests/test_expense_app.py` — 规则裁决 + HTTP 路由
+- `tests/test_server_http.py` — 多应用 info 断言
+
 
 ### Added — Agent 默认路径与交付
 

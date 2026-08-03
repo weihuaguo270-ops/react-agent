@@ -1,14 +1,37 @@
 # ReAct Agent
 
-[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/定位-证据化文档排障-lightgrey)](docs/EVIDENCE_DOCS_TROUBLESHOOT.md)
+[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/应用-编码·客服/RAG·研究-lightgrey)](docs/APPLICATION_DIRECTION.md)
 
-个人维护的 **Agent 运行时**：默认入口是 `docs_troubleshoot` **离线 Agent 循环**（观测驱动选工具 → `verify_citations` → Harness 轨迹）；`react_loop` 为 Live LLM 路径；固定 DAG Workflow 仍可用（`REACT_AGENT_DOCS_ENGINE=workflow`）。
+个人维护的 **Agent 运行时**（`react_loop` + ToolGuard + Harness + 权限闸门），面向 GitHub 主流的三类应用：**写代码/执行**、**客服与工作流自动化**、**通用 RAG/研究**。详见 [`docs/APPLICATION_DIRECTION.md`](docs/APPLICATION_DIRECTION.md)。
 
-**主场景**：[证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 内部文档 / Runbook 问答，能引用就引用、没依据就拒答（**不是**自动 API 根因诊断）。v0.3 起可传入 HTTP 错误、日志、Trace，并输出结构化 `diagnosis`；底层仍是检索 + 规则，不是多轮推理 Agent。
+结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
-结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
+## 三大应用方向
 
-## 主场景：证据化文档排障
+| 方向 | 做什么 | 快速入口 |
+|------|--------|----------|
+| **① 写代码 / 执行** | ReAct 调工具、多步任务、轨迹可回放 | `python -m react_agent "用 calculator 算 17*19"` · [`run_execution_suite.py`](examples/eval/run_execution_suite.py) |
+| **② 客服 / 自动化** | 可部署 Chat API、政策/Runbook 问答、工作流 demo | `docker compose up` · [`demo_expense_workflow.py`](examples/demos/demo_expense_workflow.py) |
+| **③ RAG / 研究** | 检索增强、公开 QA 子集、multi-hop | [`demo_rag.py`](examples/demos/demo_rag.py) · [`run_public_benchmark.py`](examples/eval/run_public_benchmark.py) |
+
+**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
+
+**垂直 demo（② 的子场景）：** [证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 引用/拒答/现场证据；`agent_runner` 默认离线循环 · Live 走 `react_loop`。
+
+```bash
+# ① 执行 Agent
+python examples/eval/run_execution_suite.py --modes agent
+
+# ② 可部署客服 / Runbook 后端
+docker compose up --build
+python examples/eval/run_docs_troubleshoot_eval.py
+
+# ③ 公开 RAG/QA
+python examples/eval/run_public_benchmark.py
+python examples/eval/run_public_rag_benchmark.py
+```
+
+## 垂直 demo：证据化文档排障
 
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
@@ -32,9 +55,9 @@ Workflow v5（legacy DAG）：`现场证据 → search → lookup_api → synthe
 
 | 是 | 不是 |
 |----|------|
-| 主流 ReAct 服务 + 领域工具 + HTTP 交付（整体对齐常见 Runbook Agent） | 图编排 / Checkpoint / 多租户平台 |
-| Agent 循环 + 循环内治理（verify 工具步、duplicate 拦截、轨迹飞轮） | 以 LangGraph 为默认或评判标准 |
-| 自建 Core（agent_runner + react_loop + 权限/Harness）可服务化 | 企业级全量 Git / OpenAPI 生产 ingest |
+| **三类主流应用**：编码执行 · 客服/自动化 · RAG/研究（见 APPLICATION_DIRECTION） | 单一「文档排障」产品或 AIOps 平台 |
+| Agent 运行时 + 循环治理（ToolGuard、Harness、权限、轨迹飞轮） | 图编排平台 / LangGraph 替代品 |
+| 可部署 HTTP + Docker + 多套 eval 证据 | 多租户 SLA / 自动线上根因 |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘 + Harness Health 门禁。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
@@ -44,11 +67,10 @@ Workflow v5（legacy DAG）：`现场证据 → search → lookup_api → synthe
 
 ```
 query
-  ├─ agent_runner（默认：观测选工具 → verify → 轨迹）   ← 离线 / CI / /v1/chat
-  ├─ react_loop（Live ReAct + LLM）                     ← REACT_AGENT_SERVER_LLM=1
+  ├─ react_loop（默认 Live：① 编码/执行 · ③ 研究）
+  ├─ agent_runner / server（② 客服/自动化 · docs_troubleshoot demo）
   └─ Workflow DAG（legacy，REACT_AGENT_DOCS_ENGINE=workflow）
-        → permission gate → tools / ToolGuard
-        → Format B 轨迹
+        → permission gate → tools / ToolGuard → Format B 轨迹
 ```
 
 | 维度 | Core（默认） |
@@ -154,7 +176,7 @@ replay_trajectory(trajectory)
 
 ### RAG / MCP / Context / 业务 Demo
 
-主场景见上文「证据化文档排障」。实验模块与工作流总览：[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)、[`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
+三条主线的 demo 入口见 [`docs/APPLICATION_DIRECTION.md`](docs/APPLICATION_DIRECTION.md)。工作流总览：[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)、[`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
 
 ```bash
 set REACT_AGENT_EXPERIMENTAL_TOOLS=1

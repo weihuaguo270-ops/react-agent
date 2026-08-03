@@ -53,7 +53,7 @@ jobs:
       run: |
         pip install pytest-cov
         pytest tests/ -q --ignore=tests/test_real_llm.py --cov=react_agent --cov-report=term-missing --cov-fail-under=35
-    - name: Execution suite (offline tools)
+    - name: "Pillar ① Execution (offline tools)"
       run: |
         set -e
         export REACT_AGENT_SKIP_RAG=1
@@ -83,17 +83,17 @@ jobs:
         else
           echo "skip step watcher evidence: no sibling trace-debugger"
         fi
-    - name: Public benchmark subset (offline matcher)
+    - name: "Pillar ③ Public benchmark (offline)"
       run: |
         python examples/eval/run_public_benchmark.py --modes offline
         pytest tests/test_public_benchmark.py -q
-    - name: Public RAG benchmark subset (offline + rag)
+    - name: "Pillar ③ Public RAG benchmark (offline)"
       run: |
         python examples/eval/run_public_rag_benchmark.py --modes offline,rag
         pytest tests/test_public_rag_benchmark.py -q
-    - name: Docs troubleshoot golden (offline)
+    - name: "Pillar ② Docs troubleshoot golden (offline)"
       run: python examples/eval/run_docs_troubleshoot_eval.py
-    - name: Docs troubleshoot fault sim (offline)
+    - name: "Pillar ② Docs fault sim (offline)"
       run: python examples/eval/run_fault_eval.py
     - name: Docs troubleshoot production blind (offline)
       run: python examples/eval/run_production_eval.py

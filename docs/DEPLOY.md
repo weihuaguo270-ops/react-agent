@@ -9,9 +9,13 @@
 docker compose up --build
 # 浏览器打开 http://127.0.0.1:8765/  — 产品 UI（引用/拒答/diagnosis 可视化）
 curl -s http://127.0.0.1:8765/ready | jq .
+curl -s http://127.0.0.1:8765/v1/info | jq .
 curl -s http://127.0.0.1:8765/v1/chat \
   -H 'Content-Type: application/json' \
-  -d '{"message":"缺少 Authorization 返回什么？"}' | jq .
+  -d '{"app":"docs_troubleshoot","message":"缺少 Authorization 返回什么？"}' | jq .
+curl -s http://127.0.0.1:8765/v1/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"app":"expense","claim":{"category":"餐饮","amount":128,"has_receipt":true}}' | jq .
 ```
 
 **可视化：** 主场景 UI 内置于 HTTP 服务（`/`、`/ui`），展示 Workflow 五步、引用来源、拒答状态、结构化 diagnosis，**不是**泛聊天窗口。实验性 ReAct 轨迹面板见 `python -m react_agent.dashboard.server`（需 Flask + 可选 LLM）。
@@ -40,7 +44,8 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 |------|------|------|
 | `REACT_AGENT_HOST` | `127.0.0.1`（本地） / `0.0.0.0`（容器） | 监听地址 |
 | `REACT_AGENT_PORT` | `8765` | 端口 |
-| `REACT_AGENT_APP` | `docs_troubleshoot` | 主场景 |
+| `REACT_AGENT_DEFAULT_APP` | `docs_troubleshoot` | 未传 `app` 时的默认应用（v0.5+） |
+| `REACT_AGENT_APP` | — | 兼容旧变量；工具/workflow 挂载仍可读此值 |
 | `REACT_AGENT_RAG_MODE` | `keyword` | 离线检索模式 |
 | `REACT_AGENT_SERVER_LLM` | 未设 | `1` 时 `/v1/chat` 走 live ReAct（需 Key） |
 | `DEEPSEEK_API_KEY` | — | live 模式需要 |
@@ -53,7 +58,8 @@ GET  /health
 GET  /ready
 GET  /v1/workflows
 POST /v1/workflows/run   {"name":"docs_troubleshoot","query":"..."}
-POST /v1/chat            {"message":"...", "error_response": {...}, ...}
+POST /v1/chat            {"app":"docs_troubleshoot|expense|default", "message":"...", ...}
+GET  /v1/info            applications + pillars
 ```
 
 响应含 `request_id`；错误为统一 envelope：`error.code / message / request_id`。

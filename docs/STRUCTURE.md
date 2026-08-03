@@ -1,6 +1,6 @@
 # 仓库结构
 
-Core 运行时、主场景、评测与实验模块的分区说明。包内模块见 [`src/react_agent/README.md`](../src/react_agent/README.md)。
+Core 运行时、**三类主流应用**、评测与实验模块的分区说明。应用地图：[`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。
 
 ## 顶层目录
 
@@ -22,7 +22,7 @@ Core 运行时、主场景、评测与实验模块的分区说明。包内模块
 src/react_agent/
 ├── react_loop.py          ReAct 循环
 ├── workflow/              声明式 Workflow
-├── apps/docs_troubleshoot/  主场景：证据化文档排障（见 EVIDENCE_DOCS_TROUBLESHOOT.md）
+├── apps/docs_troubleshoot/  垂直 demo：② 客服线 · 证据化文档排障
 ├── server/                HTTP：/health /v1/chat /v1/workflows
 ├── tools/                 工具注册表
 ├── safety/                权限闸门 + HITL
@@ -53,8 +53,9 @@ src/react_agent/
 ## 阅读顺序
 
 1. 本页（结构）
-2. [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)（控制流）
-3. [`AGENT_WORKFLOW.md`](AGENT_WORKFLOW.md)（主路径用法）
-4. [`EVAL_INDEX.md`](EVAL_INDEX.md)（评测索引；报告正文在 `reports/`）
-5. [`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)（主场景定位与路线图）
-6. [`EXPERIMENTAL.md`](EXPERIMENTAL.md)（可选能力）
+2. [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)（三类主流应用 + 入口）
+3. [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)（控制流）
+4. [`AGENT_WORKFLOW.md`](AGENT_WORKFLOW.md)（主路径用法）
+5. [`EVAL_INDEX.md`](EVAL_INDEX.md)（评测索引；报告正文在 `reports/`）
+6. [`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)（垂直 demo 边界）
+7. [`EXPERIMENTAL.md`](EXPERIMENTAL.md)（可选能力）

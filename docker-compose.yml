@@ -7,6 +7,7 @@ services:
     environment:
       REACT_AGENT_HOST: "0.0.0.0"
       REACT_AGENT_PORT: "8765"
+      REACT_AGENT_DEFAULT_APP: docs_troubleshoot
       REACT_AGENT_APP: docs_troubleshoot
       REACT_AGENT_RAG_MODE: keyword
       REACT_AGENT_DISABLE_MCP: "1"
