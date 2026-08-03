@@ -128,7 +128,7 @@ def _run_one_case(case: dict[str, Any], *, path: str) -> dict[str, Any]:
             refused=bool(result.refused),
             ok_run=bool(result.ok),
         )
-    if path == "chat_offline":
+    if path in ("agent", "chat_offline"):
         from react_agent.apps.docs_troubleshoot.offline_answer import answer_offline
 
         out = answer_offline(case["question"])
@@ -141,15 +141,18 @@ def _run_one_case(case: dict[str, Any], *, path: str) -> dict[str, Any]:
     raise ValueError(f"unsupported eval path: {path}")
 
 
-def run_golden_eval(*, path: str = "workflow") -> dict[str, Any]:
+def run_golden_eval(*, path: str = "agent") -> dict[str, Any]:
     """
     Run golden set.
 
     path:
-      - workflow (default): Core Workflow
-      - chat_offline: HTTP /v1/chat 默认离线路径（retrieve → draft → policy）
+      - agent (default): offline Agent loop (tool selection + verify_citations + trajectory)
+      - workflow: legacy fixed-step Workflow DAG
+      - chat_offline: alias of agent (/v1/chat offline path)
     """
-    if path not in ("workflow", "chat_offline"):
+    if path == "chat_offline":
+        path = "agent"
+    if path not in ("agent", "workflow"):
         raise ValueError(f"unsupported eval path: {path}")
 
     os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
@@ -266,7 +269,7 @@ def score_case(case: dict[str, Any]) -> dict[str, Any]:
     os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
     os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
     reset_index()
-    return _run_one_case(case, path="workflow")
+    return _run_one_case(case, path="agent")
 
 
 if __name__ == "__main__":

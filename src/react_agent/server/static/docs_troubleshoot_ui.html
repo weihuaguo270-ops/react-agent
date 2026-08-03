@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>证据化文档排障</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-soft:#eff6ff;--green:#16a34a;--green-bg:#f0fdf4;--red:#dc2626;--red-bg:#fef2f2;--amber:#d97706;--amber-bg:#fffbeb;--radius:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.wrap{max-width:1200px;margin:0 auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.brand h1{font-size:20px;font-weight:700}
+.brand p{color:var(--muted);font-size:12px;margin-top:4px;max-width:640px;line-height:1.5}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{font-size:11px;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid #bfdbfe}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.panel h2{font-size:13px;font-weight:700;margin-bottom:10px}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+textarea,input,select{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font:inherit;background:#fff}
+textarea{min-height:88px;resize:vertical;font-family:inherit}
+textarea.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;min-height:72px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{filter:brightness(.95)}
+.btn-secondary{background:#fff;border:1px solid var(--border);color:var(--text)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{font-size:11px;padding:5px 10px;border-radius:999px;background:#f8fafc;border:1px solid var(--border);cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.status{display:none;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:12px}
+.status.refused{display:block;background:var(--red-bg);border:1px solid #fecaca;color:#991b1b}
+.status.answered{display:block;background:var(--green-bg);border:1px solid #bbf7d0;color:#166534}
+.answer{white-space:pre-wrap;line-height:1.65;font-size:13px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;min-height:120px}
+.meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:11px;margin:10px 0}
+.cite-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.cite{padding:6px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid #bfdbfe;font-size:12px}
+.section{margin-top:14px}
+.section-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.card{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.card h3{font-size:13px;margin-bottom:6px}
+.card .sub{font-size:11px;color:var(--muted)}
+.tag{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;margin-right:4px}
+.tag-high{background:#fee2e2;color:#991b1b}
+.tag-med{background:var(--amber-bg);color:#92400e}
+.tag-low{background:#f1f5f9;color:#475569}
+.list{margin:6px 0 0 18px;font-size:12px;line-height:1.6}
+.empty{color:var(--muted);font-size:12px;padding:12px;border:1px dashed var(--border);border-radius:8px;text-align:center}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.flow-step{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;font-size:11px;color:var(--muted)}
+.flow-step strong{display:block;color:var(--text);font-size:12px;margin-bottom:4px}
+.flow-step.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+details{margin-top:8px}
+summary{cursor:pointer;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>证据化文档排障</h1>
+      <p>不是泛聊天：答案必须能引用文档，没依据就拒答；可附带 HTTP 错误 / 日志 / Trace 作为现场证据，输出结构化 diagnosis。</p>
+    </div>
+    <div class="badges" id="badges">
+      <span class="badge" id="badge-version">v-</span>
+      <span class="badge" id="badge-mode">offline</span>
+      <span class="badge">引用 / 拒答</span>
+      <span class="badge">diagnosis</span>
+    </div>
+  </header>
+
+  <div class="flow" aria-hidden="true">
+    <div class="flow-step"><strong>现场证据</strong>可选传入</div>
+    <div class="flow-step"><strong>检索</strong>语料命中</div>
+    <div class="flow-step"><strong>合成</strong>句级要点</div>
+    <div class="flow-step active"><strong>策略</strong>引用/拒答</div>
+    <div class="flow-step"><strong>诊断</strong>结构化输出</div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>提问与现场证据</h2>
+      <div class="chips" id="presets"></div>
+      <label for="question">问题</label>
+      <textarea id="question" placeholder="例如：缺少 Authorization 返回什么？"></textarea>
+      <details>
+        <summary>HTTP 错误 JSON（error_response）</summary>
+        <textarea id="error_response" class="mono" placeholder='{"status":401,"error":{"code":"unauthorized"}}'></textarea>
+      </details>
+      <details>
+        <summary>日志片段（log_excerpt）</summary>
+        <textarea id="log_excerpt" class="mono" placeholder="upstream_timeout trace_id=..."></textarea>
+      </details>
+      <details>
+        <summary>Trace JSON（trace_context）</summary>
+        <textarea id="trace_context" class="mono" placeholder='{"trace_id":"tr-504","spans":[]}'></textarea>
+      </details>
+      <div class="row">
+        <button class="btn-primary" id="ask-btn" onclick="ask()">查询</button>
+        <button class="btn-secondary" onclick="clearForm()">清空</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>结果 · 证据链</h2>
+      <div class="status" id="status"></div>
+      <div class="meta" id="meta"></div>
+      <div class="section">
+        <div class="section-title">答案</div>
+        <div class="answer" id="answer">输入问题后，这里展示带引用约束的答案，或拒答说明。</div>
+      </div>
+      <div class="section">
+        <div class="section-title">引用来源</div>
+        <div class="cite-list" id="citations"><span class="empty">暂无引用</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Agent 工具步</div>
+        <div id="agent-steps"><div class="empty">离线 Agent 循环：search → verify_citations → …</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const PRESETS = [
+  {label:"401 鉴权", q:"缺少 Authorization 返回什么？"},
+  {label:"400 cursor", q:"invalid_request 和 cursor 有什么关系？"},
+  {label:"429 限流", q:"429 速率限制怎么处理？", err:{status:429,error:{code:"rate_limited"}}},
+  {label:"域外拒答", q:"我们公司股价明天多少？"},
+  {label:"504 + log", q:"网关超时怎么排查？", log:"upstream_timeout trace_id=tr-504 status=504"}
+];
+
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+
+function initPresets(){
+  const box=document.getElementById("presets");
+  PRESETS.forEach(p=>{
+    const b=document.createElement("button");
+    b.className="chip"; b.textContent=p.label;
+    b.onclick=()=>{
+      document.getElementById("question").value=p.q;
+      document.getElementById("error_response").value=p.err?JSON.stringify(p.err,null,2):"";
+      document.getElementById("log_excerpt").value=p.log||"";
+      document.getElementById("trace_context").value="";
+    };
+    box.appendChild(b);
+  });
+}
+
+async function loadInfo(){
+  try{
+    const r=await fetch("/v1/info");
+    const j=await r.json();
+    document.getElementById("badge-version").textContent="v"+(j.version||"?");
+    document.getElementById("badge-mode").textContent=j.default_mode||"offline";
+  }catch(e){}
+}
+
+function parseJsonField(id){
+  const raw=document.getElementById(id).value.trim();
+  if(!raw) return undefined;
+  try{return JSON.parse(raw);}catch(e){throw new Error(id+" 不是合法 JSON");}
+}
+
+function clearForm(){
+  ["question","error_response","log_excerpt","trace_context"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("answer").textContent="输入问题后，这里展示带引用约束的答案，或拒答说明。";
+  document.getElementById("citations").innerHTML='<span class="empty">暂无引用</span>';
+  document.getElementById("diagnosis").innerHTML='<div class="empty">无 diagnosis 或未传入现场证据</div>';
+  document.getElementById("agent-steps").innerHTML='<div class="empty">离线 Agent 循环：search → verify_citations → …</div>';
+  document.getElementById("status").className="status";
+  document.getElementById("meta").textContent="";
+}
+
+function renderAgentSteps(steps, engine){
+  if(!steps||!steps.length){
+    return `<div class="empty">engine: ${esc(engine||"agent")} · 无步序数据</div>`;
+  }
+  return steps.map(s=>`<div class="card"><h3>Step ${esc(s.step)} · ${esc(s.action||"")}</h3><div class="sub">${esc(s.thought||"")}</div></div>`).join("");
+}
+
+  if(!d||!Object.keys(d).length){
+    return '<div class="empty">无 diagnosis 或未传入现场证据</div>';
+  }
+  let html="";
+  if(d.phenomenon) html+=`<div class="card"><h3>现象</h3><div>${esc(d.phenomenon)}</div></div>`;
+  const causes=d.candidate_causes||[];
+  if(causes.length){
+    html+=`<div class="card"><h3>候选原因</h3>`;
+    causes.forEach(c=>{
+      const conf=(c.confidence||"medium").toLowerCase();
+      const cls=conf.includes("high")?"tag-high":conf.includes("low")?"tag-low":"tag-med";
+      html+=`<div style="margin-top:8px"><span class="tag ${cls}">${esc(c.confidence||"")}</span> ${esc(c.cause||"")}`;
+      if(c.doc_hints&&c.doc_hints.length) html+=`<div class="sub">文档: ${esc(c.doc_hints.join(", "))}</div>`;
+      html+=`</div>`;
+    });
+    html+=`</div>`;
+  }
+  const mkList=(title, items)=>{
+    if(!items||!items.length) return "";
+    return `<div class="card"><h3>${title}</h3><ul class="list">${items.map(x=>`<li>${esc(typeof x==="string"?x:JSON.stringify(x))}</li>`).join("")}</ul></div>`;
+  };
+  html+=mkList("验证动作", d.verify_actions);
+  html+=mkList("可执行修复", d.fix_steps);
+  html+=mkList("待确认修复", d.pending_fix_steps);
+  html+=mkList("拦截步骤", d.blocked_fix_steps);
+  if(d.escalation) html+=`<div class="card"><h3>升级条件</h3><div>${esc(d.escalation)}</div></div>`;
+  return html||'<div class="empty">diagnosis 为空</div>';
+}
+
+async function ask(){
+  const btn=document.getElementById("ask-btn");
+  btn.disabled=true; btn.textContent="查询中…";
+  try{
+    const body={message:document.getElementById("question").value.trim()};
+    const er=parseJsonField("error_response"); if(er!==undefined) body.error_response=er;
+    const log=document.getElementById("log_excerpt").value.trim(); if(log) body.log_excerpt=log;
+    const tr=parseJsonField("trace_context"); if(tr!==undefined) body.trace_context=tr;
+    if(!body.message) throw new Error("请输入问题");
+    const resp=await fetch("/v1/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const data=await resp.json();
+    if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
+    const refused=!!data.refused;
+    const st=document.getElementById("status");
+    st.className="status "+(refused?"refused":"answered");
+    st.textContent=refused?"依据不足 · 已拒答":"已回答 · 引用策略通过";
+    document.getElementById("answer").textContent=data.answer||"";
+    document.getElementById("meta").innerHTML=
+      `request_id: ${esc(data.request_id||"")} · mode: ${esc(data.mode||"")} · trajectory: ${esc(data.trajectory_id||"")}`;
+    const cites=data.citations||[];
+    document.getElementById("citations").innerHTML=cites.length
+      ? cites.map(c=>`<span class="cite">${esc(c.source||c)}</span>`).join("")
+      : '<span class="empty">无引用（可能已拒答）</span>';
+    document.getElementById("diagnosis").innerHTML=renderDiagnosis(data.diagnosis||{});
+    document.getElementById("agent-steps").innerHTML=renderAgentSteps(data.agent_steps||[], data.engine);
+    document.getElementById("badge-mode").textContent=data.mode||"offline";
+  }catch(e){
+    document.getElementById("status").className="status refused";
+    document.getElementById("status").style.display="block";
+    document.getElementById("status").textContent="请求失败: "+e.message;
+  }finally{
+    btn.disabled=false; btn.textContent="查询";
+  }
+}
+
+initPresets();
+loadInfo();
+</script>
+</body>
+</html>

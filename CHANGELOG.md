@@ -4,6 +4,28 @@
 
 （下一批变更写在这里。）
 
+## 0.4.0 (2026-08-03)
+
+### Added — Agent 默认路径与交付
+
+- **`agent_runner`**：离线 Agent 循环（观测驱动选工具 → 强制 `verify_citations` → Harness 轨迹）；默认引擎，`REACT_AGENT_DOCS_ENGINE=workflow` 可回退 legacy DAG
+- **产品 UI**：`GET /`、`/ui` — 证据链、拒答状态、结构化 diagnosis、Agent 工具步；`GET /v1/info`
+- **Docker 交付**：`Dockerfile`、`docker-compose.yml`、`docs/DEPLOY.md`；`/ready` 就绪探针（docs 索引 `chunks > 0`）
+- **部署自检**：`examples/eval/run_deploy_smoke.py`；CI `docker-smoke` job
+- **HTTP**：`/v1/chat` 支持 `log_excerpt`、`trace_context`；返回 `agent_steps`、`engine`、`trajectory_id`
+
+### Changed
+
+- 黄金集 eval 默认路径：`agent`（原 `workflow` 仍可用）
+- `offline_answer` / `POST /v1/chat` 离线默认走 Agent 循环
+- 架构/成熟度文档：评判基准改为 **主流 ReAct + 工具 + HTTP**（不以 LangGraph 为 KPI）
+- README：默认叙事从 Workflow DAG 调整为 Agent 循环 + Live `react_loop`
+
+### Tests
+
+- `tests/test_docs_troubleshoot_agent.py` — Agent 步序、拒答、现场证据
+- `tests/test_server_http.py` — `/`、`/v1/info`、health/ready
+
 ## 0.3.0 (2026-07-27)
 
 ### Added — 证据化文档排障（docs_troubleshoot）

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "react-agent"
-version = "0.3.0"
-description = "Agent 运行时 + 证据化文档排障（v0.3：现场证据/结构化诊断/四套离线 eval）；LangGraph 可选对照"
+version = "0.4.0"
+description = "Agent 运行时 + 证据化文档排障（v0.4：默认 Agent 循环、Docker 交付、产品 UI）"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -48,6 +48,7 @@ react_agent = [
     "eval/**/*.json",
     "apps/docs_troubleshoot/golden.json",
     "apps/docs_troubleshoot/corpus/*.md",
+    "server/static/*.html",
 ]
 
 [tool.pytest.ini_options]

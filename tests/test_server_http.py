@@ -29,10 +29,26 @@ def test_health_and_chat_offline():
     t.start()
     time.sleep(0.15)
     try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=5) as resp:
+            assert resp.status == 200
+            html = resp.read().decode("utf-8")
+        assert "证据化文档排障" in html
+
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/info", timeout=5) as resp:
+            info = json.loads(resp.read().decode("utf-8"))
+        assert info.get("product") == "证据化文档排障"
+        assert "citation_verify_tool" in (info.get("features") or []) or "agent_loop_offline" in (info.get("features") or [])
+
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=5) as resp:
             health = json.loads(resp.read().decode("utf-8"))
         assert health["status"] == "ok"
         assert "version" in health
+
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/ready", timeout=5) as resp:
+            ready = json.loads(resp.read().decode("utf-8"))
+        assert resp.status == 200
+        assert ready["status"] == "ready"
+        assert ready.get("chunks", 0) > 0
 
         req = urllib.request.Request(
             f"http://127.0.0.1:{port}/v1/chat",

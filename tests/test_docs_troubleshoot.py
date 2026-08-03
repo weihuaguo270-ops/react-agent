@@ -70,7 +70,7 @@ def test_golden_eval_full_pass():
     from react_agent.apps.docs_troubleshoot.eval_golden import run_golden_eval
 
     report = run_golden_eval()
-    assert report["path"] == "workflow"
+    assert report["path"] == "agent"
     assert report["leakage_guards"]["no_must_in_query"] is True
     assert report["leakage_guards"]["score_answer_only"] is True
     assert report["passed"] == report["total"], [
@@ -87,7 +87,7 @@ def test_golden_chat_offline_path():
     from react_agent.apps.docs_troubleshoot.eval_golden import run_golden_eval
 
     report = run_golden_eval(path="chat_offline")
-    assert report["path"] == "chat_offline"
+    assert report["path"] == "agent"
     assert report["passed"] == report["total"]
 
 
