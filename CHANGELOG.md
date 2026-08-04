@@ -2,9 +2,12 @@
 
 ## Unreleased
 
+（下一批变更写在这里。）
+
+## 0.5.2 (2026-08-04)
+
 ### Fixed
 - **docker-smoke**：`run_deploy_smoke.py` 在未 `pip install` 的宿主机上可导入（`sys.path` + `PYTHONPATH=src`）
-
 
 ## 0.5.1 (2026-08-03)
 
