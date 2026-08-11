@@ -298,6 +298,12 @@ gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DE
 - [transformer-attention](https://github.com/weihuaguo270-ops/transformer-attention) — Attention 教学实现
 - [trace-debugger](https://github.com/weihuaguo270-ops/trace-debugger) — 轨迹分析小工具
 
+## Artifact 引用
+
+Harness 轨迹支持 input_artifacts、output_artifacts 和步骤级 artifacts。
+Recorder 只保留 id、media_type、uri 等白名单字段；Schema 校验禁止 data/base64
+内嵌内容。该能力只记录媒体引用，不读取或评估媒体内容。
+
 ## License
 
 MIT

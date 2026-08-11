@@ -9,9 +9,38 @@ import os
 import time
 import random
 import string
-from typing import Optional
+from typing import Any, Optional
 
 TRAJECTORY_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "trajectories")
+
+_ARTIFACT_FIELDS = {
+    "id",
+    "media_type",
+    "uri",
+    "mime_type",
+    "sha256",
+    "width",
+    "height",
+    "duration_ms",
+    "frame_count",
+    "metadata",
+}
+
+
+def _normalize_artifact(artifact: dict[str, Any]) -> dict[str, Any]:
+    """过滤并校验 Artifact 引用字段。"""
+    # 轨迹仅保存白名单字段；data/base64 等内容会被丢弃。
+    if not isinstance(artifact, dict):
+        raise TypeError("artifact must be a dict")
+    normalized = {key: artifact[key] for key in _ARTIFACT_FIELDS if key in artifact}
+    for required in ("id", "media_type", "uri"):
+        value = normalized.get(required)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"artifact.{required} must be a non-empty string")
+    metadata = normalized.get("metadata")
+    if metadata is not None and not isinstance(metadata, dict):
+        raise ValueError("artifact.metadata must be an object")
+    return normalized
 
 
 def _generate_session_id() -> str:
@@ -35,6 +64,7 @@ class Trajectory:
         *,
         task_episode_id: str = "",
         acceptance_criteria: Optional[list[str]] = None,
+        input_artifacts: Optional[list[dict[str, Any]]] = None,
     ):
         self.session_id = _generate_session_id()
         self.query = query
@@ -43,6 +73,10 @@ class Trajectory:
         self.system_prompt = system_prompt[:200] if system_prompt else ""
         self.task_episode_id = task_episode_id
         self.acceptance_criteria = list(acceptance_criteria or [])
+        self.input_artifacts = [
+            _normalize_artifact(artifact) for artifact in (input_artifacts or [])
+        ]
+        self.output_artifacts: list[dict[str, Any]] = []
         self.steps: list[dict] = []
         self.final_answer = ""
         self.total_tokens_estimated = 0
@@ -123,6 +157,18 @@ class Trajectory:
     def set_final_answer(self, answer: str):
         self.final_answer = answer[:1000] if answer else ""
 
+    def add_output_artifact(self, artifact: dict[str, Any]) -> None:
+        """记录最终产物引用。"""
+        self.output_artifacts.append(_normalize_artifact(artifact))
+
+    def add_step_artifact(self, step: int, artifact: dict[str, Any]) -> None:
+        """记录步骤产物引用。"""
+        entry = self._find_step_entry(step)
+        if entry is None:
+            entry = {"step": step}
+            self.steps.append(entry)
+        entry.setdefault("artifacts", []).append(_normalize_artifact(artifact))
+
     def to_dict(self) -> dict:
         from react_agent.harness.schema import SCHEMA_VERSION
 
@@ -144,6 +190,10 @@ class Trajectory:
             out["task_episode_id"] = self.task_episode_id
         if self.acceptance_criteria:
             out["acceptance_criteria"] = self.acceptance_criteria
+        if self.input_artifacts:
+            out["input_artifacts"] = self.input_artifacts
+        if self.output_artifacts:
+            out["output_artifacts"] = self.output_artifacts
         return out
 
     def save(self, directory: Optional[str] = None) -> str:
@@ -170,6 +220,7 @@ def start_trajectory(
     *,
     task_episode_id: str = "",
     acceptance_criteria: Optional[list[str]] = None,
+    input_artifacts: Optional[list[dict[str, Any]]] = None,
 ) -> Trajectory:
     global _current_trajectory
     _current_trajectory = Trajectory(
@@ -178,6 +229,7 @@ def start_trajectory(
         system_prompt=system_prompt,
         task_episode_id=task_episode_id,
         acceptance_criteria=acceptance_criteria,
+        input_artifacts=input_artifacts,
     )
     return _current_trajectory
 

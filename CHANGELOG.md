@@ -4,6 +4,20 @@
 
 （下一批变更写在这里。）
 
+## 0.6.0 (2026-08-11)
+
+### Added
+
+- Harness 轨迹支持 input_artifacts、output_artifacts 和步骤级 artifacts
+- Trajectory 新增输入、输出和步骤 Artifact 记录接口
+- Format B Schema 增加图片、视频、音频和文档引用字段
+- Artifact 契约测试覆盖合法引用和 data/base64 内嵌内容拒绝
+
+### Changed
+
+- Recorder 仅保存 Artifact 白名单元数据，避免媒体二进制进入轨迹
+- README 补充 Artifact 记录范围和评测职责边界
+
 ## 0.5.2 (2026-08-04)
 
 ### Fixed

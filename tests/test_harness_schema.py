@@ -117,3 +117,57 @@ def test_normalize_stamps_schema_version():
     norm = normalize_trajectory(raw)
     assert norm["schema_version"] == SCHEMA_VERSION
     assert "schema_version" not in raw
+
+def test_multimodal_artifact_references_validate_and_normalize():
+    raw = {
+        "session_id": "media-1",
+        "query": "describe the image",
+        "final_answer": "a chart",
+        "input_artifacts": [
+            {
+                "id": "image-1",
+                "media_type": "image",
+                "uri": "artifacts/input.png",
+                "mime_type": "image/png",
+                "width": 640,
+                "height": 480,
+                "metadata": {"source": "fixture"},
+            }
+        ],
+        "output_artifacts": [],
+        "steps": [
+            {
+                "step": 1,
+                "thought": "inspect",
+                "artifacts": [
+                    {
+                        "id": "frame-1",
+                        "media_type": "image",
+                        "uri": "artifacts/frame-1.png",
+                    }
+                ],
+            }
+        ],
+    }
+    assert validate_trajectory(raw) == []
+    normalized = normalize_trajectory(raw)
+    assert normalized["input_artifacts"][0]["width"] == 640
+
+
+def test_multimodal_artifact_rejects_embedded_data():
+    raw = {
+        "session_id": "media-2",
+        "query": "q",
+        "final_answer": "a",
+        "input_artifacts": [
+            {
+                "id": "image-1",
+                "media_type": "image",
+                "uri": "memory://image-1",
+                "base64": "not-allowed",
+            }
+        ],
+        "steps": [{"step": 1}],
+    }
+    issues = validate_trajectory(raw)
+    assert any("embedded media data" in issue for issue in issues)

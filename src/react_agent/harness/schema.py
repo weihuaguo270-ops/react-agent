@@ -67,6 +67,17 @@ def validate_trajectory(data: dict, *, strict_one_based: bool = True) -> list[st
     if "final_answer" in data and not isinstance(data.get("final_answer"), str):
         issues.append("final_answer must be a string")
 
+    # 输入、输出 Artifact 使用同一引用契约。
+    for field in ("input_artifacts", "output_artifacts"):
+        artifacts = data.get(field)
+        if artifacts is None:
+            continue
+        if not isinstance(artifacts, list):
+            issues.append(f"{field} must be an array")
+            continue
+        for i, artifact in enumerate(artifacts):
+            issues.extend(_validate_artifact(f"{field}[{i}]", artifact))
+
     # Version: absent ⇒ treat as SCHEMA_VERSION major (backward compatible)
     if "schema_version" in data:
         sv = data.get("schema_version")
@@ -122,6 +133,15 @@ def validate_trajectory(data: dict, *, strict_one_based: bool = True) -> list[st
             else:
                 for j, a in enumerate(actions):
                     issues.extend(_validate_tool_call(f"{prefix}.actions[{j}]", a))
+        artifacts = step.get("artifacts")
+        if artifacts is not None:
+            if not isinstance(artifacts, list):
+                issues.append(f"{prefix}.artifacts: must be an array")
+            else:
+                for j, artifact in enumerate(artifacts):
+                    issues.extend(
+                        _validate_artifact(f"{prefix}.artifacts[{j}]", artifact)
+                    )
 
     return issues
 
@@ -159,6 +179,12 @@ def normalize_trajectory(data: dict) -> dict:
                 s["actions"] = [_normalize_tool_call(a) for a in actions]
         steps_out.append(s)
     out["steps"] = steps_out
+    for field in ("input_artifacts", "output_artifacts"):
+        if field in data:
+            out[field] = [
+                _normalize_artifact(artifact)
+                for artifact in (data.get(field) or [])
+            ]
     if "total_steps" not in out:
         out["total_steps"] = len(steps_out)
     return out
@@ -193,6 +219,29 @@ def _validate_tool_call(prefix: str, action: Any) -> list[str]:
     args = action.get("arguments", action.get("args"))
     if not isinstance(args, (str, dict)):
         issues.append(f"{prefix}: arguments/args must be string or object")
+    return issues
+
+
+def _normalize_artifact(artifact: Any) -> dict:
+    """标准化 Artifact 引用。"""
+    if not isinstance(artifact, dict):
+        return {"id": "", "media_type": "", "uri": str(artifact)}
+    return dict(artifact)
+
+
+def _validate_artifact(prefix: str, artifact: Any) -> list[str]:
+    """校验 Artifact 引用，禁止 data/base64 内嵌内容。"""
+    if not isinstance(artifact, dict):
+        return [f"{prefix}: must be an object"]
+    issues: list[str] = []
+    for field in ("id", "media_type", "uri"):
+        value = artifact.get(field)
+        if not isinstance(value, str) or not value.strip():
+            issues.append(f"{prefix}.{field}: required non-empty string")
+    if "metadata" in artifact and not isinstance(artifact.get("metadata"), dict):
+        issues.append(f"{prefix}.metadata: must be an object")
+    if "data" in artifact or "base64" in artifact:
+        issues.append(f"{prefix}: embedded media data is not allowed; use uri")
     return issues
 
 
