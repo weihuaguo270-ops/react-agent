@@ -91,6 +91,36 @@ def test_production_eval_suite():
     assert report["passed"] == report["total"], [
         (r["id"], r.get("fail_reason")) for r in report["rows"] if not r["passed"]
     ]
+    metrics = report["metrics"]
+    assert metrics["document_evidence_rate"] == 1.0
+    assert metrics["avg_evidence_sufficiency"] is None
+    assert metrics["evidence_sufficiency_sample_size"] == 0
+    assert all(r["evidence_mode"] == "document_only" for r in report["rows"])
+
+
+def test_production_evidence_gate_only_applies_to_field_evidence():
+    from react_agent.apps.docs_troubleshoot.eval_production import (
+        _apply_evidence_sufficiency_gate,
+    )
+
+    document_row = {
+        "passed": True,
+        "fail_reason": "",
+        "evidence_sufficiency": None,
+        "evidence_sufficiency_applicable": False,
+    }
+    _apply_evidence_sufficiency_gate(document_row, 0.5)
+    assert document_row["passed"] is True
+
+    field_row = {
+        "passed": True,
+        "fail_reason": "",
+        "evidence_sufficiency": 0.25,
+        "evidence_sufficiency_applicable": True,
+    }
+    _apply_evidence_sufficiency_gate(field_row, 0.5)
+    assert field_row["passed"] is False
+    assert field_row["fail_reason"] == "evidence_sufficiency"
 
 
 def test_fault_eval_with_log_cases():
@@ -101,3 +131,16 @@ def test_fault_eval_with_log_cases():
     assert report["passed"] == report["total"], [
         (r["id"], r.get("fail_reason")) for r in report["rows"] if not r["passed"]
     ]
+    metrics = report["metrics"]
+    assert metrics["evidence_sufficiency_rate"] > 0
+    applicable = [
+        r for r in report["rows"] if r["evidence_sufficiency_applicable"]
+    ]
+    assert metrics["evidence_sufficiency_sample_size"] == len(applicable)
+    assert applicable
+    assert all(r["evidence_sufficiency"] is not None for r in applicable)
+    assert all(
+        r["evidence_sufficiency"] is None
+        for r in report["rows"]
+        if not r["evidence_sufficiency_applicable"]
+    )

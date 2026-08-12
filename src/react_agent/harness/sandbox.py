@@ -1,307 +1,553 @@
+"""工具执行隔离。
+
+process 后端只隔离崩溃和超时，不是安全边界。container 后端通过非 root、
+只读根文件系统、最小环境、默认断网和资源配额提供系统权限隔离。
+生产环境应同时设置 REACT_AGENT_SANDBOX_REQUIRED=1、
+REACT_AGENT_SANDBOX_BACKEND=container 和 REACT_AGENT_SANDBOX_STRATEGY=on。
 """
-沙箱模块 — 在子进程中执行工具调用（崩溃/超时隔离，非安全边界）
+from __future__ import annotations
 
-三策略模式：
-  - off:  全部在当前进程执行（最快，适合本地开发）
-  - auto: 自动判断——safe 工具直接跑，io/cpu 工具走子进程（默认）
-  - on:   全部走子进程（降低工具崩溃拖死主进程的概率）
-
-分层（与权限正交）：
-  - ``safety.permission_gate``：决定「准不准调」（deny → ask → allow）
-  - 本模块：在**已允许**的前提下，隔离崩溃与超时（不是 OS/容器安全沙箱）
-
-这是 **学习用进程隔离**：工具崩溃时不影响主进程，超时时返回错误。
-它 **不是** 容器/seccomp/网络策略级安全沙箱；不可信代码仍可能访问本机权限内资源。
-
-用法:
-    from sandbox import Sandbox
-    sandbox = Sandbox(strategy="auto", timeout=30)
-    result = sandbox.run(tool_call_dict)
-"""
-
-import subprocess
 import json
-import sys
 import os
-import textwrap
+import re
+import shutil
+import subprocess
+import sys
+import uuid
+from pathlib import Path
+from typing import Any
 
-# _sandbox_runner.py 的路径（和 sandbox.py 同目录）
-_RUNNER_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_sandbox_runner.py")
-
-# 子进程环境变量：阻止 runner 内再次创建/预热沙箱（避免进程递归膨胀）
+_RUNNER_PATH = Path(__file__).with_name("_sandbox_runner.py")
 _SANDBOX_CHILD_ENV = "REACT_AGENT_SANDBOX_CHILD"
+
+VALID_STRATEGIES = ("off", "auto", "on")
+VALID_BACKENDS = ("process", "container")
+
+RISK_CONTROL = "control"
+RISK_SAFE = "safe"
+RISK_IO = "io"
+RISK_CPU = "cpu"
+RISK_UNTRUSTED = "untrusted"
+
+CONTROL_PLANE_TOOLS = {"toggle_sandbox"}
+SAFE_TOOLS = {
+    "get_time",
+    "get_current_time",
+    "calculator",
+    "switch_cot_strategy",
+    "switch_role",
+    "switch_context_strategy",
+}
+IO_TOOLS = {
+    "web_search",
+    "fetch_page",
+    "rag_query",
+    "clear_trajectories",
+    "search_docs",
+    "lookup_api",
+    "fetch_trace",
+    "search_files",
+    "read_text_file",
+    "list_directory",
+    "directory_tree",
+    "get_file_info",
+}
+CPU_TOOLS = {"summarize", "tot_reasoning", "execute_python"}
+NETWORK_TOOLS = {"web_search", "fetch_page"}
+
+_CONTAINER_ENV_ALLOWLIST = {
+    "REACT_AGENT_APP",
+    "REACT_AGENT_DEFAULT_APP",
+    "REACT_AGENT_EXPERIMENTAL_TOOLS",
+    "REACT_AGENT_RAG_MODE",
+}
+
+_PROCESS_ENV_ALLOWLIST = {
+    "PATH",
+    "PATHEXT",
+    "SYSTEMROOT",
+    "WINDIR",
+    "COMSPEC",
+    "TEMP",
+    "TMP",
+    "LANG",
+    "LC_ALL",
+    "SSL_CERT_FILE",
+    "REQUESTS_CA_BUNDLE",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "NO_PROXY",
+    "REACT_AGENT_APP",
+    "REACT_AGENT_DEFAULT_APP",
+    "REACT_AGENT_EXPERIMENTAL_TOOLS",
+    "REACT_AGENT_RAG_MODE",
+    "REACT_AGENT_SKIP_RAG",
+}
+_NETWORK_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]{1,128}$")
+_MEMORY_RE = re.compile(r"^[1-9][0-9]*(?:[bkmgBKMG])?$")
+_CPU_RE = re.compile(r"^(?:0[.][1-9][0-9]*|[1-9][0-9]*(?:[.][0-9]+)?)$")
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _bounded_int(name: str, default: int, minimum: int, maximum: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} 必须是整数") from exc
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} 必须在 {minimum}..{maximum} 之间")
+    return value
+
+
+def _validated_value(name: str, default: str, pattern: re.Pattern[str]) -> str:
+    value = os.environ.get(name, default).strip()
+    if not pattern.fullmatch(value):
+        raise ValueError(f"{name} 的值不合法: {value!r}")
+    return value
 
 
 def _in_sandbox_child() -> bool:
     return os.environ.get(_SANDBOX_CHILD_ENV) == "1"
 
 
-def _child_env() -> dict:
-    return {
-        **os.environ,
-        "PYTHONIOENCODING": "utf-8",
-        _SANDBOX_CHILD_ENV: "1",
+def _runner_env(
+    tool_name: str,
+    max_output: int,
+    max_input: int,
+) -> dict[str, str]:
+    """只向进程后端传递运行所需配置，不继承 API Key 等宿主秘密。"""
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if key.upper() in _PROCESS_ENV_ALLOWLIST
     }
-
-
-# ============================================================
-# 工具风险等级标签（按类别判断）
-# ============================================================
-
-RISK_SAFE = "safe"  # 0ms 纯本地，不可能崩溃（时间、计算、开关类配置）
-RISK_IO = "io"      # 网络/文件 IO，可能超时（搜索、抓取、RAG、清理）
-RISK_CPU = "cpu"    # 纯计算但可能耗时长或卡住（ToT 内部多轮调 LLM）
+    env.update(
+        {
+            "PYTHONIOENCODING": "utf-8",
+            _SANDBOX_CHILD_ENV: "1",
+            "REACT_AGENT_DISABLE_MCP": "1",
+            "REACT_AGENT_SANDBOX_ALLOWED_TOOLS": tool_name,
+            "REACT_AGENT_SANDBOX_MAX_OUTPUT": str(max_output),
+            "REACT_AGENT_SANDBOX_MAX_INPUT": str(max_input),
+            "PYTHONDONTWRITEBYTECODE": "1",
+        }
+    )
+    return env
 
 
 def classify_risk(tool_name: str) -> str:
-    """根据工具名判断风险等级
-
-    返回 RISK_SAFE / RISK_IO / RISK_CPU 之一。
-    未知工具默认走 io（走沙箱），宁可多隔离也不漏掉。
-    """
-    safe_tools = {
-        "get_time", "get_current_time",
-        "calculator",
-        "switch_cot_strategy", "switch_role", "switch_context_strategy",
-        "toggle_sandbox",
-        "start_dashboard",
-    }
-    io_tools = {
-        "web_search", "fetch_page",
-        "rag_query",
-        "clear_trajectories",
-    }
-    cpu_tools = {
-        "summarize",
-        "tot_reasoning",
-    }
-    if tool_name in safe_tools:
+    """返回工具风险类别；未知工具按不可信处理。"""
+    if tool_name in CONTROL_PLANE_TOOLS:
+        return RISK_CONTROL
+    if tool_name in SAFE_TOOLS:
         return RISK_SAFE
-    if tool_name in io_tools:
+    if tool_name in IO_TOOLS:
         return RISK_IO
-    if tool_name in cpu_tools:
+    if tool_name in CPU_TOOLS:
         return RISK_CPU
-    # 未知工具: 默认 safe（不走沙箱），因为可能是 MCP/HTTP 等外部工具
-    return RISK_SAFE
+    return RISK_UNTRUSTED
 
 
 def should_sandbox_by_risk(tool_name: str, strategy: str) -> bool:
-    """根据策略和工具名判断是否走沙箱
-
-    参数:
-        tool_name: 工具名
-        strategy:  "off" / "auto" / "on"
-
-    返回:
-        True=走子进程，False=直接执行
-    """
+    """控制面工具始终在宿主执行，其余工具按策略决定。"""
+    if strategy not in VALID_STRATEGIES:
+        raise ValueError(f"未知沙箱策略: {strategy}")
+    if classify_risk(tool_name) == RISK_CONTROL:
+        return False
     if strategy == "on":
         return True
     if strategy == "off":
         return False
-    # auto 模式：只对 safe 工具跳过沙箱
-    risk = classify_risk(tool_name)
-    return risk in (RISK_IO, RISK_CPU)
+    return classify_risk(tool_name) in {RISK_IO, RISK_CPU, RISK_UNTRUSTED}
 
 
-# ============================================================
-# 子进程 runner 确保
-# ============================================================
-
-def _ensure_runner():
-    """确保子进程运行脚本存在（与仓库内 _sandbox_runner.py 保持一致）"""
-    if os.path.exists(_RUNNER_PATH):
-        return
-    runner_code = textwrap.dedent("""\
-        import io
-        import json
-        import os
-        import sys
-        from contextlib import redirect_stderr, redirect_stdout
-
-        os.environ["REACT_AGENT_SANDBOX_CHILD"] = "1"
-
-        _import_buf = io.StringIO()
-        with redirect_stdout(_import_buf), redirect_stderr(_import_buf):
-            from react_agent.tools import TOOL_REGISTRY
-
-        if len(sys.argv) < 2:
-            print("缺少工具调用参数")
-            sys.exit(1)
-
-        try:
-            tool_call = json.loads(sys.argv[1])
-        except json.JSONDecodeError as e:
-            print(f"参数解析失败: {e}")
-            sys.exit(1)
-
-        name = tool_call["function"]["name"]
-        try:
-            arguments = json.loads(tool_call["function"]["arguments"])
-        except json.JSONDecodeError:
-            arguments = {}
-
-        if name not in TOOL_REGISTRY:
-            print(f"未知工具: {name}")
-            sys.exit(1)
-
-        try:
-            result = TOOL_REGISTRY[name](**arguments)
-            print(result)
-        except Exception as e:
-            print(f"工具执行错误: {e}")
-            sys.exit(1)
-        """)
-    with open(_RUNNER_PATH, "w", encoding="utf-8") as f:
-        f.write(runner_code)
+def _ensure_runner() -> None:
+    if not _RUNNER_PATH.is_file():
+        raise RuntimeError(f"沙箱 Runner 不存在: {_RUNNER_PATH}")
 
 
-# ============================================================
-# Sandbox 类
-# ============================================================
-
-VALID_STRATEGIES = ("off", "auto", "on")
+def _decode_runner_result(
+    *,
+    tool_name: str,
+    returncode: int,
+    stdout: str | None,
+    stderr: str | None,
+) -> str:
+    out = (stdout or "").strip()
+    err = (stderr or "").strip()
+    try:
+        envelope = json.loads(out) if out else None
+    except json.JSONDecodeError:
+        envelope = None
+    if isinstance(envelope, dict) and envelope.get("ok") is True:
+        return str(envelope.get("result") or f"(工具 '{tool_name}' 无返回)")
+    if isinstance(envelope, dict):
+        detail = str(envelope.get("error") or "工具执行失败")
+    else:
+        detail = err or out or f"子进程退出码 {returncode}"
+    return f"[沙箱] 工具 '{tool_name}' 执行失败: {detail[:500]}"
 
 
 class Sandbox:
-    """工具沙箱——在子进程中执行工具，带超时保护
+    """可切换的进程/容器工具执行后端。"""
 
-    三策略模式：
-      - "off":  全部在当前进程执行（最快）
-      - "auto": 自动判断（默认）——safe 工具直接跑，io/cpu 工具走子进程
-      - "on":   全部走子进程（最安全）
+    def __init__(
+        self,
+        timeout: int = 30,
+        strategy: str | None = None,
+        prewarm: bool = True,
+        *,
+        backend: str | None = None,
+        required: bool | None = None,
+        enabled: bool | None = None,
+    ):
+        strategy = strategy or os.environ.get("REACT_AGENT_SANDBOX_STRATEGY", "auto")
+        if enabled is not None:
+            strategy = "auto" if enabled else "off"
+        backend = backend or os.environ.get("REACT_AGENT_SANDBOX_BACKEND", "process")
+        required = _env_bool("REACT_AGENT_SANDBOX_REQUIRED") if required is None else required
 
-    用法:
-        sandbox = Sandbox(strategy="auto", timeout=30)
-        result = sandbox.run({
-            "function": {"name": "calculator", "arguments": '{"expression": "1+1"}'}
-        })
-    """
-
-    def __init__(self, timeout: int = 30, strategy: str = "auto", prewarm: bool = True):
         if strategy not in VALID_STRATEGIES:
             raise ValueError(f"未知沙箱策略: {strategy}，可选: {VALID_STRATEGIES}")
-        # 沙箱子进程内禁止再开沙箱/预热，否则会递归拉起进程把系统拖死
+        if backend not in VALID_BACKENDS:
+            raise ValueError(f"未知沙箱后端: {backend}，可选: {VALID_BACKENDS}")
+        if required and (backend != "container" or strategy != "on"):
+            raise ValueError("required 模式必须使用 strategy=on 和 backend=container")
+
         if _in_sandbox_child():
             strategy = "off"
+            backend = "process"
+            required = False
             prewarm = False
         if os.environ.get("REACT_AGENT_SANDBOX_PREWARM", "1") == "0":
             prewarm = False
-        self.timeout = timeout
-        self.strategy = strategy
-        self._prewarmed = False
-        _ensure_runner()
-        if prewarm and strategy != "off":
-            self._prewarm()
 
-    def _prewarm(self):
-        """预热子进程：启动一次轻量计算，让 Python 缓存字节码和模块导入"""
-        if _in_sandbox_child():
-            return
-        try:
-            warmup_payload = json.dumps({
-                "function": {"name": "get_time", "arguments": "{}"}
-            })
-            subprocess.run(
-                [sys.executable, _RUNNER_PATH, warmup_payload],
-                capture_output=True, text=True, timeout=10,
-                encoding="utf-8", errors="replace",
-                cwd=os.path.dirname(os.path.abspath(__file__)),
-                env=_child_env(),
-            )
-            self._prewarmed = True
-        except Exception:
-            self._prewarmed = False
+        self.timeout = max(1, min(int(timeout), 300))
+        self.strategy = strategy
+        self.backend = backend
+        self.required = bool(required)
+        self.runtime = os.environ.get("REACT_AGENT_SANDBOX_RUNTIME", "docker").strip()
+        if Path(self.runtime).name.lower() not in {
+            "docker",
+            "docker.exe",
+            "podman",
+            "podman.exe",
+        }:
+            raise ValueError("REACT_AGENT_SANDBOX_RUNTIME 仅允许 docker 或 podman")
+        self.image = os.environ.get(
+            "REACT_AGENT_SANDBOX_IMAGE", "react-agent-sandbox:0.7.0"
+        ).strip()
+        if not self.image or any(ch.isspace() for ch in self.image):
+            raise ValueError("REACT_AGENT_SANDBOX_IMAGE 不合法")
+        self.memory = _validated_value(
+            "REACT_AGENT_SANDBOX_MEMORY", "256m", _MEMORY_RE
+        )
+        self.cpus = _validated_value("REACT_AGENT_SANDBOX_CPUS", "0.5", _CPU_RE)
+        self.pids_limit = _bounded_int("REACT_AGENT_SANDBOX_PIDS", 64, 16, 1024)
+        self.tmpfs_size = _validated_value(
+            "REACT_AGENT_SANDBOX_TMPFS", "64m", _MEMORY_RE
+        )
+        self.max_output = _bounded_int(
+            "REACT_AGENT_SANDBOX_MAX_OUTPUT", 65536, 1024, 1048576
+        )
+        self.max_input = _bounded_int(
+            "REACT_AGENT_SANDBOX_MAX_INPUT", 1048576, 1024, 10485760
+        )
+        self.egress_network = os.environ.get(
+            "REACT_AGENT_SANDBOX_EGRESS_NETWORK", ""
+        ).strip()
+        if self.egress_network and not _NETWORK_NAME_RE.fullmatch(
+            self.egress_network
+        ):
+            raise ValueError("REACT_AGENT_SANDBOX_EGRESS_NETWORK 不合法")
+        self._prewarmed = False
+        self._runtime_error: str | None = None
+        self._runtime_checked = False
+        _ensure_runner()
+        if self.required:
+            ready, error = self.verify_runtime()
+            if not ready:
+                raise RuntimeError(
+                    f"SANDBOX_REQUIRED_UNAVAILABLE: required 沙箱后端未就绪，服务拒绝启动: {error}"
+                )
+        if prewarm and strategy != "off" and backend == "process":
+            self._prewarm_process()
 
     @property
     def enabled(self) -> bool:
-        """兼容旧接口：返回当前是否处于可执行子进程的状态"""
         return self.strategy != "off"
 
     @enabled.setter
-    def enabled(self, value: bool):
-        """兼容旧接口：set enabled=True → 切 auto，enabled=False → 切 off"""
+    def enabled(self, value: bool) -> None:
+        if not value and self.required:
+            raise ValueError("required 模式禁止关闭沙箱")
         self.strategy = "auto" if value else "off"
+
+    @property
+    def secure(self) -> bool:
+        return self.backend == "container" and self.strategy == "on"
 
     @property
     def warm_status(self) -> str:
         return "已预热" if self._prewarmed else "未预热"
 
-    def should_sandbox(self, tool_name: str) -> bool:
-        """对外暴露：判断某个工具是否应当在沙箱中执行
+    def status(self) -> dict[str, Any]:
+        return {
+            "strategy": self.strategy,
+            "backend": self.backend,
+            "required": self.required,
+            "secure_configured": self.secure,
+            "runtime_checked": self._runtime_checked,
+            "runtime_ready": (
+                None
+                if not self._runtime_checked
+                else self._runtime_error is None
+            ),
+            "runtime_error": self._runtime_error,
+        }
 
-        LangGraph 版的 Sandbox 也有同名方法，保持接口一致。
-        """
+    def should_sandbox(self, tool_name: str) -> bool:
         return should_sandbox_by_risk(tool_name, self.strategy)
 
-    def run(self, tool_call: dict) -> str:
-        """在子进程中执行工具调用
+    def external_tool_block_reason(self, tool_name: str) -> str | None:
+        """严格容器模式禁止 MCP/HTTP 工具绕过隔离后端。"""
+        if not self.secure and not self.required:
+            return None
+        return json.dumps(
+            {
+                "error": "blocked by sandbox boundary",
+                "tool": tool_name,
+                "reason": "external tool requires an isolated MCP broker",
+            },
+            ensure_ascii=False,
+        )
 
-        参数:
-            tool_call: 标准的 LLM tool_call 字典
-
-        返回:
-            工具执行结果的字符串；跳过时返回 "__SANDBOX_DISABLED__"
-        """
-        tool_name = tool_call.get("function", {}).get("name", "")
-
-        # auto 模式下，safe 工具跳过沙箱
-        if not should_sandbox_by_risk(tool_name, self.strategy):
-            return "__SANDBOX_DISABLED__"
-
-        payload = json.dumps(tool_call, ensure_ascii=False)
-        project_dir = os.path.dirname(os.path.abspath(__file__))
-
+    def verify_runtime(self) -> tuple[bool, str | None]:
+        if self.backend != "container":
+            return True, None
+        if self._runtime_checked:
+            return self._runtime_error is None, self._runtime_error
+        executable = shutil.which(self.runtime)
+        if not executable:
+            self._runtime_error = f"找不到容器运行时: {self.runtime}"
+            self._runtime_checked = True
+            return False, self._runtime_error
         try:
             result = subprocess.run(
-                [sys.executable, _RUNNER_PATH, payload],
+                [executable, "image", "inspect", self.image],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=10,
+            )
+            if result.returncode != 0:
+                detail = (result.stderr or result.stdout or "镜像不存在").strip()
+                self._runtime_error = (
+                    f"容器镜像不可用 {self.image}: {detail[:300]}"
+                )
+        except (OSError, subprocess.SubprocessError) as exc:
+            self._runtime_error = f"容器运行时检查失败: {exc}"
+        self._runtime_checked = True
+        return self._runtime_error is None, self._runtime_error
+
+    def _prewarm_process(self) -> None:
+        try:
+            payload = json.dumps(
+                {"function": {"name": "get_time", "arguments": "{}"}},
+                ensure_ascii=False,
+            )
+            subprocess.run(
+                [sys.executable, str(_RUNNER_PATH)],
+                input=payload,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=10,
+                cwd=str(_RUNNER_PATH.parent),
+                env=_runner_env("get_time", self.max_output, self.max_input),
+            )
+            self._prewarmed = True
+        except (OSError, subprocess.SubprocessError):
+            self._prewarmed = False
+
+    def _run_process(self, tool_name: str, payload: str) -> str:
+        result = subprocess.run(
+            [sys.executable, str(_RUNNER_PATH)],
+            input=payload,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=self.timeout,
+            cwd=str(_RUNNER_PATH.parent),
+            env=_runner_env(tool_name, self.max_output, self.max_input),
+        )
+        return _decode_runner_result(
+            tool_name=tool_name,
+            returncode=result.returncode,
+            stdout=result.stdout,
+            stderr=result.stderr,
+        )
+
+    def _container_network(self, tool_name: str) -> str:
+        if tool_name in NETWORK_TOOLS and self.egress_network:
+            return self.egress_network
+        return "none"
+
+    def _container_command(
+        self, executable: str, name: str, tool_name: str
+    ) -> list[str]:
+        return [
+            executable,
+            "run",
+            "--rm",
+            "--interactive",
+            "--name",
+            name,
+            "--pull",
+            "never",
+            "--network",
+            self._container_network(tool_name),
+            "--read-only",
+            "--cap-drop",
+            "ALL",
+            "--security-opt",
+            "no-new-privileges",
+            "--pids-limit",
+            str(self.pids_limit),
+            "--memory",
+            self.memory,
+            "--memory-swap",
+            self.memory,
+            "--cpus",
+            self.cpus,
+            "--ulimit",
+            f"nofile={self.pids_limit}:{self.pids_limit}",
+            "--user",
+            "65532:65532",
+            "--tmpfs",
+            f"/tmp:rw,noexec,nosuid,nodev,size={self.tmpfs_size}",
+            "--workdir",
+            "/tmp",
+            "--env",
+            "PYTHONIOENCODING=utf-8",
+            "--env",
+            "PYTHONDONTWRITEBYTECODE=1",
+            "--env",
+            f"{_SANDBOX_CHILD_ENV}=1",
+            "--env",
+            "REACT_AGENT_DISABLE_MCP=1",
+            "--env",
+            "REACT_AGENT_SKIP_RAG=1",
+            "--env",
+            f"REACT_AGENT_SANDBOX_ALLOWED_TOOLS={tool_name}",
+            "--env",
+            f"REACT_AGENT_SANDBOX_MAX_OUTPUT={self.max_output}",
+            "--env",
+            f"REACT_AGENT_SANDBOX_MAX_INPUT={self.max_input}",
+        ] + [
+            item
+            for key in sorted(_CONTAINER_ENV_ALLOWLIST)
+            if key in os.environ
+            for item in ("--env", key)
+        ] + [self.image]
+
+    @staticmethod
+    def _remove_container(executable: str, name: str) -> None:
+        try:
+            subprocess.run(
+                [executable, "rm", "--force", name],
+                capture_output=True,
+                timeout=10,
+            )
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+    def _run_container(self, tool_name: str, payload: str) -> str:
+        ok, error = self.verify_runtime()
+        if not ok:
+            return f"[沙箱] 安全后端不可用，已拒绝执行: {error}"
+        executable = shutil.which(self.runtime)
+        if not executable:
+            return f"[沙箱] 安全后端不可用，已拒绝执行: {self.runtime}"
+        name = f"react-agent-sbx-{uuid.uuid4().hex[:12]}"
+        command = self._container_command(executable, name, tool_name)
+        try:
+            result = subprocess.run(
+                command,
+                input=payload,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
                 errors="replace",
                 timeout=self.timeout,
-                cwd=project_dir,
-                env=_child_env(),
             )
+            return _decode_runner_result(
+                tool_name=tool_name,
+                returncode=result.returncode,
+                stdout=result.stdout,
+                stderr=result.stderr,
+            )
+        except subprocess.TimeoutExpired:
+            self._remove_container(executable, name)
+            return f"[沙箱] 工具 '{tool_name}' 执行超时（{self.timeout}秒）"
+        except OSError as exc:
+            return f"[沙箱] 安全后端异常，已拒绝执行: {exc}"
+        finally:
+            self._remove_container(executable, name)
 
-            if result.returncode != 0:
-                stderr = (result.stderr or "").strip()[:200]
-                return f"[沙箱] 工具 '{tool_name}' 执行失败: {stderr}"
-
-            output = (result.stdout or "").strip()
-            return output if output else f"(工具 '{tool_name}' 无返回)"
-
+    def run(self, tool_call: dict[str, Any]) -> str:
+        function = tool_call.get("function") or {}
+        tool_name = str(function.get("name") or "")
+        if not tool_name:
+            return "[沙箱] 工具调用缺少 function.name"
+        if not self.should_sandbox(tool_name):
+            if self.required and classify_risk(tool_name) != RISK_CONTROL:
+                return "[沙箱] required 模式拒绝未隔离执行"
+            return "__SANDBOX_DISABLED__"
+        payload = json.dumps(tool_call, ensure_ascii=False)
+        if len(payload.encode("utf-8")) > self.max_input:
+            return (
+                f"[沙箱] 工具 '{tool_name}' 参数超过 "
+                f"{self.max_input} 字节上限，已拒绝执行"
+            )
+        try:
+            if self.backend == "container":
+                return self._run_container(tool_name, payload)
+            if self.required:
+                return "[沙箱] required 模式拒绝 process 后端"
+            return self._run_process(tool_name, payload)
         except subprocess.TimeoutExpired:
             return f"[沙箱] 工具 '{tool_name}' 执行超时（{self.timeout}秒）"
-        except FileNotFoundError:
-            return f"[沙箱] 找不到 Python 解释器"
-        except Exception as e:
-            return f"[沙箱] 工具 '{tool_name}' 异常: {e}"
+        except OSError as exc:
+            return f"[沙箱] 工具 '{tool_name}' 异常: {exc}"
 
 
-# ============================================================
-# 全局实例（默认 auto 模式）
-# ============================================================
-
-SANDBOX = Sandbox(strategy="auto")
-
-
-# ============================================================
-# 工具定义 + 工具函数
-# ============================================================
+SANDBOX = Sandbox()
 
 SANDBOX_TOOL_DEFINITION = {
     "type": "function",
     "function": {
         "name": "toggle_sandbox",
-        "description": "切换工具沙箱模式: off(全部直接执行)/auto(自动按工具风险决定，推荐)/on(全部子进程隔离)",
+        "description": "切换工具隔离策略；生产 required 模式禁止关闭",
         "parameters": {
             "type": "object",
             "properties": {
                 "strategy": {
                     "type": "string",
                     "enum": ["off", "auto", "on"],
-                    "description": "off=不用沙箱, auto=自动判断(默认), on=全部隔离"
+                    "description": "off=直跑，auto=按风险，on=全部隔离",
                 }
             },
             "required": ["strategy"],
@@ -311,10 +557,14 @@ SANDBOX_TOOL_DEFINITION = {
 
 
 def tool_toggle_sandbox(strategy: str = "auto") -> str:
-    """运行时切换沙箱策略"""
     if strategy not in VALID_STRATEGIES:
         return f"未知策略: {strategy}，可选: {', '.join(VALID_STRATEGIES)}"
+    if SANDBOX.required and strategy != "on":
+        return "拒绝切换：required 模式强制 strategy=on"
     old = SANDBOX.strategy
     SANDBOX.strategy = strategy
     SANDBOX.timeout = 30
-    return f"沙箱策略: {old} → {strategy}{'（自动判断）' if strategy == 'auto' else ''}"
+    return (
+        f"沙箱策略: {old} → {strategy}; backend={SANDBOX.backend}; "
+        f"secure_configured={str(SANDBOX.secure).lower()}"
+    )

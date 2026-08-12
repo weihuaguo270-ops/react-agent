@@ -3,6 +3,31 @@
 ## Unreleased
 
 （下一批变更写在这里。）
+## 0.7.0 (2026-08-12)
+
+### Added
+
+- Container sandbox backend for untrusted tool execution with rootless runtime support
+- Fail-closed `container + required` production mode and readiness reporting
+- Per-call tool allowlist, stdin protocol, structured runner envelope, and input/output limits
+- Hardened sandbox image: non-root user, read-only root, dropped capabilities, no-new-privileges,
+  default-deny network, tmpfs, CPU, memory, PID, and file descriptor limits
+- Unified required-mode tool boundary for ReAct, workflow, docs troubleshooting, and execution eval
+- Security regression suite and deployment threat-model documentation
+
+### Changed
+
+- Unknown tools are treated as untrusted; process mode is explicitly documented as crash/timeout
+  isolation rather than a security boundary
+- Strict container mode blocks direct host MCP access until an isolated broker is configured
+- Permission confirmation fails closed when production required mode has no HITL callback
+- Fault and production evaluation report tool-boundary and sandbox failures separately
+
+### Verified
+
+- Local security regression: 15 passed
+- Full local regression: 180 passed, 3 skipped
+- Rootless Podman path validated for identity, seccomp, filesystem, secrets, network, resource
 
 ## 0.6.0 (2026-08-11)
 

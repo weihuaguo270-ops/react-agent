@@ -103,6 +103,7 @@ def build_diagnosis(
         doc_causes=doc_causes,
         field_doc_aligned=aligned,
     )
+    evidence_applicable = sufficiency is not None
 
     return {
         "phenomenon": phenomenon,
@@ -119,6 +120,8 @@ def build_diagnosis(
         "refused": refused,
         "citations": [{"source": s} for s in (ranked_sources or [])],
         "evidence_sufficiency": sufficiency,
+        "evidence_sufficiency_applicable": evidence_applicable,
+        "evidence_mode": "field_evidence" if evidence_applicable else "document_only",
         "field_doc_aligned": aligned,
         "matched_rules": [r.get("id") for r in rules if r.get("id")],
         "inferred_from_docs": sum(1 for c in doc_causes if c.get("source") == "retrieval"),

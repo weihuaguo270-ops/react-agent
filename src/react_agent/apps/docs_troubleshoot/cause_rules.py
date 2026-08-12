@@ -177,11 +177,11 @@ def evidence_sufficiency(
     *,
     doc_causes: list[dict[str, Any]] | None = None,
     field_doc_aligned: bool = False,
-) -> float:
-    """0..1 — field evidence, rule match, and doc alignment combined."""
+) -> float | None:
+    """现场证据充分度；纯文档问答不适用该指标。"""
     n = int(evidence_bundle.get("count") or 0)
     if n == 0:
-        return 0.0
+        return None
     score = 0.25
     kinds = {item.get("type") for item in evidence_bundle.get("items") or []}
     if "http_error" in kinds:

@@ -29,6 +29,7 @@ def main():
             "METRICS: "
             f"root_cause_hit_rate={metrics.get('root_cause_hit_rate')} "
             f"evidence_sufficiency_rate={metrics.get('evidence_sufficiency_rate')} "
+            f"evidence_n={metrics.get('evidence_sufficiency_sample_size')} "
             f"wrong_suggestion_rate={metrics.get('wrong_suggestion_rate')}"
         )
     raise SystemExit(0 if ok else 1)

@@ -216,6 +216,11 @@ def main() -> int:
             f"{row['execution_agent'].get('total')} "
             f"ok={row['execution_agent'].get('ok')}"
         )
+    else:
+        row["execution_agent_skip_reason"] = (
+            "--with-agent not set; live model calls use quota and add network/model variance"
+        )
+        print("[daily] execution agent ... SKIP (use --with-agent; consumes API quota)")
 
     checks = [
         row["execution_offline"].get("ok"),

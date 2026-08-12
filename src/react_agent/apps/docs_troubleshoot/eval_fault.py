@@ -55,7 +55,10 @@ def score_diagnosis(case: dict[str, Any], diagnosis: dict[str, Any], row: dict[s
     if not row.get("passed"):
         row["root_cause_ok"] = False
         row["wrong_suggestion"] = False
-        row["evidence_sufficiency"] = float(diagnosis.get("evidence_sufficiency") or 0.0)
+        row["evidence_sufficiency"] = diagnosis.get("evidence_sufficiency")
+        row["evidence_sufficiency_applicable"] = bool(
+            diagnosis.get("evidence_sufficiency_applicable")
+        )
         return row
 
     expect_rc = case.get("expect_root_cause") or []
@@ -73,7 +76,10 @@ def score_diagnosis(case: dict[str, Any], diagnosis: dict[str, Any], row: dict[s
 
     forbid = case.get("forbid_any") or []
     row["wrong_suggestion"] = any(k.lower() in combined for k in forbid) if forbid else False
-    row["evidence_sufficiency"] = float(diagnosis.get("evidence_sufficiency") or 0.0)
+    row["evidence_sufficiency"] = diagnosis.get("evidence_sufficiency")
+    row["evidence_sufficiency_applicable"] = bool(
+        diagnosis.get("evidence_sufficiency_applicable")
+    )
 
     if not row["root_cause_ok"]:
         row["passed"] = False
@@ -85,14 +91,27 @@ def score_diagnosis(case: dict[str, Any], diagnosis: dict[str, Any], row: dict[s
     return row
 
 
-def compute_fault_metrics(cases: list[dict[str, Any]], rows: list[dict[str, Any]]) -> dict[str, float]:
+def compute_fault_metrics(
+    cases: list[dict[str, Any]],
+    rows: list[dict[str, Any]],
+) -> dict[str, float | int | None]:
     total = len(rows) or 1
     rc_hits = sum(1 for r in rows if r.get("root_cause_ok"))
-    suff = sum(float(r.get("evidence_sufficiency") or 0.0) for r in rows)
+    sufficiency_scores = [
+        float(r["evidence_sufficiency"])
+        for r in rows
+        if r.get("evidence_sufficiency_applicable")
+        and r.get("evidence_sufficiency") is not None
+    ]
     wrong = sum(1 for r in rows if r.get("wrong_suggestion"))
     return {
         "root_cause_hit_rate": round(rc_hits / total, 3),
-        "evidence_sufficiency_rate": round(suff / total, 3),
+        "evidence_sufficiency_rate": (
+            round(sum(sufficiency_scores) / len(sufficiency_scores), 3)
+            if sufficiency_scores
+            else None
+        ),
+        "evidence_sufficiency_sample_size": len(sufficiency_scores),
         "wrong_suggestion_rate": round(wrong / total, 3),
     }
 

@@ -227,7 +227,15 @@ class WorkflowRunner:
                             raise KeyError(f"tool not found: {step.tool}")
                         kwargs = _resolve_args(step.args, state)
                         rec.input = kwargs
-                        result = fn(**kwargs)
+                        from react_agent.harness.tool_boundary import (
+                            execute_registered_tool,
+                        )
+
+                        result = execute_registered_tool(
+                            step.tool,
+                            kwargs,
+                            self.tool_registry,
+                        )
                         # Tools often return JSON strings
                         if isinstance(result, str):
                             try:

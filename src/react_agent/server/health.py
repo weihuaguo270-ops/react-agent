@@ -11,7 +11,7 @@ def package_version() -> str:
 
         return version("react-agent")
     except Exception:
-        return "0.5.2"
+        return "0.7.0"
 
 
 def _default_app() -> str:
@@ -32,10 +32,27 @@ def liveness_payload(*, request_id: str) -> dict[str, Any]:
 
 
 def readiness_check() -> tuple[bool, dict[str, Any]]:
-    """True when the docs_troubleshoot index is loaded with chunks."""
+    """检查 Sandbox 后端和默认应用依赖。"""
+    from react_agent.harness import SANDBOX
+
     app = _default_app()
+    sandbox_status = SANDBOX.status()
+    if SANDBOX.required:
+        ready, error = SANDBOX.verify_runtime()
+        sandbox_status = SANDBOX.status()
+        if not ready:
+            return False, {
+                "app": app,
+                "reason": "sandbox_unavailable",
+                "error": str(error or "")[:200],
+                "sandbox": sandbox_status,
+            }
     if app != "docs_troubleshoot":
-        return True, {"app": app, "reason": "non_docs_app_skipped"}
+        return True, {
+            "app": app,
+            "reason": "non_docs_app_skipped",
+            "sandbox": sandbox_status,
+        }
 
     try:
         from react_agent.apps.docs_troubleshoot.index import get_index
@@ -43,10 +60,25 @@ def readiness_check() -> tuple[bool, dict[str, Any]]:
         idx = get_index()
         n = len(getattr(idx, "chunks", []) or [])
         if n <= 0:
-            return False, {"app": app, "chunks": 0, "reason": "empty_index"}
-        return True, {"app": app, "chunks": n, "rag_mode": os.environ.get("REACT_AGENT_RAG_MODE", "")}
+            return False, {
+                "app": app,
+                "chunks": 0,
+                "reason": "empty_index",
+                "sandbox": sandbox_status,
+            }
+        return True, {
+            "app": app,
+            "chunks": n,
+            "rag_mode": os.environ.get("REACT_AGENT_RAG_MODE", ""),
+            "sandbox": sandbox_status,
+        }
     except Exception as exc:
-        return False, {"app": app, "reason": "index_error", "error": str(exc)[:200]}
+        return False, {
+            "app": app,
+            "reason": "index_error",
+            "error": str(exc)[:200],
+            "sandbox": sandbox_status,
+        }
 
 
 def readiness_payload(*, request_id: str) -> tuple[int, dict[str, Any]]:

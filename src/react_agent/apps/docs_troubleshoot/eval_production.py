@@ -13,6 +13,7 @@ _APP = Path(__file__).resolve().parent
 _REPO = _APP.resolve().parents[3]
 _PRODUCTION_CORPUS = _REPO / "fixtures" / "docs_troubleshoot" / "production_corpus"
 _CASES = _APP / "production_cases.json"
+DEFAULT_MIN_EVIDENCE_SUFFICIENCY = 0.5
 
 
 def production_corpus_dir() -> Path:
@@ -43,7 +44,27 @@ def _initial_state(case: dict[str, Any]) -> dict[str, Any]:
     return state
 
 
-def run_production_eval(*, include_held_out: bool = True) -> dict[str, Any]:
+def _apply_evidence_sufficiency_gate(
+    row: dict[str, Any],
+    minimum: float | None,
+) -> None:
+    """现场证据存在时才应用充分度门禁。"""
+    if minimum is None or not row.get("evidence_sufficiency_applicable"):
+        return
+    score = row.get("evidence_sufficiency")
+    if score is not None and float(score) >= minimum:
+        return
+    row["passed"] = False
+    reasons = [item for item in str(row.get("fail_reason") or "").split(",") if item]
+    reasons.append("evidence_sufficiency")
+    row["fail_reason"] = ",".join(reasons)
+
+
+def run_production_eval(
+    *,
+    include_held_out: bool = True,
+    min_evidence_sufficiency: float | None = DEFAULT_MIN_EVIDENCE_SUFFICIENCY,
+) -> dict[str, Any]:
     _configure_production_ingest()
 
     from react_agent.tools import enable_app_tools
@@ -68,7 +89,12 @@ def run_production_eval(*, include_held_out: bool = True) -> dict[str, Any]:
         row["diagnosis"] = result.diagnosis
         if result.diagnosis:
             row["evidence_sufficiency"] = result.diagnosis.get("evidence_sufficiency")
+            row["evidence_sufficiency_applicable"] = bool(
+                result.diagnosis.get("evidence_sufficiency_applicable")
+            )
+            row["evidence_mode"] = result.diagnosis.get("evidence_mode")
             row["field_doc_aligned"] = result.diagnosis.get("field_doc_aligned")
+        _apply_evidence_sufficiency_gate(row, min_evidence_sufficiency)
         rows.append(row)
 
     passed = sum(1 for r in rows if r["passed"])
@@ -84,8 +110,17 @@ def run_production_eval(*, include_held_out: bool = True) -> dict[str, Any]:
     prod_hits = sum(
         1
         for r in rows
-        if r.get("passed") and "prod_" in (r.get("answer") or "")
+        if any("prod_" in source for source in (r.get("claimed_sources") or []))
     )
+    document_evidence_hits = sum(
+        1 for r in rows if r.get("ok_cite") and r.get("ok_src")
+    )
+    applicable_scores = [
+        float(r["evidence_sufficiency"])
+        for r in rows
+        if r.get("evidence_sufficiency_applicable")
+        and r.get("evidence_sufficiency") is not None
+    ]
 
     return {
         "suite": "production_blind",
@@ -96,10 +131,16 @@ def run_production_eval(*, include_held_out: bool = True) -> dict[str, Any]:
         "by_tag": by_tag,
         "metrics": {
             "production_source_hit_rate": round(prod_hits / total, 3) if total else 0.0,
-            "avg_evidence_sufficiency": round(
-                sum(float(r.get("evidence_sufficiency") or 0.0) for r in rows) / (total or 1),
-                3,
+            "document_evidence_rate": (
+                round(document_evidence_hits / total, 3) if total else 0.0
             ),
+            "avg_evidence_sufficiency": (
+                round(sum(applicable_scores) / len(applicable_scores), 3)
+                if applicable_scores
+                else None
+            ),
+            "evidence_sufficiency_sample_size": len(applicable_scores),
+            "min_evidence_sufficiency": min_evidence_sufficiency,
         },
         "rows": rows,
     }

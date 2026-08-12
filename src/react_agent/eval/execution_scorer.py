@@ -19,6 +19,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 
+from react_agent.harness.tool_boundary import execute_registered_tool
 from react_agent.tools import TOOL_REGISTRY
 
 _EVAL_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -78,10 +79,10 @@ def _check_expectation(result: str, step: dict) -> tuple[bool, str]:
 
 
 def execute_tool_step(tool: str, arguments: dict) -> str:
-    if tool not in TOOL_REGISTRY:
-        return json.dumps({"error": f"未知工具: {tool}"})
     try:
-        return str(TOOL_REGISTRY[tool](**(arguments or {})))
+        return str(
+            execute_registered_tool(tool, arguments or {}, TOOL_REGISTRY)
+        )
     except Exception as e:
         return json.dumps({"error": f"执行错误: {e}"})
 

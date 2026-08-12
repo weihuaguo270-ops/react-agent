@@ -53,6 +53,7 @@ def test_health_and_chat_offline():
         assert resp.status == 200
         assert ready["status"] == "ready"
         assert ready.get("chunks", 0) > 0
+        assert ready["sandbox"]["backend"] in ("process", "container")
 
         req = urllib.request.Request(
             f"http://127.0.0.1:{port}/v1/chat",

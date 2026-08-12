@@ -18,3 +18,10 @@
 - 可导致远程代码执行的 PoC（可描述问题，勿贴完整利用代码到公开渠道）
 
 收到报告后会尽量在合理时间内确认并处理。
+
+## Sandbox 安全边界
+
+不可信工具执行必须使用 **container + required**，配置和部署要求见
+[docs/SANDBOX_SECURITY.md](docs/SANDBOX_SECURITY.md)。普通 **process** 后端不是
+安全边界。发现容器逃逸、宿主密钥泄露、网络策略绕过或 MCP 隔离绕过时，请按
+本页报告方式私下提交。

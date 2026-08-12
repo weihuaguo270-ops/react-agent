@@ -16,6 +16,7 @@ from react_agent.apps.docs_troubleshoot.evidence import collect_evidence_bundle
 from react_agent.apps.docs_troubleshoot.policy import should_refuse_query
 from react_agent.apps.docs_troubleshoot.prompt import get_system_prompt
 from react_agent.harness import current_trajectory, finish_trajectory, start_trajectory
+from react_agent.harness.tool_boundary import execute_registered_tool
 from react_agent.tools import TOOL_REGISTRY, enable_app_tools
 
 
@@ -56,11 +57,8 @@ _API_NEEDLE = re.compile(
 
 
 def _run_tool(name: str, args: dict[str, Any]) -> str:
-    fn = TOOL_REGISTRY.get(name)
-    if fn is None:
-        return json.dumps({"error": f"unknown tool: {name}"}, ensure_ascii=False)
     try:
-        out = fn(**args)
+        out = execute_registered_tool(name, args, TOOL_REGISTRY)
         return out if isinstance(out, str) else json.dumps(out, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)[:300]}, ensure_ascii=False)

@@ -203,13 +203,12 @@ def _execute_tool_call_raw(tool_call):
     # 权限闸门（Harness）：模型 tool_call ≠ 允许执行；先于沙箱
     from react_agent.safety.permission_gate import permission_block_message
 
-    blocked = permission_block_message(func_name, arguments)
-    if blocked is not None:
-        print(f"  [Permission] blocked {func_name}: {blocked[:120]}")
-        return blocked
-
     # 先查本地注册的工具
     if func_name in TOOL_REGISTRY:
+        blocked = permission_block_message(func_name, arguments)
+        if blocked is not None:
+            print(f"  [Permission] blocked {func_name}: {blocked[:120]}")
+            return blocked
         # 沙箱：崩溃/超时隔离（不是权限层；见 harness/sandbox.py）
         if SANDBOX.strategy != "off" and SANDBOX.should_sandbox(func_name):
             sandbox_result = SANDBOX.run(tool_call)
@@ -221,6 +220,17 @@ def _execute_tool_call_raw(tool_call):
     # 不在本地注册表 → 尝试遍历所有 MCP Client
     for _mcp_client in MCP_CLIENTS:
         if func_name in [t["name"] for t in _mcp_client.tools]:
+            blocked = permission_block_message(
+                "mcp_call_tool",
+                {"tool": func_name, "arguments": arguments},
+            )
+            if blocked is not None:
+                print(f"  [Permission] blocked MCP {func_name}: {blocked[:120]}")
+                return blocked
+            boundary_block = SANDBOX.external_tool_block_reason(func_name)
+            if boundary_block is not None:
+                print(f"  [Sandbox] blocked MCP {func_name}: {boundary_block[:120]}")
+                return boundary_block
             try:
                 print(f"  [MCP] 转发: {func_name}({json.dumps(arguments, ensure_ascii=False)[:100]})")
                 return _mcp_client.call_tool(func_name, arguments)

@@ -61,6 +61,7 @@ python examples/eval/run_fault_eval.py
 |------|------|
 | `root_cause_hit_rate` | 期望根因 hint 是否出现在 diagnosis |
 | `evidence_sufficiency_rate` | 现场证据与规则匹配的平均充分度（0–1） |
+| `evidence_sufficiency_sample_size` | 参与充分度均值计算的现场证据样本数 |
 | `wrong_suggestion_rate` | 是否出现 `forbid_any` 禁词（fix_steps / answer） |
 
 ## 生产盲测（外部语料）
@@ -74,7 +75,11 @@ python examples/eval/run_production_eval.py
 | 指标 | 含义 |
 |------|------|
 | `production_source_hit_rate` | 回答引用 `prod_*.md` 的比例 |
-| `avg_evidence_sufficiency` | 诊断证据充分度均值 |
+| `document_evidence_rate` | 引用标记和期望生产文档均命中的比例 |
+| `avg_evidence_sufficiency` | 仅含现场证据样本的充分度均值；纯文档问答显示 `N/A` |
+| `evidence_sufficiency_sample_size` | 参与现场证据充分度统计的样本数 |
+
+生产评测默认只对含现场证据的样本应用 `0.5` 充分度门禁。当前 5 条生产盲测是纯文档问答，因此通过文档证据指标门禁，现场证据充分度为 `N/A (n=0)`，不会再被误报为 `0.0`。
 
 CI 已门禁：golden + fault + production + **git docs** 四套离线 eval。
 

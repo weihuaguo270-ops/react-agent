@@ -83,11 +83,11 @@ def permission_block_message(tool_name: str, tool_args: Optional[dict] = None) -
 
     # 非交互学习默认：CONFIRM 放行（CI / 无 TTY），但带可观测标记
     # 设 REACT_AGENT_STRICT_CONFIRM=1 则无 HITL 时拒绝 CONFIRM
-    strict = os.environ.get("REACT_AGENT_STRICT_CONFIRM", "").strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "on",
+    strict = (
+        os.environ.get("REACT_AGENT_STRICT_CONFIRM", "").strip().lower()
+        in ("1", "true", "yes", "on")
+        or os.environ.get("REACT_AGENT_SANDBOX_REQUIRED", "").strip().lower()
+        in ("1", "true", "yes", "on")
     )
     if strict:
         return json.dumps(

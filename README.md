@@ -137,7 +137,7 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 | 层 | 模块 | 职责 |
 |----|------|------|
 | 权限闸门 | `safety/permissions.py` + `permission_gate.py` | deny → ask → allow；**模型 tool_call ≠ 允许执行** |
-| 进程沙箱 | `harness/sandbox.py` | 子进程 + 超时，降低崩溃拖死主循环的概率 |
+| 工具隔离 | `harness/sandbox.py` | 开发用进程后端；生产用失败关闭的容器后端 |
 
 权限评估顺序（Harness 强制）：
 
@@ -157,11 +157,13 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 | DENY | 默认拦截 | delete_directory、install_package |
 
 范围与限制：
-- 权限层 **不是** OS ACL；未知工具名默认不 DENY。
-- 沙箱 **不是** 容器/seccomp；`execute_python` 仍可能访问本机权限内资源。
-- 危险 shell 字符串（如 `rm -rf`）**不会**被逐字解析拦截；请勿对不可信代码开放执行工具。
+- 权限层 **不是** OS ACL；未知工具名会进入 Sandbox，但权限表仍应显式登记。
+- `process` 后端仅隔离崩溃/超时；不可信代码必须使用 `container` 后端。
+- `container + required` 实施非 root、只读根、默认断网和资源限额；运行时不可用时失败关闭。
+- 严格容器模式禁止 MCP 宿主直连，需要独立隔离 Broker。
 
-`harness/sandbox.py` 支持 `off` / `auto` / `on`；子进程内禁止再次预热沙箱，避免递归拉起进程。
+`harness/sandbox.py` 支持 `off` / `auto` / `on` 和 `process` / `container`。
+生产配置与威胁模型见 [`docs/SANDBOX_SECURITY.md`](docs/SANDBOX_SECURITY.md)。
 
 ### 执行轨迹（Harness）
 

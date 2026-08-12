@@ -8,6 +8,7 @@ memory.json
 rag_index.json
 trajectories/
 _sandbox_runner.py
+!src/react_agent/harness/_sandbox_runner.py
 handwritten_react_agent.egg-info/
 *.egg-info/
 src/**/*.egg-info/
