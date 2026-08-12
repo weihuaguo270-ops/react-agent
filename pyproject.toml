@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "react-agent"
-version = "0.7.0"
+version = "0.8.0"
 description = "Agent 运行时 + 三类主流应用（编码/执行 · 客服/自动化 · RAG/研究）"
 readme = "README.md"
 requires-python = ">=3.10"
