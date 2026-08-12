@@ -18,7 +18,7 @@
         "tool_error"
       ],
       "jsonl_count": 1,
-      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_0\\traj_20260729_134104_kjgb.json",
+      "trajectory_path": "${WORKSPACE_ROOT}/react-agent\\.evidence_tmp\\traj_0\\traj_20260729_134104_kjgb.json",
       "pass": true
     },
     {
@@ -34,7 +34,7 @@
         "search_empty"
       ],
       "jsonl_count": 1,
-      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_1\\traj_20260729_134104_3hj6.json",
+      "trajectory_path": "${WORKSPACE_ROOT}/react-agent\\.evidence_tmp\\traj_1\\traj_20260729_134104_3hj6.json",
       "pass": true
     },
     {
@@ -53,7 +53,7 @@
         "search_empty"
       ],
       "jsonl_count": 2,
-      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_2\\traj_20260729_134104_eb14.json",
+      "trajectory_path": "${WORKSPACE_ROOT}/react-agent\\.evidence_tmp\\traj_2\\traj_20260729_134104_eb14.json",
       "pass": true
     },
     {
@@ -63,7 +63,7 @@
       "detected_tags": [],
       "jsonl_event_types": [],
       "jsonl_count": 0,
-      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_3\\traj_20260729_134104_y0td.json",
+      "trajectory_path": "${WORKSPACE_ROOT}/react-agent\\.evidence_tmp\\traj_3\\traj_20260729_134104_y0td.json",
       "pass": true
     },
     {
@@ -79,7 +79,7 @@
         "no_answer"
       ],
       "jsonl_count": 1,
-      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_4\\traj_20260729_134104_jhai.json",
+      "trajectory_path": "${WORKSPACE_ROOT}/react-agent\\.evidence_tmp\\traj_4\\traj_20260729_134104_jhai.json",
       "pass": true
     },
     {
@@ -95,7 +95,7 @@
         "llm_offtrack"
       ],
       "jsonl_count": 1,
-      "trajectory_path": "D:\\agent_learning\\react-agent\\.evidence_tmp\\traj_5\\traj_20260729_134104_athk.json",
+      "trajectory_path": "${WORKSPACE_ROOT}/react-agent\\.evidence_tmp\\traj_5\\traj_20260729_134104_athk.json",
       "pass": true
     }
   ],
@@ -103,7 +103,7 @@
   "golden_suite_note": "....................                                   [100%]\n38 passed in 0.08s",
   "meta": {
     "git": "51bea35",
-    "react_agent": "D:\\agent_learning\\react-agent",
-    "trace_debugger": "D:\\agent_learning\\trace-debugger"
+    "react_agent": "${WORKSPACE_ROOT}/react-agent",
+    "trace_debugger": "${WORKSPACE_ROOT}/trace-debugger"
   }
 }

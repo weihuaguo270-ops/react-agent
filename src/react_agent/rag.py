@@ -15,6 +15,9 @@ RAG — 检索增强生成模块
 import json
 import os
 import glob
+from pathlib import Path
+
+from .paths import migrate_legacy_file, runtime_file
 
 try:
     import numpy as np
@@ -31,10 +34,10 @@ class RAG:
 
     def __init__(self, save_path=None, chunk_size=500, chunk_overlap=50):
         if save_path is None:
-            save_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "rag_index.json"
-            )
-        self.save_path = save_path
+            target = runtime_file("rag_index.json", env_var="REACT_AGENT_RAG_INDEX")
+            legacy = Path(__file__).with_name("rag_index.json")
+            save_path = migrate_legacy_file(target, legacy)
+        self.save_path = str(save_path)
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.chunks = []     # 文本片段
@@ -279,6 +282,7 @@ class RAG:
     # 持久化
     # ================================================================
     def _save(self):
+        Path(self.save_path).parent.mkdir(parents=True, exist_ok=True)
         data = {
             "chunks": self.chunks,
             "sources": self.sources,

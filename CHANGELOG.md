@@ -5,6 +5,14 @@
 （下一批变更写在这里。）
 ## 0.7.0 (2026-08-12)
 
+### Release scope
+
+- Portable user-data directories for Memory, RAG, trajectories, reports, and app indexes
+- Deterministic expense evaluation with dev/golden/held-out splits and Episode v1 export
+- Historical evidence paths normalized to `${WORKSPACE_ROOT}`
+- Explicit LangGraph environment isolation through the JSON protocol boundary
+- Linux and Windows portability checks
+
 ### Added
 
 - Container sandbox backend for untrusted tool execution with rootless runtime support
@@ -25,8 +33,8 @@
 
 ### Verified
 
-- Local security regression: 15 passed
-- Full local regression: 180 passed, 3 skipped
+- Full local regression: 177 passed, 3 skipped
+- Portable path and sandbox regression: 27 passed
 - Rootless Podman path validated for identity, seccomp, filesystem, secrets, network, resource
 
 ## 0.6.0 (2026-08-11)

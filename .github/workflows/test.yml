@@ -55,6 +55,12 @@ jobs:
       run: python test_all.py
     - name: Pytest (offline)
       run: pytest tests/ -q --ignore=tests/test_real_llm.py
+    - name: Portable user-data directories
+      env:
+        REACT_AGENT_DATA_DIR: /tmp/react-agent-data
+      run: |
+        pytest tests/test_portable_paths.py -q
+        python -c "from react_agent.memory import Memory; from react_agent.rag import RAG; assert Memory().save_path.startswith('/tmp/react-agent-data'); assert RAG().save_path.startswith('/tmp/react-agent-data')"
     - name: Coverage (3.11)
       if: matrix.python-version == '3.11'
       run: |

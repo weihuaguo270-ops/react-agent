@@ -48,6 +48,7 @@ react_agent = [
     "eval/**/*.json",
     "apps/docs_troubleshoot/golden.json",
     "apps/docs_troubleshoot/corpus/*.md",
+    "apps/expense/business_cases.json",
     "server/static/*.html",
 ]
 

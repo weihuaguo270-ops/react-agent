@@ -14,6 +14,9 @@ Memory — 独立的语义记忆模块
 """
 import json
 import time
+from pathlib import Path
+
+from .paths import migrate_legacy_file, runtime_file
 
 try:
     import numpy as np
@@ -30,9 +33,10 @@ class Memory:
 
     def __init__(self, save_path=None):
         if save_path is None:
-            import os
-            save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "memory.json")
-        self.save_path = save_path
+            target = runtime_file("memory.json", env_var="REACT_AGENT_MEMORY_FILE")
+            legacy = Path(__file__).with_name("memory.json")
+            save_path = migrate_legacy_file(target, legacy)
+        self.save_path = str(save_path)
         self.facts = []
         self.vecs = []
         self.access_count = []
@@ -77,6 +81,7 @@ class Memory:
             self.last_access = []
 
     def _save(self):
+        Path(self.save_path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.save_path, "w", encoding="utf-8") as f:
             serial_vecs = []
             for v in self.vecs:

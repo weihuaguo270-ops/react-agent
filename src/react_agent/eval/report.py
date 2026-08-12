@@ -15,8 +15,9 @@ from typing import Optional
 
 from .scorer import score_result
 from .capability_scorer import score_capability
+from react_agent.paths import runtime_dir
 
-REPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
+REPORT_DIR = str(runtime_dir("reports", env_var="REACT_AGENT_REPORT_DIR"))
 
 
 def generate_report(raw_results: list, cases: list,

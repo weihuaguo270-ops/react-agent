@@ -1,7 +1,7 @@
 {
   "report_id": "tdebug_failure_20260716_005430",
   "timestamp": "2026-07-16T00:54:30.737751+00:00",
-  "source_dir": "D:/agent_learning/trace-debugger/examples/failure_bundle",
+  "source_dir": "${WORKSPACE_ROOT}/trace-debugger/examples/failure_bundle",
   "n_trajectories": 5,
   "distribution": {
     "context_overflow": 1,

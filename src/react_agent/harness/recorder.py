@@ -11,7 +11,11 @@ import random
 import string
 from typing import Any, Optional
 
-TRAJECTORY_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "trajectories")
+from react_agent.paths import runtime_dir
+
+TRAJECTORY_DIR = str(
+    runtime_dir("trajectories", env_var="REACT_AGENT_TRAJECTORY_DIR")
+)
 
 _ARTIFACT_FIELDS = {
     "id",

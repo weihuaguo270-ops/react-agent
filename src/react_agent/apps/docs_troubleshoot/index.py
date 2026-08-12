@@ -13,11 +13,13 @@ from react_agent.apps.docs_troubleshoot.ingest import (
     rebuild_index,
 )
 from react_agent.rag import RAG
+from react_agent.paths import runtime_dir
 
 _CORPUS_DIR = Path(__file__).resolve().parent / "corpus"
 _APP_DIR = Path(__file__).resolve().parent
-_MANIFEST_PATH = _APP_DIR / "_index_manifest.json"
-_CACHE_PATH = _APP_DIR / "_index_cache.json"
+_INDEX_DIR = runtime_dir("docs-troubleshoot", env_var="REACT_AGENT_DOCS_INDEX_DIR")
+_MANIFEST_PATH = _INDEX_DIR / "index_manifest.json"
+_CACHE_PATH = _INDEX_DIR / "index_cache.json"
 
 
 def corpus_dir() -> Path:
@@ -70,6 +72,7 @@ def get_index() -> RAG:
         git_root=git_root,
         git_prefix=git_prefix,
     )
+    _MANIFEST_PATH.parent.mkdir(parents=True, exist_ok=True)
     _MANIFEST_PATH.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
     )

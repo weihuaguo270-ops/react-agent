@@ -8,13 +8,16 @@ import glob
 import time
 import sys
 from flask import Flask, jsonify, send_from_directory, request
+from react_agent.paths import runtime_dir
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TRAJECTORIES_DIR = os.path.join(BASE_DIR, 'trajectories')
+TRAJECTORIES_DIR = str(
+    runtime_dir('trajectories', env_var='REACT_AGENT_TRAJECTORY_DIR')
+)
 REACT_LOOP = os.path.join(BASE_DIR, 'react_loop.py')
-REPORTS_DIR = os.path.join(BASE_DIR, 'eval', 'reports')
+REPORTS_DIR = str(runtime_dir('reports', env_var='REACT_AGENT_REPORT_DIR'))
 
 
 # ── 主页 ──

@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "expense_dev_meal_manager",
+      "split": "dev",
+      "task": "Review claim C-D01 and persist the policy decision.",
+      "claim": {"id": "C-D01", "category": "餐饮", "amount": 128, "has_receipt": true, "pre_approved": false},
+      "acceptance_criteria": ["claim finalized once", "manager approval"],
+      "expected_state": {"claim": {"status": "approved", "decision": "approve_manager"}, "audit": {"decision_events": 1}}
+    },
+    {
+      "id": "expense_dev_missing_receipt",
+      "split": "dev",
+      "task": "Review claim C-D02 and persist the policy decision.",
+      "claim": {"id": "C-D02", "category": "交通", "amount": 80, "has_receipt": false, "pre_approved": false},
+      "acceptance_criteria": ["claim finalized once", "missing receipt rejected"],
+      "expected_state": {"claim": {"status": "rejected", "decision": "reject_no_receipt"}, "audit": {"decision_events": 1}}
+    },
+    {
+      "id": "expense_golden_meal_limit",
+      "split": "golden",
+      "task": "Review claim C-G01 and persist the policy decision.",
+      "claim": {"id": "C-G01", "category": "餐饮", "amount": 260, "has_receipt": true, "pre_approved": false},
+      "acceptance_criteria": ["claim finalized once", "unapproved over-limit claim rejected"],
+      "expected_state": {"claim": {"status": "rejected", "decision": "reject_over_limit"}, "audit": {"decision_events": 1}}
+    },
+    {
+      "id": "expense_golden_transport_finance",
+      "split": "golden",
+      "task": "Review claim C-G02 and persist the policy decision.",
+      "claim": {"id": "C-G02", "category": "交通", "amount": 320, "has_receipt": true, "pre_approved": false},
+      "acceptance_criteria": ["claim finalized once", "finance approval"],
+      "expected_state": {"claim": {"status": "approved", "decision": "approve_finance"}, "audit": {"decision_events": 1}}
+    },
+    {
+      "id": "expense_golden_lodging_director",
+      "split": "golden",
+      "task": "Review claim C-G03 and persist the policy decision.",
+      "claim": {"id": "C-G03", "category": "住宿", "amount": 1500, "has_receipt": true, "pre_approved": true},
+      "acceptance_criteria": ["claim finalized once", "director approval"],
+      "expected_state": {"claim": {"status": "approved", "decision": "approve_director"}, "audit": {"decision_events": 1}}
+    },
+    {
+      "id": "expense_heldout_boundary",
+      "split": "held_out",
+      "task": "Review claim C-H01 and persist the policy decision.",
+      "claim": {"id": "C-H01", "category": "餐饮", "amount": 200, "has_receipt": true, "pre_approved": false},
+      "acceptance_criteria": ["boundary value accepted", "claim finalized once"],
+      "expected_state": {"claim": {"status": "approved", "decision": "approve_manager"}, "audit": {"decision_events": 1}}
+    },
+    {
+      "id": "expense_heldout_preapproved_over_limit",
+      "split": "held_out",
+      "task": "Review claim C-H02 and persist the policy decision.",
+      "claim": {"id": "C-H02", "category": "住宿", "amount": 800, "has_receipt": true, "pre_approved": true},
+      "acceptance_criteria": ["pre-approval honored", "claim finalized once"],
+      "expected_state": {"claim": {"status": "approved", "decision": "approve_finance"}, "audit": {"decision_events": 1}}
+    },
+    {
+      "id": "expense_heldout_purchase_no_receipt",
+      "split": "held_out",
+      "task": "Review claim C-H03 and persist the policy decision.",
+      "claim": {"id": "C-H03", "category": "办公采购", "amount": 980, "has_receipt": false, "pre_approved": true},
+      "acceptance_criteria": ["receipt requirement overrides pre-approval", "claim finalized once"],
+      "expected_state": {"claim": {"status": "rejected", "decision": "reject_no_receipt"}, "audit": {"decision_events": 1}}
+    }
+  ]
+}

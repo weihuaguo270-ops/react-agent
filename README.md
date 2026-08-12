@@ -1,5 +1,9 @@
 # ReAct Agent
 
+Mutable runtime artifacts no longer write into the installed package. See
+[`docs/PORTABILITY.md`](docs/PORTABILITY.md) for data-directory overrides and the isolated
+LangGraph environment contract.
+
 [![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/应用-编码·客服/RAG·研究-lightgrey)](docs/APPLICATION_DIRECTION.md)
 
 个人维护的 **Agent 运行时**（`react_loop` + ToolGuard + Harness + 权限闸门），面向 GitHub 主流的三类应用：**写代码/执行**、**客服与工作流自动化**、**通用 RAG/研究**。详见 [`docs/APPLICATION_DIRECTION.md`](docs/APPLICATION_DIRECTION.md)。
@@ -235,8 +239,12 @@ python -m react_agent.eval --dataset capability
 python examples/eval/run_execution_suite.py --publish
 python examples/eval/run_public_benchmark.py              # GSM8K×10 + HotpotQA×10 offline
 python examples/eval/run_public_rag_benchmark.py           # 分层 RAG：引用 by_tier + drop-off
+python examples/eval/run_expense_business_eval.py          # 有状态业务任务：dev/golden/held_out
 # python examples/eval/run_public_benchmark.py --modes agent --publish  # 需 API Key
 ```
+
+Expense 业务集不以答案关键词作为主门禁，而是检查 claim 数据库终态和审计事件数；
+可用 `--episodes-out` 导出 `evaluation-episode/v1`，交给 sibling 评测与失败治理仓。
 
 与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 校准口径：**held_out live κ≈0.69**（n=20，CI[0.46,0.92]）— 见 [METRICS_TRUST](https://github.com/weihuaguo270-ops/llm-eval-engine/blob/master/docs/METRICS_TRUST.md)；有效口径以该文档为准。  
 失败归因：[trace-debugger FAILURE_INDEX](https://github.com/weihuaguo270-ops/trace-debugger/blob/master/docs/FAILURE_INDEX.md)。

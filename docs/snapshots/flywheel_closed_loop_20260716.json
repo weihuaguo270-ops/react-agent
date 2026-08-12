@@ -18,7 +18,7 @@
     }
   },
   "before": {
-    "source": "D:/agent_learning/trace-debugger/docs/snapshots/tdebug_failure_real_20260715.json",
+    "source": "${WORKSPACE_ROOT}/trace-debugger/docs/snapshots/tdebug_failure_real_20260715.json",
     "n": 100,
     "distribution": {
       "tool_error": 2,
@@ -28,7 +28,7 @@
     }
   },
   "after": {
-    "source": "D:/agent_learning/react-agent/src/react_agent/trajectories",
+    "source": "${WORKSPACE_ROOT}/react-agent/src/react_agent/trajectories",
     "n": 100,
     "distribution": {
       "tool_error": 2,

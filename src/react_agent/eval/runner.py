@@ -12,11 +12,15 @@ import json
 import glob
 from typing import Optional
 
+from react_agent.paths import runtime_dir
+
 # src/react_agent/ 与项目根（含 llm_config.json / .env）
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
 REACT_LOOP = os.path.join(BASE_DIR, "react_loop.py")
-TRAJECTORY_DIR = os.path.join(BASE_DIR, "trajectories")
+TRAJECTORY_DIR = str(
+    runtime_dir("trajectories", env_var="REACT_AGENT_TRAJECTORY_DIR")
+)
 
 
 def run_single_case(question: str, timeout: int = 60,
