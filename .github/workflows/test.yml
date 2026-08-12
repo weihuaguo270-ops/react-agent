@@ -2,6 +2,9 @@ name: CI
 
 on:
   push:
+    # Release tags point at commits already validated on their branch.
+    tags-ignore:
+      - "**"
   pull_request:
   workflow_dispatch:
     inputs:
@@ -13,6 +16,10 @@ on:
         options:
           - smoke
           - full
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
@@ -99,6 +106,29 @@ jobs:
       run: python examples/eval/run_production_eval.py
     - name: Docs troubleshoot git docs held-out (offline)
       run: python examples/eval/run_git_docs_eval.py
+    # Reuse the Python 3.10 runner for cross-repository contracts. This
+    # preserves the gate while avoiding a separately queued runner.
+    - name: Clone & install llm-eval-engine (3.10)
+      if: matrix.python-version == '3.10'
+      run: |
+        git clone --depth=1 https://github.com/weihuaguo270-ops/llm-eval-engine.git /tmp/llm-eval-engine
+        pip install -e /tmp/llm-eval-engine
+    - name: Clone & install trace-debugger (3.10)
+      if: matrix.python-version == '3.10'
+      run: |
+        git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
+        pip install -e /tmp/trace-debugger
+    - name: Run Agent to Eval integration (3.10)
+      if: matrix.python-version == '3.10'
+      run: python examples/eval/agent_to_eval.py
+    - name: Run Harness closed-loop demo (3.10)
+      if: matrix.python-version == '3.10'
+      run: python examples/eval/harness_closed_loop.py --fixture
+    - name: Verify cross-repository scoring contracts (3.10)
+      if: matrix.python-version == '3.10'
+      run: |
+        python tests/ci_verify_integration.py
+        pytest tests/test_eval_engine_contract.py tests/test_tdebug_eval_contract.py -q
 
   # Windows: default console often GBK — catch emoji/encoding regressions early
   test-windows:
@@ -200,34 +230,6 @@ jobs:
     - name: Stop container
       if: always()
       run: docker rm -f react-agent-ci || true
-
-  integration:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-    - name: Install react-agent
-      run: pip install -e ".[test]"
-    - name: Clone & install llm-eval-engine
-      run: |
-        git clone --depth=1 https://github.com/weihuaguo270-ops/llm-eval-engine.git /tmp/llm-eval-engine
-        pip install -e /tmp/llm-eval-engine
-    - name: Clone & install trace-debugger
-      run: |
-        git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
-        pip install -e /tmp/trace-debugger
-    - name: Run Agent → Eval integration
-      run: python examples/eval/agent_to_eval.py
-    - name: Run Harness closed-loop demo (schema → tdebug → eval)
-      run: python examples/eval/harness_closed_loop.py --fixture
-    - name: Verify eval-engine scoring path
-      run: |
-        python tests/ci_verify_integration.py
-        pytest tests/test_eval_engine_contract.py tests/test_tdebug_eval_contract.py -q
 
   # Probe secret without exposing it in job-level `if` (secrets context is invalid there).
   real-llm-gate:
