@@ -36,7 +36,7 @@
 | **现场证据** | 部分 | 调用方传入；不自动抓线上流量 |
 | **结构化 diagnosis** | 部分 | 规则为主；verify_actions 尚未接工具执行 |
 | Bearer API Key / JSON 日志 | 未做 | P1 |
-| 轨迹级 eval 门禁 | 未做 | 规划：must_call 工具步序 |
+| 轨迹级 eval 门禁 | 部分 | capability 支持工具选择/有序工具序列；Expense 校验业务终态并可导出 Episode；尚未统一为所有应用的发布硬门禁 |
 | 多租户 / SLA | 本阶段不做 | — |
 
 ## 主场景入口
@@ -57,6 +57,6 @@ Live LLM：`REACT_AGENT_SERVER_LLM=1`（需 API Key）。Legacy Workflow：`REAC
 
 - **整体**：与常见 **Runbook / 文档 Copilot Agent** 同构 — ReAct + 领域工具 + HTTP 交付  
 - **细节**：循环内治理（verify 工具步、duplicate 拦截、fix 权限、轨迹飞轮）— 优化 **可跑、可审计、可回灌**，不是换图编排框架  
-- **现在有**：Agent 默认路径、Docker、探针、传入式现场 evidence、结构化 diagnosis（规则）  
+- **现在有**：Agent 默认路径、Docker、探针、传入式现场 evidence、结构化 diagnosis（规则）、工具序列评分与 Expense 终态验收
 - **还没有**：API Key 网关、结构化 JSON 日志、verify_actions 真执行、历史工单盲测  
-- **P1**：Bearer 鉴权、JSON 日志、verify_actions 接 `react_loop`、轨迹级 eval
+- **P1**：Bearer 鉴权、JSON 日志、verify_actions 接 `react_loop`、把各应用轨迹验收统一接入发布硬门禁

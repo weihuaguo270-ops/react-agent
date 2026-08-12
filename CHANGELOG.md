@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-（下一批变更写在这里。）
+### Documentation
+
+- Aligned the docs troubleshooting default path with the current offline Agent runner
+- Updated the production maturity matrix for tool-sequence and business-state evaluation
+- Replaced the retired transformer repository link with `llm-inference-pipeline`
 ## 0.8.0 (2026-08-12)
 
 ### Added

@@ -318,7 +318,7 @@ gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DE
 ## 相关项目
 
 - [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) — LLM 评估实验框架（Process Reward）
-- [transformer-attention](https://github.com/weihuaguo270-ops/transformer-attention) — Attention 教学实现
+- [llm-inference-pipeline](https://github.com/weihuaguo270-ops/llm-inference-pipeline) — LLM 推理链路实现、基准与发布性能证据
 - [trace-debugger](https://github.com/weihuaguo270-ops/trace-debugger) — 轨迹分析小工具
 
 ## Artifact 引用
