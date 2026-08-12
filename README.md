@@ -6,6 +6,19 @@
 
 结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
+## 业务目标
+
+我把这个项目定位为 **Agent 业务的执行底座**：业务方提供任务、工具和验收标准，运行时负责受控调用工具、记录完整轨迹，并把结果交给评测和失败治理系统。它优先服务三类可复用场景：编码/执行、客服/工作流自动化、RAG/研究。
+
+| 负责人关注的问题 | 项目交付 |
+|------------------|----------|
+| Agent 是否在权限边界内完成任务 | 权限闸门、ToolGuard、可切换的工具隔离 |
+| 结果能否被业务和质量团队复核 | 引用/拒答策略、Format B 轨迹、Task Episode 验收标准 |
+| 失败是否能进入回归闭环 | Harness、StepWatcher、离线/HTTP eval 和跨仓接口 |
+| 能否作为应用原型交付验证 | 多 app HTTP、Web UI、Docker 与可复现演示 |
+
+**当前阶段：** 已形成可部署、可评测的工程原型；尚未证明多租户隔离、真实业务 SLA、长期线上流量稳定性或企业权限体系集成。
+
 ## 三大应用方向
 
 | 方向 | 做什么 | 快速入口 |
