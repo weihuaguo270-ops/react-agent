@@ -23,7 +23,11 @@ LangGraph environment contract.
 | 失败是否能进入回归闭环 | Harness、StepWatcher、离线/HTTP eval 和跨仓接口 |
 | 能否作为应用原型交付验证 | 多 app HTTP、Web UI、Docker 与可复现演示 |
 
-**当前阶段：** 已形成可部署、可评测的工程原型；尚未证明多租户隔离、真实业务 SLA、长期线上流量稳定性或企业权限体系集成。
+**当前阶段：** 已形成可部署、可评测的工程原型，并在独立的
+[`agent-delivery-sandbox`](https://github.com/weihuaguo270-ops/agent-delivery-sandbox)
+完成 24 条合成 Issue 的 Shadow 运行、4 条受控 Draft PR、人工接受/拒绝、合并与回滚演练。
+该证据标记为 `external_real_sandbox`：GitHub 写入和 PR 生命周期是真实的，但任务不来自生产用户；
+尚未证明多租户隔离、真实业务 SLA、长期线上流量稳定性或企业权限体系集成。
 
 ## 三大应用方向
 

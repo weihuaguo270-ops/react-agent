@@ -12,8 +12,8 @@
 |---------------------|--------|-----------|------------------------|
 | **Task Understanding** | 目标与验收是否清晰 | execution/capability eval case `id` → `task_episode_id`；`acceptance_criteria` 写入轨迹 | **wired** — eval case 有 id；轨迹字段已支持 |
 | **Controlled Execution** | 路径可复现、权限受控 | `workflow/` · `safety/HITL` · `ToolGuard` · execution **36/36** | **exercised** — [P0 execution](./P0_EVIDENCE_MAP.md) |
-| **Change Validation** | 变更可验证、失败可诊断 | trace-debugger 7 类 taxonomy · StepWatcher · golden **27/27** | **exercised** — 试点 scan/compare |
-| **Reliable Delivery** | 发版有门禁、风险有 hold | `THRESHOLDS v1` · pilot baseline · `--compare` → `gate_decision` | **wired** — [regression_gate 案例](../trace-debugger/docs/cases/regression_gate_20260730.md) |
+| **Change Validation** | 变更可验证、失败可诊断 | trace-debugger 8 类 taxonomy · StepWatcher · golden **27/27** | **exercised** — 包含沙箱 `acceptance_failed` 回流 |
+| **Reliable Delivery** | 发版有门禁、风险有 hold | `THRESHOLDS v1` · `--compare` · 跨仓 release gate | **exercised** — 选定集 pass、全量实验 hold |
 | **Learning Capture** | 修复是否纵向验证 | [intervention_ledger.json](../trace-debugger/docs/intervention_ledger.json) · flywheel offtrack 6→1 | **outcome_supported** — 一条；其余 **exercised/wired** |
 
 ---
@@ -114,3 +114,4 @@ Schema: [findings.schema.json](../trace-debugger/schemas/findings.schema.json)
 | 日期 | 说明 |
 |------|------|
 | 2026-07-30 | 初版：五维映射、证据状态、findings CLI、intervention ledger |
+| 2026-08-14 | 同步外部 GitHub 沙箱的第 8 类失败回流及发布门禁证据 |

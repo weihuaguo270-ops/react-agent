@@ -75,6 +75,17 @@ python examples/demos/run_github_delivery.py `
 
 ## 当前证据等级
 
-本地影子运行和候选提交使用真实 Git、真实文件变更和真实测试子进程，可标记为 `local_real`。目前没有在专用 GitHub 沙箱仓库实际创建、审批、合并和回滚 PR，因此不能声称已经完成 `external_real` 或生产流量闭环。
+本地影子运行和候选提交使用真实 Git、真实文件变更和真实测试子进程，可标记为 `local_real`。
+独立 [`agent-delivery-sandbox`](https://github.com/weihuaguo270-ops/agent-delivery-sandbox)
+进一步完成了真实 GitHub 写入和 PR 生命周期验证，可标记为 `external_real_sandbox`：
 
-下一项项目级证据应是：在专用测试仓库冻结一批真实 Issue，完成 shadow 与 guarded 对照，记录 PR 接受率、人工接管率、任务成功率、P95 延迟、单任务成本和至少一个失败回流案例。
+- 冻结 24 条合成 Issue（dev/golden/held-out = 6/10/8），Shadow 24/24，外部写入为 0，P95 606.258 ms；
+- guarded 4/4 创建 Draft PR，P95 8457.034 ms；人工接受 3 条、拒绝 1 条；
+- PR #27 合并后由 PR #29 回滚；故障注入在写入前被测试拦截；
+- 选定发布集 task_01 + task_18 的跨仓门禁为 `pass`，包含 1 条 held-out；保留全部候选时因拒绝案例为 `hold`。
+
+证据见沙箱仓库的 [`evidence/experiment_20260814.json`](https://github.com/weihuaguo270-ops/agent-delivery-sandbox/blob/main/evidence/experiment_20260814.json)
+和 [`evidence/selected_release_20260814.json`](https://github.com/weihuaguo270-ops/agent-delivery-sandbox/blob/main/evidence/selected_release_20260814.json)。
+这些任务和审批均为沙箱实验，不包含生产用户、真实流量、人工执行耗时基线或单任务模型成本，因此不能标记为生产证据。
+
+下一项项目级证据是接入有明确责任人的真实业务任务，测量人工基线、Agent 增益、成本和长期运行稳定性，并接入企业权限与发布阻断系统。
