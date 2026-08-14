@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import os
 import shutil
+import tempfile
 from pathlib import Path
+
+
+def _platform_name() -> str:
+    """Return the runtime platform name through a testable local boundary."""
+    return os.name
 
 
 def data_dir() -> Path:
@@ -12,14 +18,31 @@ def data_dir() -> Path:
     override = os.environ.get("REACT_AGENT_DATA_DIR")
     if override:
         return Path(override).expanduser().resolve()
-    if os.name == "nt":
+    if _platform_name() == "nt":
         base = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
         if base:
-            return Path(base) / "react-agent"
+            candidate = Path(base) / "react-agent"
+            if _directory_is_writable(candidate):
+                return candidate
     xdg = os.environ.get("XDG_DATA_HOME")
     if xdg:
         return Path(xdg).expanduser() / "react-agent"
-    return Path.home() / ".local" / "share" / "react-agent"
+    candidate = Path.home() / ".local" / "share" / "react-agent"
+    if _directory_is_writable(candidate):
+        return candidate
+    return Path(tempfile.gettempdir()) / "react-agent"
+
+
+def _directory_is_writable(path: Path) -> bool:
+    """Check the resolved default once so restricted hosts still have a usable path."""
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        probe = path / ".write-check"
+        probe.touch()
+        probe.unlink()
+        return True
+    except OSError:
+        return False
 
 
 def runtime_dir(kind: str, *, env_var: str | None = None) -> Path:

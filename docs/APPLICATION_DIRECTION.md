@@ -35,7 +35,7 @@ python examples/eval/run_execution_http_smoke.py --url http://127.0.0.1:8765
 
 **差异化（运行时，非应用）：** 权限闸门、StepWatcher、failure flywheel、Format B 轨迹 — 见 [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)。
 
-**下一步：** 扩 execution HTTP smoke 覆盖面；sandbox 读改测任务模板。
+**已补充：** [`GITHUB_DELIVERY_WORKFLOW.md`](GITHUB_DELIVERY_WORKFLOW.md) 提供真实 Git 隔离克隆、读改测、影子运行、计划指纹审批、幂等审计、候选提交和可选 Draft PR。当前证据为本地真实运行，尚未完成专用 GitHub 仓库的 PR 接受率与回滚实验。
 
 ---
 
@@ -62,7 +62,7 @@ python examples/eval/run_docs_troubleshoot_eval.py
 
 **v0.5 已完成：** `/v1/chat` 多 app（`docs_troubleshoot` | `expense` | `default`）；`GET /v1/info` 列出 applications。
 
-**下一步：** 结构化 JSON 日志 + Bearer 鉴权；expense Live 路径；neutral 多 app UI。
+**下一步：** Bearer 鉴权；expense Live 路径；neutral 多 app UI。工程交付流程已经输出结构化审计和告警，但 HTTP 服务全链路 JSON 日志仍需单独补齐。
 
 ---
 

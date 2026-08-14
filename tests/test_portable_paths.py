@@ -11,6 +11,14 @@ def test_data_directory_override_is_shared_by_runtime_artifacts(tmp_path, monkey
     assert runtime_dir("trajectories") == tmp_path / "trajectories"
 
 
+def test_data_directory_falls_back_when_platform_default_is_not_writable(monkeypatch, tmp_path):
+    monkeypatch.delenv("REACT_AGENT_DATA_DIR", raising=False)
+    monkeypatch.setattr("react_agent.paths._platform_name", lambda: "nt")
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "blocked"))
+    monkeypatch.setattr("react_agent.paths._directory_is_writable", lambda path: False)
+    assert data_dir() == Path(__import__("tempfile").gettempdir()) / "react-agent"
+
+
 def test_dedicated_artifact_override_wins(tmp_path, monkeypatch):
     custom = tmp_path / "custom" / "memory.json"
     monkeypatch.setenv("REACT_AGENT_MEMORY_FILE", str(custom))
