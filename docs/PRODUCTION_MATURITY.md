@@ -12,7 +12,7 @@
 |------|------|
 | **主流对齐** | LLM ReAct、领域工具、RAG、HTTP API、health/ready、Docker、基础轨迹、离线回归 |
 | **细节优化** | 循环内 duplicate 拦截、收尾步强制作答、ToolGuard、verify_citations 工具步、fix_steps 权限闸门、StepWatcher + failure flywheel |
-| **待补齐（主流交付）** | Bearer API Key、结构化 JSON 日志、verify_actions 由 Agent 执行（非仅输出字符串） |
+| **待补齐（主流交付）** | Bearer API Key、HTTP 全链路结构化 JSON 日志、verify_actions 由 Agent 执行（非仅输出字符串）、专用 GitHub 仓库真实 PR 证据 |
 | **本阶段不做** | OAuth 网关、多租户 SLA、Helm 规模化、自动拉线上 Trace |
 
 ## 成熟度矩阵
@@ -20,6 +20,7 @@
 | 能力 | 状态 | 说明 |
 |------|------|------|
 | **离线 Agent 循环**（默认） | 已具备 | `agent_runner`：观测选工具 + verify + 轨迹 |
+| **工程任务受控交付** | 本地真实 | 隔离克隆、读改测、shadow、计划指纹审批、幂等审计、候选提交；Draft PR 接口尚无真实外部运行证据 |
 | ReAct + Tool Calling（Live） | 已具备 | `react_loop`；`REACT_AGENT_SERVER_LLM=1` |
 | 声明式 Workflow v5（legacy） | 已具备 | `REACT_AGENT_DOCS_ENGINE=workflow` |
 | 权限闸门 deny→ask→allow | 已具备 | 非 OS ACL；fix_steps 可进 `pending_fix_steps` |
@@ -35,7 +36,7 @@
 | **资料 ingest** | 部分 | Git / 目录；OpenAPI 需显式开关 |
 | **现场证据** | 部分 | 调用方传入；不自动抓线上流量 |
 | **结构化 diagnosis** | 部分 | 规则为主；verify_actions 尚未接工具执行 |
-| Bearer API Key / JSON 日志 | 未做 | P1 |
+| Bearer API Key / HTTP JSON 日志 | 未做 | P1；工程交付子流程已有独立 `audit.jsonl` |
 | 轨迹级 eval 门禁 | 部分 | capability 支持工具选择/有序工具序列；Expense 校验业务终态并可导出 Episode；尚未统一为所有应用的发布硬门禁 |
 | 多租户 / SLA | 本阶段不做 | — |
 
@@ -59,4 +60,4 @@ Live LLM：`REACT_AGENT_SERVER_LLM=1`（需 API Key）。Legacy Workflow：`REAC
 - **细节**：循环内治理（verify 工具步、duplicate 拦截、fix 权限、轨迹飞轮）— 优化 **可跑、可审计、可回灌**，不是换图编排框架  
 - **现在有**：Agent 默认路径、Docker、探针、传入式现场 evidence、结构化 diagnosis（规则）、工具序列评分与 Expense 终态验收
 - **还没有**：API Key 网关、结构化 JSON 日志、verify_actions 真执行、历史工单盲测  
-- **P1**：Bearer 鉴权、JSON 日志、verify_actions 接 `react_loop`、把各应用轨迹验收统一接入发布硬门禁
+- **P1**：在专用 GitHub 测试仓库运行真实 Issue -> shadow -> 审批 -> Draft PR -> 回滚闭环；再补 HTTP Bearer 鉴权、全链路 JSON 日志和 verify_actions 执行

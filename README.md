@@ -4,6 +4,8 @@ Mutable runtime artifacts no longer write into the installed package. See
 [`docs/PORTABILITY.md`](docs/PORTABILITY.md) for data-directory overrides and the isolated
 LangGraph environment contract.
 
+受控工程任务交付：[`docs/GITHUB_DELIVERY_WORKFLOW.md`](docs/GITHUB_DELIVERY_WORKFLOW.md)。默认影子执行；人工审批绑定计划指纹，外部 Draft PR 写入需单独显式授权。
+
 [![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/应用-编码·客服/RAG·研究-lightgrey)](docs/APPLICATION_DIRECTION.md)
 
 个人维护的 **Agent 运行时**（`react_loop` + ToolGuard + Harness + 权限闸门），面向 GitHub 主流的三类应用：**写代码/执行**、**客服与工作流自动化**、**通用 RAG/研究**。详见 [`docs/APPLICATION_DIRECTION.md`](docs/APPLICATION_DIRECTION.md)。
@@ -62,6 +64,23 @@ python examples/eval/run_git_docs_eval.py               # Git 文档 held-out 5 
 python -m react_agent.server --port 8765           # 浏览器 http://127.0.0.1:8765/ · 产品 UI
 docker compose up --build                         # 同上 · 见 docs/DEPLOY.md
 ```
+
+### 外部业务任务证据
+
+GitHub 只读数据集按仓库簇隔离 dev/golden/held-out，保存 Request ID、来源 URL、
+数据指纹、失败切片和人工接管率。默认 10 个仓库、5 类任务，共 50 条：
+
+```bash
+python examples/eval/run_github_portfolio_dataset.py \
+  --cache-dir artifacts/github-cache \
+  --out artifacts/github-business-dataset.json
+```
+
+完成门禁要求任务数不少于 50、存在 held-out 且全部来源可追溯。公开 API 限流或仓库采集失败时
+命令返回非零状态；缓存用于断点续跑，不把部分结果记为完整业务成功证据。
+运行器优先使用 `GITHUB_TOKEN` / `GH_TOKEN`，未设置时读取当前 `gh auth` 凭据；启动批量采集前
+会检查剩余 API 配额。2026-08-13 认证运行结果为 50/50，快照见
+[`docs/snapshots/github_portfolio_dataset_20260813.json`](docs/snapshots/github_portfolio_dataset_20260813.json)。
 
 Workflow v5（legacy DAG）：`现场证据 → search → lookup_api → synthesize → policy → diagnosis`。  
 **默认运行时**为 **Agent 循环**（`agent_runner.py`）：根据观测选工具、强制 `verify_citations`、写 Harness 轨迹；Live 模式用 `react_loop` + LLM。详见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) · 评测：[`DOCS_TROUBLESHOOT_EVAL.md`](docs/DOCS_TROUBLESHOOT_EVAL.md) · **Since v0.4.0**。
@@ -242,6 +261,28 @@ python examples/eval/run_public_rag_benchmark.py           # 分层 RAG：引用
 python examples/eval/run_expense_business_eval.py          # 有状态业务任务：dev/golden/held_out
 # python examples/eval/run_public_benchmark.py --modes agent --publish  # 需 API Key
 ```
+
+报销场景可导出跨仓 `EvaluationEpisode v1`，也可用故障画像验证发布门禁确实会阻断：
+
+```bash
+python examples/eval/run_expense_business_eval.py \
+  --agent-version expense-agent-v2 \
+  --episodes-out artifacts/expense-v2 \
+  --report-out artifacts/expense-v2.json
+python examples/eval/run_expense_business_eval.py \
+  --agent-version expense-agent-broken \
+  --profile no_action --compare-reference
+```
+
+真实外部系统和部署可靠性证据可分别运行：
+
+```bash
+python examples/eval/run_github_business_tasks.py --repository langchain-ai/langgraph
+python examples/eval/run_http_reliability.py --url http://127.0.0.1:8765 \
+  --requests 50 --concurrency 10
+```
+
+GitHub 路径默认只读；动态 Issue 内容不是冻结 Benchmark。HTTP 报告只代表指定目标与负载。
 
 Expense 业务集不以答案关键词作为主门禁，而是检查 claim 数据库终态和审计事件数；
 可用 `--episodes-out` 导出 `evaluation-episode/v1`，交给 sibling 评测与失败治理仓。

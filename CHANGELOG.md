@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## 0.9.0 (2026-08-14)
+
+### Added
+
+- Controlled GitHub delivery workflow with isolated clones, real test execution, shadow mode,
+  plan-bound approval, idempotency, audit records, candidate commits, and explicit Draft PR writes
+- Public GitHub portfolio dataset with repository-isolated dev/golden/held-out splits and source evidence
+- HTTP reliability runner and portable local evidence paths
+- EvaluationEpisode export for release gates and trajectory failure analysis
+
+### Changed
+
+- Production maturity and application-direction documents now distinguish `local_real` evidence from
+  unverified external GitHub writes
+- Sandbox and runtime artifact paths fail closed or resolve through portable data directories
+
+### Verified
+
+- Offline release regression: 193 passed, 3 skipped, 9 live tests deselected
+- GitHub delivery and dataset regression: 11 passed
+- Delivery Episode accepted by llm-eval-engine and trace-debugger
+- Live LLM exploratory run: 201 passed, 3 skipped, 1 nondeterministic consistency failure
+
 ### Documentation
 
 - Aligned the docs troubleshooting default path with the current offline Agent runner

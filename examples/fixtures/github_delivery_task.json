@@ -1,0 +1,31 @@
+{
+  "task_id": "local-delivery-demo",
+  "repository": ".",
+  "issue_url": "local://issues/delivery-demo",
+  "split": "dev",
+  "base_branch": "HEAD",
+  "replacements": [
+    {
+      "path": "examples/fixtures/github_delivery_sample.py",
+      "old": "VALUE = 1",
+      "new": "VALUE = 2"
+    },
+    {
+      "path": "examples/fixtures/github_delivery_sample_test.py",
+      "old": "assert VALUE == 1",
+      "new": "assert VALUE == 2"
+    }
+  ],
+  "test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "examples/fixtures/github_delivery_sample_test.py",
+    "-q"
+  ],
+  "acceptance_criteria": [
+    "候选变更通过指定测试",
+    "影子模式不修改源仓库",
+    "输出可导入发布门禁的 EvaluationEpisode"
+  ]
+}

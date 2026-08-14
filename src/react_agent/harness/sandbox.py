@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 _RUNNER_PATH = Path(__file__).with_name("_sandbox_runner.py")
+_PACKAGE_SRC = Path(__file__).resolve().parents[2]
 _SANDBOX_CHILD_ENV = "REACT_AGENT_SANDBOX_CHILD"
 
 VALID_STRATEGIES = ("off", "auto", "on")
@@ -155,6 +156,7 @@ def _runner_env(
             "REACT_AGENT_SANDBOX_MAX_OUTPUT": str(max_output),
             "REACT_AGENT_SANDBOX_MAX_INPUT": str(max_input),
             "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONPATH": str(_PACKAGE_SRC),
         }
     )
     return env
