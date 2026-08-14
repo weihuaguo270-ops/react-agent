@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -80,7 +81,7 @@ def test_process_runner_uses_absolute_package_path(monkeypatch):
     monkeypatch.setenv("PYTHONPATH", "src;.")
     env = sandbox_module._runner_env("calculator", 1000, 1000)
     assert os.path.isabs(env["PYTHONPATH"])
-    assert env["PYTHONPATH"].endswith("react-agent\\src")
+    assert Path(env["PYTHONPATH"]).resolve() == sandbox_module._PACKAGE_SRC.resolve()
 
 
 def test_container_backend_builds_hardened_command(monkeypatch):
