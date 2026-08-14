@@ -8,12 +8,17 @@ import tempfile
 from pathlib import Path
 
 
+def _platform_name() -> str:
+    """Return the runtime platform name through a testable local boundary."""
+    return os.name
+
+
 def data_dir() -> Path:
     """Return the writable application data directory without touching the source tree."""
     override = os.environ.get("REACT_AGENT_DATA_DIR")
     if override:
         return Path(override).expanduser().resolve()
-    if os.name == "nt":
+    if _platform_name() == "nt":
         base = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
         if base:
             candidate = Path(base) / "react-agent"
