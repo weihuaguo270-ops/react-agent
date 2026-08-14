@@ -1,4 +1,8 @@
-"""Thin production-oriented HTTP surface (stdlib only)."""
+"""基于标准库的轻量 HTTP 服务入口。
+
+本模块只负责协议解析、路由和响应封装；具体 Agent 与业务逻辑由
+`chat_router`、workflow 和 health 模块提供。
+"""
 from __future__ import annotations
 
 import json
@@ -6,10 +10,10 @@ import os
 import traceback
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Optional
+from typing import Any
 from urllib.parse import urlparse
 
-# Service defaults before heavy imports
+# 在导入 Agent 组件前固定服务默认值，避免模块初始化读取到不一致配置。
 os.environ.setdefault("REACT_AGENT_DISABLE_MCP", "1")
 os.environ.setdefault("REACT_AGENT_DEFAULT_APP", "docs_troubleshoot")
 os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
@@ -21,9 +25,12 @@ from react_agent.server.static_files import docs_troubleshoot_ui_html
 
 
 class AgentHandler(BaseHTTPRequestHandler):
+    """处理健康检查、应用信息、对话和工作流请求。"""
+
     server_version = f"react-agent-server/{package_version()}"
 
-    def _send(self, status: int, payload: dict):
+    def _send(self, status: int, payload: dict[str, Any]) -> None:
+        """发送统一 JSON 响应并透传请求标识。"""
         raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -33,10 +40,13 @@ class AgentHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
-    def log_message(self, fmt, *args):
+    def log_message(self, fmt: str, *args: object) -> None:
+        """将标准库访问日志收敛到项目日志前缀。"""
         print(f"[server] {self.address_string()} {fmt % args}")
 
-    def do_GET(self):
+    def do_GET(self) -> None:
+        """处理静态页面、服务信息、探针和工作流列表。"""
+        # 接受调用方 request id，缺失时为本次请求生成稳定关联标识。
         request_id = self.headers.get("X-Request-Id") or str(uuid.uuid4())
         path = urlparse(self.path).path
         if path in ("/", "/ui", "/v1/ui"):
@@ -79,6 +89,7 @@ class AgentHandler(BaseHTTPRequestHandler):
             self._send(status, payload)
             return
         if path in ("/v1/workflows", "/v1/workflows/list"):
+            # 延迟导入可避免健康检查启动不必要的工作流依赖。
             from react_agent.workflow import list_workflows
 
             self._send(
@@ -89,19 +100,25 @@ class AgentHandler(BaseHTTPRequestHandler):
         status, payload = error_response("not_found", f"unknown path {path}", request_id, 404)
         self._send(status, payload)
 
-    def do_POST(self):
+    def do_POST(self) -> None:
+        """解析 JSON 请求并分派对话或工作流执行。"""
         request_id = self.headers.get("X-Request-Id") or str(uuid.uuid4())
         path = urlparse(self.path).path
         length = int(self.headers.get("Content-Length") or 0)
+        # 空请求按空对象处理，所有其他请求必须是 UTF-8 JSON object。
         raw = self.rfile.read(length) if length else b"{}"
         try:
             body = json.loads(raw.decode("utf-8") or "{}")
         except json.JSONDecodeError:
-            status, payload = error_response("invalid_request", "invalid JSON body", request_id, 400)
+            status, payload = error_response(
+                "invalid_request", "invalid JSON body", request_id, 400
+            )
             self._send(status, payload)
             return
         if not isinstance(body, dict):
-            status, payload = error_response("invalid_request", "body must be object", request_id, 400)
+            status, payload = error_response(
+                "invalid_request", "body must be object", request_id, 400
+            )
             self._send(status, payload)
             return
 
@@ -144,12 +161,14 @@ class AgentHandler(BaseHTTPRequestHandler):
             status, payload = error_response("not_found", f"unknown path {path}", request_id, 404)
             self._send(status, payload)
         except Exception as e:
+            # 请求级异常转为结构化错误，服务线程继续处理后续请求。
             traceback.print_exc()
             status, payload = error_response("internal_error", str(e)[:300], request_id, 500)
             self._send(status, payload)
 
 
-def serve(host: str = "127.0.0.1", port: int = 8765):
+def serve(host: str = "127.0.0.1", port: int = 8765) -> None:
+    """初始化应用工具和索引，然后阻塞运行线程化 HTTP 服务。"""
     from react_agent.apps.docs_troubleshoot.index import reset_index
     from react_agent.tools import enable_app_tools
 
@@ -164,7 +183,8 @@ def serve(host: str = "127.0.0.1", port: int = 8765):
     httpd.serve_forever()
 
 
-def main(argv: Optional[list] = None):
+def main(argv: list[str] | None = None) -> None:
+    """解析命令行参数并启动服务。"""
     import argparse
 
     p = argparse.ArgumentParser(description="react-agent thin HTTP server")
