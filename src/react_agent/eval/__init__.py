@@ -105,14 +105,17 @@ class EvalRunner:
         )
 
     def summary(self) -> dict:
+        """返回当前评测运行的通过率和切片摘要。"""
         if not self.report:
             return {"total": 0, "passed": 0, "pass_rate": 0}
         return self.report.get("summary", {})
 
     def save_report(self) -> str:
+        """将当前报告写入运行时目录并返回路径。"""
         return save_report(self.report)
 
     def print_summary(self):
+        """将当前评测摘要输出到终端。"""
         s = self.summary()
         if not s.get("total"):
             print("[Eval] 没有评测结果")

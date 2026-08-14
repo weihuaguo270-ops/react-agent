@@ -7,11 +7,13 @@ from typing import Any
 
 
 def query_tokens(query: str) -> list[str]:
+    """提取规则排序使用的规范化查询词。"""
     parts = re.findall(r"[A-Za-z0-9_./=\-]{2,}|[\u4e00-\u9fff]{2,}", query or "")
     return [p.lower() for p in parts]
 
 
 def rank_results(results: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
+    """按词项、字段和来源信号确定性重排检索结果。"""
     tokens = query_tokens(query)
     if not results:
         return []
@@ -107,6 +109,7 @@ def rank_results(results: list[dict[str, Any]], query: str) -> list[dict[str, An
 
 
 def expanded_query(query: str, evidence_bundle: dict[str, Any] | None) -> str:
+    """用结构化错误证据扩展查询，不拼入敏感原始 Header。"""
     q = query or ""
     if not evidence_bundle:
         return q
@@ -144,5 +147,6 @@ def rank_with_evidence(
     query: str,
     evidence_bundle: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
+    """联合查询和证据信号重排，并保留原始结果字段。"""
     eq = expanded_query(query, evidence_bundle)
     return rank_results(results, eq)

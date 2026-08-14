@@ -27,6 +27,8 @@ def docs_engine() -> str:
 
 @dataclass
 class AgentRunResult:
+    """文档排障 Agent 的终答、轨迹和业务诊断结果。"""
+
     ok: bool
     answer: str
     refused: bool
@@ -37,6 +39,7 @@ class AgentRunResult:
     agent_steps: list[dict[str, Any]] = field(default_factory=list)
 
     def to_workflow_dict(self) -> dict[str, Any]:
+        """转换为 WorkflowResult 兼容的报告字段。"""
         return {
             "ok": self.ok,
             "answer": self.answer,

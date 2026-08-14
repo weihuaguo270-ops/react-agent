@@ -78,6 +78,7 @@ class TestCase:
             self.tag = self.capability
 
     def to_dict(self) -> dict:
+        """序列化测试用例，保留数据切片和执行约束。"""
         d = {
             "id": self.id,
             "question": self.question,
@@ -129,6 +130,7 @@ def resolve_dataset_path(name_or_path: Optional[str] = None) -> str:
 
 
 def name_or_path_is_execution(name_or_path: Optional[str]) -> bool:
+    """判断名称或路径是否指向工具执行评测集。"""
     if name_or_path in ("execution", "exec"):
         return True
     if name_or_path and os.path.basename(str(name_or_path)) == "execution_dataset.json":

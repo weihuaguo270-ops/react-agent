@@ -17,4 +17,5 @@ DOCS_TROUBLESHOOT_PROMPT = """你是企业内部「文档 / API 排障」助手�
 
 
 def get_system_prompt(question: str = "") -> str:
+    """返回文档排障 App 的证据约束提示词。"""
     return DOCS_TROUBLESHOOT_PROMPT.format(question=question or "")

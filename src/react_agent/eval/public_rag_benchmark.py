@@ -31,6 +31,7 @@ DEFAULT_PUBLIC_RAG = os.path.join(_EVAL_DIR, "public_rag_benchmark_subset.json")
 
 
 def load_public_rag_benchmark(path: Optional[str] = None) -> dict[str, Any]:
+    """加载冻结的 HotpotQA RAG 子集并校验顶层用例结构。"""
     filepath = path or DEFAULT_PUBLIC_RAG
     with open(filepath, encoding="utf-8") as f:
         data = json.load(f)
@@ -43,6 +44,7 @@ def retrieval_recall(
     retrieved_sources: list[str],
     supporting_ids: list[str],
 ) -> float:
+    """按支持事实标识计算检索召回，不评价生成答案质量。"""
     if not supporting_ids:
         return 1.0
     got = {normalize_text(s) for s in retrieved_sources if s}
@@ -71,6 +73,7 @@ def faithfulness_grounded(answer: str, retrieved_texts: list[str], gold: str) ->
 
 
 def build_ephemeral_index(contexts: list[dict[str, Any]]):
+    """为单个用例构建临时索引，避免跨用例语料污染。"""
     os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
     from react_agent.rag import RAG
 
@@ -116,6 +119,7 @@ def retrieve_for_case(
     top_k: int = 3,
     context_filter: str = "all",
 ) -> list[dict[str, Any]]:
+    """在用例独立索引中检索，支持无上下文和干扰项对照。"""
     contexts = list(case.get("contexts") or [])
     if context_filter == "distractors_only":
         contexts = [c for c in contexts if not c.get("is_supporting")]
@@ -173,6 +177,7 @@ def score_rag_case(
     mode: str,
     min_recall: float = 0.5,
 ) -> dict[str, Any]:
+    """联合答案匹配、检索召回和忠实度代理指标判定通过。"""
     bench = str(case.get("benchmark") or "hotpotqa_rag")
     gold = str(case.get("gold_answer") or "")
     supporting = list(case.get("supporting_ids") or [])
@@ -215,6 +220,7 @@ def score_rag_case(
 
 
 def score_offline_fixture(case: dict[str, Any], *, min_recall: float) -> dict[str, Any]:
+    """用 Gold 构造链路自检结果，不代表真实模型执行。"""
     supporting = list(case.get("supporting_ids") or [])
     hits = []
     for sid in supporting:
@@ -240,6 +246,7 @@ def run_rag_mode_case(
     mode: str = "rag",
     context_filter: str = "all",
 ) -> dict[str, Any]:
+    """运行真实检索加确定性 reader，隔离检索质量与模型能力。"""
     hits = retrieve_for_case(case, top_k=top_k, context_filter=context_filter)
     out = extractive_rag_answer(case, hits)
     row = score_rag_case(
@@ -262,6 +269,7 @@ def run_agent_mode_case(
     min_recall: float,
     agent_runner=None,
 ) -> dict[str, Any]:
+    """运行完整 Agent，并记录终答、引用和工具轨迹证据。"""
     import time
 
     from react_agent.eval.execution_scorer import _final_answer_text
@@ -518,6 +526,7 @@ def run_public_rag_benchmark(
 
 
 def report_to_markdown(report: dict, *, title: Optional[str] = None) -> str:
+    """渲染分模式 RAG 指标，并保留证据等级说明。"""
     s = report.get("summary") or {}
     title = title or f"公开 RAG/Agent benchmark（{report.get('report_id', '')}）"
     wilson = s.get("pass_rate_wilson_95") or {}

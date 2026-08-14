@@ -15,10 +15,12 @@ _CASES = _APP / "git_docs_cases.json"
 
 
 def repo_root() -> Path:
+    """返回 Git 文档评测使用的仓库根目录。"""
     return _REPO
 
 
 def load_git_docs_cases() -> list[dict[str, Any]]:
+    """加载基于真实仓库文档的冻结评测集。"""
     return json.loads(_CASES.read_text(encoding="utf-8"))
 
 
@@ -31,6 +33,7 @@ def _configure_git_ingest() -> None:
 
 
 def run_git_docs_eval(*, include_held_out: bool = True) -> dict[str, Any]:
+    """运行 Git 文档集，并可排除 held-out 切片。"""
     _configure_git_ingest()
 
     from react_agent.tools import enable_app_tools

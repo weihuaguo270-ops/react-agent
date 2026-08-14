@@ -30,6 +30,7 @@ PROFILE_HINTS = {
 
 
 def classify_tool_needs(task, call_llm):
+    """按任务关键词选择最小工具配置；当前不调用传入的 LLM。"""
     task_lower = task.lower() if isinstance(task, str) else str(task).lower()
     tags = set()
     if any(w in task_lower for w in ["时间", "时区", "当前时间", "现在几点", "纽约", "伦敦"]):
@@ -48,6 +49,7 @@ def classify_tool_needs(task, call_llm):
 
 
 def filter_tools(all_defs, needed_tags):
+    """仅保留命中工具配置的定义，未知工具不会暴露给 Worker。"""
     allowed = set()
     for tag in needed_tags:
         allowed |= TOOL_PROFILES[tag]
@@ -55,6 +57,12 @@ def filter_tools(all_defs, needed_tags):
 
 
 class Orchestrator:
+    """按依赖层级调度 Worker，并隔离各 Worker 可见的工具集合。
+
+    这里的隔离是能力路由，不是进程或系统权限边界；工具执行安全仍由
+    Sandbox 负责。并行模式只并发同一依赖层级中的任务。
+    """
+
     def __init__(self, call_llm_func, react_loop_func, tool_definitions=None):
         self.tasks = []
         self.results = []
@@ -64,6 +72,7 @@ class Orchestrator:
         self.shared_data = {}
 
     def plan(self, user_query):
+        """生成子任务并保存 Planner 给出的依赖层级。"""
         planner = Planner()
         tasks = planner.plan(user_query, self.call_llm)
         if not tasks:
@@ -80,6 +89,7 @@ class Orchestrator:
         return tasks
 
     def run_worker(self, task, context="", task_obj=None):
+        """用最小工具集执行一个子任务，并记录可供后继任务使用的输出。"""
         print(f"\n{'='*50}")
         print(f"[Worker] {task}")
         if context:
@@ -158,6 +168,7 @@ class Orchestrator:
         return "\n".join(parts)
 
     def synthesize(self):
+        """按完成顺序汇总 Worker 结果；不再调用模型改写内容。"""
         if len(self.results) == 1:
             final = self.results[0]
         elif not self.results:
@@ -171,6 +182,7 @@ class Orchestrator:
         return final
 
     def execute(self, user_query, parallel=False):
+        """完成规划、分层执行和结果汇总。"""
         self.plan(user_query)
         self.results = []
         completed_ids = set()

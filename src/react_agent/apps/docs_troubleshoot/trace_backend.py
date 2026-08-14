@@ -61,6 +61,7 @@ def fetch_trace_bundle(trace_id: str) -> dict[str, Any]:
 
 
 def search_logs_via_backend(trace_id: str, *, limit: int = 10) -> dict[str, Any]:
+    """查询配置的日志后端，并返回截断、结构化证据。"""
     tid = (trace_id or "").strip()
     if _backend_mode() == "mcp":
         try:

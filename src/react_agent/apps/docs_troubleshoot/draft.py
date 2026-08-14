@@ -25,6 +25,7 @@ _ARCH_META = re.compile(
 
 
 def as_results(blob: Any) -> list[dict[str, Any]]:
+    """将检索结果规范化为可排序字典列表。"""
     if isinstance(blob, str):
         try:
             blob = json.loads(blob)
@@ -43,6 +44,7 @@ _MULTI_HINT = re.compile(
 
 
 def needs_multi_doc(query: str) -> bool:
+    """判断问题是否需要多来源证据支撑。"""
     ql = query or ""
     codes = set(_HTTP_CODES.findall(ql))
     if len(codes) >= 2:
@@ -73,6 +75,7 @@ def _pick_unique_by_source(
 
 
 def select_hits(ranked: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
+    """按来源多样性和数量上限选择引用候选。"""
     if not ranked:
         return []
     ql = query or ""

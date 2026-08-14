@@ -17,6 +17,8 @@ DATASET_PATH = Path(__file__).with_name("business_cases.json")
 
 @dataclass
 class BusinessCaseResult:
+    """一个费用用例的状态断言和 EvaluationEpisode 证据。"""
+
     case_id: str
     split: str
     passed: bool
@@ -26,16 +28,20 @@ class BusinessCaseResult:
 
 @dataclass
 class BusinessSuiteResult:
+    """同一 Agent 版本在固定费用任务集上的聚合结果。"""
+
     agent_version: str
     cases: list[BusinessCaseResult] = field(default_factory=list)
 
     @property
     def pass_rate(self) -> float:
+        """返回执行用例的等权通过率；空集合返回零。"""
         if not self.cases:
             return 0.0
         return sum(case.passed for case in self.cases) / len(self.cases)
 
     def to_dict(self) -> dict[str, Any]:
+        """生成可持久化并用于版本门禁的报告结构。"""
         by_split = {}
         for split in sorted({case.split for case in self.cases}):
             group = [case for case in self.cases if case.split == split]
@@ -61,6 +67,7 @@ class BusinessSuiteResult:
 
 
 def load_business_cases(path: Path = DATASET_PATH) -> list[dict[str, Any]]:
+    """加载费用业务清单；调用方负责进一步校验用例字段。"""
     data = json.loads(path.read_text(encoding="utf-8"))
     return list(data.get("cases") or [])
 
@@ -72,6 +79,7 @@ def run_business_case(
     agent_fn: Callable[[dict[str, Any], ExpenseLedger], tuple[str, list[dict[str, Any]]]]
     | None = None,
 ) -> BusinessCaseResult:
+    """在独立 ledger 上执行用例并校验期望业务状态子集。"""
     claim = copy.deepcopy(case["claim"])
     claim_id = str(claim["id"])
     ledger = ExpenseLedger.from_claims([claim])
@@ -117,6 +125,7 @@ def run_business_suite(
     agent_fn: Callable[[dict[str, Any], ExpenseLedger], tuple[str, list[dict[str, Any]]]]
     | None = None,
 ) -> BusinessSuiteResult:
+    """运行指定数据切片并保留 Agent 版本证据。"""
     cases = load_business_cases()
     if split:
         cases = [case for case in cases if case["split"] == split]
@@ -137,6 +146,7 @@ def compare_business_runs(
     baseline: BusinessSuiteResult,
     candidate: BusinessSuiteResult,
 ) -> dict[str, Any]:
+    """比较候选版和基线，任何逐用例回归都会阻止发布。"""
     baseline_cases = {case.case_id: case for case in baseline.cases}
     candidate_cases = {case.case_id: case for case in candidate.cases}
     comparable = sorted(set(baseline_cases) & set(candidate_cases))

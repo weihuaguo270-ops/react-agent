@@ -1,4 +1,4 @@
-"""docs_troubleshoot /v1/chat handler."""
+"""文档排障应用的 `/v1/chat` 处理器。"""
 from __future__ import annotations
 
 import os
@@ -7,7 +7,10 @@ from typing import Any
 from react_agent.server.http_util import error_response
 
 
-def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
+def handle_docs_chat(
+    body: dict[str, Any], request_id: str
+) -> tuple[int, dict[str, Any]]:
+    """执行 Live 或离线文档问答并返回统一证据字段。"""
     message = (body.get("message") or body.get("query") or "").strip()
     if not message:
         return error_response("invalid_request", "message is required", request_id, 400)
@@ -22,6 +25,7 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
 
     if use_llm:
         try:
+            # Live 路径仍需经过回答策略，不能直接返回未经校验的模型文本。
             os.environ["REACT_AGENT_APP"] = "docs_troubleshoot"
             from react_agent.harness.recorder import current_trajectory
             from react_agent.react_loop import react_loop
@@ -51,6 +55,8 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
 
     from react_agent.apps.docs_troubleshoot.offline_answer import answer_offline
 
+    # 现场错误、请求头、日志和 trace 作为调用方提供的证据传入，
+    # handler 不主动访问生产系统。
     extra: dict[str, Any] = {}
     if body.get("error_response") is not None:
         extra["error_response"] = body.get("error_response")

@@ -1,4 +1,4 @@
-"""Liveness / readiness helpers for the thin HTTP server."""
+"""轻量 HTTP 服务的存活与就绪探针。"""
 from __future__ import annotations
 
 import os
@@ -6,6 +6,7 @@ from typing import Any
 
 
 def package_version() -> str:
+    """读取已安装包版本；源码运行时使用兼容版本号。"""
     try:
         from importlib.metadata import version
 
@@ -15,6 +16,7 @@ def package_version() -> str:
 
 
 def _default_app() -> str:
+    """返回服务启动时实际使用的默认应用。"""
     return (
         os.environ.get("REACT_AGENT_DEFAULT_APP")
         or os.environ.get("REACT_AGENT_APP")
@@ -23,6 +25,7 @@ def _default_app() -> str:
 
 
 def liveness_payload(*, request_id: str) -> dict[str, Any]:
+    """构造不访问外部依赖的存活响应。"""
     return {
         "status": "ok",
         "version": package_version(),
@@ -32,12 +35,13 @@ def liveness_payload(*, request_id: str) -> dict[str, Any]:
 
 
 def readiness_check() -> tuple[bool, dict[str, Any]]:
-    """检查 Sandbox 后端和默认应用依赖。"""
+    """检查 Sandbox 后端和默认应用的必要依赖。"""
     from react_agent.harness import SANDBOX
 
     app = _default_app()
     sandbox_status = SANDBOX.status()
     if SANDBOX.required:
+        # required 模式必须失败关闭，不能在容器不可用时降级到宿主执行。
         ready, error = SANDBOX.verify_runtime()
         sandbox_status = SANDBOX.status()
         if not ready:
@@ -55,6 +59,7 @@ def readiness_check() -> tuple[bool, dict[str, Any]]:
         }
 
     try:
+        # 文档应用只有在索引非空时才能提供有依据的回答。
         from react_agent.apps.docs_troubleshoot.index import get_index
 
         idx = get_index()
@@ -82,6 +87,7 @@ def readiness_check() -> tuple[bool, dict[str, Any]]:
 
 
 def readiness_payload(*, request_id: str) -> tuple[int, dict[str, Any]]:
+    """将就绪检查转换为 HTTP 状态码和响应体。"""
     ok, details = readiness_check()
     payload: dict[str, Any] = {
         "status": "ready" if ok else "not_ready",
