@@ -426,6 +426,7 @@ class Sandbox:
     def _container_command(
         self, executable: str, name: str, tool_name: str
     ) -> list[str]:
+        """Construct the least-privileged container command for one tool call."""
         return [
             executable,
             "run",
@@ -493,6 +494,7 @@ class Sandbox:
             pass
 
     def _run_container(self, tool_name: str, payload: str) -> str:
+        """Run one call in a disposable container and clean it up on exit."""
         ok, error = self.verify_runtime()
         if not ok:
             return f"[沙箱] 安全后端不可用，已拒绝执行: {error}"
@@ -526,6 +528,7 @@ class Sandbox:
             self._remove_container(executable, name)
 
     def run(self, tool_call: dict[str, Any]) -> str:
+        """Apply risk policy, input limits and backend-specific isolation."""
         function = tool_call.get("function") or {}
         tool_name = str(function.get("name") or "")
         if not tool_name:

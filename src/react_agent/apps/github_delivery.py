@@ -134,6 +134,7 @@ class GitHubDeliveryWorkflow:
         error = ""
 
         try:
+            # Clone, edit and test finish before any branch or remote write.
             self._git("clone", "--no-hardlinks", task.repository, str(workspace))
             self._git("checkout", task.base_branch, cwd=workspace)
             steps.append(self._step(1, "clone_repository", {"base": task.base_branch}, "ok"))
@@ -151,6 +152,7 @@ class GitHubDeliveryWorkflow:
                 "returncode": test_result["returncode"],
             }, "passed" if test_result["passed"] else "failed"))
 
+            # A failed acceptance test is terminal; never write a rejected candidate.
             if not test_result["passed"]:
                 status = "test_failed"
             elif self.config.mode == "shadow":
@@ -205,6 +207,7 @@ class GitHubDeliveryWorkflow:
         return report
 
     def _validate_task(self, task: DeliveryTask) -> None:
+        """Validate inputs that can affect the isolated worktree."""
         repository = Path(task.repository).resolve()
         if not repository.is_dir() or not (repository / ".git").exists():
             raise ValueError("repository must be a local Git worktree")
@@ -223,6 +226,7 @@ class GitHubDeliveryWorkflow:
                 raise ValueError(f"unsafe replacement path: {replacement.path}")
 
     def _validate_approval(self, plan_sha: str, approval: Approval | None) -> str:
+        """Treat malformed or mismatched approval records as non-consent."""
         if self.config.mode == "shadow":
             return "not_required"
         if approval is None:
@@ -248,6 +252,7 @@ class GitHubDeliveryWorkflow:
             target.write_text(content.replace(replacement.old, replacement.new), encoding="utf-8")
 
     def _run_tests(self, workspace: Path, command: Sequence[str]) -> dict[str, Any]:
+        """Run the allowlisted test command without shell interpretation."""
         started = time.perf_counter()
         executable = command[0]
         if executable in {"python", "python3"}:
@@ -268,6 +273,7 @@ class GitHubDeliveryWorkflow:
     def _publish_draft_pr(
         self, workspace: Path, task: DeliveryTask, approval: Approval | None, branch: str
     ) -> str:
+        """Publish only an already-approved candidate branch as a Draft PR."""
         if approval is None or not approval.allow_external_write:
             raise ValueError("approval does not authorize external writes")
         if shutil.which("gh") is None:
@@ -301,6 +307,7 @@ class GitHubDeliveryWorkflow:
         return alerts
 
     def _build_report(self, **values: Any) -> dict[str, Any]:
+        """Build the cross-repository episode and preserve its evidence boundary."""
         task: DeliveryTask = values["task"]
         success = values["status"] in {"shadow_passed", "candidate_committed", "draft_pr_created"}
         final_state = {
