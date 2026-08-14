@@ -82,26 +82,32 @@ def verify_citations_tool(answer: str, allowed_sources: str = "") -> str:
 
 
 def parse_error_evidence_tool(status_code: int = 0, body_json: str = "") -> str:
+    """将错误响应解析结果包装为工具 JSON 文本。"""
     return json.dumps(parse_error_evidence(status_code=status_code, body_json=body_json), ensure_ascii=False)
 
 
 def parse_request_headers_tool(headers_json: str = "") -> str:
+    """将脱敏 Header 证据包装为工具 JSON 文本。"""
     return json.dumps(parse_request_headers(headers_json=headers_json), ensure_ascii=False)
 
 
 def read_config_snapshot_tool(prefixes: str = "REACT_AGENT_") -> str:
+    """读取白名单前缀配置并包装为工具 JSON 文本。"""
     return json.dumps(read_config_snapshot(prefixes=prefixes), ensure_ascii=False)
 
 
 def probe_service_health_tool(url: str = "") -> str:
+    """执行一次受限健康探测并包装为工具 JSON 文本。"""
     return json.dumps(probe_service_health(url=url), ensure_ascii=False)
 
 
 def parse_log_evidence_tool(log_text: str = "", trace_id: str = "") -> str:
+    """提取日志错误与 trace 关联证据并返回 JSON 文本。"""
     return json.dumps(parse_log_evidence(log_text, trace_id=trace_id), ensure_ascii=False)
 
 
 def parse_trace_context_tool(trace_json: str = "") -> str:
+    """解析 trace 上下文并返回工具协议使用的 JSON 文本。"""
     return json.dumps(parse_trace_context(trace_json), ensure_ascii=False)
 
 

@@ -13,6 +13,7 @@ def _split_sentences(text: str) -> list[str]:
 
 
 def extract_relevant_sentences(content: str, query: str, *, limit: int = 2) -> list[str]:
+    """按查询词命中提取有限数量的证据句。"""
     tokens = query_tokens(query)
     scored: list[tuple[float, str]] = []
     for sent in _split_sentences(content):
@@ -84,6 +85,7 @@ def synthesize_draft(
 
 
 def summarize_field_evidence(evidence_bundle: dict[str, Any]) -> str:
+    """将结构化现场证据压缩为可引用的诊断摘要。"""
     parts: list[str] = []
     auth_relevant = False
     for item in evidence_bundle.get("items") or []:

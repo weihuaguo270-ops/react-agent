@@ -14,6 +14,7 @@ _FAULT = Path(__file__).resolve().parent / "fault_cases.json"
 
 
 def load_fault_cases() -> list[dict[str, Any]]:
+    """加载冻结故障注入集及其期望根因和证据。"""
     return json.loads(_FAULT.read_text(encoding="utf-8"))
 
 
@@ -95,6 +96,7 @@ def compute_fault_metrics(
     cases: list[dict[str, Any]],
     rows: list[dict[str, Any]],
 ) -> dict[str, float | int | None]:
+    """计算根因命中、证据充分和错误建议等诊断指标。"""
     total = len(rows) or 1
     rc_hits = sum(1 for r in rows if r.get("root_cause_ok"))
     sufficiency_scores = [
@@ -117,6 +119,7 @@ def compute_fault_metrics(
 
 
 def run_fault_eval() -> dict[str, Any]:
+    """运行故障集并返回可用于回归门禁的聚合报告。"""
     os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
     os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
 

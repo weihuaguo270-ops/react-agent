@@ -31,6 +31,7 @@ DEFAULT_PUBLIC_BENCHMARK = os.path.join(_EVAL_DIR, "public_benchmark_subset.json
 
 
 def load_public_benchmark(path: Optional[str] = None) -> dict[str, Any]:
+    """加载冻结的公开子集，并校验顶层 ``cases`` 容器。"""
     filepath = path or DEFAULT_PUBLIC_BENCHMARK
     with open(filepath, encoding="utf-8") as f:
         data = json.load(f)
@@ -40,6 +41,7 @@ def load_public_benchmark(path: Optional[str] = None) -> dict[str, Any]:
 
 
 def normalize_text(s: str) -> str:
+    """执行包含匹配使用的大小写和空白规范化。"""
     s = (s or "").strip().lower()
     s = re.sub(r"\s+", " ", s)
     s = s.replace("'", "'").replace("'", "'")
@@ -67,6 +69,7 @@ def extract_gsm8k_number(text: str) -> Optional[str]:
 
 
 def numbers_equal(a: str, b: str) -> bool:
+    """按浮点容差比较数值，解析失败时回退到精确字符串比较。"""
     try:
         return abs(float(a) - float(b)) < 1e-6
     except ValueError:
@@ -74,6 +77,7 @@ def numbers_equal(a: str, b: str) -> bool:
 
 
 def match_gold(pred_text: str, gold: str, benchmark: str) -> tuple[bool, str]:
+    """按 GSM8K 数值或 HotpotQA 宽松文本规则匹配答案。"""
     gold = (gold or "").strip()
     if not gold:
         return False, "empty gold"
@@ -126,6 +130,7 @@ def _build_offline_fixtures(cases: list[dict]) -> dict[str, str]:
 
 
 def score_offline_case(case: dict, prediction: str) -> dict[str, Any]:
+    """只验证答案匹配器；不代表模型或 Agent 已实际执行该用例。"""
     bench = str(case.get("benchmark") or "")
     ok, reason = match_gold(prediction, str(case.get("gold_answer") or ""), bench)
     return {
@@ -297,6 +302,7 @@ def run_public_benchmark(
 
 
 def report_to_markdown(report: dict, *, title: Optional[str] = None) -> str:
+    """将公开子集结果渲染为包含证据边界的 Markdown 摘要。"""
     s = report.get("summary") or {}
     title = title or f"公开 Agent benchmark 子集（{report.get('report_id', '')}）"
     wilson = s.get("pass_rate_wilson_95") or {}

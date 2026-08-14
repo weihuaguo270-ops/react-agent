@@ -103,6 +103,7 @@ def normalize_answer(text: str) -> str:
 
 
 def answer_matches(answer: str, expected: str) -> bool:
+    """按能力集约定执行规范化答案匹配。"""
     if not expected:
         return True
     a = normalize_answer(answer)

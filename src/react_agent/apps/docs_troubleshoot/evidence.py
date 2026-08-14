@@ -26,6 +26,7 @@ def _parse_json_blob(raw: Any) -> dict[str, Any]:
 
 
 def redact_headers(headers: dict[str, Any]) -> dict[str, str]:
+    """保留诊断所需 Header，并遮蔽凭据和 Cookie 值。"""
     out: dict[str, str] = {}
     for k, v in headers.items():
         key = str(k)
@@ -61,6 +62,7 @@ def parse_error_evidence(
 
 
 def parse_request_headers(headers_json: str = "") -> dict[str, Any]:
+    """解析请求 Header JSON，返回脱敏后的诊断证据。"""
     data = _parse_json_blob(headers_json)
     redacted = redact_headers(data) if data else {}
     has_auth = any(
@@ -94,6 +96,7 @@ def read_config_snapshot(prefixes: str = "REACT_AGENT_") -> dict[str, Any]:
 
 
 def probe_service_health(url: str = "", timeout_sec: float = 3.0) -> dict[str, Any]:
+    """在短超时内探测 HTTP 服务，不跟随业务重试策略。"""
     target = (url or os.environ.get("REACT_AGENT_HEALTH_URL") or "http://127.0.0.1:8765/health").strip()
     if not target:
         return {"ok": False, "type": "health_probe", "error": "no_url"}

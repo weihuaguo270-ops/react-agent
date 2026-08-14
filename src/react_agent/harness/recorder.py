@@ -110,11 +110,13 @@ class Trajectory:
         return None
 
     def start_step(self, step: int):
+        """记录步骤开始时间，供后续计算耗时。"""
         self._step_durations[step] = time.time()
 
     def add_step(self, step: int, thought: str = "",
                  action_name: str = "", action_args: str = "",
                  observation: str = "", tokens: int = 0):
+        """追加完整步骤并通知可选的失败监视器。"""
         entry = {
             "step": step,
             "thought": thought[:500] if thought else "",
@@ -131,6 +133,7 @@ class Trajectory:
         self._watch_step_entry(entry)
 
     def add_thought(self, step: int, thought: str):
+        """补充指定步骤的思考内容并重新通知监视器。"""
         self._update_step(step, thought=thought[:500])
         entry = self._find_step_entry(step)
         if entry:
@@ -138,6 +141,7 @@ class Trajectory:
 
     def add_tool_call(self, step: int, name: str, arguments: str,
                       result: str, duration: float = 0):
+        """补充工具调用；同一步多次调用时保留为 ``actions`` 列表。"""
         self._update_step(step,
                           action={"name": name, "arguments": arguments[:300]},
                           observation=result[:500])
@@ -159,6 +163,7 @@ class Trajectory:
         self.steps.append(entry)
 
     def set_final_answer(self, answer: str):
+        """设置截断后的最终答案。"""
         self.final_answer = answer[:1000] if answer else ""
 
     def add_output_artifact(self, artifact: dict[str, Any]) -> None:
@@ -174,6 +179,7 @@ class Trajectory:
         entry.setdefault("artifacts", []).append(_normalize_artifact(artifact))
 
     def to_dict(self) -> dict:
+        """生成符合当前 Harness schema 的轨迹字典。"""
         from react_agent.harness.schema import SCHEMA_VERSION
 
         duration = round(time.time() - self._start_time, 2)
@@ -201,6 +207,7 @@ class Trajectory:
         return out
 
     def save(self, directory: Optional[str] = None) -> str:
+        """完成失败监视并将轨迹写入单个 JSON 文件。"""
         if self._watcher:
             from .step_watcher_bridge import finalize_watcher
 
@@ -226,6 +233,7 @@ def start_trajectory(
     acceptance_criteria: Optional[list[str]] = None,
     input_artifacts: Optional[list[dict[str, Any]]] = None,
 ) -> Trajectory:
+    """创建并设置进程级当前轨迹；不提供线程隔离。"""
     global _current_trajectory
     _current_trajectory = Trajectory(
         query=query,
@@ -239,10 +247,12 @@ def start_trajectory(
 
 
 def current_trajectory() -> Optional[Trajectory]:
+    """返回进程级当前轨迹。"""
     return _current_trajectory
 
 
 def finish_trajectory(final_answer: str = "") -> Optional[str]:
+    """保存并清除当前轨迹；没有活动轨迹时返回 ``None``。"""
     global _current_trajectory
     if _current_trajectory is None:
         return None

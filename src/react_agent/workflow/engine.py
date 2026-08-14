@@ -18,6 +18,8 @@ from typing import Any, Callable, Optional
 
 
 class StepKind(str, Enum):
+    """工作流步骤的执行语义。"""
+
     TOOL = "tool"          # call a registered tool function
     POLICY = "policy"      # pure Python policy / transform
     BRANCH = "branch"      # choose next steps via predicate (soft)
@@ -26,6 +28,8 @@ class StepKind(str, Enum):
 
 @dataclass
 class Step:
+    """声明式步骤及其依赖、参数映射和失败策略。"""
+
     id: str
     kind: StepKind
     description: str = ""
@@ -45,6 +49,8 @@ class Step:
 
 @dataclass
 class WorkflowDef:
+    """带版本和处理器注册表的完整工作流定义。"""
+
     name: str
     description: str
     steps: list[Step]
@@ -54,6 +60,8 @@ class WorkflowDef:
 
 @dataclass
 class StepRecord:
+    """单个步骤的输入、结果、耗时和错误证据。"""
+
     step_id: str
     kind: str
     ok: bool
@@ -66,6 +74,8 @@ class StepRecord:
 
 @dataclass
 class WorkflowResult:
+    """一次工作流执行的状态和可审计步骤记录。"""
+
     workflow: str
     run_id: str
     ok: bool
@@ -77,6 +87,7 @@ class WorkflowResult:
     diagnosis: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """生成面向报告的摘要，不展开完整共享状态。"""
         return {
             "workflow": self.workflow,
             "run_id": self.run_id,
@@ -183,6 +194,12 @@ def _when_ok(when: str, state: dict[str, Any]) -> bool:
 
 
 class WorkflowRunner:
+    """按拓扑层级确定性执行工作流。
+
+    同一层仍顺序执行，以避免共享状态写入竞态。关键步骤失败立即返回，
+    非关键步骤失败会保留记录并继续后续步骤。
+    """
+
     def __init__(
         self,
         workflow: WorkflowDef,
@@ -192,6 +209,7 @@ class WorkflowRunner:
         self.tool_registry = tool_registry or {}
 
     def run(self, initial_state: Optional[dict[str, Any]] = None) -> WorkflowResult:
+        """复制初始状态并执行一次工作流，返回独立运行证据。"""
         state: dict[str, Any] = dict(initial_state or {})
         run_id = f"wf-{uuid.uuid4().hex[:12]}"
         records: list[StepRecord] = []

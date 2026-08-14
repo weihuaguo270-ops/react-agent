@@ -32,6 +32,8 @@ def _json_hash(payload: Any) -> str:
 
 @dataclass(frozen=True)
 class Replacement:
+    """一次受控的精确文本替换，不支持模糊匹配。"""
+
     path: str
     old: str
     new: str
@@ -39,6 +41,8 @@ class Replacement:
 
 @dataclass(frozen=True)
 class DeliveryTask:
+    """可哈希、可回放的工程交付计划。"""
+
     task_id: str
     repository: str
     issue_url: str
@@ -50,6 +54,7 @@ class DeliveryTask:
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "DeliveryTask":
+        """从持久化任务载荷恢复交付计划。"""
         return cls(
             task_id=str(payload["task_id"]),
             repository=str(payload["repository"]),
@@ -62,11 +67,14 @@ class DeliveryTask:
         )
 
     def plan_payload(self) -> dict[str, Any]:
+        """返回参与审批哈希计算的完整计划内容。"""
         return asdict(self)
 
 
 @dataclass(frozen=True)
 class Approval:
+    """绑定计划哈希的人工审批凭据。"""
+
     plan_sha256: str
     approver: str
     approved_at: str
@@ -74,6 +82,7 @@ class Approval:
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "Approval":
+        """从控制面记录恢复审批凭据。"""
         return cls(
             plan_sha256=str(payload["plan_sha256"]),
             approver=str(payload["approver"]),
@@ -84,6 +93,8 @@ class Approval:
 
 @dataclass(frozen=True)
 class WorkflowConfig:
+    """交付运行模式、证据目录和资源上限。"""
+
     artifact_dir: Path
     mode: str = "shadow"
     publish_draft_pr: bool = False
@@ -112,6 +123,12 @@ class GitHubDeliveryWorkflow:
         approval: Approval | None = None,
         idempotency_key: str,
     ) -> dict[str, Any]:
+        """执行一次可审计交付并返回标准化运行报告。
+
+        Shadow 模式只克隆、修改和测试；guarded 模式还要求审批哈希
+        与当前计划一致。只有审批显式允许外部写入且配置开启时才会
+        推送分支并创建 Draft PR。相同幂等键和计划哈希直接回放报告。
+        """
         started = time.perf_counter()
         plan_sha = _json_hash(task.plan_payload())
         replay = self._load_replay(idempotency_key, plan_sha)
