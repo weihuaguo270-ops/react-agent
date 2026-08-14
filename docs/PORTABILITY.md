@@ -18,6 +18,10 @@ Windows defaults to `%LOCALAPPDATA%\react-agent`. Linux follows
 Package-local `memory.json` and `rag_index.json` are copied once when the portable target
 does not exist. The source file is retained.
 
+Retention and cleanup rules are defined in
+[`ARTIFACT_RETENTION.md`](ARTIFACT_RETENTION.md). Runtime trajectories and caches are not
+release evidence.
+
 ## LangGraph environments
 
 The historical LangGraph experiment uses the 0.2 API and remains in the optional
