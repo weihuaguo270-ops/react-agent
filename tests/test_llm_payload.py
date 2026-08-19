@@ -9,18 +9,11 @@ from react_agent.llm import (
 from react_agent.resilience import ErrorCategory, classify_error
 
 
-def test_legacy_deepseek_chat_maps_to_v4_flash(monkeypatch):
+def test_current_deepseek_v4_defaults_to_disabled_thinking(monkeypatch):
     monkeypatch.delenv("LLM_THINKING", raising=False)
-    model, thinking = _resolve_model_and_thinking("deepseek-chat")
+    model, thinking = _resolve_model_and_thinking("deepseek-v4-flash")
     assert model == "deepseek-v4-flash"
     assert thinking == "disabled"
-
-
-def test_legacy_deepseek_reasoner_enables_thinking(monkeypatch):
-    monkeypatch.delenv("LLM_THINKING", raising=False)
-    model, thinking = _resolve_model_and_thinking("deepseek-reasoner")
-    assert model == "deepseek-v4-flash"
-    assert thinking == "enabled"
 
 
 def test_empty_tools_omitted_from_payload():

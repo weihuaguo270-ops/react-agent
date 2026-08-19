@@ -27,11 +27,25 @@ REFUSE_QUERY_NEEDLES = (
     "bypass auth",
 )
 
+PROMPT_INJECTION_NEEDLES = (
+    "ignore previous instructions",
+    "ignore all previous",
+    "忽略之前的指令",
+    "忽略所有指令",
+    "reveal system prompt",
+    "system prompt",
+    "输出系统提示词",
+    "dump api key",
+    "泄露密钥",
+)
+
 
 def should_refuse_query(query: str) -> bool:
     """Central refuse heuristic for out-of-domain or dangerous requests."""
     q = (query or "").lower()
     if any(k.lower() in q for k in REFUSE_QUERY_NEEDLES):
+        return True
+    if any(k.lower() in q for k in PROMPT_INJECTION_NEEDLES):
         return True
     if "绕过" in query and any(k in q for k in ("鉴权", "api key", "apikey", "认证")):
         return True

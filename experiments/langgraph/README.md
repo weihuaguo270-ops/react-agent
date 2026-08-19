@@ -48,11 +48,26 @@ print(run("用计算器算 1+1", thread_id="demo"))
 
 | 能力 | LangGraph 文件 | 说明 |
 |------|----------------|------|
-| Agent 运行时 | `graph/agent.py` | StateGraph + MemorySaver |
+| Agent 运行时 | `graph/agent.py` | StateGraph + 可选 MemorySaver/MySQL Checkpointer |
 | 框架 Demo | `demo_checkpoint_hitl.py` | 无 Key：图边 / checkpoint / HITL |
 | 工具 / HITL | `graph/tools.py` · `graph/safety.py` | `@tool` + 权限审批 |
 | 轨迹 | `graph/harness/recorder.py` | Format B，`schema_version=1` |
 | 其他 | context / memory / mcp / rag / orchestrator | 可选旁路 |
+
+## MySQL 持久化
+
+默认仍使用 `MemorySaver`，便于无依赖 Demo。需要跨进程/重启保留 LangGraph 状态时：
+
+```bash
+pip install -e ".[langgraph,mysql]"
+# LANGGRAPH_CHECKPOINT_BACKEND=mysql
+# LANGGRAPH_MYSQL_URL=mysql://user:password@host:3306/react_agent
+python experiments/langgraph/graph/main.py "用计算器算 1+1"
+```
+
+首次启动会创建 `langgraph_checkpoints` 和 `langgraph_writes` 表。MySQL Checkpointer
+已经实现同步/异步读写、父 checkpoint 关联和 pending writes；但仍是单库存储，未提供
+分片、跨区域复制、密钥轮换和连接池治理。
 
 ## 契约测试
 

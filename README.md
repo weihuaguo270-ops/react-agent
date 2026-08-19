@@ -34,6 +34,32 @@ LangGraph environment contract.
 | 方向 | 做什么 | 快速入口 |
 |------|--------|----------|
 | **① 写代码 / 执行** | ReAct 调工具、多步任务、轨迹可回放 | `python -m react_agent "用 calculator 算 17*19"` · [`run_execution_suite.py`](examples/eval/run_execution_suite.py) · HTTP: [`run_execution_http_smoke.py`](examples/eval/run_execution_http_smoke.py) |
+
+### Runtime 扩展接口
+
+服务额外提供异步任务和 SSE 生命周期接口：
+
+```text
+POST /v1/chat/stream       SSE 事件（started/completed）
+POST /v1/tasks             提交异步任务，返回 task_id（202）
+GET  /v1/tasks/{task_id}   查询 queued/running/succeeded/failed/cancelled
+DELETE /v1/tasks/{task_id} 取消排队或运行中的任务
+```
+
+`/v1/chat/stream` 当前发送任务级事件和最终结果，不是 Token 级模型流。默认 `/v1/tasks`
+使用进程内有界线程池，服务重启后内存状态会丢失；设置 `REACT_AGENT_TASK_STORE=mysql`
+并配置 `REACT_AGENT_MYSQL_URL` 后，任务状态可从 MySQL 查询恢复。两种模式都仍是单实例
+线程池，不等同于 Redis/RabbitMQ/Kafka 等可跨实例恢复的持久化队列。
+
+地图/搜索示例见 [`demo_geo_tools.py`](examples/demos/demo_geo_tools.py)，使用 `search_poi` 和 `estimate_route` 演示“检索地点 → 路线估算”的工具编排。`mock_geo_adapter` 是无外部依赖的演示适配器，不代表真实地图数据。
+
+运行并发指标基准：
+
+```bash
+python examples/benchmarks/run_http_benchmark.py --requests 50 --concurrency 10
+```
+
+输出 P50/P95/P99 延迟、吞吐、错误率和状态码分布；结果是本地工程基准，不等价于生产 SLA。
 | **② 客服 / 自动化** | 可部署 Chat API、政策/Runbook 问答、工作流 demo | `docker compose up` · [`demo_expense_workflow.py`](examples/demos/demo_expense_workflow.py) |
 | **③ RAG / 研究** | 检索增强、公开 QA 子集、multi-hop | [`demo_rag.py`](examples/demos/demo_rag.py) · [`run_public_benchmark.py`](examples/eval/run_public_benchmark.py) |
 

@@ -1,0 +1,36 @@
+{
+  "schema_version": "agent-http-benchmark/v1",
+  "target": "http://127.0.0.1:63135",
+  "load": {
+    "requests": 200,
+    "concurrency": 20,
+    "timeout_s": 30.0
+  },
+  "elapsed_ms": 604.607,
+  "throughput_rps": 330.793,
+  "success_rate": 1.0,
+  "error_rate": 0.0,
+  "status_counts": {
+    "200": 200
+  },
+  "latency_ms": {
+    "mean": 45.513,
+    "p50": 16.392,
+    "p95": 513.936,
+    "p99": 523.552,
+    "max": 525.303
+  },
+  "resource_observation": {
+    "process_rss_before_mb": null,
+    "process_rss_after_mb": null,
+    "process_rss_peak_mb": null,
+    "process_cpu_time_ms": 703.125,
+    "process_cpu_to_wall_ratio": 1.163,
+    "python_heap_before_mb": 0.0,
+    "python_heap_after_mb": 0.763,
+    "python_heap_peak_mb": 1.468,
+    "note": "Local mode runs HTTP server and load generator in one process; CPU and Python heap cover both. RSS is optional."
+  },
+  "passed": true,
+  "evidence_boundary": "Local HTTP load evidence for the tested target, request mix, and concurrency only; not a production SLA."
+}

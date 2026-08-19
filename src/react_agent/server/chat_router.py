@@ -40,6 +40,16 @@ APPLICATIONS = [
 ]
 
 
+def _message(body: dict[str, Any]) -> str | None:
+    """Return a normalized message and reject structured values at the boundary."""
+    value = body.get("message")
+    if value is None:
+        value = body.get("query")
+    if not isinstance(value, str):
+        return None
+    return value.strip()
+
+
 def normalize_app(raw: str | None) -> str:
     """将用户别名和默认配置统一为稳定的应用标识。"""
     key = (raw or "").strip().lower()
@@ -101,7 +111,7 @@ def handle_chat(
             .lower()
             in ("1", "true", "yes", "on")
         )
-        message = (body.get("message") or body.get("query") or "").strip()
+        message = _message(body)
         if not message:
             return error_response("invalid_request", "message is required", request_id, 400)
 

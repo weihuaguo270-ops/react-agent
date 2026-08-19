@@ -21,6 +21,7 @@ from .summarize import summarize as _tool_summarize
 from .summarize import TOOL_DEFINITION as _DEF_SUMMARIZE
 from .execute_python import execute_python as _tool_execute_python
 from .execute_python import TOOL_DEFINITION as _DEF_EXECUTE_PYTHON
+from .geo import search_poi, estimate_route, SEARCH_POI_DEFINITION, ESTIMATE_ROUTE_DEFINITION
 
 from react_agent.cot import tool_switch_cot_strategy, COT_TOOL_DEFINITION
 from react_agent.prompts import tool_switch_role, ROLE_TOOL_DEFINITION
@@ -41,6 +42,8 @@ TOOL_REGISTRY = {
     "toggle_sandbox": tool_toggle_sandbox,
     "clear_trajectories": clear_trajectories,
     "execute_python": _tool_execute_python,
+    "search_poi": search_poi,
+    "estimate_route": estimate_route,
 }
 
 # ===== TOOL_DEFINITIONS：发给 LLM 的工具描述（Core）=====
@@ -72,6 +75,8 @@ TOOL_DEFINITIONS = [
             },
         },
     },
+    SEARCH_POI_DEFINITION,
+    ESTIMATE_ROUTE_DEFINITION,
 ]
 
 

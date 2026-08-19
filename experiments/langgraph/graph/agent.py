@@ -27,8 +27,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))                  # graph/
 
 from langgraph.graph import StateGraph, END, MessagesState
-from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
+from langchain_core.runnables import RunnableConfig
 
 from llm import get_llm
 from tools import get_tools
@@ -40,6 +40,7 @@ from context import manage as manage_context
 from harness import Harness
 from safety import HumanInTheLoop
 from resilience import retry_call
+from checkpoint import build_checkpointer
 
 
 # ============================================================
@@ -82,7 +83,7 @@ def build_agent(mcp_clients=None, harness: "Harness | None" = None, hitl: "Human
     memory_llm = get_llm()  # 记忆提取用的 LLM（不绑定工具）
     step_counter = [0]  # 闭包可变引用——用列表绕过 int 不可变
 
-    def call_model(state: AgentState, config: dict | None = None):
+    def call_model(state: AgentState, config: RunnableConfig | None = None):
         """
         调 LLM 节点。
 
@@ -112,7 +113,7 @@ def build_agent(mcp_clients=None, harness: "Harness | None" = None, hitl: "Human
 
         return {"messages": [llm_response]}
 
-    def tools_node(state: AgentState, config: dict | None = None):
+    def tools_node(state: AgentState, config: RunnableConfig | None = None):
         """
         执行工具调用节点。
 
@@ -293,7 +294,7 @@ def build_agent(mcp_clients=None, harness: "Harness | None" = None, hitl: "Human
     builder.add_edge("context_manage", "extract_memory")
     builder.add_edge("extract_memory", END)
 
-    return builder.compile(checkpointer=MemorySaver())
+    return builder.compile(checkpointer=build_checkpointer())
 
 
 # ============================================================

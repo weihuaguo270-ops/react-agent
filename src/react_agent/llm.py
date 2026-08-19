@@ -125,20 +125,20 @@ def _resolve_provider(name: str) -> dict:
     api_key_env = p.pop("api_key_env", "")
     direct_key = p.pop("api_key", "")
     if api_key_env:
-        api_key = os.environ.get(api_key_env, direct_key if direct_key else "")
+        api_key = os.environ.get(api_key_env) or direct_key or ""
     else:
-        api_key = direct_key
+        api_key = direct_key or ""
     p["api_key"] = api_key
 
     # 解析 base_url：支持环境变量覆盖
     base_url_env = p.pop("base_url_env", "")
     if base_url_env:
-        p["base_url"] = os.environ.get(base_url_env, p.get("base_url", ""))
+        p["base_url"] = os.environ.get(base_url_env) or p.get("base_url", "")
 
     # 解析 model：支持环境变量覆盖
     model_env = p.pop("model_env", "")
     if model_env:
-        p["model"] = os.environ.get(model_env, p.get("model", ""))
+        p["model"] = os.environ.get(model_env) or p.get("model", "")
     # 全局 LLM_MODEL 环境变量覆盖（不依赖配置文件）
     env_model = os.environ.get("LLM_MODEL", "")
     if env_model:
@@ -156,13 +156,6 @@ def _list_providers() -> list[str]:
     return list(config.get("providers", {}).keys())
 
 
-# 2026-07-24 15:59 UTC 起 deepseek-chat / deepseek-reasoner 退役
-_LEGACY_DEEPSEEK_MODELS = {
-    "deepseek-chat": ("deepseek-v4-flash", "disabled"),
-    "deepseek-reasoner": ("deepseek-v4-flash", "enabled"),
-}
-
-
 def _normalize_api_key(key: str) -> str:
     key = (key or "").strip().strip('"').strip("'")
     if key.lower().startswith("bearer "):
@@ -173,11 +166,7 @@ def _normalize_api_key(key: str) -> str:
 def _resolve_model_and_thinking(model: str) -> tuple[str, Optional[str]]:
     """返回 (model_id, thinking_type|None)。thinking 由 LLM_THINKING 可覆盖。"""
     model = (model or "").strip()
-    legacy = _LEGACY_DEEPSEEK_MODELS.get(model)
     thinking: Optional[str] = None
-    if legacy:
-        model, thinking = legacy
-        print(f"[LLM] 旧模型名已映射为 {model} (thinking={thinking})")
     env_think = os.environ.get("LLM_THINKING", "").strip().lower()
     if env_think in ("enabled", "disabled", "on", "off", "1", "0"):
         thinking = {
@@ -189,7 +178,7 @@ def _resolve_model_and_thinking(model: str) -> tuple[str, Optional[str]]:
             "0": "disabled",
         }[env_think]
     elif thinking is None and model.startswith("deepseek-v4"):
-        # 对齐旧 deepseek-chat：默认非 thinking，降低 tool 多轮 400 风险
+        # 默认非 thinking，降低 tool 多轮 400 风险
         thinking = "disabled"
     return model, thinking
 

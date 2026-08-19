@@ -295,7 +295,7 @@ expected_tools = [
     "get_time", "calculator", "web_search", "fetch_page", "summarize",
     "switch_cot_strategy", "switch_role",
     "switch_context_strategy", "toggle_sandbox", "clear_trajectories",
-    "execute_python", "list_workflows", "run_workflow",
+    "execute_python", "search_poi", "estimate_route", "list_workflows", "run_workflow",
 ]
 if os.environ.get("REACT_AGENT_EXPERIMENTAL_TOOLS", "").strip().lower() in (
     "1", "true", "yes", "on",

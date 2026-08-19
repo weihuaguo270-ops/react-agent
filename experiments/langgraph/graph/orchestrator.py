@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))                  
 
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
+from langchain_core.runnables import RunnableConfig
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from llm import get_llm
@@ -53,7 +54,7 @@ def _build_isolated_worker(task_description: str, harness: Harness | None = None
     tool_map = {t.name: t for t in tools}
     step_counter = [0]
 
-    def call_model(state, config=None):
+    def call_model(state, config: RunnableConfig | None = None):
         step_counter[0] += 1
         current_step = parent_step_offset + step_counter[0]
 
@@ -71,7 +72,7 @@ def _build_isolated_worker(task_description: str, harness: Harness | None = None
 
         return {"messages": [response]}
 
-    def tools_node(state, config=None):
+    def tools_node(state, config: RunnableConfig | None = None):
         last_msg = state["messages"][-1]
         results = []
         current_step = parent_step_offset + step_counter[0]
@@ -127,7 +128,9 @@ def _build_isolated_worker(task_description: str, harness: Harness | None = None
     )
     builder.add_edge("tools", "call_model")
 
-    return builder.compile(checkpointer=MemorySaver())
+    from checkpoint import build_checkpointer
+
+    return builder.compile(checkpointer=build_checkpointer())
 
 
 def _get_worker_harness(config: dict | None) -> Harness | None:
