@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 0.10.1 (2026-08-20)
+
+### Security and verification
+
+- Added a real Podman live-check snapshot covering machine/image readiness, container
+  identity, namespaces, init reaping, seccomp, capabilities, filesystem, network,
+  resource limits, secret isolation, timeout, and cleanup behavior.
+- Added rootless-Podman compatibility with automatically mapped private user namespaces,
+  plus `--init`, private IPC, and core-dump limits.
+
+### Verified
+
+- Sandbox live checks: 23/23 passed; security regression: 17 passed; full regression:
+  225 passed, 4 skipped.
+
 ## 0.9.0 (2026-08-14)
 
 ### Added

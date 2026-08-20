@@ -434,6 +434,15 @@ class Sandbox:
             return self.egress_network
         return "none"
 
+    def _container_userns(self) -> str:
+        """Use a rootless-compatible private namespace for Podman.
+
+        Podman's rootless ``private`` mode requires explicit UID/GID maps on
+        this host, while ``auto`` allocates an isolated map automatically.
+        Docker keeps the original private mode.
+        """
+        return "auto" if Path(self.runtime).name.lower().startswith("podman") else "private"
+
     def _container_command(
         self, executable: str, name: str, tool_name: str
     ) -> list[str]:
@@ -443,6 +452,7 @@ class Sandbox:
             "run",
             "--rm",
             "--interactive",
+            "--init",
             "--name",
             name,
             "--pull",
@@ -450,6 +460,10 @@ class Sandbox:
             "--network",
             self._container_network(tool_name),
             "--read-only",
+            "--userns",
+            self._container_userns(),
+            "--ipc",
+            "private",
             "--cap-drop",
             "ALL",
             "--security-opt",
@@ -464,6 +478,8 @@ class Sandbox:
             self.cpus,
             "--ulimit",
             f"nofile={self.pids_limit}:{self.pids_limit}",
+            "--ulimit",
+            "core=0:0",
             "--user",
             "65532:65532",
             "--tmpfs",

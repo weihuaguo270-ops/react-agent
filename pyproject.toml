@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "react-agent"
-version = "0.10.0"
-description = "Agent 运行时 + 三类主流应用（编码/执行 · 客服/自动化 · RAG/研究）"
+version = "0.10.1"
+description = "企业软件交付与技术支持 Agent，含业务结果评测和共享质量治理能力"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

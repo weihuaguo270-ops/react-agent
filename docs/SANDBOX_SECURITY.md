@@ -28,6 +28,8 @@ required=1 是失败关闭开关：策略不是 on、后端不是 container、�
 
 每次工具调用创建一个短生命周期容器，并应用：
 
+- `--init` 回收孤儿子进程，避免工具派生进程在调用结束后残留。
+
 - UID/GID 65532:65532，禁止 root。
 - 只读根文件系统，仅 /tmp 为 noexec,nosuid,nodev tmpfs。
 - 丢弃全部 Linux capabilities，并设置 no-new-privileges。
@@ -80,28 +82,54 @@ REACT_AGENT_SANDBOX_EGRESS_NETWORK 后才加入指定容器网络。该网络应
 python -m pytest tests/test_sandbox_security.py -q
 ~~~
 
-真实容器验证要求主机先安装 Docker/Podman 并构建镜像。当前代码会通过
-image inspect 检查镜像，检查失败时拒绝运行。仓库测试不会把模拟命令构造
-结果冒充为真实容器隔离证明。
+Podman 或 Docker machine 已启动后，可运行一次非破坏性 live check：
 
-### 本机实测记录（2026-08-12）
+~~~powershell
+python examples/eval/run_sandbox_live_check.py `
+  --out docs/snapshots/sandbox_live_check_YYYYMMDD.json
+~~~
 
-验证环境为 Windows WSL2、Podman 5.8.3 rootless、cgroup v2 和 crun；Podman
-报告 seccomp 已启用。镜像 `react-agent-sandbox:0.7.0` 构建成功，本次镜像 ID
-为 `897cd67f8450`。
+该入口创建临时容器并检查 machine/image、身份、namespace、init 回收、seccomp、
+capability、写保护、网络、环境变量、资源限制和超时清理；结果写入指定 JSON。
+
+Windows 本地开发建议从当前用户的普通 PowerShell 使用启动器。它会启动**已有**
+Podman machine、按需构建镜像、在当前会话启用 required 容器模式并保存结果；不会创建
+machine、修改 Windows 权限或持久化密钥：
+
+~~~powershell
+.\scripts\run_sandbox_live_check.ps1
+~~~
+
+可使用 `-SkipBuild` 强制要求已有镜像，或通过 `-OutputPath` 指定证据 JSON 路径。
+
+真实容器验证要求主机先安装 Docker/Podman 并构建镜像。代码会通过 image
+inspect 检查镜像，检查失败时拒绝运行。仓库测试不会把模拟命令构造结果冒充为
+真实容器隔离证明；本机真实结果见下方 2026-08-20 记录。
+
+### 本机实测记录（2026-08-20）
+
+验证环境为 Windows WSL2、Podman machine `podman-machine-default`（running）、
+Podman 5.8.3 client / 5.8.5 machine rootless、cgroup v2 和 crun；Podman
+报告 seccomp 已启用。镜像 `react-agent-sandbox:0.7.0` 已检查可用，镜像 ID
+为 `897cd67f8450aa4405579c9c3d91560516df19c9153329594048e9f485ea4995`。
+该 rootless Podman 不接受无映射的 `--userns=private`，运行时自动使用
+`--userns=auto`，并通过 host-namespace 控制容器对照确认 user/IPC namespace 隔离。
 
 | 检查项 | 实测结果 |
 |--------|----------|
-| 工具调用 | `calculator` 通过 stdin 在容器内返回 `5` |
-| 身份与提权 | UID/GID 为 `65532:65532`，`CapEff=0`，`NoNewPrivs=1` |
+| 工具调用 | `calculator` 通过 stdin 在容器内返回 `42` |
+| 身份与提权 | UID/GID 为 `65532:65532`，`CapEff=0`、`CapBnd=0`，`NoNewPrivs=1` |
+| namespace / init | user、IPC namespace 均相对 host 控制容器隔离；`--init` 探针确认孤儿进程被回收 |
 | syscall 过滤 | `/proc/self/status` 显示 `Seccomp=2` |
 | 文件系统 | 写 `/etc` 返回 `Errno 30`；`/tmp` 可写，执行文件返回 `Errno 13` |
 | 环境变量 | 宿主 `DEEPSEEK_API_KEY` 在容器内为 `None` |
 | 网络 | 默认 `network=none`，网络工具连接被拒绝 |
-| 资源 | memory=256 MiB、pids=64、cpu.max=`50000 100000`、nofile=64 |
+| 资源 | memory=256 MiB、swap 上限=0、pids=64、cpu.max=`50000 100000`、nofile=64 |
 | 生命周期 | 1 秒超时后强制清理，未发现 `react-agent-sbx-*` 遗留容器 |
 
-安全回归为 `15 passed`，全量回归为 `180 passed, 3 skipped`。这些结果证明本机
+快照：[`docs/snapshots/sandbox_live_check_latest.json`](snapshots/sandbox_live_check_latest.json)，
+共 23 项 live checks 全部通过。安全回归为 `17 passed`，全量回归为
+`225 passed, 4 skipped`。这些结果证明本机
 Podman 路径上的约束实际生效，不替代生产节点逃逸测试、镜像供应链审计和多租户
 隔离评审。
 

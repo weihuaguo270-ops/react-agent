@@ -117,7 +117,11 @@ def test_container_backend_builds_hardened_command(monkeypatch):
     )
     joined = " ".join(run_command)
     assert "--interactive" in run_command
+    assert "--init" in run_command
     assert "--read-only" in run_command
+    assert run_command[run_command.index("--userns") + 1] == "private"
+    assert run_command[run_command.index("--ipc") + 1] == "private"
+    assert "core=0:0" in run_command
     assert run_command[run_command.index("--network") + 1] == "none"
     assert run_command[run_command.index("--cap-drop") + 1] == "ALL"
     assert "no-new-privileges" in run_command
@@ -129,6 +133,12 @@ def test_container_backend_builds_hardened_command(monkeypatch):
     assert "--tmpfs" in run_command
     assert "40+2" not in joined
     assert "40+2" in run_kwargs["input"]
+
+
+def test_podman_uses_rootless_private_namespace_mapping(monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_SANDBOX_RUNTIME", "podman")
+    sandbox = Sandbox(strategy="on", backend="container", prewarm=False)
+    assert sandbox._container_userns() == "auto"
 
 
 def test_container_backend_fails_closed_without_runtime(monkeypatch):
