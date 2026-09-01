@@ -25,6 +25,8 @@
 | [public_benchmark_snapshot_offline.md](./reports/public_benchmark_snapshot_offline.md) | GSM8K×10 + HotpotQA×10 | offline 匹配器 20/20 | [归档](./snapshots/public_benchmark_snapshot_offline.json) |
 | [public_benchmark_snapshot_agent_20260717.md](./reports/public_benchmark_snapshot_agent_20260717.md) | 同上 · DeepSeek agent | **19/20（95%）** · GSM8K 10/10 · Hotpot 9/10 · Wilson [76.4, 99.1] | [归档](./snapshots/public_benchmark_snapshot_agent_20260717.json) |
 | 公开 RAG 子集（分层 v2） | HotpotQA-RAG smoke/hard/held_out | `examples/eval/run_public_rag_benchmark.py` | `public_rag_benchmark_subset.json` |
+| GitHub 公开只读业务证据 | 仓库契约 + 当前公开 Issue | `examples/eval/run_github_business_tasks.py` | [github_public_read_only_20260820.json](./snapshots/github_public_read_only_20260820.json) |
+| GitHub 公开只读交付样本 | agent-delivery-sandbox 公开 Issue（10 条） | `examples/eval/run_github_business_tasks.py` | [github_public_read_only_delivery_sandbox_20260820.json](./snapshots/github_public_read_only_delivery_sandbox_20260820.json) |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 
@@ -102,8 +104,8 @@ python examples/eval/publish_eval_snapshot.py --run capability --only-new --stem
 
 | 仓库 | 评测侧重 |
 |------|----------|
-| **react-agent** | 任务通过率、工具/答案规则打分、capability 五维 |
-| **llm-eval-engine** | Process Reward、动态 rubric、人机校准（κ） |
+| **react-agent** | 任务执行、领域验收、`EvaluationEpisode` 产出、基础规则指标 |
+| **llm-eval-engine** | Episode 终态验证、Process Reward、动态 rubric、人机校准（κ） |
 
 ## 指标说明与限制
 

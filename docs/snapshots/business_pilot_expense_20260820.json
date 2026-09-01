@@ -1,0 +1,128 @@
+{
+  "schema_version": "business-pilot/v1",
+  "project": "expense-controlled-pilot",
+  "baseline_version": "expense-baseline-v0",
+  "candidate_version": "expense-candidate-v1",
+  "baseline_provenance": {
+    "mode": "fault_injection",
+    "profile": "no_action",
+    "description": "故意不调用费用工具，用于验证失败基线和发布门禁。",
+    "expected_scope": "all_tasks_fail"
+  },
+  "candidate_provenance": {
+    "mode": "deterministic_reference_agent",
+    "description": "调用费用状态工具并按固定政策完成决策。"
+  },
+  "decision": "pass",
+  "evidence_status": "complete",
+  "metrics": {
+    "baseline": {
+      "task_success_rate": 0.0,
+      "failure_rate": 1.0,
+      "sample_size": 8
+    },
+    "candidate": {
+      "task_success_rate": 1.0,
+      "failure_rate": 0.0,
+      "sample_size": 8,
+      "human_handoff_rate": 0.0,
+      "human_handoff_count": 0
+    }
+  },
+  "comparison": {
+    "deltas": {
+      "failure_rate": -1.0,
+      "sample_size": 0.0,
+      "task_success_rate": 1.0
+    },
+    "hard_metric_regressions": [],
+    "decision": "pass"
+  },
+  "review": {
+    "counts": {
+      "accepted": 8,
+      "rejected": 0,
+      "pending": 0,
+      "missing": 0
+    }
+  },
+  "data_quality": {
+    "issues": [],
+    "issue_count": 0
+  },
+  "tasks": [
+    {
+      "task_id": "expense_dev_meal_manager",
+      "split": "dev",
+      "baseline_passed": false,
+      "candidate_passed": true,
+      "review_decision": "accepted",
+      "final_status": "resolved",
+      "source_ref": "expense://business_cases/expense_dev_meal_manager"
+    },
+    {
+      "task_id": "expense_dev_missing_receipt",
+      "split": "dev",
+      "baseline_passed": false,
+      "candidate_passed": true,
+      "review_decision": "accepted",
+      "final_status": "resolved",
+      "source_ref": "expense://business_cases/expense_dev_missing_receipt"
+    },
+    {
+      "task_id": "expense_golden_meal_limit",
+      "split": "golden",
+      "baseline_passed": false,
+      "candidate_passed": true,
+      "review_decision": "accepted",
+      "final_status": "resolved",
+      "source_ref": "expense://business_cases/expense_golden_meal_limit"
+    },
+    {
+      "task_id": "expense_golden_transport_finance",
+      "split": "golden",
+      "baseline_passed": false,
+      "candidate_passed": true,
+      "review_decision": "accepted",
+      "final_status": "resolved",
+      "source_ref": "expense://business_cases/expense_golden_transport_finance"
+    },
+    {
+      "task_id": "expense_golden_lodging_director",
+      "split": "golden",
+      "baseline_passed": false,
+      "candidate_passed": true,
+      "review_decision": "accepted",
+      "final_status": "resolved",
+      "source_ref": "expense://business_cases/expense_golden_lodging_director"
+    },
+    {
+      "task_id": "expense_heldout_boundary",
+      "split": "held_out",
+      "baseline_passed": false,
+      "candidate_passed": true,
+      "review_decision": "accepted",
+      "final_status": "resolved",
+      "source_ref": "expense://business_cases/expense_heldout_boundary"
+    },
+    {
+      "task_id": "expense_heldout_preapproved_over_limit",
+      "split": "held_out",
+      "baseline_passed": false,
+      "candidate_passed": true,
+      "review_decision": "accepted",
+      "final_status": "resolved",
+      "source_ref": "expense://business_cases/expense_heldout_preapproved_over_limit"
+    },
+    {
+      "task_id": "expense_heldout_purchase_no_receipt",
+      "split": "held_out",
+      "baseline_passed": false,
+      "candidate_passed": true,
+      "review_decision": "accepted",
+      "final_status": "resolved",
+      "source_ref": "expense://business_cases/expense_heldout_purchase_no_receipt"
+    }
+  ],
+  "evidence_level": "controlled_fixture"
+}

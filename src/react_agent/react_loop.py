@@ -51,7 +51,10 @@ def _finish_with_save(answer: str = ""):
 
 MCP_CLIENTS = []
 
-from react_agent.mcp_config import load_mcp_server_commands, PORTABLE_DEFAULT_MCP_SERVERS
+from react_agent.mcp_config import (
+    load_mcp_server_configs,
+    PORTABLE_DEFAULT_MCP_SERVERS,
+)
 
 # Back-compat alias: portable defaults only (no machine-local paths).
 DEFAULT_MCP_SERVERS = PORTABLE_DEFAULT_MCP_SERVERS
@@ -239,13 +242,24 @@ def _execute_tool_call_raw(tool_call):
     return json.dumps({"error": f"未知工具: {func_name}"})
 
 
-def execute_tool_call(tool_call):
+def execute_tool_call(tool_call, *, allowed_tools=None):
     """执行工具调用；默认经 ToolGuard（超时/重试/熔断）。
 
     关闭: REACT_AGENT_TOOL_GUARD=0
     Guard OFF 时本地捕获异常并转为 error JSON，避免拖垮整轮 loop。
     """
     global _TOOL_GUARD, _GUARDED_EXECUTE
+    if allowed_tools is not None:
+        name = str((tool_call.get("function") or {}).get("name") or "")
+        if name not in allowed_tools:
+            return json.dumps(
+                {
+                    "error": "skill_tool_not_allowed",
+                    "tool": name,
+                    "allowed_tools": sorted(allowed_tools),
+                },
+                ensure_ascii=False,
+            )
     if not _tool_guard_enabled():
         try:
             return _execute_tool_call_raw(tool_call)
@@ -329,7 +343,7 @@ def _force_finalize(messages: list, *, reason: str) -> str:
 # ============================================================
 # 第五步：ReAct Loop 主循环（核心！）
 # ============================================================
-def react_loop(user_query, max_steps=None, tool_defs=None):
+def react_loop(user_query, max_steps=None, tool_defs=None, skill_name=None):
     _ensure_rag_loaded()
     from react_agent.tools import enable_app_tools
 
@@ -344,6 +358,27 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
 6. 禁止连续两次调用「完全相同」的工具名+参数；应换 URL/查询词，或直接基于已有 OBSERVATION 作答
 7. 短问答（时间/计算/只要数字）请紧扣用户问题作答，勿跑题到无关话题
 8. 最后一步不再调用工具，必须基于已有观测给出 FINAL ANSWER"""
+    # 业务 Skill 只先注入摘要；更具体的 instructions 通过上下文工具按需加载。
+    active_skill = None
+    try:
+        from react_agent.skills import get_skill, get_skill_context, route_skill
+
+        active_skill = get_skill(skill_name) if skill_name else route_skill(
+            query=str(user_query or ""), payload={"query": str(user_query or "")}
+        )
+        skill_summary = get_skill_context(active_skill.name, level="summary")
+    except (KeyError, ValueError):
+        if skill_name:
+            raise
+        active_skill = None
+        skill_summary = None
+
+    if active_skill is not None and not active_skill.agent_callable:
+        if skill_name:
+            raise ValueError(f"skill {skill_name} requires an explicit controlled caller")
+        active_skill = None
+        skill_summary = None
+
     # 垂直应用 prompt（如文档排障）优先；否则角色 + CoT
     from react_agent.apps import app_system_prompt
 
@@ -356,6 +391,14 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
         system_prompt = COT.inject(role_enhanced, query=user_query)
         print(f"[角色] {ROLE_MANAGER.current_role_name()}")
 
+    if skill_summary:
+        system_prompt += (
+            "\n\n---\n当前业务 Skill 摘要（仅按需展开）：\n"
+            + json.dumps(skill_summary, ensure_ascii=False)
+            + "\n如需具体执行规则，请调用 get_business_skill_context；不要自行扩展工具范围。"
+        )
+        print(f"[Skill] {active_skill.name} / progressive disclosure: summary")
+
     llm = _active_llm()
     if llm is None or (
         llm.provider_name != "ollama" and not (llm.api_key or "").strip()
@@ -367,6 +410,19 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
 
     # 开始轨迹记录
     start_trajectory(user_query, llm.model, system_prompt)
+
+    allowed_tools = set(active_skill.allowed_tools) if active_skill else None
+    if active_skill:
+        # Context loading is always the next layer and is itself read-only.
+        allowed_tools.add("get_business_skill_context")
+    if tool_defs is None:
+        effective_tool_defs = TOOL_DEFINITIONS
+    else:
+        effective_tool_defs = tool_defs
+    if allowed_tools is not None:
+        from react_agent.skills import filter_tool_definitions
+
+        effective_tool_defs = filter_tool_definitions(effective_tool_defs, allowed_tools)
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -396,7 +452,7 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
             .lower()
             not in ("0", "false", "off", "no")
         )
-        step_tool_defs = [] if reserve_final else tool_defs
+        step_tool_defs = [] if reserve_final else effective_tool_defs
         if reserve_final:
             print("  [Harness] 收尾步：禁止工具，强制 FINAL ANSWER")
             messages.append({
@@ -499,7 +555,7 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
                 })
                 continue
 
-            result = execute_tool_call(tc)
+            result = execute_tool_call(tc, allowed_tools=allowed_tools)
             print(f"[工具返回] {result[:100]}")
             last_tool_key = tool_key
 
@@ -822,15 +878,33 @@ def main():
             print(f"  -> mock 连接失败: {e}\n")
     else:
         if not _mcp_args_list:
-            _mcp_args_list = load_mcp_server_commands()
-        for mcp_args in _mcp_args_list:
-            cmd = mcp_args[0]
-            args = mcp_args[1:]
+            _mcp_configs = load_mcp_server_configs()
+        else:
+            _mcp_configs = [
+                {"transport": "stdio", "command": args[0], "args": args[1:]}
+                for args in _mcp_args_list
+                if args
+            ]
+        for mcp_config in _mcp_configs:
             print("  [MCP] connect")
             try:
-                from react_agent.mcp_client import MCPClient
+                if mcp_config.get("transport") == "streamable_http":
+                    from react_agent.mcp_client import StreamableHTTPMCPClient
 
-                client = MCPClient(cmd, args)
+                    client = StreamableHTTPMCPClient(
+                        mcp_config["url"],
+                        token=mcp_config.get("token"),
+                        token_env=mcp_config.get("token_env"),
+                        timeout=mcp_config.get("timeout", 15),
+                        max_retries=mcp_config.get("max_retries", 2),
+                        retry_writes=mcp_config.get("retry_writes", False),
+                    )
+                else:
+                    from react_agent.mcp_client import MCPClient
+
+                    client = MCPClient(
+                        mcp_config["command"], mcp_config.get("args", [])
+                    )
                 client.connect()
                 client.discover_tools()
                 mcp_defs = client.to_tool_definitions()

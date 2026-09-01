@@ -134,3 +134,17 @@ def enable_workflow_tools() -> None:
 
 
 enable_workflow_tools()
+
+
+def enable_skill_tools() -> None:
+    """Mount verified, low-risk business Skill discovery/execution tools."""
+    from react_agent.skills.tools import SKILL_TOOL_DEFINITIONS, SKILL_TOOL_REGISTRY
+
+    TOOL_REGISTRY.update(SKILL_TOOL_REGISTRY)
+    names = {d["function"]["name"] for d in TOOL_DEFINITIONS if "function" in d}
+    for defn in SKILL_TOOL_DEFINITIONS:
+        if defn["function"]["name"] not in names:
+            TOOL_DEFINITIONS.append(defn)
+
+
+enable_skill_tools()

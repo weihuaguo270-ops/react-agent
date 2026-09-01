@@ -1,0 +1,247 @@
+{
+  "agent_version": "expense-no-action-v0",
+  "num_cases": 8,
+  "pass_rate": 0.0,
+  "business_metrics": {
+    "task_success_rate": 0.0,
+    "failure_rate": 1.0,
+    "sample_size": 8,
+    "human_handoff_rate": 0.0,
+    "human_handoff_count": 0
+  },
+  "by_split": {
+    "dev": {
+      "num_cases": 2,
+      "pass_rate": 0.0
+    },
+    "golden": {
+      "num_cases": 3,
+      "pass_rate": 0.0
+    },
+    "held_out": {
+      "num_cases": 3,
+      "pass_rate": 0.0
+    }
+  },
+  "cases": [
+    {
+      "case_id": "expense_dev_meal_manager",
+      "split": "dev",
+      "passed": false,
+      "checks": [
+        {
+          "path": "$.claim.status",
+          "expected": "approved",
+          "actual": "pending",
+          "passed": false
+        },
+        {
+          "path": "$.claim.decision",
+          "expected": "approve_manager",
+          "actual": "",
+          "passed": false
+        },
+        {
+          "path": "$.audit.decision_events",
+          "expected": 1,
+          "actual": 0,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "case_id": "expense_dev_missing_receipt",
+      "split": "dev",
+      "passed": false,
+      "checks": [
+        {
+          "path": "$.claim.status",
+          "expected": "rejected",
+          "actual": "pending",
+          "passed": false
+        },
+        {
+          "path": "$.claim.decision",
+          "expected": "reject_no_receipt",
+          "actual": "",
+          "passed": false
+        },
+        {
+          "path": "$.audit.decision_events",
+          "expected": 1,
+          "actual": 0,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "case_id": "expense_golden_meal_limit",
+      "split": "golden",
+      "passed": false,
+      "checks": [
+        {
+          "path": "$.claim.status",
+          "expected": "rejected",
+          "actual": "pending",
+          "passed": false
+        },
+        {
+          "path": "$.claim.decision",
+          "expected": "reject_over_limit",
+          "actual": "",
+          "passed": false
+        },
+        {
+          "path": "$.audit.decision_events",
+          "expected": 1,
+          "actual": 0,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "case_id": "expense_golden_transport_finance",
+      "split": "golden",
+      "passed": false,
+      "checks": [
+        {
+          "path": "$.claim.status",
+          "expected": "approved",
+          "actual": "pending",
+          "passed": false
+        },
+        {
+          "path": "$.claim.decision",
+          "expected": "approve_finance",
+          "actual": "",
+          "passed": false
+        },
+        {
+          "path": "$.audit.decision_events",
+          "expected": 1,
+          "actual": 0,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "case_id": "expense_golden_lodging_director",
+      "split": "golden",
+      "passed": false,
+      "checks": [
+        {
+          "path": "$.claim.status",
+          "expected": "approved",
+          "actual": "pending",
+          "passed": false
+        },
+        {
+          "path": "$.claim.decision",
+          "expected": "approve_director",
+          "actual": "",
+          "passed": false
+        },
+        {
+          "path": "$.audit.decision_events",
+          "expected": 1,
+          "actual": 0,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "case_id": "expense_heldout_boundary",
+      "split": "held_out",
+      "passed": false,
+      "checks": [
+        {
+          "path": "$.claim.status",
+          "expected": "approved",
+          "actual": "pending",
+          "passed": false
+        },
+        {
+          "path": "$.claim.decision",
+          "expected": "approve_manager",
+          "actual": "",
+          "passed": false
+        },
+        {
+          "path": "$.audit.decision_events",
+          "expected": 1,
+          "actual": 0,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "case_id": "expense_heldout_preapproved_over_limit",
+      "split": "held_out",
+      "passed": false,
+      "checks": [
+        {
+          "path": "$.claim.status",
+          "expected": "approved",
+          "actual": "pending",
+          "passed": false
+        },
+        {
+          "path": "$.claim.decision",
+          "expected": "approve_finance",
+          "actual": "",
+          "passed": false
+        },
+        {
+          "path": "$.audit.decision_events",
+          "expected": 1,
+          "actual": 0,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "case_id": "expense_heldout_purchase_no_receipt",
+      "split": "held_out",
+      "passed": false,
+      "checks": [
+        {
+          "path": "$.claim.status",
+          "expected": "rejected",
+          "actual": "pending",
+          "passed": false
+        },
+        {
+          "path": "$.claim.decision",
+          "expected": "reject_no_receipt",
+          "actual": "",
+          "passed": false
+        },
+        {
+          "path": "$.audit.decision_events",
+          "expected": 1,
+          "actual": 0,
+          "passed": false
+        }
+      ]
+    }
+  ],
+  "profile": "no_action",
+  "comparison": {
+    "baseline_version": "expense-agent-v1",
+    "candidate_version": "expense-no-action-v0",
+    "comparable_cases": 8,
+    "pass_rate_delta": -1.0,
+    "regressions": [
+      "expense_dev_meal_manager",
+      "expense_dev_missing_receipt",
+      "expense_golden_lodging_director",
+      "expense_golden_meal_limit",
+      "expense_golden_transport_finance",
+      "expense_heldout_boundary",
+      "expense_heldout_preapproved_over_limit",
+      "expense_heldout_purchase_no_receipt"
+    ],
+    "improvements": [],
+    "decision": "hold"
+  }
+}

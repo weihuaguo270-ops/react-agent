@@ -69,7 +69,8 @@ def run_github_tasks(repository):
                        "observation": json.dumps({"issue_count": len(real_issues),
                                                   "numbers": [item["number"] for item in real_issues]})}],
                   "final_answer": f"Inspected {repository}; found {len(real_issues)} open issues in the first page."}
-    return {"schema_version": "external-business-evidence/v1", "system": "github-rest-api",
+    return {"schema_version": "external-business-evidence/v1", "evidence_level": "public_read_only",
+            "system": "github-rest-api",
             "repository": repository, "read_only": True, "authenticated": bool(_github_token()),
             "cases": cases, "pass_rate": sum(row["passed"] for row in cases) / len(cases),
             "trajectory": trajectory,

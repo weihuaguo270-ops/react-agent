@@ -33,3 +33,15 @@ mcp_servers.json
 
 # Local eval run artifacts (keep committed sample reports only if already tracked)
 src/react_agent/eval/reports/eval_20260713_*.json
+.pytest-tmp-*/
+
+# Build/cache/eval-output dirs (not for publishing)
+.tmp/
+build/
+artifacts/
+.test-tmp/
+.test-tmp2/
+.test-tmp3/
+.test-tmp5/
+.test-tmp6/
+.test-tmp7/

@@ -41,6 +41,7 @@ def test_health_and_chat_offline():
         apps = [a["id"] for a in (info.get("applications") or [])]
         assert "docs_troubleshoot" in apps
         assert "expense" in apps
+        assert "security_triage" in apps
         assert "default" in apps
 
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=5) as resp:

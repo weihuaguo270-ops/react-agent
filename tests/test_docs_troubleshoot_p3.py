@@ -92,6 +92,8 @@ def test_production_eval_suite():
         (r["id"], r.get("fail_reason")) for r in report["rows"] if not r["passed"]
     ]
     metrics = report["metrics"]
+    assert metrics["business"]["task_success_rate"] == 1.0
+    assert metrics["business"]["grounded_resolution_rate"] == 1.0
     assert metrics["document_evidence_rate"] == 1.0
     assert metrics["avg_evidence_sufficiency"] is None
     assert metrics["evidence_sufficiency_sample_size"] == 0

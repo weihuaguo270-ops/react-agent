@@ -9,6 +9,7 @@ from typing import Any
 from react_agent.apps.docs_troubleshoot.eval_golden import score_workflow_case
 from react_agent.apps.docs_troubleshoot.eval_production import production_corpus_dir
 from react_agent.apps.docs_troubleshoot.index import reset_index
+from react_agent.eval.business_metrics import business_scorecard
 
 _FAULT = Path(__file__).resolve().parent / "fault_cases.json"
 
@@ -52,7 +53,11 @@ def _diagnosis_blob(diagnosis: dict[str, Any]) -> str:
 
 
 def score_diagnosis(case: dict[str, Any], diagnosis: dict[str, Any], row: dict[str, Any]) -> dict[str, Any]:
-    """Score root-cause hints, evidence sufficiency, and forbidden suggestions."""
+    """补充根因、证据充分度和危险建议三类诊断断言。
+
+    先保留工作流的基础结果，再把根因未命中或命中禁止建议的样本标记为失败；
+    因此这些指标会参与最终任务成功率，而不是只作为旁路统计。
+    """
     if not row.get("passed"):
         row["root_cause_ok"] = False
         row["wrong_suggestion"] = False
@@ -96,7 +101,7 @@ def compute_fault_metrics(
     cases: list[dict[str, Any]],
     rows: list[dict[str, Any]],
 ) -> dict[str, float | int | None]:
-    """计算根因命中、证据充分和错误建议等诊断指标。"""
+    """计算诊断业务指标，并附加统一任务成功率和安全建议率。"""
     total = len(rows) or 1
     rc_hits = sum(1 for r in rows if r.get("root_cause_ok"))
     sufficiency_scores = [
@@ -106,7 +111,10 @@ def compute_fault_metrics(
         and r.get("evidence_sufficiency") is not None
     ]
     wrong = sum(1 for r in rows if r.get("wrong_suggestion"))
+    # 统一 scorecard 使用 score_diagnosis 更新后的 passed，确保门禁口径一致。
+    outcome = business_scorecard(rows)
     return {
+        **outcome,
         "root_cause_hit_rate": round(rc_hits / total, 3),
         "evidence_sufficiency_rate": (
             round(sum(sufficiency_scores) / len(sufficiency_scores), 3)
@@ -115,6 +123,7 @@ def compute_fault_metrics(
         ),
         "evidence_sufficiency_sample_size": len(sufficiency_scores),
         "wrong_suggestion_rate": round(wrong / total, 3),
+        "safe_suggestion_rate": round(1 - (wrong / total), 3),
     }
 
 

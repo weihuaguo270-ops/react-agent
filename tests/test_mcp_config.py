@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 from react_agent.mcp_config import (  # noqa: E402
     PORTABLE_DEFAULT_MCP_SERVERS,
     load_mcp_server_commands,
+    load_mcp_server_configs,
 )
 
 
@@ -49,3 +50,24 @@ def test_default_fallback_when_missing(monkeypatch, tmp_path):
 def test_disable_mcp_env(monkeypatch):
     monkeypatch.setenv("REACT_AGENT_DISABLE_MCP", "1")
     assert load_mcp_server_commands() == []
+
+
+def test_load_remote_streamable_http_config(tmp_path, monkeypatch):
+    cfg = tmp_path / "mcp_servers.json"
+    cfg.write_text(
+        json.dumps({"servers": [{
+            "transport": "streamable_http",
+            "url": "https://mcp.example.test",
+            "token_env": "MCP_TOKEN",
+            "max_retries": 1,
+        }]}),
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("REACT_AGENT_DISABLE_MCP", raising=False)
+    configs = load_mcp_server_configs(config_path=str(cfg))
+    assert configs == [{
+        "transport": "streamable_http",
+        "url": "https://mcp.example.test",
+        "token_env": "MCP_TOKEN",
+        "max_retries": 1,
+    }]

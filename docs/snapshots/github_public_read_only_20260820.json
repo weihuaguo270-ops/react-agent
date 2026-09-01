@@ -1,0 +1,55 @@
+{
+  "schema_version": "external-business-evidence/v1",
+  "evidence_level": "public_read_only",
+  "system": "github-rest-api",
+  "repository": "weihuaguo270-ops/react-agent",
+  "read_only": true,
+  "authenticated": true,
+  "cases": [
+    {
+      "case_id": "github_repository_contract",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/weihuaguo270-ops/react-agent",
+      "latency_ms": 677.7007000055164,
+      "request_id": "CB46:18DECB:D8D688:E89395:6A866ACD"
+    },
+    {
+      "case_id": "github_issue_triage",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/weihuaguo270-ops/react-agent/issues",
+      "latency_ms": 740.726399992127,
+      "request_id": "CB4E:1FA18:DE828A:EE4399:6A866ACE",
+      "issue_sample": []
+    }
+  ],
+  "pass_rate": 1.0,
+  "trajectory": {
+    "session_id": "github-weihuaguo270-ops-react-agent",
+    "query": "Inspect weihuaguo270-ops/react-agent and triage current public issues.",
+    "model": "deterministic-github-agent-v1",
+    "steps": [
+      {
+        "step": 1,
+        "thought": "Read repository metadata.",
+        "action": {
+          "name": "github_get_repository",
+          "arguments": "{\"repository\": \"weihuaguo270-ops/react-agent\"}"
+        },
+        "observation": "{\"full_name\": \"weihuaguo270-ops/react-agent\", \"url\": \"https://github.com/weihuaguo270-ops/react-agent\"}"
+      },
+      {
+        "step": 2,
+        "thought": "Read issues and exclude pull requests.",
+        "action": {
+          "name": "github_list_issues",
+          "arguments": "{\"repository\": \"weihuaguo270-ops/react-agent\"}"
+        },
+        "observation": "{\"issue_count\": 0, \"numbers\": []}"
+      }
+    ],
+    "final_answer": "Inspected weihuaguo270-ops/react-agent; found 0 open issues in the first page."
+  },
+  "evidence_boundary": "Public read-only data; dynamic issue content is not a frozen benchmark."
+}

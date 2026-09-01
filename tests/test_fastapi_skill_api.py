@@ -1,0 +1,101 @@
+"""ASGI contract tests for the optional FastAPI Skill surface."""
+from __future__ import annotations
+
+import httpx
+import pytest
+
+
+pytest.importorskip("fastapi")
+pytest.importorskip("httpx")
+
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
+
+@pytest.mark.anyio
+async def test_fastapi_skill_discovery_context_route_and_safe_run():
+    from react_agent.server.fastapi_app import create_app
+
+    api = create_app(initialize_runtime=False)
+    transport = httpx.ASGITransport(app=api)
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
+        catalog_response = await client.get(
+            "/v1/skills", headers={"X-Request-Id": "skills-1"}
+        )
+        assert catalog_response.status_code == 200
+        catalog = catalog_response.json()
+        assert catalog["request_id"] == "skills-1"
+        assert {item["name"] for item in catalog["skills"]} == {
+            "docs_troubleshoot",
+            "expense_claim_review",
+            "github_delivery",
+            "security_triage",
+        }
+        assert all("instructions" not in item for item in catalog["skills"])
+
+        context_response = await client.get(
+            "/v1/skills/docs_troubleshoot?level=full"
+        )
+        assert context_response.status_code == 200
+        context = context_response.json()["context"]
+        assert context["input_schema"]["required"] == ["query"]
+        assert context["allowed_tools"]
+        assert context["instructions"]
+
+        route_response = await client.post(
+            "/v1/skills/route", json={"query": "API 401 怎么排障"}
+        )
+        assert route_response.status_code == 200
+        assert route_response.json()["route"]["skill"] == "docs_troubleshoot"
+        assert route_response.json()["route"]["confidence"] > 0
+
+        run_response = await client.post(
+            "/v1/skills/run",
+            json={
+                "name": "expense_claim_review",
+                "payload": {
+                    "claim": {
+                        "category": "交通",
+                        "amount": 80,
+                        "has_receipt": False,
+                    }
+                },
+            },
+        )
+        assert run_response.status_code == 200
+        assert (
+            run_response.json()["output"]["decision"] == "reject_no_receipt"
+        )
+
+        blocked_response = await client.post(
+            "/v1/skills/run", json={"name": "github_delivery", "payload": {}}
+        )
+        assert blocked_response.status_code == 403
+        assert (
+            blocked_response.json()["error"]["code"]
+            == "skill_requires_controlled_caller"
+        )
+
+
+@pytest.mark.anyio
+async def test_fastapi_skill_errors_are_structured():
+    from react_agent.server.fastapi_app import create_app
+
+    api = create_app(initialize_runtime=False)
+    transport = httpx.ASGITransport(app=api)
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
+        missing = await client.get("/v1/skills/does_not_exist?level=full")
+        assert missing.status_code == 400
+        assert missing.json()["error"]["code"] == "invalid_request"
+
+        unknown = await client.post(
+            "/v1/skills/run", json={"name": "does_not_exist", "payload": {}}
+        )
+        assert unknown.status_code == 404
+        assert unknown.json()["error"]["code"] == "not_found"

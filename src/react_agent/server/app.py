@@ -7,7 +7,7 @@ import traceback
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 # Service defaults before heavy imports
 os.environ.setdefault("REACT_AGENT_DISABLE_MCP", "1")
@@ -89,6 +89,7 @@ class AgentHandler(BaseHTTPRequestHandler):
                         "agent_loop_offline",
                         "react_loop_llm",
                         "harness_trajectory",
+                        "business_skill_contracts",
                     ],
                     "ui_paths": ["/", "/ui"],
                     "request_id": request_id,
@@ -109,6 +110,28 @@ class AgentHandler(BaseHTTPRequestHandler):
                 200,
                 {"request_id": request_id, "workflows": list_workflows()},
             )
+            return
+        if path == "/v1/skills":
+            from react_agent.skills import list_skills
+
+            self._send(
+                200,
+                {"request_id": request_id, "skills": list_skills(detail="summary")},
+            )
+            return
+        if path.startswith("/v1/skills/"):
+            name = path.rsplit("/", 1)[-1]
+            query = parse_qs(urlparse(self.path).query)
+            level = (query.get("level") or ["summary"])[0]
+            try:
+                from react_agent.skills import get_skill_context
+
+                context = get_skill_context(name, level=level)
+            except (KeyError, ValueError) as exc:
+                status, payload = error_response("invalid_request", str(exc), request_id, 400)
+                self._send(status, payload)
+                return
+            self._send(200, {"request_id": request_id, "context": context})
             return
         if path.startswith("/v1/tasks/"):
             task_id = path.rsplit("/", 1)[-1]
@@ -218,6 +241,50 @@ class AgentHandler(BaseHTTPRequestHandler):
                 data["request_id"] = request_id
                 self._send(200 if data.get("ok", True) else 500, data)
                 return
+            if path == "/v1/skills/route":
+                from react_agent.skills import route_skill_decision
+
+                query = str(body.get("query") or body.get("message") or "")
+                payload = body.get("payload") if isinstance(body.get("payload"), dict) else {}
+                payload = {**payload, **{k: v for k, v in body.items() if k not in {"query", "message", "payload"}}}
+                try:
+                    decision = route_skill_decision(query, payload)
+                except ValueError as exc:
+                    status, payload_out = error_response("routing_failed", str(exc), request_id, 422)
+                    self._send(status, payload_out)
+                    return
+                self._send(200, {"request_id": request_id, "route": decision.to_dict()})
+                return
+            if path == "/v1/skills/run":
+                from react_agent.skills import get_skill, run_skill
+
+                name = str(body.get("name") or "").strip()
+                raw_payload = body.get("payload")
+                payload = dict(raw_payload) if isinstance(raw_payload, dict) else {}
+                if body.get("query") and "query" not in payload:
+                    payload["query"] = body["query"]
+                if not name:
+                    status, payload_out = error_response("invalid_request", "name is required", request_id, 400)
+                    self._send(status, payload_out)
+                    return
+                try:
+                    skill = get_skill(name)
+                except KeyError as exc:
+                    status, payload_out = error_response("not_found", str(exc), request_id, 404)
+                    self._send(status, payload_out)
+                    return
+                if skill.risk_level != "read_only" or not skill.agent_callable:
+                    status, payload_out = error_response(
+                        "skill_requires_controlled_caller",
+                        f"skill {name} requires an explicit controlled caller",
+                        request_id,
+                        403,
+                    )
+                    self._send(status, payload_out)
+                    return
+                result = run_skill(name, payload)
+                self._send(200 if result.ok else 422, {"request_id": request_id, **result.to_dict()})
+                return
             status, payload = error_response("not_found", f"unknown path {path}", request_id, 404)
             self._send(status, payload)
         except Exception as e:
@@ -248,7 +315,7 @@ def serve(host: str = "127.0.0.1", port: int = 8765):
     reset_index()
     httpd = ThreadingHTTPServer((host, port), AgentHandler)
     print(f"[server] listening on http://{host}:{port}")
-    print("[server] POST /v1/chat  app=default|docs_troubleshoot|expense")
+    print("[server] POST /v1/chat  app=default|docs_troubleshoot|expense|security_triage")
     print("[server] POST /v1/chat/stream  /v1/tasks; GET/DELETE /v1/tasks/{id}")
     print("[server] GET /v1/info  /health /ready  /  /ui")
     print("[server] REACT_AGENT_SERVER_LLM=1 for app=default (general ReAct)")

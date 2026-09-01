@@ -55,6 +55,9 @@ def test_shadow_run_is_real_but_does_not_modify_source(tmp_path):
     assert report["episode"]["state_verification"]["passed"] is True
     assert report["episode"]["task"].startswith("Resolve engineering task")
     assert report["episode"]["final_state"]["status_not_failed"] is True
+    assert report["metrics"]["business"]["task_success_rate"] == 1.0
+    assert report["metrics"]["business"]["human_handoff_rate"] == 0.0
+    assert report["metrics"]["unauthorized_external_write"] is False
     assert (repo / "service.py").read_text(encoding="utf-8") == "VALUE = 1\n"
     assert (tmp_path / "artifacts" / "audit.jsonl").exists()
 
@@ -120,3 +123,45 @@ def test_report_episode_can_be_saved_independently(tmp_path):
     payload = json.loads(episode_path.read_text(encoding="utf-8"))
     assert payload["schema_version"] == "evaluation-episode/v1"
     assert payload["split"] == "held_out"
+
+
+def test_guarded_delivery_can_publish_through_remote_gateway(tmp_path):
+    class FakeGateway:
+        def __init__(self):
+            self.calls = []
+
+        def publish_draft_pr(self, **payload):
+            self.calls.append(payload)
+            return "https://github.com/example/repo/pull/17"
+
+    repo = _repository(tmp_path)
+    gateway = FakeGateway()
+    config = WorkflowConfig(
+        tmp_path / "artifacts",
+        mode="guarded",
+        publish_draft_pr=True,
+    )
+    workflow = GitHubDeliveryWorkflow(config, remote_gateway=gateway)
+    task = DeliveryTask(**{
+        **_task(repo).__dict__,
+        "remote_repository": "https://github.com/example/repo.git",
+    })
+    pending = workflow.run(task, idempotency_key="remote-pending")
+    approval = Approval(
+        plan_sha256=pending["plan_sha256"],
+        approver="reviewer@example.com",
+        approved_at="2026-08-30T00:00:00+00:00",
+        allow_external_write=True,
+    )
+    report = workflow.run(
+        task,
+        approval=approval,
+        idempotency_key="remote-approved",
+    )
+
+    assert report["status"] == "draft_pr_created"
+    assert report["pull_request_url"].endswith("/pull/17")
+    assert gateway.calls[0]["idempotency_key"] == "remote-approved"
+    assert gateway.calls[0]["plan_sha256"] == report["plan_sha256"]
+    assert gateway.calls[0]["repository"] == "https://github.com/example/repo.git"
+    assert gateway.calls[0]["diff"]

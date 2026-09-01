@@ -1,18 +1,18 @@
 # 生产成熟度
 
-本页记录主场景 **docs_troubleshoot** 和通用运行时各块做到哪一步。学习向原型，**不是**平台 SLA 清单。
+本页记录软件工程交付、技术支持主业务线和共享运行时各块做到哪一步，**不是**平台 SLA 清单。
 
 主场景说明：[`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)。  
-**评判基准**：主流 **ReAct + 工具 + HTTP**；应用方向见 [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)（编码 · 客服/自动化 · RAG/研究）。  
+**评判基准**：主流 **ReAct + 工具 + HTTP**；应用方向见 [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)（软件工程交付 · 技术支持/工单辅助；RAG/轨迹/权限为共享能力）。
 **非目标**：多租户平台、自动根因定位、Checkpoint 中断恢复、复杂图编排。
 
 ## 主流对齐 vs 细节优化
 
 | 类型 | 说明 |
 |------|------|
-| **主流对齐** | LLM ReAct、领域工具、RAG、HTTP API、health/ready、Docker、基础轨迹、离线回归 |
+| **主流对齐** | 企业任务 Episode、可执行/状态验证器、领域工具、RAG、HTTP API、轨迹、离线回归 |
 | **细节优化** | 循环内 duplicate 拦截、收尾步强制作答、ToolGuard、verify_citations 工具步、fix_steps 权限闸门、StepWatcher + failure flywheel |
-| **待补齐（主流交付）** | 主服务 Bearer API Key、HTTP 全链路结构化 JSON 日志、verify_actions 由 Agent 执行（非仅输出字符串）、真实业务任务与人工效率基线 |
+| **待补齐（主流交付）** | 真实 Issue/工单、人工效率基线、隐藏验收、工单终态、主服务鉴权与全链路日志 |
 | **本阶段不做** | OAuth 网关、多租户 SLA、Helm 规模化、自动拉线上 Trace |
 
 ## 成熟度矩阵

@@ -296,6 +296,7 @@ expected_tools = [
     "switch_cot_strategy", "switch_role",
     "switch_context_strategy", "toggle_sandbox", "clear_trajectories",
     "execute_python", "search_poi", "estimate_route", "list_workflows", "run_workflow",
+    "list_business_skills", "get_business_skill_context", "run_business_skill",
 ]
 if os.environ.get("REACT_AGENT_EXPERIMENTAL_TOOLS", "").strip().lower() in (
     "1", "true", "yes", "on",

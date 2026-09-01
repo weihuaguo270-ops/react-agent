@@ -1,7 +1,7 @@
 """异步任务管理。
 
-默认使用进程内线程池；设置 ``REACT_AGENT_TASK_STORE=mysql`` 后，任务状态写入
-MySQL。线程执行器仍是单实例调度器，不等同于分布式消息队列。
+默认使用进程内线程池；任务状态可写入 MySQL 或 SQLAlchemy 支持的数据库。
+线程执行器仍是单实例调度器，不等同于分布式消息队列。
 """
 from __future__ import annotations
 
@@ -140,7 +140,18 @@ class TaskManager:
         self._tasks: dict[str, TaskRecord] = {}
         self._lock = threading.RLock()
         backend = os.environ.get("REACT_AGENT_TASK_STORE", "memory").strip().lower()
-        self._store = store or (MySQLTaskStore() if backend == "mysql" else None)
+        if store is not None:
+            self._store = store
+        elif backend == "mysql":
+            self._store = MySQLTaskStore()
+        elif backend == "sqlalchemy":
+            from react_agent.server.sqlalchemy_store import SQLAlchemyTaskStore
+
+            self._store = SQLAlchemyTaskStore()
+        elif backend == "memory":
+            self._store = None
+        else:
+            raise ValueError(f"unsupported task store: {backend}")
 
     def _persist(self, record: TaskRecord) -> None:
         if self._store:
@@ -201,6 +212,9 @@ class TaskManager:
                 record.status = "cancelled"
             self._persist(record)
             return record
+
+    def shutdown(self, wait: bool = True) -> None:
+        self._executor.shutdown(wait=wait, cancel_futures=True)
 
 
 task_manager = TaskManager()

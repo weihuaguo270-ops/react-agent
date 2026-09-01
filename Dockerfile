@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -15,7 +14,16 @@ COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 COPY schemas ./schemas
 
-RUN pip install --no-cache-dir -e .
+ARG REACT_AGENT_INSTALL_EXTRAS=""
+ARG REACT_AGENT_TORCH_VERSION="2.7.1+cpu"
+RUN if [ -n "$REACT_AGENT_INSTALL_EXTRAS" ]; then \
+      if [ "$REACT_AGENT_INSTALL_EXTRAS" = "rag" ]; then \
+        pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu "torch==${REACT_AGENT_TORCH_VERSION}"; \
+      fi; \
+      pip install --no-cache-dir -e ".[${REACT_AGENT_INSTALL_EXTRAS}]"; \
+    else \
+      pip install --no-cache-dir -e .; \
+    fi
 
 EXPOSE 8765
 

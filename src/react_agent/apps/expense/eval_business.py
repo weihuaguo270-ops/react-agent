@@ -1,4 +1,4 @@
-"""Deterministic business-state evaluation for the expense Agent example."""
+"""费用 Agent 示例的确定性业务状态评测。"""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 from .offline_answer import _load_limits
 from .operations import ExpenseLedger
+from react_agent.eval.business_metrics import business_scorecard
 
 
 DATASET_PATH = Path(__file__).with_name("business_cases.json")
@@ -53,6 +54,14 @@ class BusinessSuiteResult:
             "agent_version": self.agent_version,
             "num_cases": len(self.cases),
             "pass_rate": self.pass_rate,
+            # 费用流程没有真实人工交接记录，明确写入 False 仅用于统一报告结构。
+            "business_metrics": business_scorecard(
+                [
+                    {"passed": case.passed, "human_handoff": False}
+                    for case in self.cases
+                ],
+                human_handoff_key="human_handoff",
+            ),
             "by_split": by_split,
             "cases": [
                 {

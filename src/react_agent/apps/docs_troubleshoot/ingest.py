@@ -238,15 +238,24 @@ def rebuild_index(
     """清空并重建文档索引，返回可审计的摄取清单。"""
     extra_dirs = extra_dirs or []
     openapi_paths = openapi_paths or []
-    rag.clear()
-    ingest_tree(rag, corpus_dir, label_prefix=corpus_dir.name)
-    for root in extra_dirs:
-        ingest_tree(rag, root, label_prefix=root.name)
-    if git_root:
-        ingest_git_tracked(rag, git_root, path_prefix=git_prefix)
-    for op in openapi_paths:
-        if op.is_file():
-            ingest_openapi(rag, op)
+    milvus_batch = getattr(rag, "backend", "local") == "milvus"
+    if milvus_batch:
+        rag._milvus_batching = True
+    try:
+        rag.clear()
+        ingest_tree(rag, corpus_dir, label_prefix=corpus_dir.name)
+        for root in extra_dirs:
+            ingest_tree(rag, root, label_prefix=root.name)
+        if git_root:
+            ingest_git_tracked(rag, git_root, path_prefix=git_prefix)
+        for op in openapi_paths:
+            if op.is_file():
+                ingest_openapi(rag, op)
+    finally:
+        if milvus_batch:
+            rag._milvus_batching = False
+            if rag.chunks:
+                rag._get_milvus().flush()
     return build_manifest(
         corpus_dir=corpus_dir,
         extra_dirs=extra_dirs,

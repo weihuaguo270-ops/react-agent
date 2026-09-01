@@ -1,0 +1,44 @@
+{
+  "schema_version": "business-pilot/v1",
+  "project": "support-ticket-pilot-sample",
+  "baseline_version": "support-agent-v1",
+  "candidate_version": "support-agent-v2",
+  "tasks": [
+    {
+      "task_id": "ticket-001",
+      "domain": "technical_support",
+      "split": "golden",
+      "input": "用户 alice@example.com 报告服务返回 401，token=secret-value",
+      "redaction": {"applied": true},
+      "baseline": {"passed": true, "duration_ms": 920},
+      "candidate": {"passed": true, "duration_ms": 780},
+      "human_review": {"decision": "accepted", "reviewer_id": "reviewer-01"},
+      "final_status": "resolved",
+      "evidence": {"source_ref": "ticket://redacted/001"}
+    },
+    {
+      "task_id": "ticket-002",
+      "domain": "technical_support",
+      "split": "held_out",
+      "input": "批处理任务超时，需要核对 trace_id",
+      "redaction": {"applied": true},
+      "baseline": {"passed": false, "duration_ms": 1400},
+      "candidate": {"passed": true, "duration_ms": 1100},
+      "human_review": {"decision": "accepted", "reviewer_id": "reviewer-02"},
+      "final_status": "resolved",
+      "evidence": {"source_ref": "ticket://redacted/002"}
+    },
+    {
+      "task_id": "ticket-003",
+      "domain": "technical_support",
+      "split": "held_out",
+      "input": "部署后出现间歇性 503",
+      "redaction": {"applied": true},
+      "baseline": {"passed": true, "duration_ms": 1700},
+      "candidate": {"passed": true, "duration_ms": 1300},
+      "human_review": {"decision": "accepted", "reviewer_id": "reviewer-01"},
+      "final_status": "resolved",
+      "evidence": {"source_ref": "ticket://redacted/003"}
+    }
+  ]
+}

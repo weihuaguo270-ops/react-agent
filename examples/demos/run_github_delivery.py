@@ -23,6 +23,9 @@ def main() -> int:
     parser.add_argument("--episode-out", type=Path)
     parser.add_argument("--idempotency-key", required=True)
     parser.add_argument("--publish-draft-pr", action="store_true")
+    parser.add_argument("--remote-mcp-url", help="remote GitHub/CI MCP endpoint")
+    parser.add_argument("--remote-mcp-token-env", default="MCP_TOKEN")
+    parser.add_argument("--remote-mcp-max-retries", type=int, default=2)
     args = parser.parse_args()
 
     task = DeliveryTask.from_dict(json.loads(args.task.read_text(encoding="utf-8")))
@@ -33,6 +36,9 @@ def main() -> int:
         artifact_dir=args.artifact_dir,
         mode=args.mode,
         publish_draft_pr=args.publish_draft_pr,
+        remote_mcp_url=args.remote_mcp_url,
+        remote_mcp_token_env=args.remote_mcp_token_env if args.remote_mcp_url else None,
+        remote_mcp_max_retries=args.remote_mcp_max_retries,
     ))
     report = workflow.run(task, approval=approval, idempotency_key=args.idempotency_key)
     if args.episode_out:

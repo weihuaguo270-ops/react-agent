@@ -15,6 +15,7 @@ RAG — 检索增强生成模块
 import json
 import os
 import glob
+import hashlib
 from pathlib import Path
 
 from .paths import migrate_legacy_file, runtime_file
@@ -32,7 +33,11 @@ except ImportError:  # pragma: no cover
 class RAG:
     MAX_CHUNKS = 2000
 
-    def __init__(self, save_path=None, chunk_size=500, chunk_overlap=50):
+    def __init__(self, save_path=None, chunk_size=500, chunk_overlap=50,
+                 backend=None, milvus_store=None):
+        self.backend = (backend or os.environ.get("REACT_AGENT_RAG_BACKEND", "local")).strip().lower()
+        if self.backend not in {"local", "milvus"}:
+            raise ValueError("RAG backend must be 'local' or 'milvus'")
         if save_path is None:
             target = runtime_file("rag_index.json", env_var="REACT_AGENT_RAG_INDEX")
             legacy = Path(__file__).with_name("rag_index.json")
@@ -44,7 +49,20 @@ class RAG:
         self.sources = []    # 每个片段对应的来源文件名
         self.vecs = []       # 向量
         self._model = None   # 懒加载
-        self._load()
+        self._milvus = milvus_store
+        self._milvus_batching = False
+        if self.backend == "local":
+            self._load()
+
+    def _get_milvus(self):
+        if self._milvus is None:
+            from .milvus_store import MilvusStore
+            self._milvus = MilvusStore()
+        return self._milvus
+
+    def _encode(self, text):
+        value = self._get_model().encode(text)
+        return value.tolist() if hasattr(value, "tolist") else list(value)
 
     def _get_model(self):
         """首次使用时加载 BGE 模型，后续复用"""
@@ -118,6 +136,9 @@ class RAG:
 
         new_chunks, new_sources = self._chunk_text(text, os.path.basename(file_path))
 
+        if self.backend == "milvus":
+            return self._ingest_milvus(new_chunks, new_sources)
+
         # 去重：不重复加载已有片段
         existing = set(self.chunks)
         added = 0
@@ -150,6 +171,8 @@ class RAG:
         if not (text or "").strip():
             return False
         new_chunks, new_sources = self._chunk_text(text, source)
+        if self.backend == "milvus":
+            return self._ingest_milvus(new_chunks, new_sources)
         existing = set(self.chunks)
         added = 0
         use_vectors = _HAS_VECTOR and self._rag_mode() != "keyword"
@@ -170,6 +193,28 @@ class RAG:
         # Ephemeral corpora: avoid writing eval docs into the default on-disk index
         return added > 0
 
+    def _ingest_milvus(self, chunks, sources):
+        """Embed and upsert chunks; stable ids make repeated ingestion idempotent."""
+        store = self._get_milvus()
+        records = []
+        for chunk, source in zip(chunks, sources):
+            records.append({
+                "pk": store.record_id(source, chunk),
+                "vector": self._encode(chunk),
+                "content": chunk,
+                "source": source,
+                "chunk_hash": hashlib.sha256(chunk.encode("utf-8")).hexdigest(),
+            })
+        store.upsert(records)
+        if not self._milvus_batching:
+            store.flush()
+        self.chunks.extend(chunks)
+        self.sources.extend(sources)
+        self.vecs.extend([r["vector"] for r in records])
+        self._prune()
+        print(f"[RAG] 已向 Milvus 写入 {len(records)} 个片段")
+        return bool(records)
+
     def ingest_directory(self, dir_path):
         """批量加载目录中所有支持的文档 (.md .py .txt .yaml .yml)"""
         if not os.path.exists(dir_path):
@@ -178,10 +223,16 @@ class RAG:
 
         supported = ["*.md", "*.py", "*.txt", "*.yaml", "*.yml"]
         total = 0
-        for ext in supported:
-            for f in sorted(glob.glob(os.path.join(dir_path, ext))):
-                if self.ingest(f):
-                    total += 1
+        self._milvus_batching = self.backend == "milvus"
+        try:
+            for ext in supported:
+                for f in sorted(glob.glob(os.path.join(dir_path, ext))):
+                    if self.ingest(f):
+                        total += 1
+        finally:
+            self._milvus_batching = False
+            if self.backend == "milvus" and total:
+                self._get_milvus().flush()
         print(f"[RAG] 目录加载完成，共 {len(self.chunks)} 个片段")
         return total
 
@@ -231,6 +282,14 @@ class RAG:
           - REACT_AGENT_RAG_MODE=keyword → 仅关键词
           - semantic / auto + 已装 [rag] → 向量检索，失败回退关键词
         """
+        if self.backend == "milvus":
+            if not (question or "").strip():
+                return []
+            try:
+                return self._get_milvus().search(self._encode(question), top_k=top_k)
+            except Exception as e:
+                print(f"[RAG] Milvus 检索失败: {e}")
+                return []
         if not self.chunks:
             return []
         mode = self._rag_mode()
@@ -270,6 +329,11 @@ class RAG:
 
     def list_sources(self):
         """列出所有已加载的文档来源"""
+        if self.backend == "milvus":
+            sources = self._get_milvus().list_sources()
+            for src in sources:
+                print(f"  📄 {src}")
+            return sources
         seen = set()
         for src in self.sources:
             if src not in seen:
@@ -282,6 +346,8 @@ class RAG:
     # 持久化
     # ================================================================
     def _save(self):
+        if self.backend != "local":
+            return
         Path(self.save_path).parent.mkdir(parents=True, exist_ok=True)
         data = {
             "chunks": self.chunks,
@@ -316,6 +382,8 @@ class RAG:
             self.vecs.pop(0)
 
     def clear(self):
+        if self.backend == "milvus":
+            self._get_milvus().clear()
         self.chunks.clear()
         self.sources.clear()
         self.vecs.clear()
@@ -338,7 +406,8 @@ def rag_query(query: str, top_k: int = 3) -> str:
 
     无 [rag] 依赖时自动走关键词检索（REACT_AGENT_RAG_MODE=keyword）。
     """
-    if not RAG_INDEX.chunks:
+    # A remote Milvus collection is not mirrored into ``chunks`` at startup.
+    if RAG_INDEX.backend != "milvus" and not RAG_INDEX.chunks:
         return (
             "[RAG] 文档库为空。可用 examples/demos/demo_rag.py 加载 fixtures/rag_corpus，"
             "或调用 ingest / ingest_directory。"

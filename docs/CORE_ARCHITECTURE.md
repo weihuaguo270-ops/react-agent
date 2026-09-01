@@ -2,7 +2,7 @@
 
 结构地图：[`STRUCTURE.md`](STRUCTURE.md)。主场景说明：[`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)。
 
-运行时走 **自建 Core**，服务 **三类主流 Agent 应用**（编码执行 · 客服自动化 · RAG/研究）。应用地图：[`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。`docs_troubleshoot` 为 **② 客服/自动化** 下的垂直 demo。
+运行时走 **自建 Core**，服务 **两条企业业务线、跨域 benchmark 和共享能力层**（软件工程交付 · 技术支持/工单辅助 · 安全/报销场景 · RAG/轨迹/Episode/权限治理）。应用地图：[`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。`docs_troubleshoot` 是技术支持/工单辅助主线的垂直实现，`security_triage` 是安全评测 benchmark 的垂直实现。
 
 ## 与主流 Agent 的对齐（实践共性）
 
@@ -16,7 +16,7 @@
 | 工具 | 领域工具 + 通用工具 | docs 工具集 + ToolGuard |
 | 安全 | 拒答、权限、危险操作拦截 | policy + permission gate + `fix_steps` 分级 |
 | 可观测 | 日志、request_id、（部分）轨迹 | Format B 轨迹 + StepWatcher（可选） |
-| 质量 | 回归集 / smoke | 四套 eval + CI（**验收手段**，非产品卖点） |
+| 质量 | 回归集 / smoke | 多业务 benchmark + `EvaluationEpisode` + CI 发布门禁 |
 | 交付 | 单服务、health/ready | `/health`、`/ready`、compose |
 
 **刻意不作为 KPI 的能力**：复杂图编排、Checkpoint 中断恢复、多租户平台——多数 Runbook/Copilot 类 Agent 也不会先做这些。
@@ -37,7 +37,7 @@
 ## 分层
 
 ```
-Apps (docs_troubleshoot)     ← Agent 循环（默认）+ legacy Workflow + diagnosis
+Apps (docs_troubleshoot / security_triage / expense) ← Agent 循环或领域工作流 + 业务终态
   → agent_runner（观测 → 工具 → verify_citations → policy）
   → Workflow v5（固定 DAG，REACT_AGENT_DOCS_ENGINE=workflow）
   → react_loop（LLM ReAct；Live）
@@ -75,5 +75,5 @@ python examples/eval/run_docs_troubleshoot_eval.py          # 默认 agent 路�
 
 1. **整体贴近主流 ReAct 服务**；**细节**在循环治理与领域工具契约上加深  
 2. 主场景默认 Agent 循环；Workflow DAG 保留作 legacy / 对照  
-3. eval 验证 Agent 边界，不作为对外产品叙事中心  
+3. benchmark + eval 验证 Agent 边界和跨域迁移，不把单一业务线包装成平台产品  
 4. P1 优先补齐主流交付项：Bearer 鉴权、结构化 JSON 日志、**verify_actions 接工具执行**

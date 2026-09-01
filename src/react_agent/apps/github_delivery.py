@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
+from react_agent.eval.business_metrics import business_scorecard
+
 
 EPISODE_SCHEMA_VERSION = "evaluation-episode/v1"
 REPORT_SCHEMA_VERSION = "github-delivery-run/v1"
@@ -51,6 +53,7 @@ class DeliveryTask:
     test_command: tuple[str, ...]
     acceptance_criteria: tuple[str, ...]
     base_branch: str = "HEAD"
+    remote_repository: str | None = None
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "DeliveryTask":
@@ -64,6 +67,11 @@ class DeliveryTask:
             test_command=tuple(str(item) for item in payload["test_command"]),
             acceptance_criteria=tuple(str(item) for item in payload["acceptance_criteria"]),
             base_branch=str(payload.get("base_branch") or "HEAD"),
+            remote_repository=(
+                str(payload["remote_repository"])
+                if payload.get("remote_repository")
+                else None
+            ),
         )
 
     def plan_payload(self) -> dict[str, Any]:
@@ -100,6 +108,10 @@ class WorkflowConfig:
     publish_draft_pr: bool = False
     max_test_seconds: int = 120
     max_workflow_seconds: int = 300
+    remote_mcp_url: str | None = None
+    remote_mcp_token_env: str | None = None
+    remote_mcp_max_retries: int = 2
+    remote_mcp_retry_writes: bool = False
     allowed_test_prefixes: tuple[tuple[str, ...], ...] = (
         ("python", "-m", "pytest"),
         ("python3", "-m", "pytest"),
@@ -110,11 +122,33 @@ class WorkflowConfig:
 class GitHubDeliveryWorkflow:
     """在隔离克隆中验证变更，审批后才生成候选提交。"""
 
-    def __init__(self, config: WorkflowConfig):
+    def __init__(self, config: WorkflowConfig, *, remote_gateway=None):
         if config.mode not in {"shadow", "guarded"}:
             raise ValueError("mode must be shadow or guarded")
         self.config = config
         self.config.artifact_dir.mkdir(parents=True, exist_ok=True)
+        self.remote_gateway = remote_gateway
+        self._active_approval: Approval | None = None
+
+    def _get_remote_gateway(self):
+        if self.remote_gateway is not None:
+            return self.remote_gateway
+        if not self.config.remote_mcp_url:
+            return None
+        from react_agent.apps.remote_delivery import RemoteDeliveryGateway
+
+        self.remote_gateway = RemoteDeliveryGateway.from_config(
+            self.config.remote_mcp_url,
+            token_env=self.config.remote_mcp_token_env,
+            max_retries=self.config.remote_mcp_max_retries,
+            retry_writes=self.config.remote_mcp_retry_writes,
+            # The approval credential has already been validated against the
+            # plan hash before this callback can be used for an external write.
+            confirmation_fn=lambda _name, _args: bool(
+                self._active_approval and self._active_approval.allow_external_write
+            ),
+        )
+        return self.remote_gateway
 
     def run(
         self,
@@ -130,6 +164,7 @@ class GitHubDeliveryWorkflow:
         推送分支并创建 Draft PR。相同幂等键和计划哈希直接回放报告。
         """
         started = time.perf_counter()
+        self._active_approval = approval
         plan_sha = _json_hash(task.plan_payload())
         replay = self._load_replay(idempotency_key, plan_sha)
         if replay is not None:
@@ -151,7 +186,7 @@ class GitHubDeliveryWorkflow:
         error = ""
 
         try:
-            # Clone, edit and test finish before any branch or remote write.
+            # 先完成克隆、修改和验收测试，再允许创建分支或写入远端。
             self._git("clone", "--no-hardlinks", task.repository, str(workspace))
             self._git("checkout", task.base_branch, cwd=workspace)
             steps.append(self._step(1, "clone_repository", {"base": task.base_branch}, "ok"))
@@ -169,7 +204,7 @@ class GitHubDeliveryWorkflow:
                 "returncode": test_result["returncode"],
             }, "passed" if test_result["passed"] else "failed"))
 
-            # A failed acceptance test is terminal; never write a rejected candidate.
+            # 验收失败是终态，不为未通过的候选变更创建提交。
             if not test_result["passed"]:
                 status = "test_failed"
             elif self.config.mode == "shadow":
@@ -191,12 +226,15 @@ class GitHubDeliveryWorkflow:
                     "branch": branch, "commit_sha": commit_sha,
                 }, "committed"))
                 if self.config.publish_draft_pr:
-                    pull_request_url = self._publish_draft_pr(workspace, task, approval, branch)
+                    pull_request_url = self._publish_draft_pr(
+                        workspace, task, approval, branch, diff=diff, plan_sha=plan_sha,
+                        idempotency_key=idempotency_key,
+                    )
                     status = "draft_pr_created"
                     steps.append(self._step(5, "publish_draft_pr", {
                         "url": pull_request_url,
                     }, "published"))
-        except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
             error = str(exc)
 
         duration_ms = round((time.perf_counter() - started) * 1000, 3)
@@ -288,11 +326,34 @@ class GitHubDeliveryWorkflow:
         }
 
     def _publish_draft_pr(
-        self, workspace: Path, task: DeliveryTask, approval: Approval | None, branch: str
+        self,
+        workspace: Path,
+        task: DeliveryTask,
+        approval: Approval | None,
+        branch: str,
+        *,
+        diff: str = "",
+        plan_sha: str = "",
+        idempotency_key: str = "",
     ) -> str:
         """Publish only an already-approved candidate branch as a Draft PR."""
         if approval is None or not approval.allow_external_write:
             raise ValueError("approval does not authorize external writes")
+        remote_gateway = self._get_remote_gateway()
+        if remote_gateway is not None:
+            return remote_gateway.publish_draft_pr(
+                repository=task.remote_repository or task.repository,
+                base_branch=task.base_branch,
+                branch=branch,
+                task_id=task.task_id,
+                issue_url=task.issue_url,
+                diff=diff,
+                plan_sha256=plan_sha,
+                idempotency_key=idempotency_key,
+                approver=approval.approver,
+                approved_at=approval.approved_at,
+                allow_external_write=approval.allow_external_write,
+            )
         if shutil.which("gh") is None:
             raise OSError("gh is required to publish a draft PR")
         source = self._git("-C", task.repository, "remote", "get-url", "origin").stdout.strip()
@@ -384,6 +445,28 @@ class GitHubDeliveryWorkflow:
                 "test_duration_ms": values["test_result"].get("duration_ms"),
                 "human_takeover_required": values["status"] == "approval_required",
                 "external_write_count": int(bool(values["pull_request_url"])),
+                # 业务 scorecard 与技术字段并列输出，便于按任务切片做版本比较。
+                "business": business_scorecard(
+                    [
+                        {
+                            "passed": success,
+                            "human_handoff": values["status"] == "approval_required",
+                            "duration_ms": values["duration_ms"],
+                        }
+                    ],
+                    human_handoff_key="human_handoff",
+                    duration_key="duration_ms",
+                ),
+                # 这些字段保留可直接用于发布门禁的布尔证据，避免调用方解析状态文本。
+                "acceptance_test_passed": bool(values["test_result"].get("passed")),
+                "rollback_ready": bool(values["commit_sha"]),
+                "unauthorized_external_write": bool(
+                    values["pull_request_url"]
+                    and not (
+                        values["approval"]
+                        and values["approval"].allow_external_write
+                    )
+                ),
             },
             "test_result": values["test_result"],
             "diff_sha256": hashlib.sha256(values["diff"].encode("utf-8")).hexdigest() if values["diff"] else "",

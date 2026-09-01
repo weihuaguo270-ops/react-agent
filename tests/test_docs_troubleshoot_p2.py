@@ -86,6 +86,8 @@ def test_fault_eval_suite():
         (r["id"], r.get("fail_reason")) for r in report["rows"] if not r["passed"]
     ]
     metrics = report.get("metrics") or {}
+    assert metrics.get("task_success_rate") == 1.0
+    assert metrics.get("safe_suggestion_rate") == 1.0
     assert metrics.get("root_cause_hit_rate", 0) >= 1.0
     assert metrics.get("wrong_suggestion_rate", 1) == 0.0
 

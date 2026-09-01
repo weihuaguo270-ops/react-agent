@@ -65,6 +65,54 @@ python examples/demos/run_github_delivery.py `
   --idempotency-key local-delivery-demo-2
 ```
 
+## 远程 GitHub/CI MCP（混合模式）
+
+配置 `remote_mcp_url` 后，隔离克隆、补丁和验收测试仍在本地执行；Draft PR
+发布改由远程 MCP Gateway 执行。GitHub/CI 凭证只保存在远程服务，Agent 进程不
+直接使用 `gh` 或 GitHub Token。
+
+```powershell
+$env:MCP_TOKEN = "<remote-service-token>"
+python examples/demos/run_github_delivery.py `
+  examples/fixtures/github_delivery_task.json `
+  --artifact-dir artifacts/github-delivery `
+  --mode guarded `
+  --approval approval.json `
+  --publish-draft-pr `
+  --remote-mcp-url https://mcp.example.test/mcp `
+  --remote-mcp-token-env MCP_TOKEN `
+  --idempotency-key remote-delivery-1
+```
+
+任务载荷可同时提供 `repository`（Agent 本地工作区）和
+`remote_repository`（远程 MCP Worker 可访问的 HTTPS GitHub 地址）；未提供
+`remote_repository` 时远程调用会回退使用 `repository`。
+
+远程 MCP Server 至少需要提供 `create_draft_pr` 工具；可选提供
+`get_ci_status` 和 `trigger_ci` 用于共享 CI 能力。写调用携带任务计划指纹和
+幂等键，必须通过 `allow_external_write=true` 的审批凭据，并由远程客户端的
+确认回调和审计记录共同约束。
+
+项目附带的服务端协议桩可用于本地联调：
+
+```powershell
+python -m react_agent.server.mcp_delivery --host 127.0.0.1 --port 8780
+```
+
+该默认服务使用 `InMemoryDeliveryBackend`，只验证协议、鉴权、审批和幂等，
+不会访问真实 GitHub。生产部署必须注入实现 `DeliveryBackend` 的 GitHub/CI
+适配器，并将 Token 仅放在远程 Worker 或 Broker 中。项目提供 GitHub REST
+适配器，可在远程 Worker 上启动：
+
+```powershell
+$env:MCP_SERVER_TOKEN = "<mcp-client-token>"
+$env:GITHUB_TOKEN = "<github-token>"
+python -m react_agent.server.mcp_delivery --backend github --port 8780
+```
+
+GitHub Backend 的 Draft PR 创建要求目标分支已存在于远程仓库；分支推送应由
+受控 Worker 或 CI 步骤完成，不能把 GitHub 凭证带回 Agent 进程。
+
 ## 控制边界
 
 - 文件路径必须位于克隆工作区内；每个替换目标必须唯一命中。

@@ -6,15 +6,15 @@ LangGraph environment contract.
 
 受控工程任务交付：[`docs/GITHUB_DELIVERY_WORKFLOW.md`](docs/GITHUB_DELIVERY_WORKFLOW.md)。默认影子执行；人工审批绑定计划指纹，外部 Draft PR 写入需单独显式授权。
 
-[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/应用-软件交付·技术支持-lightgrey)](docs/APPLICATION_DIRECTION.md)
+[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/应用-Agent执行·跨域评测-lightgrey)](docs/APPLICATION_DIRECTION.md)
 
-个人维护的 **企业任务执行 Agent**（`react_loop` + ToolGuard + Harness + 权限闸门），当前聚焦 **软件工程交付** 与 **技术支持/工单辅助**；RAG、轨迹和过程评测作为共享能力层。详见 [`docs/APPLICATION_DIRECTION.md`](docs/APPLICATION_DIRECTION.md)。
+个人维护的 **企业任务 Agent 执行与评测样本平台**（`react_loop` + ToolGuard + Harness + 权限闸门），以软件工程交付、技术支持/工单辅助和安全研判作为被测业务场景；RAG、轨迹、Episode 和过程评测作为共享能力层。详见 [`docs/APPLICATION_DIRECTION.md`](docs/APPLICATION_DIRECTION.md)。
 
-结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
+结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 业务 Skills：[`docs/BUSINESS_SKILLS.md`](docs/BUSINESS_SKILLS.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md) · 优化进度：[`docs/PROJECT_OPTIMIZATION_STATUS.md`](docs/PROJECT_OPTIMIZATION_STATUS.md)。
 
 ## 业务目标
 
-本项目是 **Agent 业务的执行底座**：业务方提供任务、领域工具和验收标准，运行时负责受控调用工具、记录完整轨迹，并用业务结果指标驱动版本优化。主线是软件工程交付和技术支持/工单辅助，RAG、权限与过程评测由两条业务线共享。
+本项目是 **Agent 业务的执行底座与评测样本平台**：业务方提供任务、领域工具和验收标准，运行时负责受控调用工具、记录完整轨迹，统一输出 Episode，并用业务结果和过程指标驱动版本优化。软件工程交付、技术支持/工单辅助是企业任务主线；安全研判、报销审核等作为跨风险等级的 benchmark 和回归场景。
 
 业务试点闭环入口：[`docs/BUSINESS_PILOT.md`](docs/BUSINESS_PILOT.md)。它接收脱敏任务、baseline/candidate 执行证据、人工复核和最终业务状态，生成可审计的版本比较；示例夹具不代表生产结果。
 Jira、GitLab、Zendesk、ServiceNow 和 APM 的只读采集入口见 [`docs/ENTERPRISE_CONNECTORS.md`](docs/ENTERPRISE_CONNECTORS.md)。
@@ -56,8 +56,22 @@ DELETE /v1/tasks/{task_id} 取消排队或运行中的任务
 
 `/v1/chat/stream` 当前发送任务级事件和最终结果，不是 Token 级模型流。默认 `/v1/tasks`
 使用进程内有界线程池，服务重启后内存状态会丢失；设置 `REACT_AGENT_TASK_STORE=mysql`
-并配置 `REACT_AGENT_MYSQL_URL` 后，任务状态可从 MySQL 查询恢复。两种模式都仍是单实例
-线程池，不等同于 Redis/RabbitMQ/Kafka 等可跨实例恢复的持久化队列。
+并配置 `REACT_AGENT_MYSQL_URL` 后，任务状态可从 MySQL 查询恢复。
+
+可选生产接口使用 FastAPI/Pydantic，并用 SQLAlchemy 统一 SQLite 本地回归和 PostgreSQL
+部署配置：
+
+```bash
+pip install -e ".[service,postgres]"
+set REACT_AGENT_TASK_STORE=sqlalchemy
+set REACT_AGENT_DATABASE_URL=postgresql+psycopg://agent:password@127.0.0.1/react_agent
+alembic upgrade head
+react-agent-api
+```
+
+本地可将 URL 改为 `sqlite:///react_agent.db`。FastAPI 和数据库持久化仍使用单实例线程池，
+不等同于 Redis/RabbitMQ/Kafka 等可跨实例恢复的持久化队列；PostgreSQL 连接也必须经过
+live 集成测试后才能作为外部实证。
 
 地图/搜索示例见 [`demo_geo_tools.py`](examples/demos/demo_geo_tools.py)，使用 `search_poi` 和 `estimate_route` 演示“检索地点 → 路线估算”的工具编排。`mock_geo_adapter` 是无外部依赖的演示适配器，不代表真实地图数据。
 
@@ -71,7 +85,11 @@ python examples/benchmarks/run_http_benchmark.py --requests 50 --concurrency 10
 | **② 技术支持 / 工单辅助** | 现场证据、Runbook 检索、根因候选、验证和升级建议 | `docker compose up` · [`run_docs_troubleshoot_eval.py`](examples/eval/run_docs_troubleshoot_eval.py) |
 | **共享能力回归** | RAG、多跳检索、公开 QA 和通用执行能力验证 | [`demo_rag.py`](examples/demos/demo_rag.py) · [`run_public_benchmark.py`](examples/eval/run_public_benchmark.py) |
 
-**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
+**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|security_triage|default`；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
+
+**Security Triage MVP：** `app=security_triage` 提供 CVE 查询、CISA KEV 校验、非权威 ATT&CK 候选映射、IOC 富化、资产/SBOM 证据关联、引用式报告和显式人工复核。FastAPI 的 `/v1/security/cases` 提供 SQLAlchemy 案件持久化、版本冲突保护和复核审计；默认使用可复现离线快照，且不执行扫描或处置。范围与调用示例见 [`SECURITY_TRIAGE_AGENT.md`](docs/SECURITY_TRIAGE_AGENT.md)。
+
+安全 Skill、CycloneDX 只读导入、受控 LLM 报告编辑、模型对照、黄金集与失败回放见 [`SECURITY_TRIAGE_AGENT.md`](docs/SECURITY_TRIAGE_AGENT.md) 和 `examples/eval/run_security_triage_eval.py`。
 
 **垂直 demo（② 的子场景）：** [证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 引用/拒答/现场证据；`agent_runner` 默认离线循环 · Live 走 `react_loop`。
 
@@ -129,11 +147,11 @@ Workflow v5（legacy DAG）：`现场证据 → search → lookup_api → synthe
 
 | 是 | 不是 |
 |----|------|
-| **两条企业业务线 + 共享能力**：软件工程交付 · 技术支持/工单辅助 · RAG/轨迹/权限治理（见 APPLICATION_DIRECTION） | 单一「文档排障」产品或 AIOps 平台 |
+| **两条企业业务线 + 跨域评测场景 + 共享能力**：软件工程交付 · 技术支持/工单辅助 · 安全/报销 benchmark · RAG/轨迹/权限治理（见 APPLICATION_DIRECTION） | 单一「文档排障」产品或把安全线包装成完整 SOC 平台 |
 | Agent 运行时 + 循环治理（ToolGuard、Harness、权限、轨迹飞轮） | 图编排平台 / LangGraph 替代品 |
 | 可部署 HTTP + Docker + 多套 eval 证据 | 多租户 SLA / 自动线上根因 |
 
-跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘 + Harness Health 门禁。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
+跨仓：**本仓 Core** = 执行、业务场景适配和 Episode 产出；**llm-eval-engine** = EvaluationEpisode 终态验证、Process Reward / 人机校准和发布门禁；**trace-debugger** = 轨迹启发式复盘 + Harness Health 门禁。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
 证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md) · Harness 五维健康度：[`docs/HARNESS_HEALTH.md`](docs/HARNESS_HEALTH.md)。
 
@@ -172,7 +190,7 @@ query
 
 ```
 src/react_agent/          # Core 默认
-├── workflow/ · react_loop.py · apps/docs_troubleshoot/ · server/
+├── skills/ · workflow/ · react_loop.py · apps/docs_troubleshoot/ · server/
 ├── tools/ · safety/ · harness/ · resilience.py · eval/
 examples/
 ├── demos/                # 演示

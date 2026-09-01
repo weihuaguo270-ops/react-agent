@@ -9,6 +9,7 @@ def test_github_business_tasks_preserve_source_and_exclude_pull_requests(monkeyp
     monkeypatch.setattr(module, "_get", lambda path: next(responses))
     report = module.run_github_tasks("org/repo")
     assert report["pass_rate"] == 1.0
+    assert report["evidence_level"] == "public_read_only"
     assert report["read_only"] is True
     assert report["cases"][1]["issue_sample"][0]["number"] == 1
 

@@ -5,9 +5,17 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
+
+# Direct script execution puts ``examples/eval`` on sys.path rather than the
+# repository root.  Add the root explicitly so the shared GitHub client works
+# from PowerShell, CI, and ``python -m`` alike.
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from examples.eval.run_github_business_tasks import _get, _github_token
 

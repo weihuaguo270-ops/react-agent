@@ -18,6 +18,7 @@ rag = [
     "numpy>=1.24,<3",
     "scikit-learn>=1.3,<2",
     "sentence-transformers>=2.2,<4",
+    "pymilvus>=2.4,<3",
 ]
 langgraph = [
     # 与已验证的 LangGraph 1.2.x / langchain-core 1.5.x 对齐。
@@ -28,13 +29,24 @@ langgraph = [
 mysql = [
     "pymysql>=1.1,<2",
 ]
+service = [
+    "fastapi>=0.115,<1",
+    "pydantic>=2.9,<3",
+    "uvicorn>=0.30,<1",
+    "sqlalchemy>=2.0,<3",
+    "alembic>=1.13,<2",
+    "httpx>=0.27,<1",
+]
+postgres = [
+    "psycopg[binary]>=3.2,<4",
+]
 test = [
     "pytest>=9.0.3,<10",
     "pytest-cov>=4.0,<7",
     "flake8>=6.0,<8",
 ]
 dev = [
-    "react-agent[rag,test,langgraph,mysql]",
+    "react-agent[rag,test,langgraph,mysql,service,postgres]",
     "mypy>=1.8",
     "pip-audit>=2.6",
 ]
@@ -42,6 +54,8 @@ dev = [
 [project.scripts]
 agent = "react_agent.react_loop:cli_entry"
 react-agent-server = "react_agent.server.app:main"
+react-agent-api = "react_agent.server.fastapi_app:main"
+react-agent-mcp-server = "react_agent.server.mcp_delivery:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -53,6 +67,7 @@ react_agent = [
     "apps/docs_troubleshoot/golden.json",
     "apps/docs_troubleshoot/corpus/*.md",
     "apps/expense/business_cases.json",
+    "apps/security_triage/*.json",
     "server/static/*.html",
 ]
 

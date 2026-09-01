@@ -1,6 +1,6 @@
 # 仓库结构
 
-Core 运行时、**三类主流应用**、评测与实验模块的分区说明。应用地图：[`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。
+Core 运行时、**两条企业业务线、跨域 benchmark 与共享评测能力层**、评测与实验模块的分区说明。应用地图：[`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。
 
 ## 顶层目录
 
@@ -21,8 +21,10 @@ Core 运行时、**三类主流应用**、评测与实验模块的分区说明�
 ```
 src/react_agent/
 ├── react_loop.py          ReAct 循环
+├── skills/                业务 Skill 契约、确定性路由和结果验证
 ├── workflow/              声明式 Workflow
-├── apps/docs_troubleshoot/  垂直 demo：② 客服线 · 证据化文档排障
+├── apps/docs_troubleshoot/  业务线② · 技术支持/工单辅助 · 证据化文档排障
+├── apps/security_triage/    安全垂直 MVP · 公开情报研判与人工复核
 ├── server/                HTTP：/health /v1/chat /v1/workflows
 ├── tools/                 工具注册表
 ├── safety/                权限闸门 + HITL
@@ -41,7 +43,10 @@ src/react_agent/
 | 目标 | 位置 |
 |------|------|
 | 声明式流水线 / builtins | `src/react_agent/workflow/` |
+| 业务 Skill / 场景路由 | `src/react_agent/skills/` |
 | 语料 / 黄金集 / 产品定位 | `apps/docs_troubleshoot/` · [`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md) |
+| 安全研判 MVP | `apps/security_triage/` · [`SECURITY_TRIAGE_AGENT.md`](SECURITY_TRIAGE_AGENT.md) |
+| 安全研判评测 / 回放 | `examples/eval/run_security_triage_eval.py` · `examples/fixtures/security_triage_goldens.json` |
 | HTTP 服务面 | `src/react_agent/server/` |
 | 权限表 | `src/react_agent/safety/permissions.py` |
 | 垂类 Demo | `examples/demos/` |
@@ -53,7 +58,7 @@ src/react_agent/
 ## 阅读顺序
 
 1. 本页（结构）
-2. [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)（三类主流应用 + 入口）
+2. [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)（两条业务线 + benchmark + 共享能力入口）
 3. [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)（控制流）
 4. [`AGENT_WORKFLOW.md`](AGENT_WORKFLOW.md)（主路径用法）
 5. [`EVAL_INDEX.md`](EVAL_INDEX.md)（评测索引；报告正文在 `reports/`）

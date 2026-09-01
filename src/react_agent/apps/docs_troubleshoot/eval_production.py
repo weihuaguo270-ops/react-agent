@@ -1,4 +1,4 @@
-"""Production blind-set evaluation: external corpus via INGEST_DIRS."""
+"""使用独立语料目录运行生产盲测和证据充分度门禁。"""
 from __future__ import annotations
 
 import json
@@ -8,6 +8,7 @@ from typing import Any
 
 from react_agent.apps.docs_troubleshoot.eval_golden import score_workflow_case
 from react_agent.apps.docs_troubleshoot.index import reset_index
+from react_agent.eval.business_metrics import business_scorecard
 
 _APP = Path(__file__).resolve().parent
 _REPO = _APP.resolve().parents[3]
@@ -125,6 +126,17 @@ def run_production_eval(
         and r.get("evidence_sufficiency") is not None
     ]
 
+    # 业务成功率基于所有硬断言；grounded 指标只表示文档证据充分，不等于现场修复。
+    business = business_scorecard(rows)
+    business.update(
+        {
+            "grounded_resolution_rate": (
+                round(document_evidence_hits / total, 3) if total else 0.0
+            ),
+            "field_evidence_sample_size": len(applicable_scores),
+        }
+    )
+
     return {
         "suite": "production_blind",
         "corpus": str(_PRODUCTION_CORPUS),
@@ -133,6 +145,7 @@ def run_production_eval(
         "pass_rate": round(passed / total, 3) if total else 0.0,
         "by_tag": by_tag,
         "metrics": {
+            "business": business,
             "production_source_hit_rate": round(prod_hits / total, 3) if total else 0.0,
             "document_evidence_rate": (
                 round(document_evidence_hits / total, 3) if total else 0.0

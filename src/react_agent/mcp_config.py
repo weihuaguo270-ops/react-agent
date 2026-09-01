@@ -12,6 +12,57 @@ PORTABLE_DEFAULT_MCP_SERVERS: list[list[str]] = [
 ]
 
 
+def load_mcp_server_configs(config_path: Optional[str] = None) -> list[dict]:
+    """Load stdio and remote MCP definitions in one normalized shape.
+
+    Backwards-compatible list/string entries remain stdio commands.  Remote
+    entries use ``{"transport": "streamable_http", "url": "..."}`` and may
+    reference a bearer token through ``token_env`` rather than storing secrets
+    in the JSON configuration.
+    """
+    if os.environ.get("REACT_AGENT_DISABLE_MCP", "").strip().lower() in (
+        "1", "true", "yes", "on",
+    ):
+        return []
+
+    candidates = [config_path] if config_path else []
+    candidates.extend(_candidate_config_paths())
+    for path in candidates:
+        if not path or not os.path.isfile(path):
+            continue
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"  [MCP] 配置不可用 ({path}): {exc}")
+            continue
+        servers = data.get("servers") if isinstance(data, dict) else None
+        if not isinstance(servers, list) or not servers:
+            continue
+        configs: list[dict] = []
+        for entry in servers:
+            if isinstance(entry, list) and entry and all(isinstance(x, str) for x in entry):
+                configs.append({"transport": "stdio", "command": entry[0], "args": entry[1:]})
+            elif isinstance(entry, str) and entry.strip():
+                parts = entry.split()
+                configs.append({"transport": "stdio", "command": parts[0], "args": parts[1:]})
+            elif isinstance(entry, dict):
+                transport = str(entry.get("transport", "")).strip().lower()
+                url = entry.get("url")
+                if transport in {"streamable_http", "streamable-http", "http", "sse"} and isinstance(url, str) and url:
+                    item = dict(entry)
+                    item["transport"] = "streamable_http"
+                    configs.append(item)
+        if configs:
+            print(f"  [MCP] 已加载配置: {path} ({len(configs)} server)")
+            return configs
+
+    return [
+        {"transport": "stdio", "command": command[0], "args": command[1:]}
+        for command in PORTABLE_DEFAULT_MCP_SERVERS
+    ]
+
+
 def _candidate_config_paths() -> list[str]:
     paths: list[str] = []
     env = os.environ.get("REACT_AGENT_MCP_CONFIG", "").strip()

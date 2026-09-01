@@ -1,0 +1,82 @@
+{
+  "schema_version": "security-intel-snapshot/v1",
+  "snapshot_at": "2026-08-30T00:00:00Z",
+  "scope": "Small reproducible fixture derived from public sources; absence is not proof of current non-listing.",
+  "citations": {
+    "NVD-CVE-2021-44228": {"title": "NVD: CVE-2021-44228", "url": "https://nvd.nist.gov/vuln/detail/CVE-2021-44228", "retrieved_at": "2026-08-30T00:00:00Z"},
+    "NVD-CVE-2020-11022": {"title": "NVD: CVE-2020-11022", "url": "https://nvd.nist.gov/vuln/detail/CVE-2020-11022", "retrieved_at": "2026-08-30T00:00:00Z"},
+    "NVD-API": {"title": "NVD CVE API", "url": "https://nvd.nist.gov/developers/vulnerabilities", "retrieved_at": "2026-08-30T00:00:00Z"},
+    "CISA-KEV": {"title": "CISA Known Exploited Vulnerabilities Catalog", "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog", "retrieved_at": "2026-08-30T00:00:00Z"},
+    "ATTACK-T1190": {"title": "MITRE ATT&CK T1190", "url": "https://attack.mitre.org/techniques/T1190/", "retrieved_at": "2026-08-30T00:00:00Z"},
+    "ATTACK-T1059-007": {"title": "MITRE ATT&CK T1059.007", "url": "https://attack.mitre.org/techniques/T1059/007/", "retrieved_at": "2026-08-30T00:00:00Z"},
+    "RFC2606": {"title": "RFC 2606: Reserved Top Level DNS Names", "url": "https://www.rfc-editor.org/rfc/rfc2606", "retrieved_at": "2026-08-30T00:00:00Z"},
+    "GOOGLE-DNS": {"title": "Google Public DNS", "url": "https://developers.google.com/speed/public-dns/docs/using", "retrieved_at": "2026-08-30T00:00:00Z"},
+    "EICAR": {"title": "EICAR anti-malware test file", "url": "https://www.eicar.org/download-anti-malware-testfile/", "retrieved_at": "2026-08-30T00:00:00Z"},
+    "THREATFOX": {"title": "ThreatFox IOC database", "url": "https://threatfox.abuse.ch/", "retrieved_at": "2026-08-30T00:00:00Z"}
+  },
+  "cves": {
+    "CVE-2021-44228": {
+      "description": "Apache Log4j2 JNDI features did not protect against attacker-controlled LDAP and other JNDI related endpoints, enabling remote code execution in affected configurations.",
+      "published": "2021-12-10",
+      "severity": "CRITICAL",
+      "cvss_score": 10.0,
+      "cwes": ["CWE-502", "CWE-400"],
+      "citation_id": "NVD-CVE-2021-44228"
+    },
+    "CVE-2020-11022": {
+      "description": "In jQuery versions before 3.5.0, passing HTML from untrusted sources to DOM manipulation methods may execute untrusted code.",
+      "published": "2020-04-29",
+      "severity": "MEDIUM",
+      "cvss_score": 6.1,
+      "cwes": ["CWE-79"],
+      "citation_id": "NVD-CVE-2020-11022"
+    }
+  },
+  "kev": {
+    "CVE-2021-44228": {
+      "date_added": "2021-12-10",
+      "due_date": "2021-12-24",
+      "known_ransomware_campaign_use": "Known",
+      "required_action": "Apply updates per vendor instructions.",
+      "citation_id": "CISA-KEV"
+    }
+  },
+  "iocs": {
+    "example.invalid": {
+      "ioc_type": "domain",
+      "verdict": "reserved",
+      "malicious": false,
+      "confidence": "high",
+      "summary": "The .invalid top-level name is reserved for names that are certain to be invalid.",
+      "source": "RFC 2606",
+      "citation_id": "RFC2606"
+    },
+    "8.8.8.8": {
+      "ioc_type": "ipv4",
+      "verdict": "known_public_service",
+      "malicious": false,
+      "confidence": "high",
+      "summary": "Documented Google Public DNS resolver address; context is still required before allow-list decisions.",
+      "source": "Google Public DNS",
+      "citation_id": "GOOGLE-DNS"
+    },
+    "275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f": {
+      "ioc_type": "sha256",
+      "verdict": "security_test_artifact",
+      "malicious": false,
+      "confidence": "high",
+      "summary": "Common SHA-256 identifier for the EICAR anti-malware test artifact; do not treat it as production malware evidence.",
+      "source": "EICAR",
+      "citation_id": "EICAR"
+    },
+    "conflict.example": {
+      "ioc_type": "domain",
+      "verdict": "conflicting_sources",
+      "malicious": null,
+      "confidence": "low",
+      "summary": "Bounded fixture records conflicting public-source observations; analyst validation is required before any conclusion.",
+      "source": "ThreatFox fixture conflict sample",
+      "citation_id": "THREATFOX"
+    }
+  }
+}

@@ -16,6 +16,10 @@ APP_ALIASES = {
     "troubleshoot": "docs_troubleshoot",
     "expense": "expense",
     "报销": "expense",
+    "security": "security_triage",
+    "security_triage": "security_triage",
+    "security-triage": "security_triage",
+    "安全研判": "security_triage",
 }
 
 APPLICATIONS = [
@@ -35,6 +39,12 @@ APPLICATIONS = [
         "id": "expense",
         "pillar": "support_automation",
         "description": "报销政策检索 + 规则裁决 demo",
+        "offline": True,
+    },
+    {
+        "id": "security_triage",
+        "pillar": "support_automation",
+        "description": "CVE/KEV/ATT&CK/IOC 只读研判、引用报告与人工复核",
         "offline": True,
     },
 ]
@@ -104,6 +114,25 @@ def handle_chat(
             "mode": "offline",
         }
 
+    if app == "security_triage":
+        from react_agent.apps.security_triage.offline_answer import answer_offline
+
+        out = answer_offline(body)
+        if not out.get("ok"):
+            return error_response(
+                out.get("error_code", "invalid_security_triage_request"),
+                out.get("answer", "invalid security triage request"),
+                request_id,
+                400,
+            )
+        return 200, {
+            "request_id": request_id,
+            "app": "security_triage",
+            "mode": out["mode"],
+            "answer": out["answer"],
+            "case": out["case"],
+        }
+
     if app == "default":
         use_offline_react = (
             os.environ.get("REACT_AGENT_SERVER_OFFLINE_REACT", "")
@@ -141,7 +170,7 @@ def handle_chat(
                 "invalid_request",
                 "app=default requires REACT_AGENT_SERVER_LLM=1 or "
                 "REACT_AGENT_SERVER_OFFLINE_REACT=1; "
-                "use app=docs_troubleshoot or app=expense for other offline paths",
+                "use app=docs_troubleshoot, app=expense, or app=security_triage for offline paths",
                 request_id,
                 400,
             )

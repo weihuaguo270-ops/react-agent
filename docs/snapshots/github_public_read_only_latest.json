@@ -1,0 +1,106 @@
+{
+  "schema_version": "external-business-evidence/v1",
+  "evidence_level": "public_read_only",
+  "system": "github-rest-api",
+  "repository": "weihuaguo270-ops/agent-delivery-sandbox",
+  "read_only": true,
+  "authenticated": true,
+  "cases": [
+    {
+      "case_id": "github_repository_contract",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/weihuaguo270-ops/agent-delivery-sandbox",
+      "latency_ms": 1155.1480000052834,
+      "request_id": "9378:284105:1040759:114D8E2:6A867A59"
+    },
+    {
+      "case_id": "github_issue_triage",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/weihuaguo270-ops/agent-delivery-sandbox/issues",
+      "latency_ms": 912.3508000047877,
+      "request_id": "937C:25D8A0:1586FCB:169375F:6A867A5A",
+      "issue_sample": [
+        {
+          "number": 24,
+          "title": "[delivery] Raise task_24 limit from 124 to 134",
+          "labels": [
+            "split:held-out",
+            "task:policy",
+            "agent:shadow"
+          ],
+          "url": "https://github.com/weihuaguo270-ops/agent-delivery-sandbox/issues/24"
+        },
+        {
+          "number": 23,
+          "title": "[delivery] Raise task_23 limit from 123 to 133",
+          "labels": [
+            "split:held-out",
+            "task:policy",
+            "agent:shadow"
+          ],
+          "url": "https://github.com/weihuaguo270-ops/agent-delivery-sandbox/issues/23"
+        },
+        {
+          "number": 22,
+          "title": "[delivery] Raise task_22 limit from 122 to 132",
+          "labels": [
+            "split:held-out",
+            "task:policy",
+            "agent:shadow"
+          ],
+          "url": "https://github.com/weihuaguo270-ops/agent-delivery-sandbox/issues/22"
+        },
+        {
+          "number": 21,
+          "title": "[delivery] Raise task_21 limit from 121 to 131",
+          "labels": [
+            "split:held-out",
+            "task:policy",
+            "agent:shadow"
+          ],
+          "url": "https://github.com/weihuaguo270-ops/agent-delivery-sandbox/issues/21"
+        },
+        {
+          "number": 20,
+          "title": "[delivery] Raise task_20 limit from 120 to 130",
+          "labels": [
+            "split:held-out",
+            "task:policy",
+            "agent:shadow"
+          ],
+          "url": "https://github.com/weihuaguo270-ops/agent-delivery-sandbox/issues/20"
+        }
+      ]
+    }
+  ],
+  "pass_rate": 1.0,
+  "trajectory": {
+    "session_id": "github-weihuaguo270-ops-agent-delivery-sandbox",
+    "query": "Inspect weihuaguo270-ops/agent-delivery-sandbox and triage current public issues.",
+    "model": "deterministic-github-agent-v1",
+    "steps": [
+      {
+        "step": 1,
+        "thought": "Read repository metadata.",
+        "action": {
+          "name": "github_get_repository",
+          "arguments": "{\"repository\": \"weihuaguo270-ops/agent-delivery-sandbox\"}"
+        },
+        "observation": "{\"full_name\": \"weihuaguo270-ops/agent-delivery-sandbox\", \"url\": \"https://github.com/weihuaguo270-ops/agent-delivery-sandbox\"}"
+      },
+      {
+        "step": 2,
+        "thought": "Read issues and exclude pull requests.",
+        "action": {
+          "name": "github_list_issues",
+          "arguments": "{\"repository\": \"weihuaguo270-ops/agent-delivery-sandbox\"}"
+        },
+        "observation": "{\"issue_count\": 10, \"numbers\": [24, 23, 22, 21, 20, 19, 16, 15, 14, 13]}"
+      }
+    ],
+    "final_answer": "Inspected weihuaguo270-ops/agent-delivery-sandbox; found 10 open issues in the first page."
+  },
+  "evidence_boundary": "Public read-only data; dynamic issue content is not a frozen benchmark."
+}

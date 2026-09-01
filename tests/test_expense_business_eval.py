@@ -21,6 +21,8 @@ def test_expense_business_splits_and_reference_agent_pass():
     result = run_business_suite()
     assert len(result.cases) == 8
     assert result.pass_rate == 1.0
+    assert result.to_dict()["business_metrics"]["task_success_rate"] == 1.0
+    assert result.to_dict()["business_metrics"]["sample_size"] == 8
     assert result.to_dict()["by_split"]["held_out"]["num_cases"] == 3
 
 
