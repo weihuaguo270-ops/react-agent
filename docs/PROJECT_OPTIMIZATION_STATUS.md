@@ -2,7 +2,7 @@
 
 维护人：郭伟华  
 状态：Active  
-最近更新：2026-08-22  
+最近更新：2026-09-02
 用途：每次开始项目优化前先阅读；完成优化后更新进度、证据和边界。
 
 ## 一句话定位
@@ -38,7 +38,7 @@
 |------|------|------|
 | 主业务验证 | GitHub/software delivery：Issue、补丁、测试、审查、候选提交 | 后续优化的唯一主线 |
 | 次级业务示例 | docs_troubleshoot 技术支持、费用状态验证 | 保留回归，不继续横向扩张 |
-| 共享能力 | ReAct、工具边界、轨迹、评测、版本门禁、RAG | 为主业务服务 |
+| 共享能力 | ReAct、工具边界、轨迹、评测、版本门禁、RAG（本地 / 可选 Milvus） | 为主业务服务 |
 | 安全能力 | permission gate、process/container Sandbox | 证明执行边界，不证明业务价值 |
 | 实验能力 | MCP、LangGraph、多 Agent 等 | 非默认路径，除非主线需要否则不扩展 |
 
@@ -50,10 +50,11 @@
 | GitHub 公开组合集 | 10 仓库、50 个元数据任务，三切片门禁通过 | 外部只读数据采集、追溯和切片可工作 | Agent 解决了 50 个 Issue |
 | agent-delivery-sandbox | 真实 GitHub 写入与受控 PR 生命周期 | 写入审批和交付流程可执行 | 真实用户任务或上游采用率 |
 | Podman Sandbox | live-check 23/23；安全专测 17 passed | 本机 rootless 容器约束实际生效 | 逃逸防护认证、多租户安全 |
-| 全量代码回归 | 当前工作树最近复核为 224 passed、4 skipped | 当前代码无已知测试回归 | 生产可靠性和外部业务效果 |
+| 全量代码回归 | 2026-09-02：267 passed、6 skipped、13 deselected（排除 `real_llm` / `mysql_live`；270 项被收集） | 当前默认离线测试路径无已知回归 | 生产可靠性和外部业务效果 |
+| Milvus 本机集成 | Docker Compose 启动 Milvus / etcd / MinIO / Agent；HNSW 写入、检索、来源枚举、清理和 `/v1/chat` 均已联调 | 可选向量库后端与 Agent 容器可协同运行 | 多实例容量、鉴权、备份、生产 SLA |
 
-说明：另一次用户会话记录为 225 passed、4 skipped。两次均无失败，但正式引用测试数前
-应以同一提交、同一依赖和同一收集清单重新运行，不混用两个计数。
+测试数只能引用相同提交、依赖和收集条件下的结果；`real_llm` 与 `mysql_live` 因依赖外部
+凭据/服务未包含在上述本机离线回归中。
 
 ## 最大缺口
 
@@ -236,6 +237,21 @@ candidate：
 - 当前结果：费用夹具、GitHub 公开数据、受控交付和 Podman 安全证据已归档。
 - 明确边界：当前是求职用企业 Agent 工程原型，不是生产企业产品。
 - 下一动作：执行 P0，冻结真实 baseline、任务 Schema 和结果 Schema。
+
+### 2026-09-02：Milvus 可选后端与本机容器联调
+
+- 目标：在不破坏离线可复现路径的前提下，为共享 RAG 增加可部署的向量库后端。
+- 修改范围：`RAG` local/milvus 后端切换、HNSW 索引、Milvus Compose 覆盖文件、CPU-only
+  RAG 镜像依赖和 docs_troubleshoot 批量摄取。
+- 核心结果：本机 Docker Compose 下，Milvus、etcd、MinIO 与 Agent 均健康；HNSW 写入、
+  检索、来源枚举、清理和 `/v1/chat` 已真实联调。
+- 失败与回归：发现 Milvus 查询窗口上限和高频 flush 限流，已改为受限查询窗口与批量 flush；
+  默认离线回归为 267 passed、6 skipped、13 deselected（270 项被收集）。
+- 证据路径：`docker-compose.milvus.yml`、`src/react_agent/milvus_store.py`、
+  `tests/test_rag_milvus.py`、`docs/EXPERIMENTAL.md`。
+- 证据等级：`local_integration`（本机容器联调，非外部业务或生产流量）。
+- 明确边界：Milvus 能力属于共享 RAG 基础设施，不改变软件工程交付仍为主业务验证方向。
+- 下一动作：P0 冻结实验契约仍是主线；Milvus 仅按主线实际需要补充鉴权、备份和容量证据。
 
 ## 最终判断标准
 

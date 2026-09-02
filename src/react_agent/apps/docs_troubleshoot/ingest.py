@@ -255,7 +255,9 @@ def rebuild_index(
         if milvus_batch:
             rag._milvus_batching = False
             if rag.chunks:
-                rag._get_milvus().flush()
+                flush = getattr(rag._get_milvus(), "flush", None)
+                if callable(flush):
+                    flush()
     return build_manifest(
         corpus_dir=corpus_dir,
         extra_dirs=extra_dirs,

@@ -78,6 +78,10 @@ Milvus 模式使用同一组 `ingest`、`ingest_text`、`query`、`clear`、`lis
 接口，并以 embedding 向量检索；业务应用无需感知后端差异。默认不会连接 Milvus，
 因此离线测试仍可复现。生产部署还应为集合配置访问令牌、网络策略、备份和容量监控。
 
+2026-09-02 已完成本机 Compose 联调：Milvus、etcd、MinIO 和 Agent 均通过健康检查，
+并验证 HNSW 写入、检索、来源枚举、清理与 docs_troubleshoot `/v1/chat`。这只是
+`local_integration` 证据，不表示共享集群容量、生产鉴权或 SLA 已完成。
+
 当前向量索引明确使用 HNSW（COSINE），而不是 `AUTOINDEX`：`M=16`、
 `efConstruction=200`、查询 `ef=64`，均可通过 `.env` 调整。提高 `ef` 通常增加召回率和
 延迟；提高 `M` 通常增加索引内存和构建成本。已有集合若使用其他索引，需要迁移或重建，

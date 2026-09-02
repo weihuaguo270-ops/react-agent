@@ -207,7 +207,9 @@ class RAG:
             })
         store.upsert(records)
         if not self._milvus_batching:
-            store.flush()
+            flush = getattr(store, "flush", None)
+            if callable(flush):
+                flush()
         self.chunks.extend(chunks)
         self.sources.extend(sources)
         self.vecs.extend([r["vector"] for r in records])
@@ -232,7 +234,9 @@ class RAG:
         finally:
             self._milvus_batching = False
             if self.backend == "milvus" and total:
-                self._get_milvus().flush()
+                flush = getattr(self._get_milvus(), "flush", None)
+                if callable(flush):
+                    flush()
         print(f"[RAG] 目录加载完成，共 {len(self.chunks)} 个片段")
         return total
 

@@ -25,7 +25,7 @@ Jira、GitLab、Zendesk、ServiceNow 和 APM 的只读采集入口见 [`docs/ENT
 | Agent 是否在权限边界内完成任务 | 权限闸门、ToolGuard、可切换的工具隔离 |
 | 结果能否被业务和质量团队复核 | 引用/拒答策略、Format B 轨迹、Task Episode 验收标准 |
 | 失败是否能进入回归闭环 | Harness、StepWatcher、离线/HTTP eval 和跨仓接口 |
-| 能否作为应用原型交付验证 | 多 app HTTP、Web UI、Docker 与可复现演示 |
+| 能否作为应用原型交付验证 | 多 app HTTP、Web UI、Docker、可选 Milvus RAG 与可复现演示 |
 
 **当前阶段：** 已形成可部署、可评测的工程原型，并在独立的
 [`agent-delivery-sandbox`](https://github.com/weihuaguo270-ops/agent-delivery-sandbox)
@@ -33,9 +33,11 @@ Jira、GitLab、Zendesk、ServiceNow 和 APM 的只读采集入口见 [`docs/ENT
 该证据标记为 `external_real_sandbox`：GitHub 写入和 PR 生命周期是真实的，但任务不来自生产用户；
 尚未证明多租户隔离、真实业务 SLA、长期线上流量稳定性或企业权限体系集成。
 
-**2026-08-20 验证更新：** Podman machine、sandbox 镜像和短生命周期容器已完成真实运行验证；
-23 项隔离、资源、网络、密钥和超时清理检查全部通过。该证据属于本机 rootless Podman/Wsl2
-实测，不等价于生产节点逃逸测试或企业安全认证。
+**2026-09-02 验证更新：** Podman machine、sandbox 镜像和短生命周期容器已完成真实运行验证；
+23 项隔离、资源、网络、密钥和超时清理检查全部通过。可选 Milvus 后端也已在本机 Docker Compose
+中完成 Agent、Milvus、etcd、MinIO 健康检查，以及 HNSW 写入、检索、来源枚举、清理和
+docs_troubleshoot `/v1/chat` 联调。上述 Milvus 证据属于 `local_integration`，不等价于生产容量、
+鉴权、备份或 SLA；Podman 证据属于本机 rootless Podman/WSL2 实测，不等价于生产节点逃逸测试或企业安全认证。
 
 ## 企业业务方向
 
