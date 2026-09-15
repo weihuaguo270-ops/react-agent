@@ -349,3 +349,4 @@ candidate：
 - 2026-09-15 P2 强制复验：`evaluate_forced_reverify` / `run_gate_with_optional_repair`；Delivery 支持 `reverify_from` 与可选 `repair_loop`；hold 后未 improved_to_pass 不得成功。
 - 2026-09-15 A1/A2：`repair_feedback/v1` 驱动修复；`baseline_scan` 跨 run 真对比（CI green/red）。
 - 2026-09-15 A3–A5：`build_process_quality` 证据分 + ProcessReward fast（去 stub）；`tests/test_failure_regression_contracts.py`；答辩页 `docs/FAILURE_REGRESSION_PITCH.md`；`EVAL_API_VERSION` 对齐 0.2。
+- 2026-09-15 SoftwareTask 门禁验收：`15764` / `15974` / `16253` 挂入同一条 `failure_regression_gate`；冻结 `baseline_scan` 下坏补丁 → `hold`、好 Agent → `pass`；复验剧本 hold → `reverify_from` → 仅 `improved_to_pass` 放行。脚本 `examples/eval/run_software_task_failure_regression.py`；CI + `tests/test_software_task_failure_regression.py` 禁止跳过。可写口径：**对齐工作流已在夹具 + 3 条 SoftwareTask 上复现**；不可写生产 SLA / Agent 自优化。总览 `artifacts/failure-regression/software-tasks/acceptance_summary.json`；答辩链见 `docs/FAILURE_REGRESSION_PITCH.md`。

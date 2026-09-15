@@ -10,7 +10,7 @@ LangGraph environment contract.
 
 个人维护的 **Agent 运行时**（`react_loop` + ToolGuard + Harness + 权限闸门），面向 GitHub 主流的三类应用：**写代码/执行**、**客服与工作流自动化**、**通用 RAG/研究**。详见 [`docs/APPLICATION_DIRECTION.md`](docs/APPLICATION_DIRECTION.md)。
 
-结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
+结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 进展：[`docs/PROJECT_OPTIMIZATION_STATUS.md`](docs/PROJECT_OPTIMIZATION_STATUS.md) · 失败回归：[`docs/FAILURE_REGRESSION_PIPELINE.md`](docs/FAILURE_REGRESSION_PIPELINE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
 ## 业务目标
 
@@ -252,6 +252,8 @@ Web 面板（实验）：`REACT_AGENT_EXPERIMENTAL_TOOLS=1` 后 `python -m react
 ## 评测（EVAL-ONLY）
 
 文档排障四套离线门禁 + capability 规则打分：[`docs/DOCS_TROUBLESHOOT_EVAL.md`](docs/DOCS_TROUBLESHOOT_EVAL.md) · [`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md)。
+
+失败自动检出 → 回归门禁 → 修复后强制复验：[`docs/FAILURE_REGRESSION_PIPELINE.md`](docs/FAILURE_REGRESSION_PIPELINE.md) · 答辩口径：[`docs/FAILURE_REGRESSION_PITCH.md`](docs/FAILURE_REGRESSION_PITCH.md)（可写「夹具 + 3 条 SoftwareTask 已复现」；不可写 SLA / 自优化）。
 
 ```bash
 python examples/eval/run_docs_troubleshoot_eval.py         # golden 34
