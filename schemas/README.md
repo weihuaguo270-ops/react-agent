@@ -27,4 +27,18 @@ See [trace-debugger/schemas/README.md](https://github.com/weihuaguo270-ops/trace
 
 Local alias file: [`harness_trajectory.schema.json`](harness_trajectory.schema.json)
 
+## Software task contract
+
+[`software_task.schema.json`](software_task.schema.json) defines the frozen
+software-engineering task input used by delivery and evaluation. It requires an
+immutable `base_commit`, an explicit test command, acceptance criteria, and
+allowed paths. The runtime representation is
+`react_agent.eval.software_task.SoftwareTask`; its canonical JSON hash binds
+later approvals and baseline/candidate comparisons to the exact task.
+
+`react_agent.eval.software_task_runner.SoftwareTaskRunner` consumes this
+contract. It checks the declared test command against an allowlist and runs it
+in a disposable Docker or Podman container with no network, a read-only root,
+non-root UID, resource limits, and one writable workspace mount.
+
 Demo: `python examples/eval/harness_closed_loop.py`

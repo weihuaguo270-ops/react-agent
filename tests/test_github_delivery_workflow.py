@@ -45,9 +45,16 @@ def _task(repo: Path) -> DeliveryTask:
     )
 
 
+def _config(artifact_dir, **kwargs) -> WorkflowConfig:
+    # Unit tests opt out of the default sibling gate; P1 coverage lives in
+    # test_failure_regression_gate.py and uses real/mocked siblings explicitly.
+    kwargs.setdefault("failure_regression_gate", False)
+    return WorkflowConfig(artifact_dir, **kwargs)
+
+
 def test_shadow_run_is_real_but_does_not_modify_source(tmp_path):
     repo = _repository(tmp_path)
-    workflow = GitHubDeliveryWorkflow(WorkflowConfig(tmp_path / "artifacts"))
+    workflow = GitHubDeliveryWorkflow(_config(tmp_path / "artifacts"))
     report = workflow.run(_task(repo), idempotency_key="shadow-17")
 
     assert report["status"] == "shadow_passed"
@@ -55,6 +62,9 @@ def test_shadow_run_is_real_but_does_not_modify_source(tmp_path):
     assert report["episode"]["state_verification"]["passed"] is True
     assert report["episode"]["task"].startswith("Resolve engineering task")
     assert report["episode"]["final_state"]["status_not_failed"] is True
+    assert report["metrics"]["business"]["task_success_rate"] == 1.0
+    assert report["metrics"]["business"]["human_handoff_rate"] == 0.0
+    assert report["metrics"]["unauthorized_external_write"] is False
     assert (repo / "service.py").read_text(encoding="utf-8") == "VALUE = 1\n"
     assert (tmp_path / "artifacts" / "audit.jsonl").exists()
 
@@ -62,7 +72,7 @@ def test_shadow_run_is_real_but_does_not_modify_source(tmp_path):
 def test_guarded_run_requires_approval_bound_to_plan(tmp_path):
     repo = _repository(tmp_path)
     task = _task(repo)
-    workflow = GitHubDeliveryWorkflow(WorkflowConfig(tmp_path / "artifacts", mode="guarded"))
+    workflow = GitHubDeliveryWorkflow(_config(tmp_path / "artifacts", mode="guarded"))
 
     pending = workflow.run(task, idempotency_key="guarded-missing")
     assert pending["status"] == "approval_required"
@@ -81,7 +91,7 @@ def test_guarded_run_requires_approval_bound_to_plan(tmp_path):
 
 def test_idempotency_replays_and_rejects_key_reuse(tmp_path):
     repo = _repository(tmp_path)
-    workflow = GitHubDeliveryWorkflow(WorkflowConfig(tmp_path / "artifacts"))
+    workflow = GitHubDeliveryWorkflow(_config(tmp_path / "artifacts"))
     task = _task(repo)
     first = workflow.run(task, idempotency_key="same-key")
     second = workflow.run(task, idempotency_key="same-key")
@@ -97,7 +107,7 @@ def test_idempotency_replays_and_rejects_key_reuse(tmp_path):
 
 def test_task_rejects_path_escape_and_arbitrary_command(tmp_path):
     repo = _repository(tmp_path)
-    workflow = GitHubDeliveryWorkflow(WorkflowConfig(tmp_path / "artifacts"))
+    workflow = GitHubDeliveryWorkflow(_config(tmp_path / "artifacts"))
     task = _task(repo)
     unsafe = DeliveryTask(**{
         **task.__dict__,
@@ -106,6 +116,12 @@ def test_task_rejects_path_escape_and_arbitrary_command(tmp_path):
     with pytest.raises(ValueError, match="unsafe replacement path"):
         workflow.run(unsafe, idempotency_key="unsafe-path")
 
+    unsafe_allowlist = DeliveryTask(**{
+        **task.__dict__, "allowed_paths": ("../outside",),
+    })
+    with pytest.raises(ValueError, match="unsafe allowed path"):
+        workflow.run(unsafe_allowlist, idempotency_key="unsafe-allowlist")
+
     arbitrary = DeliveryTask(**{**task.__dict__, "test_command": ("powershell", "whoami")})
     with pytest.raises(ValueError, match="allowlist"):
         workflow.run(arbitrary, idempotency_key="unsafe-command")
@@ -113,10 +129,91 @@ def test_task_rejects_path_escape_and_arbitrary_command(tmp_path):
 
 def test_report_episode_can_be_saved_independently(tmp_path):
     repo = _repository(tmp_path)
-    workflow = GitHubDeliveryWorkflow(WorkflowConfig(tmp_path / "artifacts"))
+    workflow = GitHubDeliveryWorkflow(_config(tmp_path / "artifacts"))
     report = workflow.run(_task(repo), idempotency_key="episode")
     episode_path = tmp_path / "episode.json"
     episode_path.write_text(json.dumps(report["episode"]), encoding="utf-8")
     payload = json.loads(episode_path.read_text(encoding="utf-8"))
     assert payload["schema_version"] == "evaluation-episode/v1"
     assert payload["split"] == "held_out"
+
+
+def test_guarded_delivery_can_publish_through_remote_gateway(tmp_path):
+    class FakeGateway:
+        def __init__(self):
+            self.calls = []
+
+        def publish_draft_pr(self, **payload):
+            self.calls.append(payload)
+            return "https://github.com/example/repo/pull/17"
+
+    repo = _repository(tmp_path)
+    gateway = FakeGateway()
+    config = _config(
+        tmp_path / "artifacts",
+        mode="guarded",
+        publish_draft_pr=True,
+    )
+    workflow = GitHubDeliveryWorkflow(config, remote_gateway=gateway)
+    task = DeliveryTask(**{
+        **_task(repo).__dict__,
+        "remote_repository": "https://github.com/example/repo.git",
+    })
+    pending = workflow.run(task, idempotency_key="remote-pending")
+    approval = Approval(
+        plan_sha256=pending["plan_sha256"],
+        approver="reviewer@example.com",
+        approved_at="2026-08-30T00:00:00+00:00",
+        allow_external_write=True,
+    )
+    report = workflow.run(
+        task,
+        approval=approval,
+        idempotency_key="remote-approved",
+    )
+
+    assert report["status"] == "draft_pr_created"
+    assert report["pull_request_url"].endswith("/pull/17")
+    assert gateway.calls[0]["idempotency_key"] == "remote-approved"
+    assert gateway.calls[0]["plan_sha256"] == report["plan_sha256"]
+    assert gateway.calls[0]["repository"] == "https://github.com/example/repo.git"
+    assert gateway.calls[0]["diff"]
+
+
+def test_delivery_can_use_unified_software_task_runner(tmp_path):
+    class FakeSoftwareRunner:
+        def __init__(self):
+            self.tasks = []
+
+        def run(self, task, *, workspace):
+            self.tasks.append((task, workspace))
+            return {
+                "task_id": task.task_id,
+                "task_hash": task.content_hash(),
+                "status": "succeeded",
+                "exit_code": 0,
+                "duration_ms": 12,
+                "stdout": "public and hidden passed",
+                "stderr": "",
+                "public_test": {"status": "passed", "returncode": 0},
+                "hidden_test": {"status": "passed", "returncode": 0},
+                "changed_paths": ["service.py"],
+                "unauthorized_paths": [],
+            }
+
+    repo = _repository(tmp_path)
+    runner = FakeSoftwareRunner()
+    config = _config(tmp_path / "artifacts", software_task_runner=runner)
+    report = GitHubDeliveryWorkflow(config).run(
+        DeliveryTask(**{
+            **_task(repo).__dict__,
+            "allowed_paths": ("service.py",),
+            "hidden_test_command": ("pytest", "tests/test_service.py"),
+        }),
+        idempotency_key="software-runner",
+    )
+    assert report["status"] == "shadow_passed"
+    assert report["test_result"]["runner"] == "software_task_runner"
+    assert report["test_result"]["hidden_test"]["status"] == "passed"
+    assert runner.tasks[0][0].base_commit
+    assert runner.tasks[0][0].allowed_paths == ("service.py",)

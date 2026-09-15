@@ -1,0 +1,908 @@
+{
+  "schema_version": "software-task-candidate/v1",
+  "source_snapshot": "docs/snapshots/github_portfolio_dataset_20260820.json",
+  "source_type": "github_public_read_only_metadata",
+  "disposition": "review_queue_only",
+  "candidates": [
+    {
+      "repository": "https://github.com/langchain-ai/langgraph",
+      "repository_name": "langchain-ai/langgraph",
+      "case_id": "github::langchain-ai/langgraph::identity",
+      "split": "dev",
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/langchain-ai/langgraph",
+      "repository_name": "langchain-ai/langgraph",
+      "case_id": "github::langchain-ai/langgraph::activity",
+      "split": "dev",
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/langchain-ai/langgraph",
+      "repository_name": "langchain-ai/langgraph",
+      "case_id": "github::langchain-ai/langgraph::popularity",
+      "split": "dev",
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/langchain-ai/langgraph",
+      "repository_name": "langchain-ai/langgraph",
+      "case_id": "github::langchain-ai/langgraph::technology",
+      "split": "dev",
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/langchain-ai/langgraph",
+      "repository_name": "langchain-ai/langgraph",
+      "case_id": "github::langchain-ai/langgraph::governance",
+      "split": "dev",
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/openai/openai-agents-python",
+      "repository_name": "openai/openai-agents-python",
+      "case_id": "github::openai/openai-agents-python::identity",
+      "split": "dev",
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/openai/openai-agents-python",
+      "repository_name": "openai/openai-agents-python",
+      "case_id": "github::openai/openai-agents-python::activity",
+      "split": "dev",
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/openai/openai-agents-python",
+      "repository_name": "openai/openai-agents-python",
+      "case_id": "github::openai/openai-agents-python::popularity",
+      "split": "dev",
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/openai/openai-agents-python",
+      "repository_name": "openai/openai-agents-python",
+      "case_id": "github::openai/openai-agents-python::technology",
+      "split": "dev",
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/openai/openai-agents-python",
+      "repository_name": "openai/openai-agents-python",
+      "case_id": "github::openai/openai-agents-python::governance",
+      "split": "dev",
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/modelcontextprotocol/python-sdk",
+      "repository_name": "modelcontextprotocol/python-sdk",
+      "case_id": "github::modelcontextprotocol/python-sdk::identity",
+      "split": "dev",
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/modelcontextprotocol/python-sdk",
+      "repository_name": "modelcontextprotocol/python-sdk",
+      "case_id": "github::modelcontextprotocol/python-sdk::activity",
+      "split": "dev",
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/modelcontextprotocol/python-sdk",
+      "repository_name": "modelcontextprotocol/python-sdk",
+      "case_id": "github::modelcontextprotocol/python-sdk::popularity",
+      "split": "dev",
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/modelcontextprotocol/python-sdk",
+      "repository_name": "modelcontextprotocol/python-sdk",
+      "case_id": "github::modelcontextprotocol/python-sdk::technology",
+      "split": "dev",
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/modelcontextprotocol/python-sdk",
+      "repository_name": "modelcontextprotocol/python-sdk",
+      "case_id": "github::modelcontextprotocol/python-sdk::governance",
+      "split": "dev",
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/huggingface/transformers",
+      "repository_name": "huggingface/transformers",
+      "case_id": "github::huggingface/transformers::identity",
+      "split": "golden",
+      "source_url": "https://github.com/huggingface/transformers",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/huggingface/transformers",
+      "repository_name": "huggingface/transformers",
+      "case_id": "github::huggingface/transformers::activity",
+      "split": "golden",
+      "source_url": "https://github.com/huggingface/transformers",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/huggingface/transformers",
+      "repository_name": "huggingface/transformers",
+      "case_id": "github::huggingface/transformers::popularity",
+      "split": "golden",
+      "source_url": "https://github.com/huggingface/transformers",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/huggingface/transformers",
+      "repository_name": "huggingface/transformers",
+      "case_id": "github::huggingface/transformers::technology",
+      "split": "golden",
+      "source_url": "https://github.com/huggingface/transformers",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/huggingface/transformers",
+      "repository_name": "huggingface/transformers",
+      "case_id": "github::huggingface/transformers::governance",
+      "split": "golden",
+      "source_url": "https://github.com/huggingface/transformers",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pytest-dev/pytest",
+      "repository_name": "pytest-dev/pytest",
+      "case_id": "github::pytest-dev/pytest::identity",
+      "split": "golden",
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pytest-dev/pytest",
+      "repository_name": "pytest-dev/pytest",
+      "case_id": "github::pytest-dev/pytest::activity",
+      "split": "golden",
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pytest-dev/pytest",
+      "repository_name": "pytest-dev/pytest",
+      "case_id": "github::pytest-dev/pytest::popularity",
+      "split": "golden",
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pytest-dev/pytest",
+      "repository_name": "pytest-dev/pytest",
+      "case_id": "github::pytest-dev/pytest::technology",
+      "split": "golden",
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pytest-dev/pytest",
+      "repository_name": "pytest-dev/pytest",
+      "case_id": "github::pytest-dev/pytest::governance",
+      "split": "golden",
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pallets/flask",
+      "repository_name": "pallets/flask",
+      "case_id": "github::pallets/flask::identity",
+      "split": "golden",
+      "source_url": "https://github.com/pallets/flask",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pallets/flask",
+      "repository_name": "pallets/flask",
+      "case_id": "github::pallets/flask::activity",
+      "split": "golden",
+      "source_url": "https://github.com/pallets/flask",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pallets/flask",
+      "repository_name": "pallets/flask",
+      "case_id": "github::pallets/flask::popularity",
+      "split": "golden",
+      "source_url": "https://github.com/pallets/flask",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pallets/flask",
+      "repository_name": "pallets/flask",
+      "case_id": "github::pallets/flask::technology",
+      "split": "golden",
+      "source_url": "https://github.com/pallets/flask",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pallets/flask",
+      "repository_name": "pallets/flask",
+      "case_id": "github::pallets/flask::governance",
+      "split": "golden",
+      "source_url": "https://github.com/pallets/flask",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/fastapi/fastapi",
+      "repository_name": "fastapi/fastapi",
+      "case_id": "github::fastapi/fastapi::identity",
+      "split": "golden",
+      "source_url": "https://github.com/fastapi/fastapi",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/fastapi/fastapi",
+      "repository_name": "fastapi/fastapi",
+      "case_id": "github::fastapi/fastapi::activity",
+      "split": "golden",
+      "source_url": "https://github.com/fastapi/fastapi",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/fastapi/fastapi",
+      "repository_name": "fastapi/fastapi",
+      "case_id": "github::fastapi/fastapi::popularity",
+      "split": "golden",
+      "source_url": "https://github.com/fastapi/fastapi",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/fastapi/fastapi",
+      "repository_name": "fastapi/fastapi",
+      "case_id": "github::fastapi/fastapi::technology",
+      "split": "golden",
+      "source_url": "https://github.com/fastapi/fastapi",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/fastapi/fastapi",
+      "repository_name": "fastapi/fastapi",
+      "case_id": "github::fastapi/fastapi::governance",
+      "split": "golden",
+      "source_url": "https://github.com/fastapi/fastapi",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/psf/requests",
+      "repository_name": "psf/requests",
+      "case_id": "github::psf/requests::identity",
+      "split": "held_out",
+      "source_url": "https://github.com/psf/requests",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/psf/requests",
+      "repository_name": "psf/requests",
+      "case_id": "github::psf/requests::activity",
+      "split": "held_out",
+      "source_url": "https://github.com/psf/requests",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/psf/requests",
+      "repository_name": "psf/requests",
+      "case_id": "github::psf/requests::popularity",
+      "split": "held_out",
+      "source_url": "https://github.com/psf/requests",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/psf/requests",
+      "repository_name": "psf/requests",
+      "case_id": "github::psf/requests::technology",
+      "split": "held_out",
+      "source_url": "https://github.com/psf/requests",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/psf/requests",
+      "repository_name": "psf/requests",
+      "case_id": "github::psf/requests::governance",
+      "split": "held_out",
+      "source_url": "https://github.com/psf/requests",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pydantic/pydantic",
+      "repository_name": "pydantic/pydantic",
+      "case_id": "github::pydantic/pydantic::identity",
+      "split": "held_out",
+      "source_url": "https://github.com/pydantic/pydantic",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pydantic/pydantic",
+      "repository_name": "pydantic/pydantic",
+      "case_id": "github::pydantic/pydantic::activity",
+      "split": "held_out",
+      "source_url": "https://github.com/pydantic/pydantic",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pydantic/pydantic",
+      "repository_name": "pydantic/pydantic",
+      "case_id": "github::pydantic/pydantic::popularity",
+      "split": "held_out",
+      "source_url": "https://github.com/pydantic/pydantic",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pydantic/pydantic",
+      "repository_name": "pydantic/pydantic",
+      "case_id": "github::pydantic/pydantic::technology",
+      "split": "held_out",
+      "source_url": "https://github.com/pydantic/pydantic",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/pydantic/pydantic",
+      "repository_name": "pydantic/pydantic",
+      "case_id": "github::pydantic/pydantic::governance",
+      "split": "held_out",
+      "source_url": "https://github.com/pydantic/pydantic",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/encode/httpx",
+      "repository_name": "encode/httpx",
+      "case_id": "github::encode/httpx::identity",
+      "split": "held_out",
+      "source_url": "https://github.com/encode/httpx",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/encode/httpx",
+      "repository_name": "encode/httpx",
+      "case_id": "github::encode/httpx::activity",
+      "split": "held_out",
+      "source_url": "https://github.com/encode/httpx",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/encode/httpx",
+      "repository_name": "encode/httpx",
+      "case_id": "github::encode/httpx::popularity",
+      "split": "held_out",
+      "source_url": "https://github.com/encode/httpx",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/encode/httpx",
+      "repository_name": "encode/httpx",
+      "case_id": "github::encode/httpx::technology",
+      "split": "held_out",
+      "source_url": "https://github.com/encode/httpx",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    },
+    {
+      "repository": "https://github.com/encode/httpx",
+      "repository_name": "encode/httpx",
+      "case_id": "github::encode/httpx::governance",
+      "split": "held_out",
+      "source_url": "https://github.com/encode/httpx",
+      "status": "needs_manual_issue_review",
+      "missing": [
+        "issue_url",
+        "base_commit",
+        "public_test",
+        "hidden_test",
+        "allowed_paths",
+        "license_confirmation",
+        "runtime_image",
+        "repository_cluster"
+      ]
+    }
+  ]
+}
