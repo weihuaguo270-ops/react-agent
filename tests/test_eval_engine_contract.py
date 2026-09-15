@@ -33,7 +33,7 @@ _TRAJ = {
 
 
 def test_eval_api_version_pinned():
-    assert EVAL_API_VERSION == "0.1"
+    assert EVAL_API_VERSION == "0.2"
     assert EVAL_ENGINE_API_CONTRACT == f"ProcessRewardScorer.extra_contracts@{EVAL_API_VERSION}"
     from eval_engine.core.process_reward import EVAL_API_VERSION as ee_ver
 
