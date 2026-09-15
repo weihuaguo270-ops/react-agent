@@ -21,10 +21,14 @@
 | [P0_EVIDENCE_MAP.md](./P0_EVIDENCE_MAP.md) | 四层证据串联 | — | Execution × Reliability × Failure × Judge |
 | [daily_smoke/VARIANCE.md](./daily_smoke/VARIANCE.md) | 跨日 smoke | 自动追加 | Actions `daily-smoke`（UTC 01:00） |
 | [FAILURE_FLYWHEEL.md](./FAILURE_FLYWHEEL.md) | 失败→动作→复测飞轮 | 真闭环已勾选 | 配合 tdebug 扫描 |
+| [FAILURE_REGRESSION_PIPELINE.md](./FAILURE_REGRESSION_PIPELINE.md) | P0–P2 编排 + A1/A2 反馈与真 baseline | CI 强制装两仓 | 不自动改 Agent |
+| [FAILURE_REGRESSION_PITCH.md](./FAILURE_REGRESSION_PITCH.md) | 答辩三句话 + 一张图 | — | 口径页 |
 | [flywheel_closed_loop_20260716.md](./reports/flywheel_closed_loop_20260716.md) | 同批 100 条改前/改后 | **llm_offtrack 6→1** | [snapshots/…](./snapshots/flywheel_closed_loop_20260716.json) |
 | [public_benchmark_snapshot_offline.md](./reports/public_benchmark_snapshot_offline.md) | GSM8K×10 + HotpotQA×10 | offline 匹配器 20/20 | [归档](./snapshots/public_benchmark_snapshot_offline.json) |
 | [public_benchmark_snapshot_agent_20260717.md](./reports/public_benchmark_snapshot_agent_20260717.md) | 同上 · DeepSeek agent | **19/20（95%）** · GSM8K 10/10 · Hotpot 9/10 · Wilson [76.4, 99.1] | [归档](./snapshots/public_benchmark_snapshot_agent_20260717.json) |
 | 公开 RAG 子集（分层 v2） | HotpotQA-RAG smoke/hard/held_out | `examples/eval/run_public_rag_benchmark.py` | `public_rag_benchmark_subset.json` |
+| GitHub 公开只读业务证据 | 仓库契约 + 当前公开 Issue | `examples/eval/run_github_business_tasks.py` | [github_public_read_only_20260820.json](./snapshots/github_public_read_only_20260820.json) |
+| GitHub 公开只读交付样本 | agent-delivery-sandbox 公开 Issue（10 条） | `examples/eval/run_github_business_tasks.py` | [github_public_read_only_delivery_sandbox_20260820.json](./snapshots/github_public_read_only_delivery_sandbox_20260820.json) |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 
@@ -102,8 +106,8 @@ python examples/eval/publish_eval_snapshot.py --run capability --only-new --stem
 
 | 仓库 | 评测侧重 |
 |------|----------|
-| **react-agent** | 任务通过率、工具/答案规则打分、capability 五维 |
-| **llm-eval-engine** | Process Reward、动态 rubric、人机校准（κ） |
+| **react-agent** | 任务执行、领域验收、`EvaluationEpisode` 产出、基础规则指标 |
+| **llm-eval-engine** | Episode 终态验证、Process Reward、动态 rubric、人机校准（κ） |
 
 ## 指标说明与限制
 
