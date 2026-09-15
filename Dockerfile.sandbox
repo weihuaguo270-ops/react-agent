@@ -1,5 +1,4 @@
-# syntax=docker/dockerfile:1
-FROM python:3.11.15-slim-bookworm
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1     PYTHONUNBUFFERED=1     PYTHONIOENCODING=utf-8     REACT_AGENT_SANDBOX_CHILD=1     REACT_AGENT_DISABLE_MCP=1     REACT_AGENT_SKIP_RAG=1
 
@@ -8,7 +7,7 @@ WORKDIR /opt/react-agent
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 
-RUN groupadd --gid 65532 sandbox     && useradd --uid 65532 --gid 65532 --no-create-home        --shell /usr/sbin/nologin sandbox     && pip install --no-cache-dir .     && rm -rf /root/.cache /tmp/*
+RUN groupadd --gid 65532 sandbox     && useradd --uid 65532 --gid 65532 --no-create-home        --shell /usr/sbin/nologin sandbox     && pip install --no-cache-dir ".[test]"     && rm -rf /root/.cache /tmp/*
 
 USER 65532:65532
 WORKDIR /tmp

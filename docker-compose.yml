@@ -11,6 +11,9 @@ services:
       REACT_AGENT_APP: docs_troubleshoot
       REACT_AGENT_RAG_MODE: keyword
       REACT_AGENT_DISABLE_MCP: "1"
+      # Optional: set a bearer token to protect /v1/chat, /v1/tasks,
+      # /v1/security/* and /v1/skills/*.
+      # REACT_AGENT_API_KEY: ${REACT_AGENT_API_KEY}
       # REACT_AGENT_SERVER_LLM: "1"
       # DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       # Mount extra corpus (optional):

@@ -117,7 +117,11 @@ def test_container_backend_builds_hardened_command(monkeypatch):
     )
     joined = " ".join(run_command)
     assert "--interactive" in run_command
+    assert "--init" in run_command
     assert "--read-only" in run_command
+    assert "--userns" not in run_command  # Docker Desktop uses its default private namespace
+    assert run_command[run_command.index("--ipc") + 1] == "private"
+    assert "core=0:0" in run_command
     assert run_command[run_command.index("--network") + 1] == "none"
     assert run_command[run_command.index("--cap-drop") + 1] == "ALL"
     assert "no-new-privileges" in run_command
