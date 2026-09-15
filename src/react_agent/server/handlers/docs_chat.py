@@ -8,7 +8,10 @@ from react_agent.server.http_util import error_response
 
 
 def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
-    message = (body.get("message") or body.get("query") or "").strip()
+    value = body.get("message")
+    if value is None:
+        value = body.get("query")
+    message = value.strip() if isinstance(value, str) else ""
     if not message:
         return error_response("invalid_request", "message is required", request_id, 400)
 
@@ -64,6 +67,10 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
         extra["log_excerpt"] = body.get("log_excerpt")
     if body.get("trace_context") is not None:
         extra["trace_context"] = body.get("trace_context")
+    if body.get("multimodal_artifacts") is not None:
+        extra["multimodal_artifacts"] = body.get("multimodal_artifacts")
+    if body.get("multimodal_max_bytes") is not None:
+        extra["multimodal_max_bytes"] = body.get("multimodal_max_bytes")
 
     out = answer_offline(message, **extra)
     sources = [c.get("source", "") for c in (out.get("citations") or []) if c.get("source")]
@@ -80,4 +87,5 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
         "engine": out.get("engine") or "agent",
         "agent_steps": out.get("agent_steps") or [],
         "session_id": body.get("session_id") or "",
+        "multimodal": out.get("multimodal") or {},
     }

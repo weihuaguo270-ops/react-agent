@@ -8,6 +8,8 @@ import urllib.error
 import urllib.request
 from typing import Any
 
+from react_agent.multimodal import attach_evidence, inspect_artifact
+
 _REDACT_KEYS = re.compile(r"(authorization|api[_-]?key|token|secret|password)", re.I)
 
 _SAFE_ENV_PREFIXES = ("REACT_AGENT_", "LLM_", "RAG_")
@@ -26,6 +28,7 @@ def _parse_json_blob(raw: Any) -> dict[str, Any]:
 
 
 def redact_headers(headers: dict[str, Any]) -> dict[str, str]:
+    """保留诊断所需 Header，并遮蔽凭据和 Cookie 值。"""
     out: dict[str, str] = {}
     for k, v in headers.items():
         key = str(k)
@@ -61,6 +64,7 @@ def parse_error_evidence(
 
 
 def parse_request_headers(headers_json: str = "") -> dict[str, Any]:
+    """解析请求 Header JSON，返回脱敏后的诊断证据。"""
     data = _parse_json_blob(headers_json)
     redacted = redact_headers(data) if data else {}
     has_auth = any(
@@ -94,6 +98,7 @@ def read_config_snapshot(prefixes: str = "REACT_AGENT_") -> dict[str, Any]:
 
 
 def probe_service_health(url: str = "", timeout_sec: float = 3.0) -> dict[str, Any]:
+    """在短超时内探测 HTTP 服务，不跟随业务重试策略。"""
     target = (url or os.environ.get("REACT_AGENT_HEALTH_URL") or "http://127.0.0.1:8765/health").strip()
     if not target:
         return {"ok": False, "type": "health_probe", "error": "no_url"}
@@ -207,6 +212,50 @@ def parse_trace_context(trace_json: str = "") -> dict[str, Any]:
     }
 
 
+def parse_multimodal_evidence(
+    artifacts: Any,
+    *,
+    max_bytes: int = 50 * 1024 * 1024,
+) -> dict[str, Any]:
+    """Normalize caller-supplied local artifacts into auditable evidence.
+
+    This boundary intentionally does not call an OCR/VLM service. An adapter
+    can be added later; until then extraction status remains explicit.
+    """
+    raw_items = artifacts if isinstance(artifacts, list) else []
+    items: list[dict[str, Any]] = []
+    failures: list[dict[str, str]] = []
+    for index, raw in enumerate(raw_items[:10], start=1):
+        path = raw.get("path") if isinstance(raw, dict) else raw
+        artifact_id = raw.get("id") if isinstance(raw, dict) else None
+        if not isinstance(path, (str, bytes)):
+            failures.append({"path": str(path), "code": "invalid_path", "message": "artifact path must be a string"})
+            continue
+        try:
+            artifact = inspect_artifact(
+                path,
+                artifact_id=str(artifact_id or f"support-artifact-{index}"),
+                max_bytes=max_bytes,
+            )
+            item = artifact.to_dict()
+            item["type"] = "multimodal_artifact"
+            item["evidence_ref"] = attach_evidence(artifact).to_dict()
+            item["extracted_text"] = artifact.extracted_text[:4_000]
+            items.append(item)
+        except Exception as exc:
+            code = getattr(exc, "code", "invalid_artifact")
+            failures.append({"path": str(path), "code": str(code), "message": str(exc)[:300]})
+    status = "failed" if failures and not items else "partial" if failures else "ready"
+    return {
+        "ok": not failures,
+        "type": "multimodal_evidence",
+        "status": status,
+        "items": items,
+        "failures": failures,
+        "count": len(items),
+    }
+
+
 def collect_evidence_bundle(state: dict[str, Any]) -> dict[str, Any]:
     """Merge optional workflow state fields into one evidence bundle."""
     items: list[dict[str, Any]] = []
@@ -247,6 +296,18 @@ def collect_evidence_bundle(state: dict[str, Any]) -> dict[str, Any]:
                 trace if isinstance(trace, str) else json.dumps(trace, ensure_ascii=False)
             )
         )
+    multimodal = state.get("multimodal_artifacts")
+    if multimodal:
+        multimodal_out = parse_multimodal_evidence(
+            multimodal,
+            max_bytes=int(state.get("multimodal_max_bytes") or 50 * 1024 * 1024),
+        )
+        state["multimodal_summary"] = {
+            "status": multimodal_out["status"],
+            "count": multimodal_out["count"],
+            "failures": multimodal_out["failures"],
+        }
+        items.extend(multimodal_out["items"])
     tid = str(state.get("trace_id") or "").strip()
     fetch_trace = state.get("fetch_trace_from_backend", True)
     has_trace = any(i.get("type") == "trace_context" for i in items)

@@ -15,6 +15,7 @@ from react_agent.apps.docs_troubleshoot.draft import build_draft_from_hits
 from react_agent.apps.docs_troubleshoot.evidence import collect_evidence_bundle
 from react_agent.apps.docs_troubleshoot.policy import should_refuse_query
 from react_agent.apps.docs_troubleshoot.prompt import get_system_prompt
+from react_agent.apps.docs_troubleshoot.query_policy import classify_query_difficulty
 from react_agent.harness import current_trajectory, finish_trajectory, start_trajectory
 from react_agent.harness.tool_boundary import execute_registered_tool
 from react_agent.tools import TOOL_REGISTRY, enable_app_tools
@@ -27,6 +28,8 @@ def docs_engine() -> str:
 
 @dataclass
 class AgentRunResult:
+    """文档排障 Agent 的终答、轨迹和业务诊断结果。"""
+
     ok: bool
     answer: str
     refused: bool
@@ -37,6 +40,7 @@ class AgentRunResult:
     agent_steps: list[dict[str, Any]] = field(default_factory=list)
 
     def to_workflow_dict(self) -> dict[str, Any]:
+        """转换为 WorkflowResult 兼容的报告字段。"""
         return {
             "ok": self.ok,
             "answer": self.answer,
@@ -51,7 +55,9 @@ class AgentRunResult:
 
 _API_NEEDLE = re.compile(
     r"api|auth|authorization|bearer|401|403|404|429|500|502|504|endpoint|webhook|"
-    r"鉴权|接口|错误码|限流|超时",
+    r"鉴权|接口|错误码|限流|超时|分页|cursor|limit|cors|跨域|预检|"
+    r"回调|签名|路由|响应头|环境变量|版本|schema|轨迹|toolguard|"
+    r"请求头|状态码|重试",
     re.I,
 )
 
@@ -107,6 +113,22 @@ def _should_lookup_api(state: dict[str, Any]) -> bool:
     return False
 
 
+def _needs_internal_retrieval(state: dict[str, Any]) -> bool:
+    """只对排障问题强制走内部证据；普通常识问题交给通用 LLM。"""
+    query = str(state.get("query") or "")
+    if _API_NEEDLE.search(query):
+        return True
+    if any(key in state for key in ("error_response", "log_excerpt", "trace_context", "request_headers")):
+        return True
+    return any(token in query.lower() for token in (
+        "文档", "排障", "故障", "runbook", "内部", "deepseek", "permission",
+        "权限闸门", "rag", "mcp", "schema", "ci", "bearer", "token",
+        "分页", "cursor", "limit", "cors", "跨域", "预检", "webhook", "回调",
+        "签名", "路由", "响应头", "环境变量", "版本", "轨迹", "toolguard",
+        "请求头", "状态码", "重试", "项目", "当前项目", "默认", "配置",
+    ))
+
+
 def _merge_search(state: dict[str, Any], key: str, observation: str) -> None:
     try:
         parsed = json.loads(observation)
@@ -160,7 +182,7 @@ def decide_next_tool(state: dict[str, Any], called: set[str]) -> Optional[tuple[
             {"headers_json": raw},
         )
 
-    if "search_docs" not in called:
+    if _needs_internal_retrieval(state) and "search_docs" not in called:
         return (
             "Retrieve internal runbook/docs before stating any fact.",
             "search_docs",
@@ -204,11 +226,15 @@ def run_docs_agent(initial: Optional[dict[str, Any]] = None) -> AgentRunResult:
     if not query:
         return AgentRunResult(ok=False, answer="query is required", refused=True, state=state)
 
+    state["query_difficulty"] = classify_query_difficulty(query, state)
     start_trajectory(query, "offline-agent", get_system_prompt(query))
     called: set[str] = set()
     agent_steps: list[dict[str, Any]] = []
     step_num = 0
-    max_tool_steps = int(os.environ.get("REACT_AGENT_DOCS_AGENT_MAX_STEPS", "12"))
+    max_tool_steps = int(os.environ.get(
+        "REACT_AGENT_DOCS_AGENT_MAX_STEPS",
+        str(state["query_difficulty"]["recommended_max_steps"]),
+    ))
 
     if should_refuse_query(query):
         state["need_refuse"] = True

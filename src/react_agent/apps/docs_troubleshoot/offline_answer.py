@@ -28,5 +28,6 @@ def answer_offline(query: str, **state: Any) -> dict[str, Any]:
         "trajectory_id": result.trajectory_id,
         "engine": os.environ.get("REACT_AGENT_DOCS_ENGINE", "agent"),
         "agent_steps": result.agent_steps,
+        "multimodal": result.state.get("multimodal_summary") or {},
     }
     return out
