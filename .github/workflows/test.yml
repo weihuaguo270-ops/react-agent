@@ -51,6 +51,12 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -e ".[test]"
+    - name: Clone & install sibling gate repos
+      run: |
+        set -e
+        git clone --depth=1 https://github.com/weihuaguo270-ops/llm-eval-engine.git /tmp/llm-eval-engine
+        git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
+        pip install -e /tmp/llm-eval-engine -e /tmp/trace-debugger
     - name: Script tests
       run: python test_all.py
     - name: Pytest (offline)
@@ -80,22 +86,28 @@ jobs:
         export REACT_AGENT_SKIP_RAG=1
         python examples/eval/run_reliability_live.py --mock
     - name: Failure flywheel (fixture)
-      run: |
-        # optional sibling; skip if trace-debugger not cloned beside
-        if [ -d ../trace-debugger ]; then
-          python examples/eval/run_failure_flywheel.py --fixture --publish
-        else
-          echo "skip flywheel: no sibling trace-debugger"
-        fi
+      run: python examples/eval/run_failure_flywheel.py --fixture --publish
     - name: StepWatcher evidence (trace-debugger)
       run: |
-        if [ -d ../trace-debugger ]; then
-          pip install -e ../trace-debugger
-          pytest tests/test_step_watcher_golden_e2e.py -q
-          python examples/eval/run_step_watcher_evidence.py --publish
-        else
-          echo "skip step watcher evidence: no sibling trace-debugger"
-        fi
+        pytest tests/test_step_watcher_golden_e2e.py -q
+        python examples/eval/run_step_watcher_evidence.py --publish
+    - name: Failure regression pipeline P0 (pass + hold)
+      run: |
+        set -e
+        python examples/eval/run_failure_regression_pipeline.py --mode pass --expect-decision pass --out artifacts/failure-regression/ci-pass
+        python examples/eval/run_failure_regression_pipeline.py --mode hold --expect-decision hold --out artifacts/failure-regression/ci-hold
+        python examples/eval/run_failure_regression_pipeline.py --mode pass --expect-decision pass --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-green
+        python examples/eval/run_failure_regression_pipeline.py --mode hold --expect-decision hold --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-red
+        pytest tests/test_failure_regression_pipeline.py -q
+    - name: Failure regression gate P1 (Delivery + SoftwareTask)
+      run: pytest tests/test_failure_regression_gate.py -q
+    - name: Failure regression contracts (Episode / gate / process_quality)
+      run: pytest tests/test_failure_regression_contracts.py -q
+    - name: SoftwareTask failure regression acceptance (3 FastAPI tasks)
+      run: |
+        set -e
+        python examples/eval/run_software_task_failure_regression.py --out artifacts/failure-regression/ci-software-tasks --expect-all-pass-good
+        pytest tests/test_software_task_failure_regression.py -q
     - name: "Pillar ③ Public benchmark (offline)"
       run: |
         python examples/eval/run_public_benchmark.py --modes offline
@@ -112,26 +124,11 @@ jobs:
       run: python examples/eval/run_production_eval.py
     - name: Docs troubleshoot git docs held-out (offline)
       run: python examples/eval/run_git_docs_eval.py
-    # Reuse the Python 3.10 runner for cross-repository contracts. This
-    # preserves the gate while avoiding a separately queued runner.
-    - name: Clone & install llm-eval-engine (3.10)
-      if: matrix.python-version == '3.10'
-      run: |
-        git clone --depth=1 https://github.com/weihuaguo270-ops/llm-eval-engine.git /tmp/llm-eval-engine
-        pip install -e /tmp/llm-eval-engine
-    - name: Clone & install trace-debugger (3.10)
-      if: matrix.python-version == '3.10'
-      run: |
-        git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
-        pip install -e /tmp/trace-debugger
-    - name: Run Agent to Eval integration (3.10)
-      if: matrix.python-version == '3.10'
+    - name: Run Agent to Eval integration
       run: python examples/eval/agent_to_eval.py
-    - name: Run Harness closed-loop demo (3.10)
-      if: matrix.python-version == '3.10'
+    - name: Run Harness closed-loop demo
       run: python examples/eval/harness_closed_loop.py --fixture
-    - name: Verify cross-repository scoring contracts (3.10)
-      if: matrix.python-version == '3.10'
+    - name: Verify cross-repository scoring contracts
       run: |
         python tests/ci_verify_integration.py
         pytest tests/test_eval_engine_contract.py tests/test_tdebug_eval_contract.py -q

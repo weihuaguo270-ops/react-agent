@@ -1,5 +1,9 @@
 """Tests for eval report markdown publishing."""
+from react_agent.console_io import configure_stdio
 from react_agent.eval.report import report_to_markdown
+
+# GBK 控制台下直接 print emoji 会抛 UnicodeEncodeError；导入即放开 errors=replace。
+configure_stdio()
 
 
 def test_report_to_markdown_minimal():

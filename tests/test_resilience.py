@@ -1,7 +1,13 @@
 """resilience 模块测试"""
-import sys, os, time
+import sys, os, time, threading
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+from react_agent.console_io import configure_stdio
+
+# 本文件用 emoji 打印进度；GBK 控制台上直接 print 会抛 UnicodeEncodeError，
+# 所以先放开 errors=replace（pytest 捕获输出时无影响）。
+configure_stdio()
 
 from react_agent.resilience import (
     classify_error, is_retryable, ErrorCategory,
@@ -220,6 +226,75 @@ def test_tool_guard_rate_limit():
     print("  ✅ 频率限制正确")
 
 
+def test_tool_guard_timeout_does_not_retry_detached_call():
+    """超时且原调用仍在后台运行时不得重试。
+
+    线程无法终止，重试只会在同一个卡住的工具上再叠加一个线程；对写类工具
+    还意味着同一操作被并发执行两次。execute_python 属写类（max_retries=1），
+    所以修复前这里会被调用 2 次。
+    """
+    import json
+    from react_agent.resilience import ToolGuard
+    guard = ToolGuard()
+    guard._TOOL_TIMEOUTS = {**ToolGuard._TOOL_TIMEOUTS, "execute_python": 1}
+    calls = {"n": 0}
+    release = threading.Event()
+
+    def stuck_tool(tc):
+        calls["n"] += 1
+        release.wait(timeout=10)  # 远长于 1s 超时，保证超时时线程仍在跑
+        return "ok"
+
+    try:
+        result = json.loads(guard.wrap(stuck_tool)(
+            {"function": {"name": "execute_python", "arguments": "{}"}}))
+        assert "超时" in result.get("error", ""), result
+        assert calls["n"] == 1, f"仍在运行的超时调用不应重试，实际调用 {calls['n']} 次"
+    finally:
+        release.set()
+    print("  ✅ 超时且仍在运行时不再重试")
+
+
+def test_tool_guard_blocks_when_detached_calls_saturated(monkeypatch):
+    """后台遗留调用触顶时快速失败，而不是继续叠加线程。"""
+    import json
+    from react_agent import resilience
+    from react_agent.resilience import ToolGuard
+
+    monkeypatch.setattr(resilience, "_detached_calls", resilience.MAX_DETACHED_CALLS)
+    guard = ToolGuard()
+    result = json.loads(guard.wrap(lambda tc: "ok")(
+        {"function": {"name": "get_time", "arguments": "{}"}}))
+    assert result.get("blocked") is True, result
+    assert "仍在后台运行" in result.get("error", ""), result
+    print("  ✅ 遗留调用触顶后快速失败")
+
+
+def test_detached_call_count_recovers_after_thread_finishes():
+    """后台调用结束后计数必须回落，不能永久泄漏。"""
+    from react_agent.resilience import _call_with_timeout, detached_call_count
+    release = threading.Event()
+
+    def stuck(tc):
+        release.wait(timeout=10)
+        return "ok"
+
+    raised = False
+    try:
+        _call_with_timeout(stuck, {}, timeout=0.2)
+    except TimeoutError:
+        raised = True
+    assert raised, "应抛出 TimeoutError"
+    assert detached_call_count() >= 1, "超时后应计入遗留调用"
+
+    release.set()
+    deadline = time.time() + 5
+    while detached_call_count() and time.time() < deadline:
+        time.sleep(0.05)
+    assert detached_call_count() == 0, "后台线程结束后计数应回落到 0"
+    print("  ✅ 遗留调用计数可回落")
+
+
 if __name__ == "__main__":
     print("=" * 50)
     print("  Resilience 模块测试")
@@ -237,4 +312,7 @@ if __name__ == "__main__":
     test_tool_guard_timeout()
     test_tool_guard_dangerous_no_retry()
     test_tool_guard_rate_limit()
-    print(f"\n  ✅ 全部 13 个测试通过")
+    # test_tool_guard_blocks_when_detached_calls_saturated 需要 pytest 的 monkeypatch
+    test_tool_guard_timeout_does_not_retry_detached_call()
+    test_detached_call_count_recovers_after_thread_finishes()
+    print("\n  ✅ 全部测试通过")

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "D:\\agent_learning\\tmp\\click2930-pykndky7\\venv\\Scripts\\python.exe",
+    "-I",
+    "D:\\agent_learning\\react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\acceptance\\hidden-tests\\check_flags.py",
+    "D:\\agent_learning\\tmp\\click2930-pykndky7\\before\\pallets-click-011b9f9\\src"
+  ],
+  "cwd": "D:\\agent_learning\\tmp\\click2930-pykndky7",
+  "exit_code": 1,
+  "status": "failed",
+  "captured_at": "2026-09-19T06:46:15.735189+00:00"
+}

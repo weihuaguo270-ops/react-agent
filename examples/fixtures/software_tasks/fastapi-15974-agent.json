@@ -1,0 +1,21 @@
+{
+  "task_id": "fastapi-15974-router-cache-race",
+  "task_hash": "667d7d57e66e35c7722953b243880b4b00fe98462b959267e73a7e157971c64d",
+  "base_commit": "7cb06f360dd44efac059848df1a9beee7643b018",
+  "status": "succeeded",
+  "exit_code": 0,
+  "public_test": {
+    "status": "passed",
+    "returncode": 0
+  },
+  "hidden_test": {
+    "status": "passed",
+    "returncode": 0
+  },
+  "changed_paths": [
+    "fastapi/routing.py"
+  ],
+  "unauthorized_paths": [],
+  "patch_kind": "agent",
+  "source": "compacted_from_agent_run"
+}

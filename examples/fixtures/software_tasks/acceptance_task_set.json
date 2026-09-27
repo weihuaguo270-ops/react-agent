@@ -1,0 +1,12 @@
+{
+  "suite": "software_delivery_minimal_v1",
+  "size": 5,
+  "tasks": [
+    {"id": "pass_existing_fix", "scenario": "pass", "fixture": "fastapi-15764-agent.json", "acceptance": "public_and_hidden_tests_pass"},
+    {"id": "repair_then_pass", "scenario": "repair", "fixture": "fastapi-15974-agent.json", "acceptance": "initial_failure_then_reverify_pass"},
+    {"id": "tests_still_fail", "scenario": "hold", "fixture": "tests_still_fail.json", "acceptance": "release_hold"},
+    {"id": "approval_denied", "scenario": "approval_denied", "fixture": "approval_denied.json", "acceptance": "no_write_and_review"},
+    {"id": "tool_timeout", "scenario": "tool_timeout", "fixture": "tool_timeout.json", "acceptance": "failure_finding_and_hold"}
+  ]
+}
+

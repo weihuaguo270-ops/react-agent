@@ -10,9 +10,10 @@
 
 | 类型 | 说明 |
 |------|------|
-| **主流对齐** | LLM ReAct、领域工具、RAG、HTTP API、health/ready、Docker、基础轨迹、离线回归 |
+| **主流对齐** | LLM ReAct、领域工具、RAG、HTTP API/SSE（含答案增量与断连取消）、health/ready、Docker、基础轨迹、离线回归 |
 | **细节优化** | 循环内 duplicate 拦截、收尾步强制作答、ToolGuard、verify_citations 工具步、fix_steps 权限闸门、StepWatcher + failure flywheel |
-| **待补齐（主流交付）** | 主服务 Bearer API Key、HTTP 全链路结构化 JSON 日志、verify_actions 由 Agent 执行（非仅输出字符串）、真实业务任务与人工效率基线 |
+| **安全加固** | Bearer 共享密钥鉴权、Host 头校验（防 DNS rebinding）、异步人工审批、SSRF 守卫、路径穿越防护、子进程环境白名单、轨迹脱敏、应用工具作用域隔离 |
+| **待补齐（主流交付）** | HTTP 全链路结构化 JSON 日志、verify_actions 由 Agent 执行（非仅输出字符串）、真实业务任务与人工效率基线 |
 | **本阶段不做** | OAuth 网关、多租户 SLA、Helm 规模化、自动拉线上 Trace |
 
 ## 成熟度矩阵
@@ -24,19 +25,24 @@
 | ReAct + Tool Calling（Live） | 已具备 | `react_loop`；`REACT_AGENT_SERVER_LLM=1` |
 | 声明式 Workflow v5（legacy） | 已具备 | `REACT_AGENT_DOCS_ENGINE=workflow` |
 | 权限闸门 deny→ask→allow | 已具备 | 非 OS ACL；fix_steps 可进 `pending_fix_steps` |
+| **异步人工审批（HTTP）** | 已具备 | `REACT_AGENT_APPROVAL_MODE=async`：`CONFIRM` 级工具落盘待批项并阻塞，经 `GET/POST /v1/approvals` 批准后带 `approval_id` 重试放行；单次/会话授权、防重放；存储不可写则失败关闭 |
 | ToolGuard 超时/重试/熔断 | 已具备 | 非容器隔离 |
 | 循环内 guardrails | 已具备 | duplicate 拦截、reserve_final、Harness 自修 |
 | Format B 轨迹 + StepWatcher | 已具备 | 可选 failure tag；flywheel 回灌 |
 | **证据化文档问答** | 已具备 | 引用校验 + 无依据拒答；14 篇演示语料 |
 | 黄金集 + 扩展 eval | 已具备 | golden 34 + fault 12 + production 5 + git 5（**验收**） |
 | HTTP `/health` `/ready` + `/v1/chat` | 已具备 | 离线默认可不耗 Key |
+| HTTP `/v1/chat/stream` SSE | 已具备 | started/runtime/step/tool/`answer_delta`/`answer`/`cancelled`/done；答案增量流式；**客户端断连即取消执行**（步间 + 工具前检查），不再空跑完剩余步数 |
+| **服务鉴权 / Host 校验** | 已具备 | `REACT_AGENT_AUTH_TOKEN` → 除 `/health`、`/ready` 外全接口要求 Bearer；Host 头校验（默认 `loopback` 档，`allowlist` 严格档未声明则拒绝启动）防 DNS rebinding |
+| **工具执行面加固** | 已具备 | SSRF 守卫（scheme 白名单 + 解析后 IP + 逐跳重定向复检）、`trace_id` 路径穿越防护、MCP/沙箱子进程环境白名单、轨迹落盘脱敏、app 工具作用域隔离、控制面工具移出模型可见面 |
 | 结构化错误 + request_id | 已具备 | 统一 error envelope |
 | 产品 UI（证据链 + Agent 步） | 已具备 | `GET /` |
 | Docker 单实例交付 | 已具备 | `docs/DEPLOY.md` |
 | **资料 ingest** | 部分 | Git / 目录；OpenAPI 需显式开关 |
 | **现场证据** | 部分 | 调用方传入；不自动抓线上流量 |
 | **结构化 diagnosis** | 部分 | 规则为主；verify_actions 尚未接工具执行 |
-| Bearer API Key / HTTP JSON 日志 | 主服务未做 | 独立沙箱控制面已完成 Bearer、request_id、JSON 访问日志和审批审计；尚未并入本仓主服务 |
+| Bearer API Key（主服务） | 已具备 | `REACT_AGENT_AUTH_TOKEN`：除探针外全接口校验；可选启用，未设置时保持本地开发便利并打印暴露告警。**HTTP JSON 日志仍未做** |
+| HTTP JSON 访问日志 | 主服务未做 | 独立沙箱控制面已完成 Bearer、request_id、JSON 访问日志和审批审计；主服务已有 Bearer 与 request_id，JSON 日志尚未并入 |
 | 轨迹级 eval 门禁 | 部分 | capability 支持工具选择/有序工具序列；Expense 校验业务终态并可导出 Episode；尚未统一为所有应用的发布硬门禁 |
 | 多租户 / SLA | 本阶段不做 | — |
 
@@ -58,7 +64,7 @@ Live LLM：`REACT_AGENT_SERVER_LLM=1`（需 API Key）。Legacy Workflow：`REAC
 
 - **整体**：与常见 **Runbook / 文档 Copilot Agent** 同构 — ReAct + 领域工具 + HTTP 交付  
 - **细节**：循环内治理（verify 工具步、duplicate 拦截、fix 权限、轨迹飞轮）— 优化 **可跑、可审计、可回灌**，不是换图编排框架  
-- **现在有**：Agent 默认路径、Docker、探针、传入式现场 evidence、结构化 diagnosis（规则）、工具序列评分与 Expense 终态验收
+- **现在有**：Agent 默认路径、Docker、探针、传入式现场 evidence、结构化 diagnosis（规则）、工具序列评分与 Expense 终态验收、服务 Bearer 鉴权与 Host 校验、异步人工审批、答案流式与断连取消
 - **外部沙箱已有**：24 条合成 Issue -> shadow -> 审批 -> 4 个 Draft PR -> 接受/拒绝/回滚；选定发布集通过、全量实验因拒绝案例保持 hold
-- **还没有**：主服务 API Key 网关和全链路 JSON 日志、verify_actions 真执行、真实历史工单盲测、人工效率基线
+- **还没有**：HTTP 全链路 JSON 日志、verify_actions 真执行、真实历史工单盲测、人工效率基线
 - **P1**：接入真实业务任务及责任人，量化人工与 Agent 对照；再把沙箱鉴权、日志和发布门禁接入目标系统

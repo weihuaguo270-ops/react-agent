@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "D:\agent_learning\react-agent\eval\cross_repo_evidence\click-typed-flag-2930\reproduction.py", line 13, in <module>
+    assert r.output=="'True'\n", 'target_flag_behavior'
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: target_flag_behavior

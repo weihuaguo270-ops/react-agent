@@ -1,5 +1,22 @@
 # ReAct Agent
 
+## 项目定位
+
+面向编码执行、客服工作流和 RAG 研究场景的受控 Agent 运行时，负责工具调用、权限边界、轨迹记录和任务验收。
+
+## 对外口径
+
+可以表述为可部署、可评测的 Agent 工程原型；不能表述为生产 SaaS、长期线上 SLA、企业多租户权限平台或自动根因诊断系统。当前状态与 P0 见 [`docs/STATUS.md`](docs/STATUS.md)。
+
+## 结构入口
+
+运行时核心位于 `src/react_agent/`，应用与评测入口位于 `examples/`，轨迹契约位于 `schemas/`，架构、评测、失败回归和成熟度文档位于 `docs/`。
+
+闭环验收：`python examples/eval/harness_closed_loop.py --fixture --report-out artifacts/portfolio_acceptance.json`
+
+软件交付最小验收集（5 条）：`python examples/eval/build_acceptance_report.py`
+证据目录生成：`python examples/eval/materialize_acceptance_evidence.py`
+
 Mutable runtime artifacts no longer write into the installed package. See
 [`docs/PORTABILITY.md`](docs/PORTABILITY.md) for data-directory overrides and the isolated
 LangGraph environment contract.
@@ -10,7 +27,7 @@ LangGraph environment contract.
 
 个人维护的 **Agent 运行时**（`react_loop` + ToolGuard + Harness + 权限闸门），面向 GitHub 主流的三类应用：**写代码/执行**、**客服与工作流自动化**、**通用 RAG/研究**。详见 [`docs/APPLICATION_DIRECTION.md`](docs/APPLICATION_DIRECTION.md)。
 
-结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
+结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 进展：[`docs/STATUS.md`](docs/STATUS.md) · 失败回归：[`docs/FAILURE_REGRESSION_PIPELINE.md`](docs/FAILURE_REGRESSION_PIPELINE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
 ## 业务目标
 
@@ -37,7 +54,7 @@ LangGraph environment contract.
 | **② 客服 / 自动化** | 可部署 Chat API、政策/Runbook 问答、工作流 demo | `docker compose up` · [`demo_expense_workflow.py`](examples/demos/demo_expense_workflow.py) |
 | **③ RAG / 研究** | 检索增强、公开 QA 子集、multi-hop | [`demo_rag.py`](examples/demos/demo_rag.py) · [`run_public_benchmark.py`](examples/eval/run_public_benchmark.py) |
 
-**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
+**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`POST/GET /v1/chat/stream` 提供 `text/event-stream` 进度事件；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
 
 **垂直 demo（② 的子场景）：** [证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 引用/拒答/现场证据；`agent_runner` 默认离线循环 · Live 走 `react_loop`。
 
@@ -97,7 +114,7 @@ Workflow v5（legacy DAG）：`现场证据 → search → lookup_api → synthe
 |----|------|
 | **三类主流应用**：编码执行 · 客服/自动化 · RAG/研究（见 APPLICATION_DIRECTION） | 单一「文档排障」产品或 AIOps 平台 |
 | Agent 运行时 + 循环治理（ToolGuard、Harness、权限、轨迹飞轮） | 图编排平台 / LangGraph 替代品 |
-| 可部署 HTTP + Docker + 多套 eval 证据 | 多租户 SLA / 自动线上根因 |
+| 可部署 HTTP + Docker + 多套 eval 证据 + 服务鉴权 / 异步人工审批 | 多租户 SLA / 自动线上根因 |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘 + Harness Health 门禁。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
@@ -169,10 +186,17 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 权限评估顺序（Harness 强制）：
 
 1. **DENY** — 参数 DENY 规则或工具表 DENY（默认拦截）
-2. **ASK** — CONFIRM（有 HITL 则询问；非交互默认放行，可用 `REACT_AGENT_STRICT_CONFIRM=1` 收紧）
+2. **ASK** — CONFIRM 级工具，三种处置之一：
+   - **异步人工审批**（推荐）：`REACT_AGENT_APPROVAL_MODE=async` → 落盘待批项并阻塞，人工经 `GET/POST /v1/approvals` 批准后带 `approval_id` 重试放行
+   - 注入 HITL：交互式询问（需真人在同一通道）
+   - 兜底：`REACT_AGENT_STRICT_CONFIRM=1` 直接拒绝；**默认（两者都未配）会放行**，启动日志与 `/ready` 的 `confirmation_gate` 会明确告警
 3. **ALLOW** — SAFE / NOTIFY
 
 关闭权限闸门：`REACT_AGENT_PERMISSION_GATE=0`。
+
+> 审批被建模为**状态**而非消息：HTTP 请求无法挂着等人几分钟，因此不需要 WebSocket。
+> 待批项持久化到 `REACT_AGENT_DATA_DIR`（容器部署需挂卷，否则重启即丢）；
+> 审批目录不可写时闸门**失败关闭**（拒绝执行），不会退化为放行。
 
 工具名表 + 参数规则示例（`safety/permissions.py`）：
 
@@ -252,6 +276,8 @@ Web 面板（实验）：`REACT_AGENT_EXPERIMENTAL_TOOLS=1` 后 `python -m react
 ## 评测（EVAL-ONLY）
 
 文档排障四套离线门禁 + capability 规则打分：[`docs/DOCS_TROUBLESHOOT_EVAL.md`](docs/DOCS_TROUBLESHOOT_EVAL.md) · [`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 证据地图：[`docs/P0_EVIDENCE_MAP.md`](docs/P0_EVIDENCE_MAP.md)。
+
+失败自动检出 → 回归门禁 → 修复后强制复验：[`docs/FAILURE_REGRESSION_PIPELINE.md`](docs/FAILURE_REGRESSION_PIPELINE.md) · 答辩口径：[`docs/FAILURE_REGRESSION_PITCH.md`](docs/FAILURE_REGRESSION_PITCH.md)（可写「夹具 + 3 条 SoftwareTask 已复现」；不可写 SLA / 自优化）。
 
 ```bash
 python examples/eval/run_docs_troubleshoot_eval.py         # golden 34
@@ -353,6 +379,19 @@ gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DE
 ```
 
 仓库忽略本地 `llm_config.json`；CI / 新环境会回退到已提交的 [`llm_config.example.json`](llm_config.example.json)（Key 仍只来自环境变量 / Secret）。
+
+## 服务部署与安全
+
+`python -m react_agent.server --port 8765` 暴露的 HTTP 面**默认不鉴权**（本地开发便利）。除 `/health`、`/ready` 探针外，所有接口都能驱动 Agent 工具（含 `execute_python`），因此一旦对外可达必须显式加固。完整说明：[`docs/DEPLOY.md`](docs/DEPLOY.md)。
+
+| 能力 | 开关 | 作用 |
+|------|------|------|
+| 共享密钥鉴权 | `REACT_AGENT_AUTH_TOKEN` | 除探针外全接口要求 `Authorization: Bearer`（或 `X-Api-Key`） |
+| Host 头校验 | `REACT_AGENT_HOST_VALIDATION`（默认 `loopback`） | 防 **DNS rebinding**；`allowlist` 档未声明域名则拒绝启动，`REACT_AGENT_ALLOWED_HOSTS` 声明域名 |
+| 异步人工审批 | `REACT_AGENT_APPROVAL_MODE=async` | `CONFIRM` 级工具阻塞待批，经 `/v1/approvals` 批准 |
+| 答案流式 | `REACT_AGENT_LLM_STREAM`（默认开） | `/v1/chat/stream` 推送 `answer_delta`；客户端断连即**取消执行**，不再空烧 LLM 调用 |
+
+出站与进程边界亦加固：SSRF 守卫（`safety/net_guard.py`）、`trace_id` 路径穿越防护、MCP/沙箱子进程环境白名单、轨迹落盘脱敏、app 工具作用域隔离（`docs_tools` 不外溢到 Core）。
 
 ## 环境要求
 

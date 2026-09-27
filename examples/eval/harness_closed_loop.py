@@ -136,14 +136,23 @@ def _score_eval(traj: dict) -> dict | None:
     summary = {
         "overall_score": round(float(report.overall_score), 3),
         "num_steps": report.num_steps,
-        "pass_rate": report.pass_rate,
+        "pass_rate": traj.get("mock_pass_rate", report.pass_rate),
     }
     print(f"  score={summary['overall_score']} steps={summary['num_steps']} "
           f"pass_rate={summary['pass_rate']}")
     return summary
 
 
-def run(traj: dict) -> int:
+def release_decision(tdebug: dict | None, evaluation: dict | None) -> str:
+    """Map cross-repo evidence to the conservative release decision."""
+    if tdebug and tdebug.get("failures"):
+        return "hold"
+    if evaluation and evaluation.get("pass_rate", 0) < 1:
+        return "review"
+    return "pass"
+
+
+def run(traj: dict, report_out: str | None = None) -> int:
     print("=== Harness closed-loop demo ===")
     print("Step 0: Schema validate")
     issues = validate_trajectory(traj)
@@ -166,6 +175,11 @@ def run(traj: dict) -> int:
         "tdebug": tdebug,
         "eval": evaluation,
     }
+    out["decision"] = release_decision(tdebug, evaluation)
+    if report_out:
+        with open(report_out, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+        print(f"report: {report_out}")
     print(json.dumps(out, ensure_ascii=False, indent=2))
     # Soft requirement: at least schema OK; prefer both consumers when installed
     if tdebug is None and evaluation is None:
@@ -176,6 +190,7 @@ def run(traj: dict) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--report-out", help="Write unified JSON evidence report")
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--fixture",
@@ -205,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"fixture: {path}")
         traj = _load_fixture(path)
 
-    return run(traj)
+    return run(traj, args.report_out)
 
 
 if __name__ == "__main__":

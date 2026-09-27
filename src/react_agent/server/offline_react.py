@@ -1,4 +1,4 @@
-"""无需 LLM 的确定性 ReAct 冒烟路径。"""
+"""Deterministic ReAct loop for HTTP smoke (no LLM)."""
 from __future__ import annotations
 
 import re
@@ -8,7 +8,6 @@ from react_agent.eval.execution_scorer import execute_tool_step
 
 
 def _extract_calculator_expression(message: str) -> str | None:
-    """从受支持的中英文表达中提取简单二元算式。"""
     text = message.replace("×", "*").replace("x", "*").replace("X", "*")
     # Explicit expression like 17*19 or 100 - 37
     m = re.search(
@@ -34,7 +33,6 @@ def _extract_calculator_expression(message: str) -> str | None:
 
 
 def _python_snippet_for_message(message: str) -> str | None:
-    """将固定冒烟问题映射为可控 Python 片段。"""
     if "1+2+3+4+5" in message or "1+2+3+4+5" in message.replace(" ", ""):
         return "print(sum(range(1, 6)))"
     if "阶乘" in message and "5" in message:
@@ -45,15 +43,23 @@ def _python_snippet_for_message(message: str) -> str | None:
 
 
 def offline_react_loop(message: str, *, max_steps: int = 6) -> dict[str, Any]:
-    """运行最小工具循环并返回答案、工具清单和步骤。"""
+    """Run a tiny tool loop without LLM; returns answer + tools_called + agent_steps."""
+    from react_agent.server.streaming import emit_event
+
     steps: list[dict[str, Any]] = []
     tools_called: list[str] = []
+    emit_event("runtime", {"status": "started", "mode": "offline_react"})
 
-    def _call(tool: str, arguments: dict[str, Any]) -> str:
-        """执行一步并同步记录可评测轨迹。"""
+    def _call(tool: str, arguments: dict) -> str:
+        emit_event("tool_call", {"tool": tool, "arguments": arguments})
         obs = execute_tool_step(tool, arguments)
         tools_called.append(tool)
         steps.append({"tool": tool, "arguments": arguments, "observation": obs[:500]})
+        emit_event("tool_result", {
+            "tool": tool,
+            "ok": not str(obs).startswith("ERROR"),
+            "observation": obs[:500],
+        })
         return obs
 
     lower = message.lower()
@@ -75,8 +81,8 @@ def offline_react_loop(message: str, *, max_steps: int = 6) -> dict[str, Any]:
             obs = _call("calculator", {"expression": expr})
             answer = f"计算结果是 {obs.strip()}。"
 
-    # 不支持的问题显式失败，避免把规则路径误报为通用 Agent 能力。
     if not answer:
+        emit_event("runtime", {"status": "failed", "reason": "unsupported_query"})
         return {
             "ok": False,
             "answer": "offline_react: unsupported smoke query",
@@ -84,6 +90,7 @@ def offline_react_loop(message: str, *, max_steps: int = 6) -> dict[str, Any]:
             "agent_steps": steps,
         }
 
+    emit_event("runtime", {"status": "completed", "tools_called": tools_called})
     return {
         "ok": True,
         "answer": answer,

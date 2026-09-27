@@ -1,0 +1,21 @@
+{
+  "task_id": "fastapi-15764-apiroute-tags",
+  "task_hash": "0f25f85238fe2c7ab50bd3a4e03e485ce9303403c3980e802a38c90794ae1430",
+  "base_commit": "e0f8cadf094bb4cb7a21e7757333d5dfbae46712",
+  "status": "succeeded",
+  "exit_code": 0,
+  "public_test": {
+    "status": "passed",
+    "returncode": 0
+  },
+  "hidden_test": {
+    "status": "passed",
+    "returncode": 0
+  },
+  "changed_paths": [
+    "fastapi/routing.py"
+  ],
+  "unauthorized_paths": [],
+  "patch_kind": "agent",
+  "source": "compacted_from_agent_run"
+}

@@ -1,0 +1,19 @@
+{
+  "kind": "test_execution",
+  "agent_generated": false,
+  "steps": [
+    {
+      "command": [
+        "D:\\agent_learning\\tmp\\click2930-pykndky7\\venv\\Scripts\\python.exe",
+        "-I",
+        "D:\\agent_learning\\react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\acceptance\\hidden-tests\\check_flags.py",
+        "D:\\agent_learning\\tmp\\click2930-pykndky7\\after\\pallets-click-4fd2fea\\src"
+      ],
+      "cwd": "D:\\agent_learning\\tmp\\click2930-pykndky7\\after\\pallets-click-4fd2fea",
+      "exit_code": 0,
+      "status": "passed",
+      "captured_at": "2026-09-19T06:46:15.574189+00:00",
+      "commit": "4fd2fea0db423d242aedcae0a5f664efe0a93484"
+    }
+  ]
+}

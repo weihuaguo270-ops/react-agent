@@ -44,7 +44,6 @@ def wilson_ci(successes: int, n: int, z: float = 1.96) -> dict[str, float]:
 
 
 def load_execution_dataset(path: Optional[str] = None) -> list[dict]:
-    """加载冻结的工具执行任务，并返回独立用例列表。"""
     filepath = path or DEFAULT_EXECUTION_DATASET
     with open(filepath, encoding="utf-8") as f:
         data = json.load(f)
@@ -80,13 +79,26 @@ def _check_expectation(result: str, step: dict) -> tuple[bool, str]:
 
 
 def execute_tool_step(tool: str, arguments: dict) -> str:
-    """在受支持的本地工具注册表中执行一个确定性步骤。"""
     try:
         return str(
             execute_registered_tool(tool, arguments or {}, TOOL_REGISTRY)
         )
     except Exception as e:
-        return json.dumps({"error": f"执行错误: {e}"})
+        # 闸门的结构化拦截（尤其 approval_required）必须原样透传：外层再包一层
+        # {"error": "执行错误: ..."} 会把 JSON 糊成字符串，审批凭据随之丢失。
+        message = str(e)
+        stripped = message.strip()
+        if stripped.startswith("{"):
+            try:
+                payload = json.loads(stripped)
+            except (json.JSONDecodeError, ValueError):
+                payload = None
+            if isinstance(payload, dict) and (
+                payload.get("approval_id")
+                or payload.get("error") == "approval_required"
+            ):
+                return stripped
+        return json.dumps({"error": f"执行错误: {message}"})
 
 
 def _collect_tools(stdout: str, trajectory: Optional[dict]) -> set[str]:
@@ -110,7 +122,6 @@ def _final_answer_text(stdout: str, trajectory: Optional[dict]) -> str:
 
 
 def score_offline_task(task: dict) -> dict[str, Any]:
-    """执行确定性工具链并校验最终状态，不调用 LLM。"""
     task_id = str(task.get("id") or "unknown")
     step_results = []
     all_ok = True
@@ -451,7 +462,6 @@ def run_execution_suite(
 
 
 def report_to_markdown(report: dict, *, title: Optional[str] = None) -> str:
-    """将工具执行评测渲染为含模式和失败证据的报告。"""
     s = report.get("summary") or {}
     modes = report.get("modes") or [report.get("mode", "offline_tools")]
     title = title or f"Execution 公开快照（{report.get('report_id', 'exec')}）"

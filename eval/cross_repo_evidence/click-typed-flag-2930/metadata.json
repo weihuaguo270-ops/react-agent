@@ -1,0 +1,17 @@
+{
+  "venv_creation": [
+    "C:\\Users\\1\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe",
+    "-m",
+    "venv",
+    "D:\\agent_learning\\tmp\\click2930-pykndky7\\venv"
+  ],
+  "python": "Python 3.11.15",
+  "dependencies": "colorama==0.4.6\r\n",
+  "source_roots": {
+    "before": "D:\\agent_learning\\tmp\\click2930-pykndky7\\before\\pallets-click-011b9f9\\src",
+    "after": "D:\\agent_learning\\tmp\\click2930-pykndky7\\after\\pallets-click-4fd2fea\\src"
+  },
+  "offline_test_execution": true,
+  "agent_evaluation_performed": false,
+  "isolation": "-I dedicated venv; evaluator scripts outside source roots; no actual agent mounted yet"
+}

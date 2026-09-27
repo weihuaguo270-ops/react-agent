@@ -1,4 +1,4 @@
-"""将 `/v1/chat` 请求路由到各应用处理器。"""
+"""Route /v1/chat to mainstream application handlers."""
 from __future__ import annotations
 
 import os
@@ -41,7 +41,6 @@ APPLICATIONS = [
 
 
 def normalize_app(raw: str | None) -> str:
-    """将用户别名和默认配置统一为稳定的应用标识。"""
     key = (raw or "").strip().lower()
     if not key:
         key = os.environ.get("REACT_AGENT_DEFAULT_APP", "docs_troubleshoot").strip().lower()
@@ -49,14 +48,24 @@ def normalize_app(raw: str | None) -> str:
 
 
 def list_applications() -> list[dict[str, Any]]:
-    """返回应用清单副本，避免调用方修改模块级配置。"""
     return [dict(a) for a in APPLICATIONS]
 
 
-def handle_chat(
-    body: dict[str, Any], request_id: str
-) -> tuple[int, dict[str, Any]]:
-    """按应用和运行模式处理一次对话请求。"""
+def registry_pillars() -> list[str]:
+    """已实现应用实际覆盖的 pillar（去重、保持注册顺序）。
+
+    注意与对外宣称的三支柱区分：``rag_research`` 目前没有绑定应用，
+    因此不会出现在这里。见 docs/APPLICATION_DIRECTION.md。
+    """
+    seen: list[str] = []
+    for app in APPLICATIONS:
+        pillar = str(app.get("pillar") or "").strip()
+        if pillar and pillar not in seen:
+            seen.append(pillar)
+    return seen
+
+
+def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
     app = normalize_app(body.get("app") or body.get("application"))
     use_llm = os.environ.get("REACT_AGENT_SERVER_LLM", "").strip().lower() in (
         "1",
@@ -66,7 +75,6 @@ def handle_chat(
     )
 
     if app == "docs_troubleshoot":
-        # 文档排障维护独立策略和证据字段，由专用 handler 处理。
         from react_agent.server.handlers.docs_chat import handle_docs_chat
 
         return handle_docs_chat(body, request_id)
@@ -95,17 +103,16 @@ def handle_chat(
         }
 
     if app == "default":
-        use_offline_react = (
-            os.environ.get("REACT_AGENT_SERVER_OFFLINE_REACT", "")
-            .strip()
-            .lower()
-            in ("1", "true", "yes", "on")
+        use_offline_react = os.environ.get("REACT_AGENT_SERVER_OFFLINE_REACT", "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
         )
         message = (body.get("message") or body.get("query") or "").strip()
         if not message:
             return error_response("invalid_request", "message is required", request_id, 400)
 
-        # 离线 ReAct 只用于无 Key 冒烟，不回退或伪装成 Live LLM。
         if use_offline_react:
             from react_agent.server.offline_react import offline_react_loop
 
@@ -136,7 +143,6 @@ def handle_chat(
                 400,
             )
         try:
-            # default 应用不应继承 docs_troubleshoot 的工具注册上下文。
             os.environ.pop("REACT_AGENT_APP", None)
             from react_agent.harness.recorder import current_trajectory
             from react_agent.react_loop import react_loop

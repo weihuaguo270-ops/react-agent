@@ -1,0 +1,206 @@
+{
+  "schema_version": "cross-repo-task-promotion/v1",
+  "status": "review_required",
+  "target_repositories": [
+    "pydantic/pydantic",
+    "encode/httpx",
+    "pallets/werkzeug"
+  ],
+  "minimum_batch": {
+    "tasks": 6,
+    "repositories": 2,
+    "held_out": 2
+  },
+  "tasks": [
+    {
+      "task_id": "pydantic-identity-review",
+      "candidate_id": "github::pydantic/pydantic::identity",
+      "repository": "pydantic/pydantic",
+      "split": "development",
+      "status": "verified",
+      "evidence_dir": "react-agent/eval/cross_repo_evidence/pydantic-identity-review",
+      "issue_url": "https://github.com/pydantic/pydantic/pull/13830",
+      "issue_title": "Fix RootModel equality with type aliases",
+      "issue_body": "RootModel equality fails when equivalent PEP 695 TypeAliasType aliases are used.",
+      "issue_author": "KingLizard1020",
+      "base_commit": "617abdb1bb95b6a5d7808937cac7ef2fdbe918d9",
+      "problem_statement": "RootModel equality fails when equivalent PEP 695 TypeAliasType aliases are used.",
+      "expected_behavior": "RootModel[str](\"a\") equals RootModel[SomeStr](\"a\") while distinct parametrizations remain unequal."
+    },
+    {
+      "task_id": "httpx-identity-review",
+      "candidate_id": "github::encode/httpx::identity",
+      "repository": "encode/httpx",
+      "split": "development",
+      "status": "verified",
+      "evidence_dir": "react-agent/eval/cross_repo_evidence/httpx-identity-review",
+      "issue_url": "https://github.com/encode/httpx/pull/3764",
+      "issue_title": "Percent-encode pipe character in URL paths",
+      "issue_body": "The pipe character was not percent-encoded in URL path segments.",
+      "issue_author": "Mr-Neutr0n",
+      "base_commit": "ae1b9f66238f75ced3ced5e4485408435de10768",
+      "problem_statement": "HTTPX leaves pipe characters unencoded in path segments.",
+      "expected_behavior": "A pipe in a URL path is encoded as %7C."
+    },
+    {
+      "task_id": "httpx-activity-review",
+      "candidate_id": "github::encode/httpx::activity",
+      "repository": "encode/httpx",
+      "split": "development",
+      "status": "verified",
+      "issue_url": "https://github.com/encode/httpx/pull/2701",
+      "issue_title": "Fix for gen-delims escaping behaviour in path/query/fragment",
+      "issue_body": "Path gen-delimiters should preserve square brackets instead of percent-encoding them.",
+      "issue_author": "lovelydinosaur",
+      "base_commit": "df5dbc05580a4c3225e70153729e2a306d67a472",
+      "problem_statement": "HTTPX percent-encodes square brackets in URL paths.",
+      "expected_behavior": "Square brackets remain raw in path bytes.",
+      "reproduction_command": "PYTHONPATH=tmp/httpx2701-before-src python -c import httpx; assert httpx.URL('http://example.com/a[b]').raw_path == b'/a[b]'",
+      "failing_test": "assert httpx.URL('http://example.com/a[b]').raw_path == b'/a[b]'",
+      "environment": "Windows AMD64; Python 3.11.15; fixed source tarballs",
+      "image": "local:python311",
+      "acceptance_test": "hidden test checks square brackets remain in URL path",
+      "missing": [
+        "missing_evidence"
+      ],
+      "evidence_dir": "react-agent/eval/cross_repo_evidence/httpx-activity-review"
+    },
+    {
+      "task_id": "werkzeug-auth-whitespace-3129",
+      "status": "verified",
+      "repository": "pallets/werkzeug",
+      "issue_url": "https://github.com/pallets/werkzeug/issues/3127",
+      "issue_title": "WWW-Authenticate trailing white-space with empty parameters",
+      "issue_body": "Hello there \ud83d\udc4b \n\nI tried to follow the guidelines at:\n* https://palletsprojects.com/contributing/pr\n* https://palletsprojects.com/contributing/issue\n* This issue template\n\nLegal: no GenAI tool were used, nowhere, and I'm making this PR on behave of my employer.\n\nThank you for Werkzeug!\n\n---\n\nWhen a WWWAuthenticate header with no realm or other parameter is converted to a response header, the header contains an invalid trailing white-space.\n\nWhen loading that header in `h11.Response` it is rejected because of the trailing white-space.\n\n- Python version: 3.12.3-0ubuntu2.1\n- Werkzeug version: 3.0.1-3ubuntu0.2\n- h11 version: 0.14.0-1ubuntu0.24.04.1\n\nSuch parameter-less headers are standard: https://httpwg.org/specs/rfc9110.html#challenge.and.response\n\nSimple reproduction steps:\n```py\nwa = WWWAuthenticate('bearer')\nassert wa.to_header() == \"Bearer\"  # must not be \"Bearer \"\n```\n\nThe exact problem we are having, when loading the response in h11:\n\nOur controller does:\n```py\nraise Unauthorized('Missing \"Authorization\"', www_authenticate=WWWAuthenticate('bearer'))\n```\n\nIt ultimately reaches our WSGI server:\n```py\ndef start_response(self, status, response_headers, exc_info):\n    status_code, _, reason = status.partition(' ')\n    status_code = HTTPStatus(int(status_code))\n    response_headers = [\n        (header.encode('ascii').lower(), value.encode('latin-1'))\n        for header, value in response_headers\n    ]\n    ...\n    h11_response = h11.Response(\n        status_code=status_code,\n        reason=reason,\n        headers=response_headers,\n    )\n```\n\nAnd h11 rejects the header:\n```\n  File \"/home/julien/Odoo/community/odoo/http/server.py\", line 307, in start_response\n    h11_response = h11_response_cls(\n                   ^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/h11/_events.py\", line 151, in __init__\n    self, \"headers\", normalize_and_validate(headers, _parsed=_parsed)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/h11/_headers.py\", line 164, in normalize_and_validate\n    validate(_field_value_re, value, \"Illegal header value {!r}\", value)\n  File \"/usr/lib/python3/dist-packages/h11/_util.py\", line 91, in validate\n    raise LocalProtocolError(msg)\nh11._util.LocalProtocolError: Illegal header value b'Bearer '\n```\n\nWe are doing the following patch in our wsgi server to mitigate the problem:\n```diff\n+        if get_header(b'www-authenticate'):\n+            for index, (header, value) in enumerate(response_headers):\n+                if header == b'www-authenticate':\n+                    break\n+            response_headers[index] = (header, value.rstrip())\n+\n```\n\nI've fixed the issue inside werkzeug and I would like to make a PR, what branch can I target?\n\nRegards,\nJulien (juc)",
+      "issue_author": "Julien00859",
+      "base_commit": "795f4eaf6ef1fdc2fd1d7114c61ad384ede4322c",
+      "fix_commit": "051fd66352cf8b3f0797249858068dedaead6d39",
+      "problem_statement": "Parameterless WWW-Authenticate has invalid trailing whitespace.",
+      "expected_behavior": "Emit scheme only; preserve tokens and parameters.",
+      "reproduction_command": [
+        "D:\\agent_learning\\tmp\\werkzeug3129-venv\\Scripts\\python.exe",
+        "-I",
+        "D:\\agent_learning\\react-agent\\eval\\cross_repo_evidence\\werkzeug-auth-whitespace-3129\\acceptance\\hidden-tests\\check_auth.py",
+        "D:\\agent_learning\\tmp\\werkzeug3129-before\\pallets-werkzeug-795f4ea\\src"
+      ],
+      "failing_test": "parameterless Bearer header equality",
+      "environment": "metadata.json",
+      "image": "dedicated Windows Python venv",
+      "acceptance_test": "acceptance/hidden-tests/check_auth.py",
+      "evidence_dir": "react-agent/eval/cross_repo_evidence/werkzeug-auth-whitespace-3129",
+      "split": "development"
+    },
+    {
+      "task_id": "click-typed-flag-2930",
+      "status": "verified",
+      "verified": true,
+      "repository": "pallets/click",
+      "issue_url": "https://github.com/pallets/click/issues/2894",
+      "pr_url": "https://github.com/pallets/click/pull/2930",
+      "issue_title": "Click 8.2.0 ignores is_flag options that have a type",
+      "issue_body": "Click 8.2.0 ignores the use of options defined with `is_flag` and `type=str`.\n\nOf course, combining `is_flag` and `type=str` does not make sense, but it happened in one of our projects. Click before 8.2.0 ignored `type=str` and processed this as expected for `is_flag`.\n\nClick 8.2.0 does not set a value for such an option.\n\nI could trace this change to PR #2829 - If I install click 8.2.0 and manually undo the change in `core.py` that is done by that PR, it works as before.\n\nTo reproduce:\n\n1. Have a file `main.py` with:\n\n```\nimport click\n\n@click.group(invoke_without_command=True)\n@click.option('-x', '--transpose', type=str, is_flag=True,\n              help='Transpose the output table.')\ndef cli(transpose):\n    print(f\"Debug: transpose={transpose}\")\n    return 0\n```\n\n2. Reproduce with click 8.2.0:\n```\n$ pip install click==8.2.0\n$ python -c \"import main,sys; sys.argv=['cli', '--transpose']; main.cli()\"\nDebug: transpose=None\n```\n\n3. Verify that click 8.2.0 with PR #2829 undone works:\n```\n# perform the undo in core.py (see below)\n$ python -c \"import main,sys; sys.argv=['cli', '--transpose']; main.cli()\"\nDebug: transpose=True\n```\n\n4. Verify that click 8.1.8 works:\n```\n$ pip install click==8.1.8\n$ python -c \"import main,sys; sys.argv=['cli', '--transpose']; main.cli()\"\nDebug: transpose=True\n```\n\nThe \"undo\" of PR #2829 has the following changes in `core.py`, starting at line 2613:\n```\n        # Undo PR 2829: Added the following two lines\n        if flag_value is None:\n            flag_value = not self.default\n        self.type: types.ParamType\n        if is_flag and type is None:\n            # Undo PR 2829: Removed the following two lines\n            # if flag_value is None:\n            #     flag_value = not self.default\n            # Re-guess the type from the flag value instead of the\n            # default.\n            self.type = types.convert_type(None, flag_value)\n```\n\nEnvironment:\n\n- Python version: 3.12.7 on macOS (it happens on all Python versions supported by click 8.2.0, but not on all OSs)\n- Click version: 8.2.0\n\nBased on our CI test run, the issue happens only on macOS and Windows, but not on Ubuntu: \nhttps://github.com/zhmcclient/zhmccli/actions/runs/14949544297. I did not investigate why it does not happen on Ubuntu.\n\nThe fix for projects using click is of course to remove `type` when `is_flag` is used.\n\nEven though this is basically an incorrect use of click, I would expect click to surface this as an incorrect use, instead of silently not setting a value for the option.",
+      "issue_author": "andy-maier",
+      "base_commit": "011b9f9d190c71310264e6c54bae6259f5e38a9f",
+      "fix_commit": "4fd2fea0db423d242aedcae0a5f664efe0a93484",
+      "defect_type": "CLI parameter state and explicit type conversion",
+      "evidence_dir": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930",
+      "missing": [],
+      "split": "held_out_provisional",
+      "exposure": "curator has seen fix; cannot be clean held-out for this conversation",
+      "problem_statement": "Explicitly typed flags fail to activate on CLI invocation.",
+      "expected_behavior": "Flag activation and default toggling preserve explicit type conversion.",
+      "reproduction_command": [
+        "D:\\agent_learning\\tmp\\click2930-pykndky7\\venv\\Scripts\\python.exe",
+        "-I",
+        "D:\\agent_learning\\react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\reproduction.py",
+        "D:\\agent_learning\\tmp\\click2930-pykndky7\\before\\pallets-click-011b9f9\\src"
+      ],
+      "failing_test": "target_flag_behavior",
+      "environment": "metadata.json",
+      "image": "Windows Python isolated venv",
+      "acceptance_test": "acceptance/hidden-tests/check_flags.py"
+    },
+    {
+      "task_id": "jinja-async-unique-1782",
+      "candidate_id": "github::pallets/jinja::async-unique",
+      "repository": "pallets/jinja",
+      "split": "held_out_provisional",
+      "status": "verified",
+      "verified": true,
+      "evidence_dir": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782",
+      "issue_url": "https://github.com/pallets/jinja/issues/1781",
+      "pr_url": "https://github.com/pallets/jinja/pull/1782",
+      "issue_title": "unique filter does not work when chain with a filter that returns async generator",
+      "issue_body": "unique() fails when chained after a filter returning an async generator.",
+      "issue_author": "sileht",
+      "base_commit": "a4abbfd7538e9ff216244266579232585033136c",
+      "fix_commit": "76af7110ead6083e75072f9e76242c9ce79b76ed",
+      "problem_statement": "Async generator output cannot be consumed by unique filter.",
+      "expected_behavior": "An async template chain through unique|list renders de-duplicated values.",
+      "reproduction_command": "PYTHONPATH=tmp/jinja-base-src/src python tmp/jinja-repro.py",
+      "failing_test": "async template chaining reject_z|unique|list must render ['a', 'b', 'c', 'd']",
+      "environment": "metadata.json",
+      "image": "local:python-3.11-markupsafe-3.0.3",
+      "acceptance_test": "acceptance/hidden-tests/test_acceptance.py",
+      "missing": []
+    }
+  ],
+  "task_schema": {
+    "required_evidence": [
+      "repository",
+      "issue_url",
+      "issue_title",
+      "issue_body",
+      "issue_author",
+      "base_commit",
+      "problem_statement",
+      "expected_behavior",
+      "reproduction_command",
+      "failing_test",
+      "environment",
+      "image",
+      "acceptance_test",
+      "evidence_dir"
+    ],
+    "lifecycle": [
+      "review_queue_only",
+      "candidate",
+      "verified"
+    ]
+  },
+  "selection_rule": "Select real reproducible defects across repositories; placeholders are not real tasks. Golden selection requires separate diversity and isolation review.",
+  "placeholder_history": [
+    {
+      "task_id": "pydantic-activity-review",
+      "candidate_id": "github::pydantic/pydantic::activity",
+      "repository": "pydantic/pydantic",
+      "split": "held_out",
+      "status": "review_queue_only",
+      "missing_reason": "missing_issue_and_execution_evidence"
+    },
+    {
+      "task_id": "pydantic-popularity-review",
+      "candidate_id": "github::pydantic/pydantic::popularity",
+      "repository": "pydantic/pydantic",
+      "split": "held_out",
+      "status": "review_queue_only",
+      "missing_reason": "missing_issue_and_execution_evidence"
+    },
+    {
+      "task_id": "httpx-popularity-review",
+      "candidate_id": "github::encode/httpx::popularity",
+      "repository": "encode/httpx",
+      "split": "held_out",
+      "status": "review_queue_only",
+      "missing_reason": "missing_issue_and_execution_evidence"
+    }
+  ],
+  "unfilled_task_slots": 0,
+  "golden_count": 0,
+  "counts": {
+    "verified_tasks": 6,
+    "unfilled_task_slots": 0,
+    "golden": 0
+  },
+  "split_policy": "4 development / 2 provisional held-out; clean eligibility requires fresh model context, input-only mounts, no curator history or network retrieval."
+}

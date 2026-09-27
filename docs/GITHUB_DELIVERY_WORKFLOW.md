@@ -9,13 +9,45 @@ Issue/任务单
   -> 计划指纹
   -> 隔离克隆
   -> 受限文件替换
-  -> 真实测试子进程
+  -> 真实测试子进程（或 SoftwareTaskRunner）
+  -> 失败回归门禁（默认开启：tdebug + eval-engine）
   -> shadow 报告
   -> 人工审批（绑定计划指纹）
   -> 候选分支提交
   -> 可选 Draft PR
   -> EvaluationEpisode / 审计 / 告警
 ```
+
+验收通过后会默认调用 `react_agent.eval.failure_regression_gate`。sibling 缺失或
+`release_decision` 为 `hold`/`review` 时，状态为 `failure_regression_unavailable` /
+`failure_regression_hold`，**不会**创建候选提交，并标注 `reverify.required`。
+
+修复后必须再跑强制复验：`run(..., reverify_from=<上次 failure-regression 目录>)`，
+仅当 `improved_to_pass` 才可放行；也可注入 `WorkflowConfig.repair_loop` 在同一次 run
+内自动修复并复验。详见 `docs/FAILURE_REGRESSION_PIPELINE.md`。
+
+## 统一软件任务验收门
+
+`DeliveryTask` 现在可以携带 `allowed_paths`、`hidden_test_command`、
+`timeout_seconds` 和 `max_output_bytes`，并转换为统一的 `SoftwareTask`。
+在 `WorkflowConfig` 注入 `SoftwareTaskRunner` 后，公开测试和隐藏测试都会在
+Docker 中执行，容器使用断网、只读根文件系统、非 root 用户和资源上限；测试失败、
+超时或修改允许路径之外的文件都会把交付置为失败。`SoftwareTaskRunner` 出口同样默认挂上
+失败回归门禁。未配置该验收门时，保留原有的本地测试路径，便于离线开发和历史夹具兼容。
+
+这项接入解决了两套任务契约并存、隐藏测试无法进入交付报告的问题，但目前仍需在
+真实公开 Issue 上冻结 baseline/candidate 版本，才能比较 Agent 版本变化带来的业务结果。
+
+Agent 生成的修改必须先返回结构化 `replacements` 数组，再由
+`react_agent.apps.patch_planner.parse_patch_plan` 校验路径、字段和替换内容，最后
+转换为 `Replacement` 交给本流程。该解析器不直接写文件；文件替换仍由交付流程执行，
+因此模型不能通过自由文本绕过路径限制。
+
+受控修复循环由 `react_agent.eval.repair_loop.RepairLoop` 提供。它接收可注入的
+`planner` 和 `executor`：每轮先校验补丁、执行公开测试；失败时把结构化失败信息
+交回 planner，最多执行 `max_attempts` 轮；公开测试通过后才执行隐藏测试。隐藏测试
+失败或达到轮次上限都会结束任务，不会继续尝试或发布外部写操作。该循环本身不绑定
+具体模型，因此可以接入现有 ReAct，也可以接入可选 LangGraph。
 
 默认是 `shadow`，不会修改源仓库，也不会访问 GitHub 写接口。`guarded` 只有在审批文件中的 `plan_sha256` 与任务完全一致时才创建候选提交。推送 Draft PR 还要同时提供 `--publish-draft-pr` 和 `allow_external_write=true`，且源仓库必须配置 GitHub origin。
 
@@ -72,6 +104,8 @@ python examples/demos/run_github_delivery.py `
 - Base 分支从不直接修改；候选提交位于隔离克隆的 `agent/*` 分支。
 - 发布 Draft PR 是显式外部写操作，不能由 shadow 或普通审批隐式触发。
 - 测试失败、待审批和 SLO 超限进入结构化告警；失败 Episode 可进入现有回归与失败治理流程。
+- Docker 验收门的结果包含 `public_test`、`hidden_test`、`changed_paths`、
+  `unauthorized_paths` 和 `task_hash`，可直接用于版本对比和发布门禁。
 
 ## 当前证据等级
 

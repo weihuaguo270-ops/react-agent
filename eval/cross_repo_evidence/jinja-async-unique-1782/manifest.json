@@ -1,0 +1,61 @@
+{
+  "acceptance_status": "passed",
+  "evidence_files": [
+    {
+      "path": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/task.json",
+      "size": 2736
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/metadata.json",
+      "size": 273
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/before/trajectory.json",
+      "size": 167
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/before/test-result.json",
+      "size": 196
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/before/stdout.log",
+      "size": 5350
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/acceptance/hidden-tests/test_acceptance.py",
+      "size": 754
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/after/trajectory.json",
+      "size": 163
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/after/test-result.json",
+      "size": 145
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/after/stdout.log",
+      "size": 0
+    }
+  ],
+  "evidence_sha256": {
+    "react-agent\\eval\\cross_repo_evidence\\jinja-async-unique-1782\\before\\test-result.json": "87774bc34398e7e770cb0f576de74351ffe32d36a8be5a8e7417cc6569ac90b1",
+    "react-agent\\eval\\cross_repo_evidence\\jinja-async-unique-1782\\task.json": "7d2264877ccc2f06110d4457f0f12aff415ed26cc091a6abd94846f13233b127",
+    "react-agent\\eval\\cross_repo_evidence\\jinja-async-unique-1782\\acceptance\\hidden-tests\\test_acceptance.py": "eed724f80acc2b0204be72b7ee11077f54f3285bad0316423c8a378095615a6d",
+    "react-agent\\eval\\cross_repo_evidence\\jinja-async-unique-1782\\before\\trajectory.json": "44e7788133c21fe359a96049d092de72d1a2e61bbc889518085a61d5809621de",
+    "react-agent\\eval\\cross_repo_evidence\\jinja-async-unique-1782\\after\\stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/before/test-result.json": "87774bc34398e7e770cb0f576de74351ffe32d36a8be5a8e7417cc6569ac90b1",
+    "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/task.json": "7d2264877ccc2f06110d4457f0f12aff415ed26cc091a6abd94846f13233b127",
+    "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/after/trajectory.json": "88e8cc18025418699390f5e1274fa13d60c420d53fc50e4130eccbb3caccbfdc",
+    "react-agent\\eval\\cross_repo_evidence\\jinja-async-unique-1782\\after\\trajectory.json": "88e8cc18025418699390f5e1274fa13d60c420d53fc50e4130eccbb3caccbfdc",
+    "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/after/test-result.json": "faecdc19947b7ea360639315acd9b7c8a6a956beb6a39153259833b591e7f280",
+    "react-agent\\eval\\cross_repo_evidence\\jinja-async-unique-1782\\after\\test-result.json": "faecdc19947b7ea360639315acd9b7c8a6a956beb6a39153259833b591e7f280",
+    "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/after/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "react-agent\\eval\\cross_repo_evidence\\jinja-async-unique-1782\\before\\stdout.log": "19af678b5ceca91f40410c3cd49d1c7aa4e551f4d3edd27cdc5f9bd814ad8b82",
+    "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/before/trajectory.json": "44e7788133c21fe359a96049d092de72d1a2e61bbc889518085a61d5809621de",
+    "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/acceptance/hidden-tests/test_acceptance.py": "eed724f80acc2b0204be72b7ee11077f54f3285bad0316423c8a378095615a6d",
+    "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/before/stdout.log": "19af678b5ceca91f40410c3cd49d1c7aa4e551f4d3edd27cdc5f9bd814ad8b82",
+    "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782/metadata.json": "f5f374b96c07b359eeed5b7d4041519c830b6947bb647ac1141c75d488db3a94",
+    "react-agent\\eval\\cross_repo_evidence\\jinja-async-unique-1782\\metadata.json": "f5f374b96c07b359eeed5b7d4041519c830b6947bb647ac1141c75d488db3a94"
+  }
+}

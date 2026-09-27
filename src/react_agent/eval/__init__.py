@@ -30,6 +30,12 @@ from .dataset import (
 )
 from .runner import run_batch
 from .report import generate_report, save_report, list_reports
+from .software_task_dataset import (
+    DATASET_SCHEMA_VERSION,
+    SoftwareTaskDataset,
+    SoftwareTaskDatasetError,
+    load_software_task_dataset,
+)
 
 
 class EvalRunner:

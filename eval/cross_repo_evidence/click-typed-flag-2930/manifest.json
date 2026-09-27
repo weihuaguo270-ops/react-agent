@@ -1,0 +1,179 @@
+{
+  "verified": true,
+  "status": "verified",
+  "acceptance_status": "passed",
+  "evidence_sha256": {
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\after-source.tar.gz": "c269fc08cff531fa264f891c032af2fad998df23209db25bb0b1c1edb80de5f5",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\base-pyproject.toml": "c5d2bf56dfd888b3e497d0f938ec6afb5cfbb5d6e9005f5c52c3b9454001e8c8",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\before-source.tar.gz": "fab3c2c35405e1f42ec1dbeb0b4e4f6823fc5001f2c74bf191628dcf44fe0f05",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\fix-pyproject.toml": "c5d2bf56dfd888b3e497d0f938ec6afb5cfbb5d6e9005f5c52c3b9454001e8c8",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\metadata.json": "34e9ae60436153975f5e5fe01a691e2d612b8fead5ce4a675ad35a061095370b",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\reproduction.py": "c4e9df58b56f42f457c4c6c44337394794319a0f268779033bb989c9fdb10535",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\requirements.lock": "e3642591033221551525135287412c996b8b1fbab1d14c732db4fd3cd482a050",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\source.json": "468f92e03b8f9195669af067f85779182122581d4e2fffca4174f86ee7ed9ac6",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\task.json": "e279438e59c2d8ee400ae9ef818fc138287db14ea404875f163f72b5709540e8",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\acceptance\\test-result.json": "a84c5602bc7498dad094bcf1421bb664010f6d7c4e3b3b4df75afe9fd20bb681",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\acceptance\\baseline\\stderr.log": "e5a8083a2efa4ef6d6b305b240a592c1f078a0a7ac962ea8da0f84e54e5fc9b6",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\acceptance\\baseline\\stdout.log": "bcda635ca9c34205230675a270776924db1a8f67bf9558e3ade02956ee57749f",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\acceptance\\baseline\\test-result.json": "405019568959d691378de0b057888e72a75ab12122e7a79218261f4224014759",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\acceptance\\hidden-tests\\check_flags.py": "ef83992cc55ee7646a0bc436858d039702d5d510ea1bc5d7edbba3365c263e77",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\after\\stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\after\\stdout.log": "d7dede2e890f4e1d2856fefbd8daf710071676f196aaed588e371464a65edc7a",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\after\\test-result.json": "a84c5602bc7498dad094bcf1421bb664010f6d7c4e3b3b4df75afe9fd20bb681",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\after\\trajectory.json": "55558fc084ee4fa85402b00f420e8023b017079d355e48b6813dc7f691aa51e9",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\after\\repeat\\stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\after\\repeat\\stdout.log": "d7dede2e890f4e1d2856fefbd8daf710071676f196aaed588e371464a65edc7a",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\after\\repeat\\test-result.json": "5a5a3aed896398f40cfbdddef341c71215049b64ed08f644fce780ada563b3c7",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\after\\repeat\\trajectory.json": "ea07f7e2670a5507f32d3511fa2ed6f9f908b3c4f2f00d25a44ec78525f4733c",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\before\\stderr.log": "0ab20176cfddb526d03df6ef885b4500e5466f8fe1a0aad8102ed01edc1f4805",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\before\\stdout.log": "40636aacda68d79e524c23f3649635073dc1815012f2c27774012dc9f1a24780",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\before\\test-result.json": "9ff725b8bb44b6654e2c9360ef418af0c0a1c8f869f6f9a2e1c0fac28fabb106",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\before\\trajectory.json": "e19a74907e43847a771d79c6d4d91e08f151a856ebea1105409711e464b1a9ee",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\before\\repeat\\stderr.log": "0ab20176cfddb526d03df6ef885b4500e5466f8fe1a0aad8102ed01edc1f4805",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\before\\repeat\\stdout.log": "40636aacda68d79e524c23f3649635073dc1815012f2c27774012dc9f1a24780",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\before\\repeat\\test-result.json": "5a2b8907771bce3895dba0340220b8f17ee13d4e4e2e0c14316733862f26b6aa",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\before\\repeat\\trajectory.json": "047a08ef1617de2f9c96461cef67a5f7229c7f6fa8543b412dd6c410db5536b6",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\environment\\install\\stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\environment\\install\\stdout.log": "0e9e72d1388349d0c03eb05f99e6049920d7d74ff3977668225071e9a6c61a97",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\environment\\install\\test-result.json": "452a21cc036681b5fa8cbdecb1e14603064fbc89fa1d9d0888d59a055f275222",
+    "react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\wheels\\colorama-0.4.6-py2.py3-none-any.whl": "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+  },
+  "evidence_files": [
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/after-source.tar.gz",
+      "size": 399278
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/base-pyproject.toml",
+      "size": 4526
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/before-source.tar.gz",
+      "size": 399057
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/fix-pyproject.toml",
+      "size": 4526
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/metadata.json",
+      "size": 674
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/reproduction.py",
+      "size": 449
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/requirements.lock",
+      "size": 17
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/source.json",
+      "size": 40501
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/task.json",
+      "size": 4071
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/acceptance/test-result.json",
+      "size": 575
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/acceptance/baseline/stderr.log",
+      "size": 361
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/acceptance/baseline/stdout.log",
+      "size": 1016
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/acceptance/baseline/test-result.json",
+      "size": 489
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/acceptance/hidden-tests/check_flags.py",
+      "size": 1891
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/after/stderr.log",
+      "size": 0
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/after/stdout.log",
+      "size": 1039
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/after/test-result.json",
+      "size": 575
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/after/trajectory.json",
+      "size": 710
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/stderr.log",
+      "size": 0
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/stdout.log",
+      "size": 1039
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/test-result.json",
+      "size": 575
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/trajectory.json",
+      "size": 710
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/before/stderr.log",
+      "size": 289
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/before/stdout.log",
+      "size": 130
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/before/test-result.json",
+      "size": 552
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/before/trajectory.json",
+      "size": 687
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/stderr.log",
+      "size": 289
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/stdout.log",
+      "size": 130
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/test-result.json",
+      "size": 552
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/trajectory.json",
+      "size": 687
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/environment/install/stderr.log",
+      "size": 0
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/environment/install/stdout.log",
+      "size": 315
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/environment/install/test-result.json",
+      "size": 459
+    },
+    {
+      "path": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930/wheels/colorama-0.4.6-py2.py3-none-any.whl",
+      "size": 25335
+    }
+  ]
+}

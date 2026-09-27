@@ -1,0 +1,28 @@
+--- a/fastapi/routing.py
++++ b/fastapi/routing.py
+@@ -7,6 +7,7 @@
+ import json
+ import os
+ import stat
++import threading
+ import types
+ from collections.abc import (
+     AsyncIterator,
+@@ -1579,12 +1580,20 @@ class APIRouter(routing.Router):
+         default_factory=list
+     )
+     _effective_low_priority_routes_version: int | None = None
++    _rebuild_lock: threading.Lock = Field(default_factory=threading.Lock)
++
++    def _rebuild_included_routers(self) -> None:
++        """Rebuild included routers under a lock so concurrent calls stay consistent."""
++        with self._rebuild_lock:
++            self._effective_low_priority_routes_version = None
++            self._rebuild_routes()
+ 
+     def add_api_route(
+         self, path: str, endpoint: Callable[..., Any], **kwargs: Any
+     ) -> None:
+-        self._effective_low_priority_routes_version = None
++        self._rebuild_included_routers()
+         super().add_api_route(path, endpoint, **kwargs)

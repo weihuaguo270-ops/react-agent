@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+### Fixed
+
+- Failure-regression suite (`pipeline`, `gate`, `contracts`, `software-task`, `closed-loop`
+  decision) now runs against trace-debugger's v0.6.0 failure-gate export —
+  `build_failures_export`, `build_scan_snapshot(task_type=...)` and `approval_denied`
+  detection — which is on the sidecar's default branch that CI installs.
+- `tests/test_collect_repair_evidence.py` no longer seeds from `artifacts/software-tasks`,
+  which only exists after a real Docker SoftwareTaskRunner run. The same layout is committed
+  as compact fixtures under `examples/fixtures/software_tasks/repair_evidence/`, so the test
+  passes on a clean checkout instead of failing in CI.
+- `GitHubDeliveryWorkflow` runs candidate tests with `PYTHONDONTWRITEBYTECODE=1`. CPython keys
+  `.pyc` validity on (source mtime in whole seconds, size), so a candidate that rewrites a file
+  to the same size within the same second could be tested against the *previous* candidate's
+  bytecode — the repair-loop delivery test flaked between two runs of the same commit
+  (`repair_failed` vs `shadow_passed`).
+- `examples/eval/run_failure_flywheel.py`, `run_step_watcher_evidence.py` and
+  `run_flywheel_closed_loop.py` resolve the trace-debugger **source** checkout from the
+  importable package (`pip install -e /tmp/trace-debugger` in CI) with
+  `REACT_AGENT_TDEBUG_ROOT` and sibling-directory fallbacks, instead of assuming
+  `../trace-debugger`. The flywheel CI step failed with `轨迹目录不存在` and the StepWatcher
+  evidence step silently published `golden_suite_pass_rate: null`.
+
 ## 0.9.0 (2026-08-14)
 
 ### Added
@@ -69,7 +91,7 @@
 
 - Local security regression: 15 passed
 - Full local regression: 180 passed, 3 skipped
-- Rootless Podman path validated for identity, seccomp, filesystem, secrets, network, resource
+- Docker sandbox path validated for identity, seccomp, filesystem, secrets, network, resource
 
 ## 0.6.0 (2026-08-11)
 

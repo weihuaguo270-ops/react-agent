@@ -1,0 +1,30 @@
+{
+  "task_id": "click-typed-flag-2930",
+  "status": "verified",
+  "verified": true,
+  "repository": "pallets/click",
+  "issue_url": "https://github.com/pallets/click/issues/2894",
+  "pr_url": "https://github.com/pallets/click/pull/2930",
+  "issue_title": "Click 8.2.0 ignores is_flag options that have a type",
+  "issue_body": "Click 8.2.0 ignores the use of options defined with `is_flag` and `type=str`.\n\nOf course, combining `is_flag` and `type=str` does not make sense, but it happened in one of our projects. Click before 8.2.0 ignored `type=str` and processed this as expected for `is_flag`.\n\nClick 8.2.0 does not set a value for such an option.\n\nI could trace this change to PR #2829 - If I install click 8.2.0 and manually undo the change in `core.py` that is done by that PR, it works as before.\n\nTo reproduce:\n\n1. Have a file `main.py` with:\n\n```\nimport click\n\n@click.group(invoke_without_command=True)\n@click.option('-x', '--transpose', type=str, is_flag=True,\n              help='Transpose the output table.')\ndef cli(transpose):\n    print(f\"Debug: transpose={transpose}\")\n    return 0\n```\n\n2. Reproduce with click 8.2.0:\n```\n$ pip install click==8.2.0\n$ python -c \"import main,sys; sys.argv=['cli', '--transpose']; main.cli()\"\nDebug: transpose=None\n```\n\n3. Verify that click 8.2.0 with PR #2829 undone works:\n```\n# perform the undo in core.py (see below)\n$ python -c \"import main,sys; sys.argv=['cli', '--transpose']; main.cli()\"\nDebug: transpose=True\n```\n\n4. Verify that click 8.1.8 works:\n```\n$ pip install click==8.1.8\n$ python -c \"import main,sys; sys.argv=['cli', '--transpose']; main.cli()\"\nDebug: transpose=True\n```\n\nThe \"undo\" of PR #2829 has the following changes in `core.py`, starting at line 2613:\n```\n        # Undo PR 2829: Added the following two lines\n        if flag_value is None:\n            flag_value = not self.default\n        self.type: types.ParamType\n        if is_flag and type is None:\n            # Undo PR 2829: Removed the following two lines\n            # if flag_value is None:\n            #     flag_value = not self.default\n            # Re-guess the type from the flag value instead of the\n            # default.\n            self.type = types.convert_type(None, flag_value)\n```\n\nEnvironment:\n\n- Python version: 3.12.7 on macOS (it happens on all Python versions supported by click 8.2.0, but not on all OSs)\n- Click version: 8.2.0\n\nBased on our CI test run, the issue happens only on macOS and Windows, but not on Ubuntu: \nhttps://github.com/zhmcclient/zhmccli/actions/runs/14949544297. I did not investigate why it does not happen on Ubuntu.\n\nThe fix for projects using click is of course to remove `type` when `is_flag` is used.\n\nEven though this is basically an incorrect use of click, I would expect click to surface this as an incorrect use, instead of silently not setting a value for the option.",
+  "issue_author": "andy-maier",
+  "base_commit": "011b9f9d190c71310264e6c54bae6259f5e38a9f",
+  "fix_commit": "4fd2fea0db423d242aedcae0a5f664efe0a93484",
+  "defect_type": "CLI parameter state and explicit type conversion",
+  "evidence_dir": "react-agent/eval/cross_repo_evidence/click-typed-flag-2930",
+  "missing": [],
+  "split": "unassigned",
+  "exposure": "curator has seen fix; cannot be clean held-out for this conversation",
+  "problem_statement": "Explicitly typed flags fail to activate on CLI invocation.",
+  "expected_behavior": "Flag activation and default toggling preserve explicit type conversion.",
+  "reproduction_command": [
+    "D:\\agent_learning\\tmp\\click2930-pykndky7\\venv\\Scripts\\python.exe",
+    "-I",
+    "D:\\agent_learning\\react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\reproduction.py",
+    "D:\\agent_learning\\tmp\\click2930-pykndky7\\before\\pallets-click-011b9f9\\src"
+  ],
+  "failing_test": "target_flag_behavior",
+  "environment": "metadata.json",
+  "image": "Windows Python isolated venv",
+  "acceptance_test": "acceptance/hidden-tests/check_flags.py"
+}

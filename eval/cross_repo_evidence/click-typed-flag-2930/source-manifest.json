@@ -1,0 +1,20 @@
+{
+  "scope": "source_only_not_execution",
+  "files": [
+    {
+      "path": "base-pyproject.toml",
+      "size": 4526,
+      "sha256": "c5d2bf56dfd888b3e497d0f938ec6afb5cfbb5d6e9005f5c52c3b9454001e8c8"
+    },
+    {
+      "path": "fix-pyproject.toml",
+      "size": 4526,
+      "sha256": "c5d2bf56dfd888b3e497d0f938ec6afb5cfbb5d6e9005f5c52c3b9454001e8c8"
+    },
+    {
+      "path": "source.json",
+      "size": 40501,
+      "sha256": "468f92e03b8f9195669af067f85779182122581d4e2fffca4174f86ee7ed9ac6"
+    }
+  ]
+}

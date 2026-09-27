@@ -291,10 +291,14 @@ check("工具定义 calculator 正确", TD_CALC["function"]["name"] == "calculat
 print("\n【工具注册完整性】")
 from react_agent.tools import TOOL_REGISTRY as TR, TOOL_DEFINITIONS as TDS
 
+# 注意：toggle_sandbox 已刻意移出 TOOL_REGISTRY / TOOL_DEFINITIONS——它是控制面工具，
+# 若模型可调用就能自行关闭隔离后端（见 tools/__init__.py 与 safety/permissions.py）。
+# 函数本身仍保留在 harness 供宿主调用，其 TOOL_DEFINITION 常量也仍存在，
+# 故上方 SANDBOX_TOOL_DEFINITION 断言不受影响。
 expected_tools = [
     "get_time", "calculator", "web_search", "fetch_page", "summarize",
     "switch_cot_strategy", "switch_role",
-    "switch_context_strategy", "toggle_sandbox", "clear_trajectories",
+    "switch_context_strategy", "clear_trajectories",
     "execute_python", "list_workflows", "run_workflow",
 ]
 if os.environ.get("REACT_AGENT_EXPERIMENTAL_TOOLS", "").strip().lower() in (

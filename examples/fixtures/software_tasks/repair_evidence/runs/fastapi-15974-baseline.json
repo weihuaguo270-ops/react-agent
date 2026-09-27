@@ -1,0 +1,22 @@
+{
+  "task_id": "fastapi-15974-router-cache-race",
+  "task_hash": "667d7d57e66e35c7722953b243880b4b00fe98462b959267e73a7e157971c64d",
+  "base_commit": "7cb06f360dd44efac059848df1a9beee7643b018",
+  "status": "failed",
+  "exit_code": 1,
+  "duration_ms": 8270.08,
+  "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.11.16, pytest-8.3.3, pluggy-1.5.0\nrootdir: /workspace/fastapi\ncollected 1 item\n\ntests/test_included_router_concurrent_rebuild.py::test_concurrent_rebuild F\n\n=================================== FAILURES ===================================\n________________________ test_concurrent_rebuild ________________________\n\n    def test_concurrent_rebuild():\n>       assert rebuilt.routes == expected_routes\nE       AssertionError: rebuilt included router lost routes\n\ntests/test_included_router_concurrent_rebuild.py:24: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_included_router_concurrent_rebuild.py::test_concurrent_rebuild\n============================== 1 failed in 0.42s ==============================\n",
+  "stderr": "\n",
+  "public_test": {
+    "status": "passed",
+    "returncode": 0
+  },
+  "hidden_test": {
+    "status": "failed",
+    "returncode": 1
+  },
+  "changed_paths": [],
+  "unauthorized_paths": [],
+  "patch_kind": "none",
+  "source": "compacted_from_runner_artifacts"
+}

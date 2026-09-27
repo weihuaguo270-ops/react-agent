@@ -1,0 +1,21 @@
+{
+  "task_id": "fastapi-16253-docs-template-xss",
+  "task_hash": "836ddcab727e535ff6f8f7c8245cc399d754b75bcb29cdd4ac54b8fd12663cdd",
+  "base_commit": "49033471594ea5d99a80abdf1043231b7791ee49",
+  "status": "succeeded",
+  "exit_code": 0,
+  "public_test": {
+    "status": "passed",
+    "returncode": 0
+  },
+  "hidden_test": {
+    "status": "passed",
+    "returncode": 0
+  },
+  "changed_paths": [
+    "fastapi/openapi/docs.py"
+  ],
+  "unauthorized_paths": [],
+  "patch_kind": "agent",
+  "source": "compacted_from_agent_run"
+}

@@ -1,0 +1,1 @@
+{"exit_code":0,"status":"passed","command":"PYTHONPATH=tmp/pydantic-after-src tmp/pydantic-venv/Scripts/python.exe tmp/pydantic-repro.py","head_commit":"df728a384f966a4aea7745ae23d482bbe0f6a1a8","assertions":["equivalent TypeAliasType RootModels compare equal","distinct parametrizations remain unequal"]}
