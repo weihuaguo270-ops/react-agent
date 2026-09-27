@@ -114,7 +114,7 @@ Workflow v5（legacy DAG）：`现场证据 → search → lookup_api → synthe
 |----|------|
 | **三类主流应用**：编码执行 · 客服/自动化 · RAG/研究（见 APPLICATION_DIRECTION） | 单一「文档排障」产品或 AIOps 平台 |
 | Agent 运行时 + 循环治理（ToolGuard、Harness、权限、轨迹飞轮） | 图编排平台 / LangGraph 替代品 |
-| 可部署 HTTP + Docker + 多套 eval 证据 | 多租户 SLA / 自动线上根因 |
+| 可部署 HTTP + Docker + 多套 eval 证据 + 服务鉴权 / 异步人工审批 | 多租户 SLA / 自动线上根因 |
 
 跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘 + Harness Health 门禁。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
@@ -186,10 +186,17 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 权限评估顺序（Harness 强制）：
 
 1. **DENY** — 参数 DENY 规则或工具表 DENY（默认拦截）
-2. **ASK** — CONFIRM（有 HITL 则询问；非交互默认放行，可用 `REACT_AGENT_STRICT_CONFIRM=1` 收紧）
+2. **ASK** — CONFIRM 级工具，三种处置之一：
+   - **异步人工审批**（推荐）：`REACT_AGENT_APPROVAL_MODE=async` → 落盘待批项并阻塞，人工经 `GET/POST /v1/approvals` 批准后带 `approval_id` 重试放行
+   - 注入 HITL：交互式询问（需真人在同一通道）
+   - 兜底：`REACT_AGENT_STRICT_CONFIRM=1` 直接拒绝；**默认（两者都未配）会放行**，启动日志与 `/ready` 的 `confirmation_gate` 会明确告警
 3. **ALLOW** — SAFE / NOTIFY
 
 关闭权限闸门：`REACT_AGENT_PERMISSION_GATE=0`。
+
+> 审批被建模为**状态**而非消息：HTTP 请求无法挂着等人几分钟，因此不需要 WebSocket。
+> 待批项持久化到 `REACT_AGENT_DATA_DIR`（容器部署需挂卷，否则重启即丢）；
+> 审批目录不可写时闸门**失败关闭**（拒绝执行），不会退化为放行。
 
 工具名表 + 参数规则示例（`safety/permissions.py`）：
 
@@ -372,6 +379,19 @@ gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DE
 ```
 
 仓库忽略本地 `llm_config.json`；CI / 新环境会回退到已提交的 [`llm_config.example.json`](llm_config.example.json)（Key 仍只来自环境变量 / Secret）。
+
+## 服务部署与安全
+
+`python -m react_agent.server --port 8765` 暴露的 HTTP 面**默认不鉴权**（本地开发便利）。除 `/health`、`/ready` 探针外，所有接口都能驱动 Agent 工具（含 `execute_python`），因此一旦对外可达必须显式加固。完整说明：[`docs/DEPLOY.md`](docs/DEPLOY.md)。
+
+| 能力 | 开关 | 作用 |
+|------|------|------|
+| 共享密钥鉴权 | `REACT_AGENT_AUTH_TOKEN` | 除探针外全接口要求 `Authorization: Bearer`（或 `X-Api-Key`） |
+| Host 头校验 | `REACT_AGENT_HOST_VALIDATION`（默认 `loopback`） | 防 **DNS rebinding**；`allowlist` 档未声明域名则拒绝启动，`REACT_AGENT_ALLOWED_HOSTS` 声明域名 |
+| 异步人工审批 | `REACT_AGENT_APPROVAL_MODE=async` | `CONFIRM` 级工具阻塞待批，经 `/v1/approvals` 批准 |
+| 答案流式 | `REACT_AGENT_LLM_STREAM`（默认开） | `/v1/chat/stream` 推送 `answer_delta`；客户端断连即**取消执行**，不再空烧 LLM 调用 |
+
+出站与进程边界亦加固：SSRF 守卫（`safety/net_guard.py`）、`trace_id` 路径穿越防护、MCP/沙箱子进程环境白名单、轨迹落盘脱敏、app 工具作用域隔离（`docs_tools` 不外溢到 Core）。
 
 ## 环境要求
 
