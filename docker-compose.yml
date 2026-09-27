@@ -3,20 +3,44 @@ services:
     build: .
     image: react-agent:local
     ports:
-      - "8765:8765"
+      # Published on loopback only: the HTTP API has no authentication unless
+      # REACT_AGENT_AUTH_TOKEN is set. Use "0.0.0.0:8765:8765" deliberately if
+      # you expose it, and set the token below.
+      - "127.0.0.1:8765:8765"
     environment:
+      # Bind inside the container; reachability is governed by the ports mapping above.
       REACT_AGENT_HOST: "0.0.0.0"
       REACT_AGENT_PORT: "8765"
       REACT_AGENT_DEFAULT_APP: docs_troubleshoot
       REACT_AGENT_APP: docs_troubleshoot
       REACT_AGENT_RAG_MODE: keyword
       REACT_AGENT_DISABLE_MCP: "1"
+      # Shared-secret Bearer auth for every endpoint except /health and /ready.
+      # Strongly recommended whenever this service is reachable off-host.
+      # REACT_AGENT_AUTH_TOKEN: ${REACT_AGENT_AUTH_TOKEN}
+      # Host-header validation (DNS rebinding). Default mode "loopback" already
+      # rejects non-local Host headers; declare the real hostname when a reverse
+      # proxy or custom domain is in front. Set REQUIRE_HOST_ALLOWLIST=1 to make a
+      # missing declaration fail startup instead of silently serving.
+      # REACT_AGENT_ALLOWED_HOSTS: agent.example.com
+      # REACT_AGENT_REQUIRE_HOST_ALLOWLIST: "1"
+      # Async human approval. CONFIRM-level tools (e.g. execute_python) are then
+      # blocked with status=awaiting_approval instead of auto-allowed, and a human
+      # approves via GET/POST /v1/approvals. Requires a writable approval dir
+      # (see the volume below); if it is not writable the gate fails CLOSED.
+      # REACT_AGENT_APPROVAL_MODE: async
+      # Persist runtime data (approvals / trajectories / reports) across restarts.
+      REACT_AGENT_DATA_DIR: /app/data
       # REACT_AGENT_SERVER_LLM: "1"
       # DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       # Mount extra corpus (optional):
       # REACT_AGENT_DOCS_INGEST_DIRS: /data/extra
-    # volumes:
-    #   - ./fixtures/docs_troubleshoot/production_corpus:/data/extra:ro
+    volumes:
+      # Named volume (not a bind mount) so container-root ownership never fights
+      # host permissions. Required for async approval: a pending item must
+      # survive until a human acts on it.
+      - react-agent-data:/app/data
+      # - ./fixtures/docs_troubleshoot/production_corpus:/data/extra:ro
     healthcheck:
       test:
         [
@@ -29,3 +53,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 20s
+
+volumes:
+  react-agent-data:

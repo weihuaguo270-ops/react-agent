@@ -81,9 +81,7 @@ _PROCESS_ENV_ALLOWLIST = {
     "LC_ALL",
     "SSL_CERT_FILE",
     "REQUESTS_CA_BUNDLE",
-    "HTTP_PROXY",
-    "HTTPS_PROXY",
-    "NO_PROXY",
+    # 代理变量按前缀放行（见 _runner_env）：它们常含 user:pass@ 凭据，需显式开启
     "HOME",
     "USERPROFILE",
     "HOMEDRIVE",
@@ -103,6 +101,16 @@ _PROCESS_ENV_ALLOWLIST = {
 _NETWORK_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]{1,128}$")
 _MEMORY_RE = re.compile(r"^[1-9][0-9]*(?:[bkmgBKMG])?$")
 _CPU_RE = re.compile(r"^(?:0[.][1-9][0-9]*|[1-9][0-9]*(?:[.][0-9]+)?)$")
+# 代理变量默认不传给沙箱子进程：代理 URL 常形如 http://user:pass@proxy，属凭据。
+# 需要联网的沙箱工具可通过 REACT_AGENT_SANDBOX_ALLOW_PROXY=1 显式开启。
+_PROXY_ENV_PREFIXES = (
+    "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "ALL_PROXY",
+    "http_proxy", "https_proxy", "no_proxy", "all_proxy",
+)
+
+
+def _proxy_env_enabled() -> bool:
+    return _env_bool("REACT_AGENT_SANDBOX_ALLOW_PROXY")
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -147,6 +155,14 @@ def _runner_env(
         for key, value in os.environ.items()
         if key.upper() in _PROCESS_ENV_ALLOWLIST
     }
+    if _proxy_env_enabled():
+        env.update(
+            {
+                key: value
+                for key, value in os.environ.items()
+                if key in _PROXY_ENV_PREFIXES
+            }
+        )
     env.update(
         {
             "PYTHONIOENCODING": "utf-8",
@@ -254,13 +270,8 @@ class Sandbox:
         self.backend = backend
         self.required = bool(required)
         self.runtime = os.environ.get("REACT_AGENT_SANDBOX_RUNTIME", "docker").strip()
-        if Path(self.runtime).name.lower() not in {
-            "docker",
-            "docker.exe",
-            "podman",
-            "podman.exe",
-        }:
-            raise ValueError("REACT_AGENT_SANDBOX_RUNTIME 仅允许 docker 或 podman")
+        if Path(self.runtime).name.lower() not in {"docker", "docker.exe"}:
+            raise ValueError("REACT_AGENT_SANDBOX_RUNTIME 仅允许 docker")
         self.image = os.environ.get(
             "REACT_AGENT_SANDBOX_IMAGE", "react-agent-sandbox:0.7.0"
         ).strip()

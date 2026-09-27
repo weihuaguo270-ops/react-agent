@@ -1,0 +1,25 @@
+{
+  "session_id": "golden_tool_error",
+  "query": "计算 2+2",
+  "model": "mock-gpt",
+  "timestamp": "2026-07-28T00:00:01Z",
+  "steps": [
+    {
+      "step": 1,
+      "thought": "调用 calculator",
+      "action": {
+        "name": "calculator",
+        "arguments": "{\"expression\": \"2++\"}"
+      },
+      "observation": "{\"error\": \"表达式语法错误\"}",
+      "duration_seconds": 0.2
+    },
+    {
+      "step": 2,
+      "thought": "FINAL ANSWER: 无法完成",
+      "observation": ""
+    }
+  ],
+  "final_answer": "无法完成",
+  "total_duration_seconds": 0.5
+}

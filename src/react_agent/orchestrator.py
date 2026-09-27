@@ -5,6 +5,7 @@ Orchestrator — 独立的多 Agent 协作模块
 """
 import json, urllib.request, sys, os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextvars import copy_context
 from react_agent.planner import Planner, Task
 
 
@@ -114,9 +115,13 @@ class Orchestrator:
 
     def _capture_worker_outputs(self, task, result):
         try:
-            from react_agent.react_loop import last_trajectory_steps
+            # 必须用 context 局部读取：模块级 last_trajectory_steps 跨 worker 共享，
+            # 并行时会把别的 worker 的工具输出算到本任务上，再经 _build_context
+            # 作为【前置数据】注入下游依赖任务。
+            from react_agent.react_loop import get_last_trajectory_steps
+
             outputs = []
-            for step in last_trajectory_steps:
+            for step in get_last_trajectory_steps():
                 obs = step.get("observation", "")
                 act = step.get("action", {})
                 name = act.get("name", "") if isinstance(act, dict) else ""
@@ -197,7 +202,13 @@ class Orchestrator:
             result = self.run_worker(task.description, context=context, task_obj=task)
             return (task.id, result)
         with ThreadPoolExecutor(max_workers=len(level)) as ex:
-            futures = {ex.submit(run_one, t): t for t in level}
+            # ThreadPoolExecutor 不传播 ContextVar：worker 线程拿到的是空 context，
+            # 于是 react_loop 内部的 emit_event 会取到 default=None 并静默丢弃进度
+            # 事件。这里为每个任务单独拷贝调用方的 context，让 SSE sink 等请求级
+            # 上下文随任务进入 worker。
+            # 注意必须「每任务一份」：同一个 Context 对象不能被并发 run()，共享一份
+            # 会在多 worker 同时启动时抛 RuntimeError: cannot enter context。
+            futures = {ex.submit(copy_context().run, run_one, t): t for t in level}
             for f in as_completed(futures):
                 t = futures[f]
                 try:

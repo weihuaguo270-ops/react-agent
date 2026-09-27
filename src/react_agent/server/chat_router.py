@@ -51,6 +51,20 @@ def list_applications() -> list[dict[str, Any]]:
     return [dict(a) for a in APPLICATIONS]
 
 
+def registry_pillars() -> list[str]:
+    """已实现应用实际覆盖的 pillar（去重、保持注册顺序）。
+
+    注意与对外宣称的三支柱区分：``rag_research`` 目前没有绑定应用，
+    因此不会出现在这里。见 docs/APPLICATION_DIRECTION.md。
+    """
+    seen: list[str] = []
+    for app in APPLICATIONS:
+        pillar = str(app.get("pillar") or "").strip()
+        if pillar and pillar not in seen:
+            seen.append(pillar)
+    return seen
+
+
 def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
     app = normalize_app(body.get("app") or body.get("application"))
     use_llm = os.environ.get("REACT_AGENT_SERVER_LLM", "").strip().lower() in (

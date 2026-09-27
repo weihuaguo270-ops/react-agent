@@ -60,10 +60,20 @@ TOOL_PERMISSIONS: dict[str, PermissionLevel] = {
     "search_docs": PermissionLevel.SAFE,
     "lookup_api": PermissionLevel.SAFE,
     "verify_citations": PermissionLevel.SAFE,
+    # docs_troubleshoot 其余注册工具：纯解析/只读，显式标注为 SAFE
+    "parse_error_evidence": PermissionLevel.SAFE,
+    "parse_request_headers": PermissionLevel.SAFE,
+    "parse_log_evidence": PermissionLevel.SAFE,
+    "parse_trace_context": PermissionLevel.SAFE,
+    # 良性控制面：只切换 CoT/角色/上下文策略，无副作用，显式保持 SAFE
+    "switch_cot_strategy": PermissionLevel.SAFE,
+    "switch_role": PermissionLevel.SAFE,
+    "switch_context_strategy": PermissionLevel.SAFE,
     "list_workflows": PermissionLevel.SAFE,
     "run_workflow": PermissionLevel.SAFE,
     "apply_fix_step": PermissionLevel.CONFIRM,
-    "fetch_trace": PermissionLevel.SAFE,
+    # fetch_trace 的 trace_id 会成为文件路径/子进程参数，需要人工确认
+    "fetch_trace": PermissionLevel.CONFIRM,
     "search_files": PermissionLevel.SAFE,
     "read_text_file": PermissionLevel.SAFE,
     "list_directory": PermissionLevel.SAFE,
@@ -80,6 +90,15 @@ TOOL_PERMISSIONS: dict[str, PermissionLevel] = {
     "search_memory": PermissionLevel.NOTIFY,
 
     # CONFIRM
+    # 读取宿主环境变量（prefixes 可由调用方控制）——不是 SAFE
+    "read_config_snapshot": PermissionLevel.CONFIRM,
+    # 对外发起 HTTP 请求（SSRF 面）——不是 SAFE
+    "probe_service_health": PermissionLevel.CONFIRM,
+    # 删除历史轨迹（破坏性写操作）
+    "clear_trajectories": PermissionLevel.CONFIRM,
+    # toggle_sandbox 已从 TOOL_REGISTRY / TOOL_DEFINITIONS 移除（控制面，模型不可见）。
+    # 这里保留 CONFIRM 条目作为纵深防御：任何遗留或内部调用路径都会先过闸门。
+    "toggle_sandbox": PermissionLevel.CONFIRM,
     "write_file": PermissionLevel.CONFIRM,
     "patch_file": PermissionLevel.CONFIRM,
     "execute_python": PermissionLevel.CONFIRM,
@@ -160,6 +179,14 @@ ARG_RULES: list[tuple[str, ArgChecker, PermissionLevel]] = [
 ]
 
 
+# ── 默认等级 ──
+# 失败关闭：未在 TOOL_PERMISSIONS 中显式标注的工具默认 CONFIRM，而不是 SAFE。
+# 动态装载的工具（app workflow、未来新增工具）会先落到 CONFIRM，需要被显式评审
+# 后加入上表才能免除确认。与 harness/sandbox.py 的「未知工具按不可信处理」
+# （classify_risk → RISK_UNTRUSTED）保持同一取向。
+DEFAULT_PERMISSION = PermissionLevel.CONFIRM
+
+
 def _level_to_outcome(level: PermissionLevel) -> Outcome:
     if level == PermissionLevel.DENY:
         return "deny"
@@ -177,8 +204,8 @@ def evaluate_tool_permission(
     模型产生 tool_call 不等于允许执行；本函数结果由 Harness 强制执行。
     """
     args = tool_args or {}
-    base = TOOL_PERMISSIONS.get(tool_name, PermissionLevel.SAFE)
-    base_source = "tool_table" if tool_name in TOOL_PERMISSIONS else "default"
+    base = TOOL_PERMISSIONS.get(tool_name, DEFAULT_PERMISSION)
+    base_source = "tool_table" if tool_name in TOOL_PERMISSIONS else "default_confirm"
 
     # ── 1) DENY ──
     for name, checker, level in ARG_RULES:

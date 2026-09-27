@@ -43,6 +43,17 @@ def test_health_and_chat_offline():
         assert "expense" in apps
         assert "default" in apps
 
+        # pillars 必须与实际应用注册表一致（此前硬编码三支柱，含未绑定的 rag_research）
+        derived = []
+        for app in info.get("applications") or []:
+            pillar = app.get("pillar")
+            if pillar and pillar not in derived:
+                derived.append(pillar)
+        assert info.get("pillars") == derived
+        assert "rag_research" not in (info.get("pillars") or [])
+        # 宣称定位单独暴露，不与“已实现”混用
+        assert "rag_research" in (info.get("declared_pillars") or [])
+
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=5) as resp:
             health = json.loads(resp.read().decode("utf-8"))
         assert health["status"] == "ok"

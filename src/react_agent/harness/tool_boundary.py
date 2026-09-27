@@ -20,6 +20,12 @@ def execute_registered_tool(
         raise KeyError(f"tool not found: {tool_name}")
 
     if not SANDBOX.required:
+        # 非 required 模式：仍强制权限闸门。CONFIRM 在无 HITL 时按 permission_gate
+        # 的既有语义放行，但 STRICT_CONFIRM/REQUIRED 下会拒绝——此前这里直接执行，
+        # 导致权限表对 app/workflow 工具完全失效。
+        blocked = permission_block_message(tool_name, arguments)
+        if blocked is not None:
+            raise PermissionError(blocked)
         return fn(**arguments)
 
     blocked = permission_block_message(tool_name, arguments)

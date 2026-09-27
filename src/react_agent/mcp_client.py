@@ -18,6 +18,52 @@ import subprocess
 import os as _os
 
 
+# ── MCP 子进程环境白名单 ──
+# MCP server 是可从 mcp_servers.json / REACT_AGENT_MCP_CONFIG 指定的第三方进程
+# （例如 npx -y <任意包>），此前这里用 os.environ.copy() 把完整父环境（含
+# DEEPSEEK_API_KEY 等全部密钥）交给它。改为与 harness/sandbox.py 同取向的白名单。
+_MCP_ENV_ALLOWLIST = {
+    # 进程启动必需
+    "PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "SYSTEMDRIVE",
+    "TEMP", "TMP", "TMPDIR",
+    # 运行库 / 证书
+    "LANG", "LC_ALL", "SSL_CERT_FILE", "REQUESTS_CA_BUNDLE", "NODE_EXTRA_CA_CERTS",
+    # 包管理器缓存（uvx/npx 需要在可写位置落地）
+    "HOME", "USERPROFILE", "HOMEDRIVE", "HOMEPATH",
+    "XDG_CACHE_HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_STATE_HOME",
+    "UV_CACHE_DIR", "PIP_CACHE_DIR", "npm_config_cache",
+}
+# 代理变量按前缀放行：代理本身常带 user:pass@，属凭据，需调用方显式开启
+_MCP_PROXY_ENV_PREFIXES = ("HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "ALL_PROXY",
+                           "http_proxy", "https_proxy", "no_proxy", "all_proxy")
+
+
+def _mcp_child_env(extra: dict | None = None, *, allow_proxy: bool | None = None) -> dict:
+    """构造 MCP 子进程环境；默认不继承宿主密钥与代理凭据。"""
+    if allow_proxy is None:
+        allow_proxy = _os.environ.get("REACT_AGENT_MCP_ALLOW_PROXY", "").strip().lower() in {
+            "1", "true", "yes", "on",
+        }
+    env = {
+        key: value
+        for key, value in _os.environ.items()
+        if key.upper() in _MCP_ENV_ALLOWLIST
+        or key in _MCP_ENV_ALLOWLIST
+    }
+    if allow_proxy:
+        env.update(
+            {
+                key: value
+                for key, value in _os.environ.items()
+                if key in _MCP_PROXY_ENV_PREFIXES
+            }
+        )
+    env["PYTHONIOENCODING"] = "utf-8"
+    if extra:
+        env.update({str(k): str(v) for k, v in extra.items()})
+    return env
+
+
 class MCPClient:
     """通过 stdin/stdout（stdio）连接 MCP Server，实现 JSON-RPC 2.0 通信"""
 
@@ -35,8 +81,7 @@ class MCPClient:
 
     def connect(self, timeout=15):
         """启动 MCP Server 子进程 -> 握手 initialize"""
-        env = _os.environ.copy()
-        env.update(self.env)
+        env = _mcp_child_env(self.env)
         self.proc = subprocess.Popen(
             [self.command] + self.args,
             stdin=subprocess.PIPE,

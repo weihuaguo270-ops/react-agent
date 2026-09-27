@@ -15,6 +15,11 @@ import os
 import re
 import pytest
 
+from react_agent.console_io import configure_stdio
+
+# GBK 控制台下直接 print emoji 会抛 UnicodeEncodeError；导入即放开 errors=replace。
+configure_stdio()
+
 
 def _has_key() -> bool:
     return bool(os.environ.get("DEEPSEEK_API_KEY"))

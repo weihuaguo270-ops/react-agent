@@ -1,5 +1,22 @@
 # ReAct Agent
 
+## 项目定位
+
+面向编码执行、客服工作流和 RAG 研究场景的受控 Agent 运行时，负责工具调用、权限边界、轨迹记录和任务验收。
+
+## 对外口径
+
+可以表述为可部署、可评测的 Agent 工程原型；不能表述为生产 SaaS、长期线上 SLA、企业多租户权限平台或自动根因诊断系统。当前状态与 P0 见 [`docs/STATUS.md`](docs/STATUS.md)。
+
+## 结构入口
+
+运行时核心位于 `src/react_agent/`，应用与评测入口位于 `examples/`，轨迹契约位于 `schemas/`，架构、评测、失败回归和成熟度文档位于 `docs/`。
+
+闭环验收：`python examples/eval/harness_closed_loop.py --fixture --report-out artifacts/portfolio_acceptance.json`
+
+软件交付最小验收集（5 条）：`python examples/eval/build_acceptance_report.py`
+证据目录生成：`python examples/eval/materialize_acceptance_evidence.py`
+
 Mutable runtime artifacts no longer write into the installed package. See
 [`docs/PORTABILITY.md`](docs/PORTABILITY.md) for data-directory overrides and the isolated
 LangGraph environment contract.
@@ -10,7 +27,7 @@ LangGraph environment contract.
 
 个人维护的 **Agent 运行时**（`react_loop` + ToolGuard + Harness + 权限闸门），面向 GitHub 主流的三类应用：**写代码/执行**、**客服与工作流自动化**、**通用 RAG/研究**。详见 [`docs/APPLICATION_DIRECTION.md`](docs/APPLICATION_DIRECTION.md)。
 
-结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 进展：[`docs/PROJECT_OPTIMIZATION_STATUS.md`](docs/PROJECT_OPTIMIZATION_STATUS.md) · 失败回归：[`docs/FAILURE_REGRESSION_PIPELINE.md`](docs/FAILURE_REGRESSION_PIPELINE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
+结构：[`docs/STRUCTURE.md`](docs/STRUCTURE.md) · 架构：[`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md) · 评测：[`docs/EVAL_INDEX.md`](docs/EVAL_INDEX.md) · 进展：[`docs/STATUS.md`](docs/STATUS.md) · 失败回归：[`docs/FAILURE_REGRESSION_PIPELINE.md`](docs/FAILURE_REGRESSION_PIPELINE.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
 ## 业务目标
 
@@ -37,7 +54,7 @@ LangGraph environment contract.
 | **② 客服 / 自动化** | 可部署 Chat API、政策/Runbook 问答、工作流 demo | `docker compose up` · [`demo_expense_workflow.py`](examples/demos/demo_expense_workflow.py) |
 | **③ RAG / 研究** | 检索增强、公开 QA 子集、multi-hop | [`demo_rag.py`](examples/demos/demo_rag.py) · [`run_public_benchmark.py`](examples/eval/run_public_benchmark.py) |
 
-**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
+**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`POST/GET /v1/chat/stream` 提供 `text/event-stream` 进度事件；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
 
 **垂直 demo（② 的子场景）：** [证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 引用/拒答/现场证据；`agent_runner` 默认离线循环 · Live 走 `react_loop`。
 
