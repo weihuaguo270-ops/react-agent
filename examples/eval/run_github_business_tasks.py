@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import time
 import urllib.request
+import urllib.error
 from pathlib import Path
 
 API = "https://api.github.com"
@@ -38,9 +39,23 @@ def _get(path):
     if token:
         headers["Authorization"] = f"Bearer {token}"
     started = time.perf_counter()
-    with urllib.request.urlopen(urllib.request.Request(f"{API}{path}", headers=headers), timeout=30) as response:
-        return (json.loads(response.read().decode("utf-8")),
-                (time.perf_counter() - started) * 1000, response.headers.get("X-GitHub-Request-Id"))
+    try:
+        with urllib.request.urlopen(urllib.request.Request(f"{API}{path}", headers=headers), timeout=30) as response:
+            return (json.loads(response.read().decode("utf-8")),
+                    (time.perf_counter() - started) * 1000, response.headers.get("X-GitHub-Request-Id"))
+    except (urllib.error.URLError, TimeoutError, OSError) as error:
+        # Windows environments can fail .NET/Python TLS while the authenticated
+        # GitHub CLI remains usable. Keep the fallback read-only and token-free.
+        executable = shutil.which("gh")
+        if not executable:
+            raise error
+        result = subprocess.run(
+            [executable, "api", path, "--header", "Accept: application/vnd.github+json"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"GitHub API failed via urllib and gh: {result.stderr.strip()}") from error
+        return json.loads(result.stdout), (time.perf_counter() - started) * 1000, None
 
 
 def run_github_tasks(repository):

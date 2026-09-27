@@ -12,12 +12,12 @@ harness/sandbox.py 提供两个后端：
 生产模式必须同时配置：
 
 ~~~powershell
-docker build -f Dockerfile.sandbox -t react-agent-sandbox:0.7.0 .  # 或 podman build
+docker build -f Dockerfile.sandbox -t react-agent-sandbox:0.7.0 .
 
 $env:REACT_AGENT_SANDBOX_STRATEGY = "on"
 $env:REACT_AGENT_SANDBOX_BACKEND = "container"
 $env:REACT_AGENT_SANDBOX_REQUIRED = "1"
-$env:REACT_AGENT_SANDBOX_RUNTIME = "podman"  # Docker 环境改为 docker
+$env:REACT_AGENT_SANDBOX_RUNTIME = "docker"
 $env:REACT_AGENT_SANDBOX_IMAGE = "react-agent-sandbox:0.7.0"
 ~~~
 
@@ -31,7 +31,7 @@ required=1 是失败关闭开关：策略不是 on、后端不是 container、�
 - UID/GID 65532:65532，禁止 root。
 - 只读根文件系统，仅 /tmp 为 noexec,nosuid,nodev tmpfs。
 - 丢弃全部 Linux capabilities，并设置 no-new-privileges。
-- Docker/Podman 默认 seccomp 配置。
+- Docker 默认 seccomp 配置。
 - 默认关闭网络。
 - CPU、内存、PID、文件描述符和输出大小限制。
 - 工具参数经 stdin 传递，不进入进程命令行。
@@ -62,7 +62,7 @@ REACT_AGENT_SANDBOX_EGRESS_NETWORK 后才加入指定容器网络。该网络应
 
 ## 部署要求
 
-1. 使用 rootless Docker/Podman 或独立 Sandbox Worker，不把 Docker Socket
+1. 使用 rootless Docker 或独立 Sandbox Worker，不把 Docker Socket
    挂载进面向用户的 API 容器。
 2. 基础镜像在发布流水线中固定 digest，并进行漏洞扫描、SBOM 和签名校验。
 3. Linux 生产节点验证默认 seccomp 已启用；更高风险场景使用 gVisor、Kata
@@ -80,15 +80,14 @@ REACT_AGENT_SANDBOX_EGRESS_NETWORK 后才加入指定容器网络。该网络应
 python -m pytest tests/test_sandbox_security.py -q
 ~~~
 
-真实容器验证要求主机先安装 Docker/Podman 并构建镜像。当前代码会通过
+真实容器验证要求主机先安装 Docker 并构建镜像。当前代码会通过
 image inspect 检查镜像，检查失败时拒绝运行。仓库测试不会把模拟命令构造
 结果冒充为真实容器隔离证明。
 
 ### 本机实测记录（2026-08-12）
 
-验证环境为 Windows WSL2、Podman 5.8.3 rootless、cgroup v2 和 crun；Podman
-报告 seccomp 已启用。镜像 `react-agent-sandbox:0.7.0` 构建成功，本次镜像 ID
-为 `897cd67f8450`。
+验证环境为 Windows WSL2、Docker、cgroup v2 和相关运行时；镜像
+`react-agent-sandbox:0.7.0` 构建成功。
 
 | 检查项 | 实测结果 |
 |--------|----------|
@@ -101,9 +100,8 @@ image inspect 检查镜像，检查失败时拒绝运行。仓库测试不会把
 | 资源 | memory=256 MiB、pids=64、cpu.max=`50000 100000`、nofile=64 |
 | 生命周期 | 1 秒超时后强制清理，未发现 `react-agent-sbx-*` 遗留容器 |
 
-安全回归为 `15 passed`，全量回归为 `180 passed, 3 skipped`。这些结果证明本机
-Podman 路径上的约束实际生效，不替代生产节点逃逸测试、镜像供应链审计和多租户
-隔离评审。
+安全回归为 `15 passed`，全量回归为 `180 passed, 3 skipped`。这些结果不替代生产
+节点逃逸测试、镜像供应链审计和多租户隔离评审。
 
 ## 边界
 

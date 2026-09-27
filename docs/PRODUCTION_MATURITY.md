@@ -10,7 +10,7 @@
 
 | 类型 | 说明 |
 |------|------|
-| **主流对齐** | LLM ReAct、领域工具、RAG、HTTP API、health/ready、Docker、基础轨迹、离线回归 |
+| **主流对齐** | LLM ReAct、领域工具、RAG、HTTP API/SSE、health/ready、Docker、基础轨迹、离线回归 |
 | **细节优化** | 循环内 duplicate 拦截、收尾步强制作答、ToolGuard、verify_citations 工具步、fix_steps 权限闸门、StepWatcher + failure flywheel |
 | **待补齐（主流交付）** | 主服务 Bearer API Key、HTTP 全链路结构化 JSON 日志、verify_actions 由 Agent 执行（非仅输出字符串）、真实业务任务与人工效率基线 |
 | **本阶段不做** | OAuth 网关、多租户 SLA、Helm 规模化、自动拉线上 Trace |
@@ -30,6 +30,7 @@
 | **证据化文档问答** | 已具备 | 引用校验 + 无依据拒答；14 篇演示语料 |
 | 黄金集 + 扩展 eval | 已具备 | golden 34 + fault 12 + production 5 + git 5（**验收**） |
 | HTTP `/health` `/ready` + `/v1/chat` | 已具备 | 离线默认可不耗 Key |
+| HTTP `/v1/chat/stream` SSE | 已具备 | 请求级 started/runtime/step/tool/result/done 事件；生产接入仍需鉴权、脱敏和事件保留策略 |
 | 结构化错误 + request_id | 已具备 | 统一 error envelope |
 | 产品 UI（证据链 + Agent 步） | 已具备 | `GET /` |
 | Docker 单实例交付 | 已具备 | `docs/DEPLOY.md` |

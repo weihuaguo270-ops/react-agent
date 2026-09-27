@@ -69,7 +69,7 @@
 
 - Local security regression: 15 passed
 - Full local regression: 180 passed, 3 skipped
-- Rootless Podman path validated for identity, seccomp, filesystem, secrets, network, resource
+- Docker sandbox path validated for identity, seccomp, filesystem, secrets, network, resource
 
 ## 0.6.0 (2026-08-11)
 

@@ -38,7 +38,7 @@ later approvals and baseline/candidate comparisons to the exact task.
 
 `react_agent.eval.software_task_runner.SoftwareTaskRunner` consumes this
 contract. It checks the declared test command against an allowlist and runs it
-in a disposable Docker or Podman container with no network, a read-only root,
+in a disposable Docker container with no network, a read-only root,
 non-root UID, resource limits, and one writable workspace mount.
 
 Demo: `python examples/eval/harness_closed_loop.py`

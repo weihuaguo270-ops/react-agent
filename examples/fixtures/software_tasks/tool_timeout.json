@@ -1,0 +1,25 @@
+{
+  "session_id": "golden_search_timeout",
+  "query": "抓取大型页面",
+  "model": "mock-gpt",
+  "timestamp": "2026-07-28T00:00:03Z",
+  "steps": [
+    {
+      "step": 1,
+      "thought": "fetch",
+      "action": {
+        "name": "fetch_page",
+        "arguments": "{\"url\": \"https://slow.example\"}"
+      },
+      "observation": "Python official documentation covers tutorial library reference and standard modules in detail. Python official documentation covers tutorial library reference and standard modules in detail. ",
+      "duration_seconds": 25.5
+    },
+    {
+      "step": 2,
+      "thought": "FINAL ANSWER: done",
+      "observation": ""
+    }
+  ],
+  "final_answer": "done",
+  "total_duration_seconds": 26.0
+}

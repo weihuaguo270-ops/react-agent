@@ -44,13 +44,22 @@ def _python_snippet_for_message(message: str) -> str | None:
 
 def offline_react_loop(message: str, *, max_steps: int = 6) -> dict[str, Any]:
     """Run a tiny tool loop without LLM; returns answer + tools_called + agent_steps."""
+    from react_agent.server.streaming import emit_event
+
     steps: list[dict[str, Any]] = []
     tools_called: list[str] = []
+    emit_event("runtime", {"status": "started", "mode": "offline_react"})
 
     def _call(tool: str, arguments: dict) -> str:
+        emit_event("tool_call", {"tool": tool, "arguments": arguments})
         obs = execute_tool_step(tool, arguments)
         tools_called.append(tool)
         steps.append({"tool": tool, "arguments": arguments, "observation": obs[:500]})
+        emit_event("tool_result", {
+            "tool": tool,
+            "ok": not str(obs).startswith("ERROR"),
+            "observation": obs[:500],
+        })
         return obs
 
     lower = message.lower()
@@ -73,6 +82,7 @@ def offline_react_loop(message: str, *, max_steps: int = 6) -> dict[str, Any]:
             answer = f"计算结果是 {obs.strip()}。"
 
     if not answer:
+        emit_event("runtime", {"status": "failed", "reason": "unsupported_query"})
         return {
             "ok": False,
             "answer": "offline_react: unsupported smoke query",
@@ -80,6 +90,7 @@ def offline_react_loop(message: str, *, max_steps: int = 6) -> dict[str, Any]:
             "agent_steps": steps,
         }
 
+    emit_event("runtime", {"status": "completed", "tools_called": tools_called})
     return {
         "ok": True,
         "answer": answer,

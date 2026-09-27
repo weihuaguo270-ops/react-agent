@@ -4,14 +4,14 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from react_agent.tools import enable_app_tools
+from react_agent.tools import set_request_app
 
 
 def answer_offline(query: str, **state: Any) -> dict[str, Any]:
     """Deterministic docs troubleshoot via offline Agent loop (default) or Workflow."""
-    os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
     os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
-    enable_app_tools()
+    # 声明本次请求的 app 作用域，而不是把 app 工具永久并入全局注册表
+    set_request_app("docs_troubleshoot")
     from react_agent.apps.docs_troubleshoot.index import reset_index
     from react_agent.apps.docs_troubleshoot.agent_runner import run_docs
 

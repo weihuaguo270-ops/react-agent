@@ -24,7 +24,7 @@
 | [FAILURE_REGRESSION_PIPELINE.md](./FAILURE_REGRESSION_PIPELINE.md) | P0–P2 编排 + A1/A2 反馈与真 baseline；SoftwareTask 15764/15974/16253 同门禁验收 | CI 强制装两仓 + `run_software_task_failure_regression.py` | 不自动改 Agent；无 SLA |
 | [FAILURE_REGRESSION_PITCH.md](./FAILURE_REGRESSION_PITCH.md) | 答辩三句话 + 一张图；可写「夹具 + 3 条 SoftwareTask」 | 产物链到 `artifacts/failure-regression/software-tasks/` | 口径页 |
 | [SOFTWARE_TASK_RUNNER.md](./SOFTWARE_TASK_RUNNER.md) / [SOFTWARE_TASK_DATASET.md](./SOFTWARE_TASK_DATASET.md) | FastAPI 任务 Runner + 数据集 | 报告 [software_task_execution_20260913.md](./reports/software_task_execution_20260913.md) | Agent 成功率 ≠ 生产收益 |
-| [PROJECT_OPTIMIZATION_STATUS.md](./PROJECT_OPTIMIZATION_STATUS.md) | 优化进度时间线（含 2026-09-15 门禁验收） | — | 进展总览 |
+| [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) | 项目定位、对外口径与边界 | — | 背景总览 |
 | [flywheel_closed_loop_20260716.md](./reports/flywheel_closed_loop_20260716.md) | 同批 100 条改前/改后 | **llm_offtrack 6→1** | [snapshots/…](./snapshots/flywheel_closed_loop_20260716.json) |
 | [public_benchmark_snapshot_offline.md](./reports/public_benchmark_snapshot_offline.md) | GSM8K×10 + HotpotQA×10 | offline 匹配器 20/20 | [归档](./snapshots/public_benchmark_snapshot_offline.json) |
 | [public_benchmark_snapshot_agent_20260717.md](./reports/public_benchmark_snapshot_agent_20260717.md) | 同上 · DeepSeek agent | **19/20（95%）** · GSM8K 10/10 · Hotpot 9/10 · Wilson [76.4, 99.1] | [归档](./snapshots/public_benchmark_snapshot_agent_20260717.json) |

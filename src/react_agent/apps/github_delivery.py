@@ -14,6 +14,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Sequence
+from urllib.parse import urlparse
 
 from react_agent.eval.business_metrics import business_scorecard
 
@@ -28,6 +29,41 @@ _SAFE_BRANCH = re.compile(r"[^a-zA-Z0-9._/-]+")
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+# GitHub 远程地址校验。原实现是 `if "github.com" not in source` 子串判断，
+# 可被以下形式绕过并把分支推到攻击者主机或内网：
+#   https://github.com@127.0.0.1:8765/x.git   （userinfo 里出现 github.com）
+#   https://github.com.attacker.tld/x.git     （主机名后缀包含 github.com）
+#   ssh://git@github.com.attacker.tld/x.git
+# 改为解析后按 host 精确/后缀匹配，且限制 scheme。
+_ALLOWED_GIT_SCHEMES = {"https", "ssh", "git"}
+_GITHUB_HOSTS = {"github.com", "www.github.com"}
+
+
+def _require_github_origin(source: str) -> str:
+    """校验 origin 指向 GitHub；返回规范化 host，非法则抛 ValueError。"""
+    raw = (source or "").strip()
+    if not raw:
+        raise ValueError("repository origin is empty")
+
+    # scp 形式：git@github.com:owner/repo.git
+    scp_like = re.fullmatch(r"(?:[^@/\s]+@)?([^:/\s]+):(.+)", raw)
+    if scp_like and "://" not in raw:
+        host = scp_like.group(1).lower()
+        if host in _GITHUB_HOSTS:
+            return host
+        raise ValueError(f"repository origin is not GitHub: {host}")
+
+    parsed = urlparse(raw)
+    scheme = (parsed.scheme or "").lower()
+    if scheme not in _ALLOWED_GIT_SCHEMES:
+        raise ValueError(f"unsupported git scheme: {scheme or '(none)'}")
+    # parsed.hostname 会剥离 userinfo，因此 https://github.com@evil.tld 得到 evil.tld
+    host = (parsed.hostname or "").lower()
+    if host not in _GITHUB_HOSTS:
+        raise ValueError(f"repository origin is not GitHub: {host or '(no host)'}")
+    return host
 
 
 def _json_hash(payload: Any) -> str:
@@ -123,10 +159,6 @@ class WorkflowConfig:
     publish_draft_pr: bool = False
     max_test_seconds: int = 120
     max_workflow_seconds: int = 300
-    remote_mcp_url: str | None = None
-    remote_mcp_token_env: str | None = None
-    remote_mcp_max_retries: int = 2
-    remote_mcp_retry_writes: bool = False
     allowed_test_prefixes: tuple[tuple[str, ...], ...] = (
         ("python", "-m", "pytest"),
         ("python3", "-m", "pytest"),
@@ -147,6 +179,8 @@ class GitHubDeliveryWorkflow:
     """在隔离克隆中验证变更，审批后才生成候选提交。"""
 
     def __init__(self, config: WorkflowConfig, *, remote_gateway=None):
+        """``remote_gateway`` 是外部写入的注入点：仓库不含内置实现，
+        未注入时 Draft PR 走本地 ``gh``。"""
         if config.mode not in {"shadow", "guarded"}:
             raise ValueError("mode must be shadow or guarded")
         self.config = config
@@ -155,23 +189,12 @@ class GitHubDeliveryWorkflow:
         self._active_approval: Approval | None = None
 
     def _get_remote_gateway(self):
-        if self.remote_gateway is not None:
-            return self.remote_gateway
-        if not self.config.remote_mcp_url:
-            return None
-        from react_agent.apps.remote_delivery import RemoteDeliveryGateway
+        """返回调用方注入的远程网关（没有则为 None）。
 
-        self.remote_gateway = RemoteDeliveryGateway.from_config(
-            self.config.remote_mcp_url,
-            token_env=self.config.remote_mcp_token_env,
-            max_retries=self.config.remote_mcp_max_retries,
-            retry_writes=self.config.remote_mcp_retry_writes,
-            # The approval credential has already been validated against the
-            # plan hash before this callback can be used for an external write.
-            confirmation_fn=lambda _name, _args: bool(
-                self._active_approval and self._active_approval.allow_external_write
-            ),
-        )
+        仓库当前不提供远程网关的 HTTP 客户端实现，因此只能由调用方通过
+        ``remote_gateway=`` 注入（测试用 FakeGateway，生产需接入方自行实现）。
+        未注入时发布走下方本地 ``gh`` 路径。
+        """
         return self.remote_gateway
 
     def run(
@@ -544,8 +567,7 @@ class GitHubDeliveryWorkflow:
         if shutil.which("gh") is None:
             raise OSError("gh is required to publish a draft PR")
         source = self._git("-C", task.repository, "remote", "get-url", "origin").stdout.strip()
-        if "github.com" not in source:
-            raise ValueError("repository origin is not GitHub")
+        _require_github_origin(source)
         self._git("remote", "set-url", "origin", source, cwd=workspace)
         self._git("push", "origin", f"HEAD:refs/heads/{branch}", cwd=workspace)
         result = subprocess.run(

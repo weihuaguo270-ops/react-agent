@@ -27,7 +27,15 @@ CLI 切换：
 import json
 import os
 import time
-from typing import Optional
+from typing import Callable, Optional
+
+
+class LLMCancelled(Exception):
+    """流式调用被调用方主动中止（例如客户端断开 SSE 连接）。
+
+    刻意不继承 URLError/HTTPError：取消不是失败，上层需要区分「出错」与
+    「用户已离开」，后者不应重试、不应上报为错误。
+    """
 from urllib import request as req
 from urllib.error import URLError
 
@@ -285,7 +293,8 @@ class LLM:
     def chat(self, messages: list, tool_defs: Optional[list] = None,
              temperature: Optional[float] = None,
              max_tokens: Optional[int] = None,
-             max_retries: int = 2) -> dict:
+             max_retries: int = 2,
+             on_delta: Optional[Callable[[str], None]] = None) -> dict:
         """
         调用 LLM chat/completions API。
 
@@ -295,6 +304,8 @@ class LLM:
             temperature: 覆盖配置中的 temperature
             max_tokens: 覆盖配置中的 max_tokens
             max_retries: 失败重试次数
+            on_delta: 提供时走流式（``stream: true``），每收到一段增量正文即回调。
+                      回调抛出的异常会直接向上传播（用于取消）。
 
         返回:
             LLM 返回的消息对象 {"role": "assistant", "content": "...", "tool_calls": [...]}
@@ -308,6 +319,20 @@ class LLM:
         }
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
+
+        if on_delta is not None:
+            # 流式路径不做自动重试：部分内容已交付给调用方，重试会重复输出。
+            payload["stream"] = True
+            try:
+                return self._chat_stream(url, headers, payload, on_delta)
+            except Exception as e:  # noqa: BLE001 - 取消异常需原样上抛
+                from urllib.error import HTTPError as _HE
+
+                if isinstance(e, _HE):
+                    return {"role": "assistant", "content": f"LLM调用失败: {_http_error_detail(e)}"}
+                if isinstance(e, URLError):
+                    return {"role": "assistant", "content": f"LLM调用失败: {e}"}
+                raise
 
         body = json.dumps(payload).encode("utf-8")
 
@@ -335,6 +360,68 @@ class LLM:
             return {"role": "assistant", "content": f"解析LLM返回失败: {e}"}
         except Exception as e:
             return {"role": "assistant", "content": f"LLM调用异常: {e}"}
+
+    def _chat_stream(self, url: str, headers: dict, payload: dict,
+                     on_delta: Callable[[str], None]) -> dict:
+        """流式请求：解析 SSE 增量，拼接正文与 tool_calls 分片。"""
+        body = json.dumps(payload).encode("utf-8")
+        r = req.Request(url, data=body, headers=headers, method="POST")
+        content_parts: list[str] = []
+        reasoning_parts: list[str] = []
+        tool_fragments: dict[int, dict] = {}
+        with req.urlopen(r, timeout=120) as resp:
+            for raw_line in resp:
+                line = raw_line.decode("utf-8", errors="replace").strip()
+                if not line or not line.startswith("data:"):
+                    continue
+                data = line[5:].strip()
+                if not data or data == "[DONE]":
+                    continue
+                try:
+                    chunk = json.loads(data)
+                except json.JSONDecodeError:
+                    continue
+                choices = chunk.get("choices") or []
+                if not choices:
+                    continue
+                delta = choices[0].get("delta") or {}
+                piece = delta.get("content")
+                if piece:
+                    content_parts.append(piece)
+                    on_delta(piece)  # 取消异常由此向上传播
+                if delta.get("reasoning_content"):
+                    reasoning_parts.append(delta["reasoning_content"])
+                for frag in delta.get("tool_calls") or []:
+                    idx = frag.get("index")
+                    if idx is None:
+                        idx = 0
+                    slot = tool_fragments.setdefault(
+                        idx, {"id": "", "name": "", "arguments": ""}
+                    )
+                    if frag.get("id"):
+                        slot["id"] = frag["id"]
+                    fn = frag.get("function") or {}
+                    if fn.get("name"):
+                        slot["name"] = fn["name"]
+                    if fn.get("arguments"):
+                        slot["arguments"] += fn["arguments"]
+
+        message: dict = {"role": "assistant", "content": "".join(content_parts)}
+        if reasoning_parts:
+            message["reasoning_content"] = "".join(reasoning_parts)
+        if tool_fragments:
+            message["tool_calls"] = [
+                {
+                    "id": slot["id"] or f"call_{idx}",
+                    "type": "function",
+                    "function": {
+                        "name": slot["name"],
+                        "arguments": slot["arguments"] or "{}",
+                    },
+                }
+                for idx, slot in sorted(tool_fragments.items())
+            ]
+        return message
 
     def __repr__(self) -> str:
         return f"LLM(provider={self.provider_name}, model={self.model})"

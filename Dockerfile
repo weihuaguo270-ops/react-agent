@@ -9,13 +9,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     REACT_AGENT_PORT=8765 \
     REACT_AGENT_DEFAULT_APP=docs_troubleshoot \
     REACT_AGENT_RAG_MODE=keyword \
-    REACT_AGENT_DISABLE_MCP=1
+    REACT_AGENT_DISABLE_MCP=1 \
+    REACT_AGENT_DATA_DIR=/app/data
 
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 COPY schemas ./schemas
 
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir -e . \
+    && mkdir -p /app/data
+
+# Mutable runtime data (approvals / trajectories / reports) lives in a volume.
+# Without a writable approval dir the async approval gate fails CLOSED.
+VOLUME ["/app/data"]
 
 EXPOSE 8765
 

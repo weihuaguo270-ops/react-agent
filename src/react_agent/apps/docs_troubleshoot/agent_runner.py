@@ -17,7 +17,7 @@ from react_agent.apps.docs_troubleshoot.policy import should_refuse_query
 from react_agent.apps.docs_troubleshoot.prompt import get_system_prompt
 from react_agent.harness import current_trajectory, finish_trajectory, start_trajectory
 from react_agent.harness.tool_boundary import execute_registered_tool
-from react_agent.tools import TOOL_REGISTRY, enable_app_tools
+from react_agent.tools import get_registry, set_request_app
 
 
 def docs_engine() -> str:
@@ -58,7 +58,7 @@ _API_NEEDLE = re.compile(
 
 def _run_tool(name: str, args: dict[str, Any]) -> str:
     try:
-        out = execute_registered_tool(name, args, TOOL_REGISTRY)
+        out = execute_registered_tool(name, args, get_registry())
         return out if isinstance(out, str) else json.dumps(out, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)[:300]}, ensure_ascii=False)
@@ -195,9 +195,9 @@ def decide_next_tool(state: dict[str, Any], called: set[str]) -> Optional[tuple[
 
 def run_docs_agent(initial: Optional[dict[str, Any]] = None) -> AgentRunResult:
     """Offline Agent loop: tool calls → draft → verify_citations → policy → diagnosis."""
-    os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
     os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
-    enable_app_tools()
+    # 应用作用域：只影响本次调用的工具视图，不改动全局注册表
+    set_request_app("docs_troubleshoot")
 
     state: dict[str, Any] = dict(initial or {})
     query = str(state.get("query") or "").strip()
