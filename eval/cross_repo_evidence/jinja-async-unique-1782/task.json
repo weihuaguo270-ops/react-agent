@@ -1,0 +1,22 @@
+{
+  "task_id": "jinja-async-unique-1782",
+  "status": "candidate",
+  "verified": false,
+  "repository": "pallets/jinja",
+  "issue_url": "https://github.com/pallets/jinja/issues/1781",
+  "pr_url": "https://github.com/pallets/jinja/pull/1782",
+  "issue_title": "unique filter does not work when chain with a filter that returns async generator",
+  "issue_body": "`unique()` filter does not work when chain with a filter that returns async generator\r\n\r\nEnvironment:\r\n\r\n- Python version: 3.11\r\n- Jinja version: 3.1.2\r\n\r\nThe template:\r\n```\r\n{%- set commit_authors = commits | rejectattr(\"author\", \"eq\", \"mergify[bot]\") | unique(false, \"email_author\")| list -%}\r\n```\r\n\r\nThe backtrace:\r\n```\r\n  File \"xxxxxx.py\", line 2314, in render_template\r\n    return await env.from_string(template).render_async(**infos)\r\n  File \"jinja2/environment.py\", line 1324, in render_async\r\n    return self.environment.handle_exception()\r\n  File \"jinja2/environment.py\", line 936, in handle_exception\r\n    raise rewrite_traceback_stack(source=source)\r\n  File \"jinja2/environment.py\", line 1321, in <listcomp>\r\n    [n async for n in self.root_render_func(ctx)]  # type: ignore\r\n  File \"<template>\", line 7, in top-level template code\r\n  File \"jinja2/async_utils.py\", line 65, in auto_await\r\n    return await t.cast(\"t.Awaitable[V]\", value)\r\n  File \"jinja2/filters.py\", line 1329, in do_list\r\n    return await auto_to_list(value)\r\n  File \"jinja2/async_utils.py\", line 84, in auto_to_list\r\n    return [x async for x in auto_aiter(value)]\r\n  File \"jinja2/async_utils.py\", line 84, in <listcomp>\r\n    return [x async for x in auto_aiter(value)]\r\n  File \"jinja2/async_utils.py\", line 77, in auto_aiter\r\n    for item in t.cast(\"t.Iterable[V]\", iterable):\r\n  File \"jinja2/filters.py\", line 437, in do_unique\r\n    for item in value:\r\nTypeError: 'async_generator' object is not iterable\r\n```",
+  "issue_author": "sileht",
+  "base_commit": "a4abbfd7538e9ff216244266579232585033136c",
+  "fix_commit": "76af7110ead6083e75072f9e76242c9ce79b76ed",
+  "defect_type": "async iterable data deduplication and filter integration",
+  "evidence_dir": "react-agent/eval/cross_repo_evidence/jinja-async-unique-1782",
+  "split": "unassigned",
+  "reproduction_command": "PYTHONPATH=tmp/jinja-base-src/src python tmp/jinja-repro.py",
+  "failing_test": "async template chaining reject_z|unique|list must render ['a', 'b', 'c', 'd']",
+  "environment": "Windows AMD64; Python 3.11.15; MarkupSafe 3.0.3; source installed from fixed tarballs",
+  "image": "local:python-3.11-markupsafe-3.0.3",
+  "acceptance_test": "acceptance/hidden-tests/test_acceptance.py",
+  "missing": []
+}

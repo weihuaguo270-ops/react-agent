@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+  File "D:\agent_learning\tmp\pydantic-identity-src\pydantic\__init__.py", line 8, in <module>
+    _ensure_pydantic_core_version()
+  File "D:\agent_learning\tmp\pydantic-identity-src\pydantic\version.py", line 94, in _ensure_pydantic_core_version
+    raise SystemError(
+SystemError: The installed pydantic-core version (2.46.4) is incompatible with the current pydantic version, which requires 2.49.0. If you encounter this error, make sure that you haven't upgraded pydantic-core manually.
+
+False
+AssertionError: RootModel[str]("a") == RootModel[SomeStr]("a")
+exit_code=1

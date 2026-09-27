@@ -1,0 +1,20 @@
+{
+  "task_id": "pydantic-identity-review",
+  "status": "verified",
+  "repository": "pydantic/pydantic",
+  "issue_url": "https://github.com/pydantic/pydantic/pull/13830",
+  "issue_title": "Fix RootModel equality with type aliases",
+  "issue_body": "RootModel equality fails when equivalent PEP 695 TypeAliasType aliases are used; PR 13830 proposes unwrapping __value__ before comparison.",
+  "issue_author": "KingLizard1020",
+  "base_commit": "617abdb1bb95b6a5d7808937cac7ef2fdbe918d9",
+  "problem_statement": "RootModel equality fails when equivalent PEP 695 TypeAliasType aliases are used.",
+  "expected_behavior": "Equivalent aliases compare equal and distinct parametrizations remain unequal.",
+  "reproduction_command": "PYTHONPATH=tmp/pydantic-identity-src tmp/pydantic-venv/Scripts/python.exe tmp/pydantic-repro.py",
+  "failing_test": "assert RootModel[str](\"a\") == RootModel[SomeStr](\"a\")",
+  "environment": "Windows AMD64; Python 3.11.15; pydantic-core==2.49.0; typing-extensions==4.16.0; typing-inspection==0.4.4; annotated-types==0.8.0",
+  "image": "local:tmp/pydantic-venv",
+  "acceptance_test": "hidden acceptance must assert equivalent TypeAliasType RootModels compare equal and distinct parametrizations remain unequal",
+  "missing": [],
+  "issue_accessed_at": "2026-09-19T00:00:00+08:00",
+  "base_commit_source": "https://api.github.com/repos/pydantic/pydantic/pulls/13830"
+}

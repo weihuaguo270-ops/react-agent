@@ -1,0 +1,1 @@
+{"repository":"pallets/jinja","base_commit":"a4abbfd7538e9ff216244266579232585033136c","fix_commit":"76af7110ead6083e75072f9e76242c9ce79b76ed","python":"3.11.15","platform":"Windows AMD64","dependency":"MarkupSafe 3.0.3","before_runs":2,"after_runs":2,"acceptance_runs":2}

@@ -1,0 +1,7 @@
+{
+  "python": "Python 3.11.15",
+  "requirements": "MarkupSafe==3.0.3\r\n",
+  "offline_execution": true,
+  "isolation": "dedicated venv; -I subprocess; evaluator tests outside repository snapshot",
+  "agent_evaluation_performed": false
+}

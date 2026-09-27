@@ -1,0 +1,18 @@
+{
+  "task_id": "httpx-identity-review",
+  "status": "verified",
+  "repository": "encode/httpx",
+  "issue_url": "https://github.com/encode/httpx/pull/3764",
+  "issue_title": "Percent-encode pipe character in URL paths",
+  "issue_body": "The pipe character was not percent-encoded in URL path segments.",
+  "issue_author": "Mr-Neutr0n",
+  "base_commit": "ae1b9f66238f75ced3ced5e4485408435de10768",
+  "problem_statement": "HTTPX leaves pipe characters unencoded in path segments.",
+  "expected_behavior": "A pipe in a URL path is encoded as %7C.",
+  "reproduction_command": "PYTHONPATH=tmp/httpx-before-src python -c import httpx; assert httpx.URL('http://example.com/a|b').raw_path == b'/a%7Cb'",
+  "failing_test": "assert httpx.URL('http://example.com/a|b').raw_path == b'/a%7Cb'",
+  "environment": "Windows AMD64; Python 3.11.15; fixed source commit",
+  "image": "local:python311",
+  "acceptance_test": "hidden test asserts pipe is percent-encoded in URL path",
+  "missing": []
+}

@@ -1,0 +1,56 @@
+{
+  "task_id": "pydantic-identity-review",
+  "status": "verified",
+  "verified": true,
+  "acceptance_status": "passed",
+  "before_status": "failed",
+  "after_status": "passed",
+  "before_exit_code": 1,
+  "after_exit_code": 0,
+  "base_commit": "617abdb1bb95b6a5d7808937cac7ef2fdbe918d9",
+  "head_commit": "df728a384f966a4aea7745ae23d482bbe0f6a1a8",
+  "evidence_sha256": {
+    "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\task.json": "db9c349d797f1b292b9933943bc7d5942a3f682e3c829ab2778026afbcc64301",
+    "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\metadata.json": "670223f0a7f2247295bf65b1a812c8308a1f757b1736da9d05d0d4135502b838",
+    "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\before\\trajectory.json": "28e1f030921069eb7e658a841ff2339790f68c7f245dbc7ab699f02a1824e1a1",
+    "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\before\\test-result.json": "072c78dd0f3b9aa67218b916150e19871430899922e7a4705740ff7c8c6d7d22",
+    "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\before\\stdout.log": "f34e225a45f8486ee22ba06396fa2a2c1af90b4197822379c0d065e016e2e175",
+    "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\acceptance\\hidden-tests\\test_root_model_alias_equality.py": "c48c954409789a37317c7c8eb92ce1dd9f954c7273a67a2e0809d2f3824be289",
+    "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\after\\test-result.json": "2aee40a5edeae6e17d4010160b4e5071665837ae715624a161bc957971cb247f",
+    "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\after\\stdout.log": "6e8c79e83c2dafdd9ef75900b0e1452b4d96622af800896429ed41343d0413f5"
+  },
+  "evidence_files": [
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\task.json",
+      "size": 1395
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\metadata.json",
+      "size": 792
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\before\\trajectory.json",
+      "size": 68
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\before\\test-result.json",
+      "size": 292
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\before\\stdout.log",
+      "size": 652
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\acceptance\\hidden-tests\\test_root_model_alias_equality.py",
+      "size": 329
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\after\\test-result.json",
+      "size": 306
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\pydantic-identity-review\\after\\stdout.log",
+      "size": 70
+    }
+  ]
+}

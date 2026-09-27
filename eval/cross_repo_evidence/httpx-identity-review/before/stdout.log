@@ -1,0 +1,3 @@
+b'/a|b'
+AssertionError: expected b'/a%7Cb'
+exit_code=1

@@ -1,0 +1,1 @@
+{"phase":"before","base_commit":"a4abbfd7538e9ff216244266579232585033136c","runs":[{"log":"before/run-1.log","exit_code":1},{"log":"before/run-2.log","exit_code":1}]}

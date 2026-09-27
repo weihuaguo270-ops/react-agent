@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "D:\agent_learning\react-agent\eval\cross_repo_evidence\werkzeug-auth-whitespace-3129\acceptance\hidden-tests\check_auth.py", line 9, in <module>
+    assert value == scheme.title(), (scheme, value)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('bearer', 'Bearer ')
