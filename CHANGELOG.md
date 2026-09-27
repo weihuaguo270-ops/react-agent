@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Fixed
+
+- Failure-regression suite (`pipeline`, `gate`, `contracts`, `software-task`, `closed-loop`
+  decision) now runs against trace-debugger's v0.6.0 failure-gate export —
+  `build_failures_export`, `build_scan_snapshot(task_type=...)` and `approval_denied`
+  detection — which is on the sidecar's default branch that CI installs.
+- `tests/test_collect_repair_evidence.py` no longer seeds from `artifacts/software-tasks`,
+  which only exists after a real Docker SoftwareTaskRunner run. The same layout is committed
+  as compact fixtures under `examples/fixtures/software_tasks/repair_evidence/`, so the test
+  passes on a clean checkout instead of failing in CI.
+
 ## 0.9.0 (2026-08-14)
 
 ### Added

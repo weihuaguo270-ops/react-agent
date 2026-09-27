@@ -10,13 +10,22 @@ SPEC = importlib.util.spec_from_file_location("collect_repair", ROOT / "examples
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
+# `collect()` 读取 artifacts/software-tasks 下的真实 runner 产物；那些文件由 Docker +
+# FastAPI checkout 的 SoftwareTaskRunner 生成，CI 无法产出（也不在版本库里），
+# 所以同一份目录布局以紧凑夹具提交在下面。用例因此不依赖机器本地遗留产物。
+FIXTURE_ROOT = ROOT / "examples" / "fixtures" / "software_tasks" / "repair_evidence"
+SEED_FILES = (
+    "runs/fastapi-15974-baseline.json",
+    "runs/fastapi-15974-agent.json",
+    "patches/fastapi-15974/agent.patch",
+)
+
 
 def seed(tmp_path):
-    source = Path("artifacts/software-tasks")
-    for name in ("runs/fastapi-15974-baseline.json", "runs/fastapi-15974-agent.json", "patches/fastapi-15974/agent.patch"):
-        target = tmp_path / source / name
+    for name in SEED_FILES:
+        target = tmp_path / "artifacts" / "software-tasks" / name
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(ROOT / source / name, target)
+        shutil.copyfile(FIXTURE_ROOT / name, target)
 
 
 def test_historical_collection_does_not_claim_reverification(tmp_path):
