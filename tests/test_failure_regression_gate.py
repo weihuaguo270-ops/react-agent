@@ -489,7 +489,23 @@ def test_delivery_repair_loop_on_test_failure(tmp_path, monkeypatch):
         )
     )
     report = workflow.run(task, idempotency_key="repair-then-pass")
-    assert report["status"] == "shadow_passed"
+    assert report["status"] == "shadow_passed", json.dumps(
+        {
+            "status": report.get("status"),
+            "error": report.get("error"),
+            "repair": report.get("repair"),
+            "steps": report.get("steps"),
+            "test_result": {
+                key: value
+                for key, value in (report.get("test_result") or {}).items()
+                if key not in {"stdout", "stderr"}
+            },
+            "stdout_tail": (report.get("test_result") or {}).get("stdout", "")[-1500:],
+            "stderr_tail": (report.get("test_result") or {}).get("stderr", "")[-800:],
+        },
+        ensure_ascii=False,
+        default=str,
+    )
     assert report["repair"]["status"] == "succeeded"
     assert report["test_result"]["passed"] is True
 

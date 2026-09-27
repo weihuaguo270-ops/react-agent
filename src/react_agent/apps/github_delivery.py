@@ -471,15 +471,23 @@ class GitHubDeliveryWorkflow:
             target.write_text(content.replace(replacement.old, replacement.new), encoding="utf-8")
 
     def _run_tests(self, workspace: Path, command: Sequence[str]) -> dict[str, Any]:
-        """Run the allowlisted test command without shell interpretation."""
+        """Run the allowlisted test command without shell interpretation.
+
+        Bytecode writing is disabled inside the candidate workspace: CPython records the
+        source mtime in ``.pyc`` with one-second resolution and keys validity on
+        (mtime, size). A candidate that rewrites a file to the *same size* within the same
+        second would otherwise be tested against the previous candidate's bytecode — the
+        repair loop then looks flaky because the fix appears not to take effect.
+        """
         started = time.perf_counter()
         executable = command[0]
         if executable in {"python", "python3"}:
             executable = os.fspath(Path(os.sys.executable))
+        env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
         result = subprocess.run(
             [executable, *command[1:]], cwd=workspace, capture_output=True,
             text=True, encoding="utf-8", errors="replace",
-            timeout=self.config.max_test_seconds, shell=False,
+            timeout=self.config.max_test_seconds, shell=False, env=env,
         )
         return {
             "passed": result.returncode == 0,

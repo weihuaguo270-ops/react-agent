@@ -12,6 +12,17 @@
   which only exists after a real Docker SoftwareTaskRunner run. The same layout is committed
   as compact fixtures under `examples/fixtures/software_tasks/repair_evidence/`, so the test
   passes on a clean checkout instead of failing in CI.
+- `GitHubDeliveryWorkflow` runs candidate tests with `PYTHONDONTWRITEBYTECODE=1`. CPython keys
+  `.pyc` validity on (source mtime in whole seconds, size), so a candidate that rewrites a file
+  to the same size within the same second could be tested against the *previous* candidate's
+  bytecode — the repair-loop delivery test flaked between two runs of the same commit
+  (`repair_failed` vs `shadow_passed`).
+- `examples/eval/run_failure_flywheel.py`, `run_step_watcher_evidence.py` and
+  `run_flywheel_closed_loop.py` resolve the trace-debugger **source** checkout from the
+  importable package (`pip install -e /tmp/trace-debugger` in CI) with
+  `REACT_AGENT_TDEBUG_ROOT` and sibling-directory fallbacks, instead of assuming
+  `../trace-debugger`. The flywheel CI step failed with `轨迹目录不存在` and the StepWatcher
+  evidence step silently published `golden_suite_pass_rate: null`.
 
 ## 0.9.0 (2026-08-14)
 

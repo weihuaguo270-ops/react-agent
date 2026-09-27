@@ -16,9 +16,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TDEBUG = ROOT.parent / "trace-debugger"
 sys.path.insert(0, str(ROOT / "src"))
-sys.path.insert(0, str(TDEBUG))
+
+from react_agent.eval.sibling_paths import trace_debugger_source_root  # noqa: E402
+
+# CI 侧车装在 /tmp/trace-debugger（pip install -e），仓库里没有同级目录。
+TDEBUG = trace_debugger_source_root()
+if TDEBUG is not None:
+    sys.path.insert(0, str(TDEBUG))
+else:
+    TDEBUG = ROOT.parent / "trace-debugger"
 
 
 def _git_sha(cwd: Path) -> str:
