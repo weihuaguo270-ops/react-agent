@@ -1,0 +1,84 @@
+Traceback (most recent call last):
+  File "D:\agent_learning\tmp\jinja-repro.py", line 23, in <module>
+    asyncio.run(main())
+  File "C:\Users\1\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\1\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\1\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-repro.py", line 17, in main
+    rendered = await template.render_async(items=["a", "b", "c", "c", "a", "d", "z"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\environment.py", line 1315, in render_async
+    return self.environment.handle_exception()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\environment.py", line 1312, in <listcomp>
+    [n async for n in self.root_render_func(ctx)]  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<template>", line 1, in top-level template code
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\async_utils.py", line 68, in auto_await
+    return await t.cast("t.Awaitable[V]", value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\filters.py", line 1357, in do_list
+    return await auto_to_list(value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\async_utils.py", line 99, in auto_to_list
+    return [x async for x in auto_aiter(value)]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\async_utils.py", line 99, in <listcomp>
+    return [x async for x in auto_aiter(value)]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\async_utils.py", line 82, in __anext__
+    return next(self._iterator)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\filters.py", line 465, in do_unique
+    for item in value:
+TypeError: 'async_generator' object is not iterable
+Traceback (most recent call last):
+  File "D:\agent_learning\tmp\jinja-repro.py", line 23, in <module>
+    asyncio.run(main())
+  File "C:\Users\1\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\1\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\1\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-repro.py", line 17, in main
+    rendered = await template.render_async(items=["a", "b", "c", "c", "a", "d", "z"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\environment.py", line 1315, in render_async
+    return self.environment.handle_exception()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\environment.py", line 1312, in <listcomp>
+    [n async for n in self.root_render_func(ctx)]  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<template>", line 1, in top-level template code
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\async_utils.py", line 68, in auto_await
+    return await t.cast("t.Awaitable[V]", value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\filters.py", line 1357, in do_list
+    return await auto_to_list(value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\async_utils.py", line 99, in auto_to_list
+    return [x async for x in auto_aiter(value)]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\async_utils.py", line 99, in <listcomp>
+    return [x async for x in auto_aiter(value)]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\async_utils.py", line 82, in __anext__
+    return next(self._iterator)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\agent_learning\tmp\jinja-base-src\src\jinja2\filters.py", line 465, in do_unique
+    for item in value:
+TypeError: 'async_generator' object is not iterable

@@ -1,0 +1,13 @@
+imported D:\agent_learning\tmp\click2930-pykndky7\after\pallets-click-4fd2fea\src\click\__init__.py
+{"case": "bool-off", "cli_exit_code": 0, "output": "false\n", "expected": false}
+{"case": "bool-on", "cli_exit_code": 0, "output": "true\n", "expected": true}
+{"case": "bool-default", "cli_exit_code": 0, "output": "true\n", "expected": true}
+{"case": "bool-toggle", "cli_exit_code": 0, "output": "false\n", "expected": false}
+{"case": "click-bool-on", "cli_exit_code": 0, "output": "true\n", "expected": true}
+{"case": "str-off", "cli_exit_code": 0, "output": "null\n", "expected": null}
+{"case": "str-on", "cli_exit_code": 0, "output": "\"True\"\n", "expected": "True"}
+{"case": "explicit-value", "cli_exit_code": 0, "output": "\"enabled\"\n", "expected": "enabled"}
+{"case": "implicit-bool", "cli_exit_code": 0, "output": "true\n", "expected": true}
+{"case": "numeric", "args": [], "output": "7\n", "cli_exit_code": 0}
+{"case": "numeric", "args": ["--count", "12"], "output": "12\n", "cli_exit_code": 0}
+11 CLI cases passed

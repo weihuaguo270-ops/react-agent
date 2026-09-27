@@ -1,0 +1,3 @@
+b'/a%5Bb%5D'
+AssertionError: expected b'/a[b]'
+exit_code=1
