@@ -22,6 +22,7 @@ def _load_limits() -> dict[str, float]:
 
 
 def decide(claim: dict[str, Any], limits: dict[str, float]) -> str:
+    """按收据、额度和预批状态返回稳定决策码。"""
     if not claim.get("has_receipt"):
         return "reject_no_receipt"
     cat = str(claim.get("category") or "")
@@ -89,6 +90,7 @@ def _parse_claim(body: dict[str, Any]) -> dict[str, Any]:
 
 
 def answer_offline(body: dict[str, Any]) -> dict[str, Any]:
+    """解析费用请求并返回规则决策、引用和拒绝状态。"""
     claim = _parse_claim(body)
     if not claim.get("category") or claim.get("amount") is None:
         return {

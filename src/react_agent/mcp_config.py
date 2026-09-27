@@ -1,4 +1,4 @@
-"""Load MCP server launch commands from config (never hardcode machine paths)."""
+"""从配置加载 MCP Server 启动命令，避免硬编码本机路径。"""
 from __future__ import annotations
 
 import json
@@ -6,7 +6,7 @@ import os
 from typing import Optional
 
 
-# Portable default only — no OS-specific absolute paths.
+# 默认命令必须可移植，不包含操作系统相关的绝对路径。
 PORTABLE_DEFAULT_MCP_SERVERS: list[list[str]] = [
     ["uvx", "mcp-server-time"],
 ]
@@ -17,7 +17,7 @@ def _candidate_config_paths() -> list[str]:
     env = os.environ.get("REACT_AGENT_MCP_CONFIG", "").strip()
     if env:
         paths.append(env)
-    # Package-adjacent / cwd (same pattern as llm_config.json)
+    # 依次检查项目根目录和当前工作目录，与 llm_config.json 的查找方式一致。
     here = os.path.dirname(os.path.abspath(__file__))
     root = os.path.abspath(os.path.join(here, "..", ".."))
     paths.append(os.path.join(root, "mcp_servers.json"))
@@ -28,18 +28,18 @@ def _candidate_config_paths() -> list[str]:
 def load_mcp_server_commands(
     config_path: Optional[str] = None,
 ) -> list[list[str]]:
-    """Return list of argv lists for MCP servers.
+    """返回各 MCP Server 的 argv 命令列表。
 
-    Resolution order:
-      1. ``config_path`` argument
-      2. ``REACT_AGENT_MCP_CONFIG`` env
-      3. ``mcp_servers.json`` under project root / cwd
-      4. portable default (``uvx mcp-server-time`` only)
+    配置解析顺序：
+      1. 显式传入的 ``config_path``
+      2. 环境变量 ``REACT_AGENT_MCP_CONFIG``
+      3. 项目根目录或当前工作目录中的 ``mcp_servers.json``
+      4. 可移植默认命令（仅 ``uvx mcp-server-time``）
 
-    JSON schema::
+    JSON 结构::
         {"servers": [["uvx", "mcp-server-time"], ["npx", "-y", "..."]]}
 
-    Set ``REACT_AGENT_DISABLE_MCP=1`` to skip all MCP (useful for eval determinism).
+    设置 ``REACT_AGENT_DISABLE_MCP=1`` 可禁用全部 MCP，供确定性评测使用。
     """
     if os.environ.get("REACT_AGENT_DISABLE_MCP", "").strip().lower() in (
         "1", "true", "yes", "on",

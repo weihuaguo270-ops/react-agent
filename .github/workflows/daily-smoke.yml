@@ -14,7 +14,9 @@ on:
         default: false
 
 permissions:
+  actions: write
   contents: write
+  pull-requests: write
 
 jobs:
   daily-smoke:
@@ -46,7 +48,9 @@ jobs:
           fi
           python examples/eval/run_daily_smoke.py $EXTRA
 
-      - name: Commit variance log
+      - name: Commit variance log and open PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -55,5 +59,18 @@ jobs:
             echo "No variance log changes"
             exit 0
           fi
-          git commit -m "chore(daily-smoke): append $(date -u +%Y-%m-%d) variance row"
-          git push
+
+          smoke_date="$(date -u +%Y-%m-%d)"
+          branch="automation/daily-smoke-${smoke_date}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git commit -m "chore(daily-smoke): append ${smoke_date} variance row"
+          git push origin "HEAD:refs/heads/${branch}"
+
+          pr_url="$(gh pr create \
+            --base main \
+            --head "${branch}" \
+            --title "chore(daily-smoke): append ${smoke_date} variance row" \
+            --body "Automated variance log update from Daily smoke run ${GITHUB_RUN_ID} (attempt ${GITHUB_RUN_ATTEMPT}).")"
+          echo "Created ${pr_url}"
+
+          # GITHUB_TOKEN-created PRs do not emit another Actions run, so dispatch CI explicitly.
+          gh workflow run test.yml --ref "${branch}" -f suite=smoke

@@ -31,6 +31,7 @@ def _gate_enabled() -> bool:
 
 
 def classify_fix_step(step: str) -> PermissionLevel:
+    """将修复步骤分类为安全、需确认或禁止动作。"""
     text = str(step or "").strip()
     if not text:
         return PermissionLevel.SAFE

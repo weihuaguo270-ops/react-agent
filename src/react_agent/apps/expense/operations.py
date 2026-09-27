@@ -18,6 +18,7 @@ class ExpenseLedger:
 
     @classmethod
     def from_claims(cls, claims: list[dict[str, Any]]) -> "ExpenseLedger":
+        """复制输入报销单，避免评测用例共享可变业务状态。"""
         records = {}
         for raw in claims:
             claim = copy.deepcopy(raw)
@@ -29,6 +30,7 @@ class ExpenseLedger:
         return cls(claims=records)
 
     def inspect_claim(self, claim_id: str) -> dict[str, Any]:
+        """返回报销单副本；不存在时抛出 ``KeyError``。"""
         if claim_id not in self.claims:
             raise KeyError(f"unknown claim: {claim_id}")
         return copy.deepcopy(self.claims[claim_id])
@@ -40,6 +42,7 @@ class ExpenseLedger:
         limits: dict[str, float],
         idempotency_key: str,
     ) -> dict[str, Any]:
+        """执行一次幂等决策并写入 ledger 审计事件。"""
         if not idempotency_key:
             raise ValueError("idempotency_key is required")
         for event in self.audit_events:
@@ -70,6 +73,7 @@ class ExpenseLedger:
         return result
 
     def snapshot(self, claim_id: str) -> dict[str, Any]:
+        """返回报销单及其决策事件计数，供状态断言使用。"""
         return {
             "claim": self.inspect_claim(claim_id),
             "audit": {
