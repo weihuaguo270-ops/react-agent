@@ -11,6 +11,15 @@ import pytest
 
 pytest.importorskip("trace_debugger")
 pytest.importorskip("eval_engine")
+# build_failures_export 是本仓期待的侧车契约，但 trace-debugger 目前尚未提供该导出。
+# 只守卫模块不够：缺失该 API 会在**模块级导入**处抛 ImportError，使整个 pytest 会话
+# 在收集阶段中断（CI 的 test job 因此全红）。这里把守卫扩展到具体 API，
+# 待侧车提供后本文件会自动恢复为真实断言。
+if not hasattr(__import__("trace_debugger"), "build_failures_export"):
+    pytest.skip(
+        "trace-debugger 尚未提供 build_failures_export",
+        allow_module_level=True,
+    )
 
 from eval_engine.gates.evidence_bundle import evaluate_evidence_bundle
 from eval_engine.integrations.episode import import_episode, verify_episode_state
