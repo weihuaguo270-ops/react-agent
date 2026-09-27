@@ -16,7 +16,7 @@
     "HARNESS_HEALTH.md": "d80f2cdbc97ab517b49d205a0bd826a208b11b312f14d51d1272ff8776182b3a",
     "P0_EVIDENCE_MAP.md": "dc8f99209bb533260d3570b00bc36c879e795b97ca0d630e27ece1b95bc5b157",
     "PORTABILITY.md": "0ea1949782f3e4eae96bd716ada6b031086a3234d24fa2653a94a73d871d1e77",
-    "PRODUCTION_MATURITY.md": "b36bcd01be860ae99a5f4762203bca1b401bcc4c09f18472c424948791c371d7",
+    "PRODUCTION_MATURITY.md": "d6bf1fef46fff27ad165b1e7efa1599e168db7a32c45ae8e341da972bd2a0200",
     "PROJECT_CONTEXT.md": "d3522bff118d756873f163cc966c6ade062f25ecc97b8ecf1a17f44d1b0b6ec4",
     "ROADMAP.md": "db30092982a45a4bba4bd1cc8d1334866435addb7b5863af13d33fb6ebc9f156",
     "SANDBOX_SECURITY.md": "27c004b01ce5137d200ed0d9d8cdf08a48003b15b62793e63021ac358f5f9a7b",
@@ -78,6 +78,6 @@
     "snapshots/tdebug_failure_flywheel_20260716.json": "6dc0bc4dff8701ef6d8480eae0a1c160883e3c811c7d61dda2a4f114483ab5e7",
     "step_watcher_evidence_baseline.md": "a1e6376be48be10386699fd651241c1d179e2c405abc082b26e1dfee01e1a3bd"
   },
-  "generated_at": "2026-09-27T09:45:24Z",
+  "generated_at": "2026-09-27T12:53:22Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
