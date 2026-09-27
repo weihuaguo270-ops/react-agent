@@ -464,7 +464,7 @@ def evaluate_failure_regression_gate(
     if require_installed_siblings:
         ok, missing = siblings_available()
         if not ok:
-            report = {
+            report: dict[str, Any] = {
                 "schema_version": "failure-regression-gate/v1",
                 "available": False,
                 "missing_siblings": missing,
@@ -559,7 +559,7 @@ def evaluate_failure_regression_gate(
     )
     _write_json(out / "repair_feedback.json", repair_feedback)
 
-    report: dict[str, Any] = {
+    report = {
         "schema_version": "failure-regression-gate/v1",
         "available": True,
         "goal": "失败自动检出 + 回归门禁 + 修复后强制复验",
