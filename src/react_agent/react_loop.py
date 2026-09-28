@@ -786,6 +786,7 @@ def multi_agent_chain(user_query, parallel=False, parent_summary=None):
     Agent 副作用——对齐 Codex ``agents.max_depth`` 默认 1 的取向。
     """
     from react_agent.orchestrator import (
+        Orchestrator,
         current_delegation_depth,
         max_delegation_depth,
         max_worker_concurrency,

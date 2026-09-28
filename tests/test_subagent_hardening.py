@@ -373,6 +373,39 @@ def test_spawn_prompt_has_no_parent_context():
     assert "不该出现在 spawn 里" not in prompt
 
 
+def test_multi_agent_chain_runs_the_real_orchestrator_path(monkeypatch, capsys):
+    """回归：``multi_agent_chain`` 必须能在**不 stub Orchestrator** 的情况下跑通。
+
+    此前该函数内联改写了 Orchestrator 的构造，却漏掉导入，真实 CLI 的
+    ``--parallel`` 路径一调用就抛 NameError；而原先的用例把 Orchestrator
+    patch 掉了，恰好绕过这个错误。这里让真实函数体执行，只把 Planner 的
+    分解结果置空，从而不触达任何 LLM 调用。
+    """
+    from react_agent import react_loop as rl
+
+    monkeypatch.delenv("REACT_AGENT_SUBAGENT_MAX_DEPTH", raising=False)
+    monkeypatch.setattr(Planner, "plan", lambda self, query, llm_call=None: [])
+
+    result = rl.multi_agent_chain("同时做两件事")
+
+    assert result == ""
+    output = capsys.readouterr().out
+    assert "Planner 未返回任务" in output
+    assert "NameError" not in output
+
+
+def test_tool_scope_full_enumerates_definition_names():
+    """回归：``ToolScope.full`` 曾调用一个不存在的辅助函数（NameError）。"""
+    defs = [_tool_def("calculator"), _tool_def("web_search")]
+
+    scope = ToolScope.full(defs)
+
+    assert scope.names == {"calculator", "web_search"}
+    assert scope.source == "full"
+    # 结构异常的定义不应让枚举抛错
+    assert ToolScope.full([{}, {"function": {}}, None]).names == set()
+
+
 def test_fork_prompt_includes_upstream_context_when_present():
     orchestrator = Orchestrator(lambda _: {}, lambda q, **_: q)
     prompt = orchestrator._compose_worker_prompt("后续任务", "前置任务 #1 输出：x", "fork")

@@ -25,6 +25,7 @@ from react_agent.tool_scope import (
     PROFILE_HINTS,
     MAX_PROFILES as TOOL_PROFILES,
     ToolScope,
+    def_names,
 )
 from react_agent.write_sets import (
     write_conflict_serialize_enabled,
@@ -163,16 +164,11 @@ def _registry_names() -> set[str]:
 
 
 def _def_names(all_defs: Iterable[dict]) -> set[str]:
-    """从工具定义列表取名字；无成本、不触发任何导入。"""
-    names: set[str] = set()
-    for definition in all_defs or ():
-        try:
-            name = (definition.get("function") or {}).get("name")
-        except AttributeError:
-            name = None
-        if name:
-            names.add(name)
-    return names
+    """从工具定义列表取名字；无成本、不触发任何导入。
+
+    实现复用 ``tool_scope.def_names``，避免同一逻辑两处维护。
+    """
+    return def_names(all_defs)
 
 
 def _resolve_worker_scope(

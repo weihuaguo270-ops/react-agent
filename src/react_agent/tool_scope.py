@@ -31,6 +31,7 @@ __all__ = [
     "ToolScope",
     "MAX_PROFILES",
     "DEFAULT_FALLBACK_PROFILES",
+    "def_names",
     "profiles_from_tags",
     "scope_is_strict",
 ]
@@ -136,7 +137,7 @@ class ToolScope:
     @classmethod
     def full(cls, all_defs: Sequence[dict]) -> "ToolScope":
         """全量工具面。仅应由调用方在**显式决定**回退到全量时使用。"""
-        return cls(_def_names(all_defs), source="full")
+        return cls(def_names(all_defs), source="full")
 
     @classmethod
     def empty(cls) -> "ToolScope":
@@ -196,6 +197,16 @@ class ToolScope:
         if unknown:
             parts.append(f"未知 {len(unknown)}: {', '.join(unknown)}")
         return "，".join(parts)
+
+
+def def_names(all_defs: Iterable[dict]) -> set[str]:
+    """从工具定义列表里取出全部工具名（无成本，不触发任何导入）。"""
+    names: set[str] = set()
+    for definition in all_defs or ():
+        name = _def_name(definition)
+        if name:
+            names.add(name)
+    return names
 
 
 def _def_name(definition: dict) -> str:
