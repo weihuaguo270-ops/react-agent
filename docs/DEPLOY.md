@@ -19,7 +19,7 @@ curl -s http://127.0.0.1:8765/v1/chat \
 ```
 
 默认容器现在启动 `react-agent-api`（FastAPI + Uvicorn）。原有标准库入口仍可用：
-`react-agent-server --host 0.0.0.0 --port 8765`。设置 `REACT_AGENT_API_KEY` 后，
+`react-agent-server --host 0.0.0.0 --port 8765`。设置 `REACT_AGENT_AUTH_TOKEN` 后，
 对话、任务、Workflow、安全案件和 Skill 执行接口要求 `Authorization: Bearer <key>`；健康检查和
 服务信息接口保持公开，便于容器编排探针使用。
 
