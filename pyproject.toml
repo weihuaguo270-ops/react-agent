@@ -24,13 +24,22 @@ langgraph = [
     "langchain-core>=0.3,<0.4",
     "langchain-openai>=0.2,<0.4",
 ]
+# FastAPI 服务面（react-agent-api）。core install 保持轻量：不装它时
+# react_agent.server.fastapi_app 仍可导入，只是无法作为 ASGI 应用对外提供。
+# 只列实际被 fastapi_app / task_manager 使用的依赖，不含 sqlalchemy/alembic
+# （那两个属于持久化层，当前实现未引用）。
+service = [
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.30,<1",
+    "httpx>=0.27,<1",
+]
 test = [
     "pytest>=9.0.3,<10",
     "pytest-cov>=4.0,<7",
     "flake8>=6.0,<8",
 ]
 dev = [
-    "react-agent[rag,test,langgraph]",
+    "react-agent[rag,test,langgraph,service]",
     "mypy>=1.8",
     "pip-audit>=2.6",
 ]
@@ -38,6 +47,7 @@ dev = [
 [project.scripts]
 agent = "react_agent.react_loop:cli_entry"
 react-agent-server = "react_agent.server.app:main"
+react-agent-api = "react_agent.server.fastapi_app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
