@@ -23,7 +23,7 @@
     "SANDBOX_SECURITY.md": "5db642e408c480b1a39854499568d3a63223ae8b44f581d4d922e142c00cdba1",
     "SOFTWARE_TASK_DATASET.md": "611187066ffba163750db0387228be7d79ee13cb9ec44e12b12c5911e16d4cb6",
     "SOFTWARE_TASK_RUNNER.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
-    "STATUS.md": "1ab29d0b41c5ebaa5a2756cef49590bae6e268ddaabf7ac0136e0e5bf06e98e2",
+    "STATUS.md": "d91609de883f1fc7df25090c12e520f7982103381e7e3bb39ed9677b0258bb46",
     "STRUCTURE.md": "35bb1e1a2369fd5fccbcf5f7ec42de17fdffc7b53e8c07f983adb6869dccbcf0",
     "capability_newcases_20260713.md": "45ab3373f77f4c01863c03103ae7df1e36e394f5f556e2004a2a67624eb39418",
     "capability_snapshot_20260713.md": "3cbc82cfb04116f1345cf412970eee9b3f3548d3f7615c5d24c65a7d43604f95",
@@ -81,6 +81,6 @@
     "snapshots/tdebug_failure_flywheel_20260716.json": "6dc0bc4dff8701ef6d8480eae0a1c160883e3c811c7d61dda2a4f114483ab5e7",
     "step_watcher_evidence_baseline.md": "03f803a77c7ce669f15fc4a2cb572797415c94b131769fb470d2dd62d659c892"
   },
-  "generated_at": "2026-09-28T09:09:32Z",
+  "generated_at": "2026-09-28T09:20:00Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
