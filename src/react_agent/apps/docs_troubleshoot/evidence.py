@@ -392,6 +392,18 @@ def collect_evidence_bundle(state: dict[str, Any]) -> dict[str, Any]:
                 trace if isinstance(trace, str) else json.dumps(trace, ensure_ascii=False)
             )
         )
+    multimodal = state.get("multimodal_artifacts")
+    if multimodal:
+        multimodal_out = parse_multimodal_evidence(
+            multimodal,
+            max_bytes=int(state.get("multimodal_max_bytes") or 50 * 1024 * 1024),
+        )
+        state["multimodal_summary"] = {
+            "status": multimodal_out["status"],
+            "count": multimodal_out["count"],
+            "failures": multimodal_out["failures"],
+        }
+        items.extend(multimodal_out["items"])
     tid = str(state.get("trace_id") or "").strip()
     fetch_trace = state.get("fetch_trace_from_backend", True)
     has_trace = any(i.get("type") == "trace_context" for i in items)
