@@ -4,7 +4,7 @@
     "APPLICATION_DIRECTION.md": "e6c20b91db757cb2f2bc45336200b9b7d990486474865a53fbac733237ba052d",
     "ARTIFACT_RETENTION.md": "475c094c40a51dcf3ae89e0f71d56d1a3ffb22b203b628dc9b3c3ba00e6d94af",
     "CORE_ARCHITECTURE.md": "42a1d474134fc218a74553f40db4a73c8e22bac0895bb7a7274d528e096f5d14",
-    "DEPLOY.md": "9af6b6f0896beb7ff7ef0574339634fe4ce76921a15535a71363c13b92255fae",
+    "DEPLOY.md": "2ceba43a8ecd66db4f23bfd5b52b3f5ce507bbc07836f5b60273a6f0b55e737d",
     "DOCS_TROUBLESHOOT_EVAL.md": "1f1807e9ca5c7cd2d9f3cf8549e86cdec52f5b6b81cef09b01b541188d3f8d26",
     "EVAL_INDEX.md": "48e20ce4ff557427edbbc41c0faf878c962f6c847d30fc49ec3f6e2795559414",
     "EVIDENCE.md": "36b9c5162880d31a6b7fab3adb40a052b686f865d1debcb6f967a33b83267fd0",
@@ -76,10 +76,11 @@
     "snapshots/reliability_live_mock_20260716.json": "b69efa468e9f1452c73d46e3f5faa04afe41a5fd768d39eb3852cda0ee387f56",
     "snapshots/reliability_live_mock_20260716_v2.json": "fa09e124caa50118be7ea7d2c2625acdebb1d69f194df833aa23051afe6c8d2b",
     "snapshots/reliability_snapshot_20260715.json": "9194731530006497852c293164c42e6c848cee242063e085ffb71dc9e8203aab",
+    "snapshots/sandbox_live_check_docker_latest.json": "84f1d2655d95eb0e46a6276b22b32364b0ae81f22d054de65aa3f652fac79013",
     "snapshots/step_watcher_evidence_baseline.json": "0b320b311b225ae93a744a2b9a22d353fc65381e89aeeac621b16e2014ea0961",
     "snapshots/tdebug_failure_flywheel_20260716.json": "6dc0bc4dff8701ef6d8480eae0a1c160883e3c811c7d61dda2a4f114483ab5e7",
     "step_watcher_evidence_baseline.md": "03f803a77c7ce669f15fc4a2cb572797415c94b131769fb470d2dd62d659c892"
   },
-  "generated_at": "2026-09-28T04:23:44Z",
+  "generated_at": "2026-09-28T06:19:45Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
