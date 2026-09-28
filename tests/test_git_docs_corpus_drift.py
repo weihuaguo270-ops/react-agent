@@ -115,3 +115,36 @@ def test_baseline_file_is_valid_json():
     data = json.loads(text)
     assert "files" in data
     assert all(isinstance(v, str) and len(v) == 64 for v in data["files"].values())
+
+
+def test_corpus_hash_is_line_ending_independent(tmp_path):
+    """语料哈希必须与检出行尾无关。
+
+    本项目的 CI 同时在 ubuntu 与 windows 上跑本模块；Windows 侧
+    ``core.autocrlf=true`` 会把工作区文档检出为 CRLF。若按原始字节哈希，基线就
+    只在生成它的平台上成立，另一侧永远报“语料已变化”。内容相同、行尾不同必须
+    得到同一哈希。
+    """
+    from react_agent.apps.docs_troubleshoot.ingest import sha256_file
+
+    body = "line one\nline two\nline three\n"
+    lf = tmp_path / "lf.md"
+    crlf = tmp_path / "crlf.md"
+    cr = tmp_path / "cr.md"
+    lf.write_bytes(body.encode("utf-8"))
+    crlf.write_bytes(body.replace("\n", "\r\n").encode("utf-8"))
+    cr.write_bytes(body.replace("\n", "\r").encode("utf-8"))
+
+    assert sha256_file(lf) == sha256_file(crlf) == sha256_file(cr)
+
+
+def test_corpus_hash_still_detects_real_content_change(tmp_path):
+    """行尾归一化不得让真实内容变更变得不可见。"""
+    from react_agent.apps.docs_troubleshoot.ingest import sha256_file
+
+    a = tmp_path / "a.md"
+    b = tmp_path / "b.md"
+    a.write_bytes("alpha\n".encode("utf-8"))
+    b.write_bytes("beta\n".encode("utf-8"))
+
+    assert sha256_file(a) != sha256_file(b)
