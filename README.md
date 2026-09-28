@@ -147,7 +147,7 @@ query
   └─ run_workflow("docs_troubleshoot")（legacy DAG）
 ```
 
-多 Agent / MCP / RAG / LangGraph 为**实验对照**，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。成熟度评判见 [`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
+多 Agent 编排（Orchestrator / Worker）的能力与边界见 [多 Agent 编排](#多-agent-编排orchestrator--worker)；MCP / RAG / LangGraph 为**实验对照**，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。成熟度评判见 [`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
 ### 模块清单
 
@@ -156,7 +156,9 @@ query
 ```
 src/react_agent/          # Core 默认
 ├── workflow/ · react_loop.py · apps/docs_troubleshoot/ · server/
-├── tools/ · safety/ · harness/ · resilience.py · eval/
+├── tools/ · tool_scope.py · write_sets.py
+├── orchestrator.py · planner.py    # 多 Agent 编排
+├── safety/ · harness/ · resilience.py · eval/
 examples/
 ├── demos/                # 演示
 └── eval/                 # 回归与公开基准
@@ -215,6 +217,39 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 
 `harness/sandbox.py` 支持 `off` / `auto` / `on` 和 `process` / `container`。
 生产配置与威胁模型见 [`docs/SANDBOX_SECURITY.md`](docs/SANDBOX_SECURITY.md)。
+
+### 多 Agent 编排（Orchestrator / Worker）
+
+`orchestrator.py` + `planner.py` 实现 Orchestrator–Worker 模式：Planner 把请求拆成
+带依赖的子任务，按拓扑分层（同层并行），每个 Worker 跑独立 ReAct 循环，结果汇总回
+主对话。入口是 `multi_agent_chain()`（CLI 用 `--parallel`）。
+
+```bash
+python -m react_agent --parallel "搜索今天的汇率，并且算一下 100 美元换成人民币"
+```
+
+> CLI 只在提问里出现「同时 / 并且 / 还有 / 另外 / 且」等并列词时才自动走编排路径；
+> 其他提问仍走单 Agent 的 `react_loop`。`--parallel` 只是允许同层任务并行执行。
+
+Planner 的 `context: fork` 让子任务带上**父会话答案摘要**（不是完整历史，提示词里
+会如实说明），适合"基于刚才的结论继续做"的子任务。
+
+**能力与边界**（完整表见 [`docs/CORE_ARCHITECTURE.md`](docs/CORE_ARCHITECTURE.md)）：
+
+| 能力 | 现状 |
+|------|------|
+| Worker 工具面 | 按声明收窄（`tool_scope.py`）；未知工具名告警，严格模式抛错；**空声明不等于全量** |
+| 同层并行 | **写冲突检测默认开启**：写集可能相交的任务拆到不同段串行 |
+| 写集来源 | Planner 输出 `\| writes: 路径`；**未声明或 `unknown` 一律按冲突保守串行** |
+| 委派深度 | 默认 `1`（允许直接子级，禁止更深嵌套）；超限明确拒绝 |
+| 并发上限 | 默认 `4` |
+| Worker 记忆 | 默认不读不写长期记忆 |
+
+> ⚠️ **并行 Worker 没有工作区隔离**：它们共享同一进程与同一工作目录，同时修改
+> 同一文件仍会互相覆盖。当前的安全保障是「写集声明 + 冲突分层」这套调度约定，
+> **不是隔离机制**。因此读密集任务（检索、审查、日志分析）适合并行；写密集任务
+> 必须先声明写集，声明不完整时调度器会保守串行——这是设计意图，不是缺陷。
+> 独立 worktree / 进程外隔离尚未实施。
 
 ### 执行轨迹（Harness）
 
@@ -390,6 +425,11 @@ gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DE
 | Host 头校验 | `REACT_AGENT_HOST_VALIDATION`（默认 `loopback`） | 防 **DNS rebinding**；`allowlist` 档未声明域名则拒绝启动，`REACT_AGENT_ALLOWED_HOSTS` 声明域名 |
 | 异步人工审批 | `REACT_AGENT_APPROVAL_MODE=async` | `CONFIRM` 级工具阻塞待批，经 `/v1/approvals` 批准 |
 | 答案流式 | `REACT_AGENT_LLM_STREAM`（默认开） | `/v1/chat/stream` 推送 `answer_delta`；客户端断连即**取消执行**，不再空烧 LLM 调用 |
+| 写冲突串行化 | `REACT_AGENT_WRITE_CONFLICT_SERIALIZE`（默认 `1`） | 同层写集可能相交的 Worker 拆段串行；设 `0` 回到历史并行行为 |
+| Worker 工具面严格模式 | `REACT_AGENT_SCOPE_STRICT`（默认 `0`） | `1` 时工具面声明含未知工具名直接抛错，而非仅告警 |
+| 委派深度上限 | `REACT_AGENT_SUBAGENT_MAX_DEPTH`（默认 `1`） | 子 Agent 不得再派生更深层子 Agent；超限明确拒绝 |
+| 同层并发上限 | `REACT_AGENT_SUBAGENT_MAX_CONCURRENCY`（默认 `4`） | `0` 表示不限 |
+| Worker 记忆回写 | `REACT_AGENT_WORKER_MEMORY_WRITE`（默认 `0`） | 是否允许 Worker 回写长期记忆（默认禁止，避免并行污染） |
 
 出站与进程边界亦加固：SSRF 守卫（`safety/net_guard.py`）、`trace_id` 路径穿越防护、MCP/沙箱子进程环境白名单、轨迹落盘脱敏、app 工具作用域隔离（`docs_tools` 不外溢到 Core）。
 

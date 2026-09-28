@@ -244,7 +244,7 @@ Task(id, description, depends_on, writes: list[str] | None = None)
 - 相关回归组（含 workflow / permissions / docs / llm payload / eval contract / rag / duplicate / final answer / corpus drift）：通过
 - 全量离线套件：失败数与基线一致（12–13 项既有失败）。已用 `git worktree` 建干净副本逐项对照确认，非本次改动引入。
 
-**提交**：`8f27fcc`（RAG 语料装配修复，独立提交）· `c3dbd75`（本方案的实现 + 指令解析三处修复）。
+**提交**：`fix(docs_troubleshoot): 停止在 Core 导入路径上装配 RAG 语料`（RAG 装配修复，独立提交）· `feat(orchestrator): Worker 工具面声明化、写集冲突分层、深度/并发上限、摘要式 fork`（本方案的实现 + 指令解析三处修复）。`git log --oneline` 可见具体 hash。
 
 ### 7.4 指令解析鲁棒性（实测驱动，2026-09-25 补充）
 
@@ -266,7 +266,7 @@ Task(id, description, depends_on, writes: list[str] | None = None)
 2. **命中前先执行**：写集来自 Planner 的 LLM 输出，模型可能不遵循 `writes:` 格式；此时 `writes` 为 `None` → 保守串行。**这是设计意图**：宁可慢，不可猜。
 3. **`docs/` 同时是评测语料**：`docs/` 同时是 git-docs 评测的 RAG 语料。本次新增/修改了 3 个 docs 文件，语料 sha256 基线（`git_docs_corpus_baseline.json`）**未刷新**。注意该基线在改动前**已经**与 `docs/` 漂移（18 个文件，其中多数非本次改动），因此刷新它属于独立事项，不应混进本次改动。
 
-**顺带发现的既有缺陷（已在 `8f27fcc` 单独修复）**：
+**顺带发现的既有缺陷（已单独修复）**：
 
 `tests/test_core_lazy_imports.py::test_react_loop_import_does_not_load_experimental_modules` 在本方案开始前于 HEAD 上就失败。已用干净 worktree 复现（`HEAD rag leak: True`，`1 failed`）。
 

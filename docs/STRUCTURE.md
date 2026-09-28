@@ -25,6 +25,10 @@ src/react_agent/
 ├── apps/docs_troubleshoot/  垂直 demo：② 客服线 · 证据化文档排障
 ├── server/                HTTP：/health /v1/chat /v1/workflows
 ├── tools/                 工具注册表
+├── tool_scope.py          Worker 工具面声明（ToolScope；不触发 tools 包装配）
+├── write_sets.py          写集冲突判定（并行写安全依赖它）
+├── orchestrator.py        多 Agent 编排（Orchestrator / Worker）
+├── planner.py             任务分解 + 依赖/写集分层
 ├── safety/                权限闸门 + HITL
 ├── harness/               轨迹录制 / 回放 / 沙箱超时
 ├── resilience.py          ToolGuard
@@ -34,7 +38,9 @@ src/react_agent/
 
 ## 实验模块
 
-默认不进入 Core 工具表。清单见 [`EXPERIMENTAL.md`](EXPERIMENTAL.md)：`rag.py`、`mcp_*.py`、`orchestrator.py`、`planner.py`、`tot.py`、`dashboard/`。
+默认不进入 Core 工具表。清单见 [`EXPERIMENTAL.md`](EXPERIMENTAL.md)：`rag.py`、`mcp_*.py`、`tot.py`、`dashboard/`。
+
+多 Agent 编排（`orchestrator.py` / `planner.py` / `tool_scope.py` / `write_sets.py`）同样不在 Core 工具表内，但已具备声明式工具面、写冲突分层与深度/并发上限；能力边界见 [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)。**注意并行 Worker 无工作区隔离。**
 
 ## 变更入口
 
