@@ -116,6 +116,31 @@ def _merge_search(state: dict[str, Any], key: str, observation: str) -> None:
     state[key] = parsed
 
 
+_API_NEEDLE = re.compile(
+    r"api|auth|authorization|bearer|401|403|404|429|500|502|504|endpoint|webhook|"
+    r"鉴权|接口|错误码|限流|超时|分页|cursor|limit|cors|跨域|预检|"
+    r"回调|签名|路由|响应头|环境变量|版本|schema|轨迹|toolguard|"
+    r"请求头|状态码|重试",
+    re.I,
+)
+
+
+def _needs_internal_retrieval(state: dict[str, Any]) -> bool:
+    """只对排障问题强制走内部证据；普通常识问题交给通用 LLM。"""
+    query = str(state.get("query") or "")
+    if _API_NEEDLE.search(query):
+        return True
+    if any(key in state for key in ("error_response", "log_excerpt", "trace_context", "request_headers")):
+        return True
+    return any(token in query.lower() for token in (
+        "文档", "排障", "故障", "runbook", "内部", "deepseek", "permission",
+        "权限闸门", "rag", "mcp", "schema", "ci", "bearer", "token",
+        "分页", "cursor", "limit", "cors", "跨域", "预检", "webhook", "回调",
+        "签名", "路由", "响应头", "环境变量", "版本", "轨迹", "toolguard",
+        "请求头", "状态码", "重试", "项目", "当前项目", "默认", "配置",
+    ))
+
+
 def decide_next_tool(state: dict[str, Any], called: set[str]) -> Optional[tuple[str, str, dict[str, Any]]]:
     """Observation-driven next action: (thought, tool_name, args)."""
     query = str(state.get("query") or "")
@@ -160,7 +185,7 @@ def decide_next_tool(state: dict[str, Any], called: set[str]) -> Optional[tuple[
             {"headers_json": raw},
         )
 
-    if "search_docs" not in called:
+    if _needs_internal_retrieval(state) and "search_docs" not in called:
         return (
             "Retrieve internal runbook/docs before stating any fact.",
             "search_docs",

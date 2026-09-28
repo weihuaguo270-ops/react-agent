@@ -306,6 +306,52 @@ def parse_trace_context(trace_json: str = "") -> dict[str, Any]:
     }
 
 
+def parse_multimodal_evidence(
+    artifacts: Any,
+    *,
+    max_bytes: int = 50 * 1024 * 1024,
+) -> dict[str, Any]:
+    """Normalize caller-supplied local artifacts into auditable evidence.
+
+    This boundary intentionally does not call an OCR/VLM service. An adapter
+    can be added later; until then extraction status remains explicit.
+    """
+    from react_agent.multimodal import attach_evidence, inspect_artifact
+
+    raw_items = artifacts if isinstance(artifacts, list) else []
+    items: list[dict[str, Any]] = []
+    failures: list[dict[str, str]] = []
+    for index, raw in enumerate(raw_items[:10], start=1):
+        path = raw.get("path") if isinstance(raw, dict) else raw
+        artifact_id = raw.get("id") if isinstance(raw, dict) else None
+        if not isinstance(path, (str, bytes)):
+            failures.append({"path": str(path), "code": "invalid_path", "message": "artifact path must be a string"})
+            continue
+        try:
+            artifact = inspect_artifact(
+                path,
+                artifact_id=str(artifact_id or f"support-artifact-{index}"),
+                max_bytes=max_bytes,
+            )
+            item = artifact.to_dict()
+            item["type"] = "multimodal_artifact"
+            item["evidence_ref"] = attach_evidence(artifact).to_dict()
+            item["extracted_text"] = artifact.extracted_text[:4_000]
+            items.append(item)
+        except Exception as exc:
+            code = getattr(exc, "code", "invalid_artifact")
+            failures.append({"path": str(path), "code": str(code), "message": str(exc)[:300]})
+    status = "failed" if failures and not items else "partial" if failures else "ready"
+    return {
+        "ok": not failures,
+        "type": "multimodal_evidence",
+        "status": status,
+        "items": items,
+        "failures": failures,
+        "count": len(items),
+    }
+
+
 def collect_evidence_bundle(state: dict[str, Any]) -> dict[str, Any]:
     """Merge optional workflow state fields into one evidence bundle."""
     items: list[dict[str, Any]] = []
