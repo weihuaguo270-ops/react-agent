@@ -37,6 +37,10 @@ test = [
     "pytest>=9.0.3,<10",
     "pytest-cov>=4.0,<7",
     "flake8>=6.0,<8",
+    # tests/test_fastapi_skill_api.py 用 httpx 的 ASGI transport 驱动 FastAPI 应用；
+    # CI 只装 `.[test]`，因此这两个必须在此自足，不能只依赖 [service]。
+    "fastapi>=0.115,<1",
+    "httpx>=0.27,<1",
 ]
 dev = [
     "react-agent[rag,test,langgraph,service]",
