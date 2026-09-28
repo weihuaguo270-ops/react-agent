@@ -2,6 +2,18 @@
 
 - 当前收口：统一离线验收入口 `examples/eval/run_portfolio_acceptance.py` 与跨仓证据账本已落地；主线闭环可复现，但 held-out/golden 发布门槛仍未满足，不能宣称生产成熟度。
 
+- 服务层补回（2026-09-28）：`#73` 的测试引用了不存在的模块。根因**不是逻辑缺失，而是拆分丢件**——完整半成品在 `backup/pre-split-wip`（`2a6d272`），拆成 #72–#75 时只带走了测试与部分源码。现按字节补回 `skills/`（schema/contracts/registry/business_boundaries/builtins/evaluation/tools）、`multimodal.py`、`query_policy.py`、`server/fastapi_app.py`、`server/task_manager.py`，并补 `[service]` extra 与 `react-agent-api` 入口点。对 main 已有文件只做最小语义移植（`evidence.py` 的 multimodal 分支、`agent_runner.py` 的按需检索门控、`prompt.py` 一条硬规则）。相关 7 个测试文件 35 passed。#73 已关闭（由 #95 取代），#72 随后按原意合并。见 [#95](https://github.com/weihuaguo270-ops/react-agent/pull/95)。
+
+- 服务入口点对齐（2026-09-28）：合并 #72 时 `DEPLOY.md` 声明"默认启动 `react-agent-api`"而 Dockerfile 仍为 stdlib 入口，两者矛盾。已修 `server/__main__.py` 为「装了 `[service]` 走 FastAPI，否则回退 stdlib」、Dockerfile CMD 改回 `react-agent-api`、`DEPLOY.md` 里过时的 `REACT_AGENT_API_KEY` 改为 `REACT_AGENT_AUTH_TOKEN`。见 [#97](https://github.com/weihuaguo270-ops/react-agent/pull/97)。
+
+- daily-smoke 日志断档修复（2026-09-28）：工作流只创建 PR、**从未包含合并步骤**，导致 `docs/daily_smoke/` 停在 2026-08-16，而此后每天的计划任务都成功运行并开出 PR（累计 42 个未合并）。已给工作流加 `gh pr merge --squash --auto` 并启用仓库级 `allow_auto_merge`（#93，机制随后经 #94/#96 实证：auto-merge 由 `app/github-actions` 自行开启）；42 个存量 PR 的内容以**一次性重建**方式补齐（`log.jsonl` 29→71 行、`VARIANCE.md` 42→84 行，日期连续覆盖 2026-08-17~09-27，无重复行）后统一关闭。见 [#93](https://github.com/weihuaguo270-ops/react-agent/pull/93)、[#94](https://github.com/weihuaguo270-ops/react-agent/pull/94)。
+
+- 语料基线的跨平台缺陷修复（2026-09-28）：`sha256_file` 原按原始字节哈希，而 CI 同时在 ubuntu 与 windows 上跑 `test_git_docs_corpus_drift`；Windows 侧 `core.autocrlf=true` 会把 `docs/` 检出为 CRLF，使基线只在生成它的平台上成立。现改为哈希前把 CRLF/CR 归一化为 LF，并加两条用例锁住该不变量（同内容不同行尾必须同哈希、真实内容变更仍可检出）。
+
+- 同轮的其他加固：#92 合并 Subagent 能力（Worker 工具面声明化、**写冲突检测默认开启**、委派深度/并发上限、摘要式 fork、指令解析三处鲁棒性修复，并使 Core 导入路径不再连带装配 RAG 语料）。注：`docs/` 同时是 docs_troubleshoot 的 RAG 语料并带 sha256 基线，**凡改 `docs/` 下文件都需用 `eval_git_docs --refresh-baseline` 刷新基线**。
+
+- held-out/golden 状态**未变**：Click 仍为 `invalid_run`，Jinja 为唯一有效 held-out，golden 仍为 0；本轮改动不涉及盲测成绩。
+
 - v10 协议补丁：发现 v9 终态请求只允许 submit，但服务仍返回 shell，旧运行器继续执行。现已增加完整调用批次校验，违规响应停止为 `protocol_violation`，与 hidden 成绩分开记录。16 项离线测试通过，尚未在线复测；held-out 保持未运行。见 [补丁说明](../eval/blind_pilot_v1/V10_PROTOCOL_PATCH.md)。
 
 - v10 在线复测（2026-09-22）：仅运行新版 Pydantic development。结果为 `terminal_submitted`、hidden passed、51140 tokens、budget compliant；普通阶段 25 次 shell，终态 1 次合法 submit，未触发 protocol violation，因此没有生成违规证据文件。证据完整，Click/Jinja held-out 仍未运行。见 [在线复测报告](../eval/blind_pilot_v1/V10_ONLINE_RETEST_REPORT.md)。
