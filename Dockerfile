@@ -39,6 +39,7 @@ EXPOSE 8765
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/ready', timeout=2)"
 
-# 默认沿用 stdlib 服务面（端口与 /ready 契约不变）。镜像内已安装 [service]，
-# 如需 FastAPI 服务面，用 `docker run ... react-agent:ci react-agent-api --host 0.0.0.0 --port 8765` 覆盖 CMD。
-CMD ["react-agent-server", "--host", "0.0.0.0", "--port", "8765"]
+# 默认服务面：FastAPI（react-agent-api；端口与 REACT_AGENT_HOST/PORT 由默认值
+# 0.0.0.0:8765 提供）。stdlib 入口在镜像内仍可用，覆盖 CMD 即可切换：
+#   docker run ... react-agent:ci react-agent-server --host 0.0.0.0 --port 8765
+CMD ["react-agent-api"]

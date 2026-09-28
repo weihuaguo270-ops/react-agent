@@ -251,6 +251,33 @@ Planner 的 `context: fork` 让子任务带上**父会话答案摘要**（不是
 > 必须先声明写集，声明不完整时调度器会保守串行——这是设计意图，不是缺陷。
 > 独立 worktree / 进程外隔离尚未实施。
 
+### 服务入口点与能力包
+
+两个 HTTP 入口点，按是否安装 `[service]` 决定默认走哪个：
+
+| 入口点 | 依赖 | 说明 |
+|--------|------|------|
+| `react-agent-server` | 无（标准库） | 零依赖服务面，离线/最小运行时 |
+| `react-agent-api` | `react-agent[service]` | FastAPI + Uvicorn 服务面 |
+
+`python -m react_agent.server` 与容器镜像**默认使用 FastAPI**（镜像内已装 `[service]`）；
+**仅核心安装**（未装 fastapi）时自动回退到标准库服务面，轻量运行时不受影响。端口与就绪探针
+两者一致（`REACT_AGENT_HOST` / `REACT_AGENT_PORT`，默认 `0.0.0.0:8765`，`/health` + `/ready`）。
+容器细节与构建参数见 [`docs/DEPLOY.md`](docs/DEPLOY.md)。
+
+能力包按需安装（core 安装保持轻量，`dependencies = []`）：
+
+```bash
+pip install -e ".[service]"     # FastAPI 服务面
+pip install -e ".[rag]"         # 语义检索（numpy / scikit-learn / sentence-transformers）
+pip install -e ".[langgraph]"   # LangGraph 对照
+```
+
+Skills 与多模态：`react_agent/skills/` 提供可注册的 skill 边界（schema 校验、业务边界、
+风险评估）与 `run_skill()`；`react_agent/multimodal.py` 把本地制品归一化为可审计证据
+（`inspect_artifact` / `build_multimodal_input` / `attach_evidence`）。两者都**不调用
+OCR/VLM 服务**，抽取状态是显式记录的，不会假装已理解图片。
+
 ### 执行轨迹（Harness）
 
 每步 thought / action / observation 写入 Format B JSON，供回放和跨仓对接（`harness/recorder.py` → `schemas/harness_trajectory.schema.json`）。

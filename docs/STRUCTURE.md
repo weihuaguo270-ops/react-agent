@@ -23,7 +23,9 @@ src/react_agent/
 ├── react_loop.py          ReAct 循环
 ├── workflow/              声明式 Workflow
 ├── apps/docs_troubleshoot/  垂直 demo：② 客服线 · 证据化文档排障
-├── server/                HTTP：/health /v1/chat /v1/workflows
+├── server/                HTTP：stdlib app + FastAPI fastapi_app（两个入口点）
+├── skills/                可注册 skill：schema 校验 / 业务边界 / 风险评估 · run_skill()
+├── multimodal.py          本地制品归一化为可审计证据（不调用 OCR/VLM 服务）
 ├── tools/                 工具注册表
 ├── tool_scope.py          Worker 工具面声明（ToolScope；不触发 tools 包装配）
 ├── write_sets.py          写集冲突判定（并行写安全依赖它）

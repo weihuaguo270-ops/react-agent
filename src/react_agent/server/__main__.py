@@ -1,9 +1,12 @@
-"""支持 `python -m react_agent.server` 的命令行入口。
+"""支持 python -m react_agent.server 的命令行入口。
 
-服务端只有 stdlib 实现（``react_agent.server.app``）：核心安装不附带
-FastAPI/Uvicorn 依赖，因此这里不存在可回退的第二个入口。
+已安装 [service]（FastAPI/Uvicorn）时默认使用 FastAPI 服务面；仅核心安装时装不到
+fastapi，则回退到 stdlib 服务面，保证轻量运行时仍可用。
 """
-from react_agent.server.app import main
+try:
+    from react_agent.server.fastapi_app import main
+except ImportError:
+    from react_agent.server.app import main
 
 if __name__ == "__main__":
     main()
