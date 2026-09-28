@@ -42,3 +42,17 @@ src/react_agent/eval/reports/eval_20260713_*.json
 .test-tmp*/
 .tmp/
 artifacts/
+
+# Blind-pilot 运行数据：**刻意不提交**。
+#
+# inputs/ 每个任务含 problem.md（盲测的问题陈述）与整份 baseline repo 克隆；
+# runs/ 是每次运行的全量执行记录（request/response/tool 调用、patch.diff）与
+# acceptance/ 判分产物。两者合计 ~253 MB，更重要的是把它们放进仓库会让任何
+# 在本工作区内运行的 Agent 直接读到 held-out 的任务陈述——这正好违反
+# docs/SOFTWARE_TASK_DATASET.md 的「隐藏测试不复制进 Agent 工作区」约定，
+# 并破坏后续重跑的盲性。
+#
+# 顶层报告（REPORT.md / DEVELOPMENT_*.md / V10_*.md / results.json 等，~236 KB）
+# 是 docs/STATUS.md 的证据来源，**已显式提交**（git add -f），不受此规则影响。
+eval/blind_pilot_v1/inputs/
+eval/blind_pilot_v1/runs/
