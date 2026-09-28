@@ -1,8 +1,14 @@
 # react-agent Subagent 能力加固方案
 
-> 状态：**方案待评审，未写任何实现代码**
+> 状态：已实施（决策与进度见第 7 节）
 > 依据：[`subagent-comparison.md`](subagent-comparison.md) 的五家调研结论（DSH / Codex / OpenCode / ZCode / MiniMax Code）
-> 范围：`src/react_agent/orchestrator.py`、`planner.py`、`react_loop.py`、`tools/`，以及对应测试与文档
+> 范围：`src/react_agent/orchestrator.py`、`planner.py`、`react_loop.py`、`tool_scope.py`、`write_sets.py`，以及对应测试与文档
+>
+> **为什么放在 `notes/` 而不是 `docs/`**：`docs/` 是 docs_troubleshoot 的 RAG 语料
+> （`ingest_git_tracked` 通过 `git ls-files docs` 索引其中所有已跟踪文档）。把工程
+> 方案放进去会稀释检索排序——实测新增这两篇后，`git_docs` 的 `git03` 用例由通过
+> 变为失败（该用例需要 `docs/CORE_ARCHITECTURE.md` 里的「自建 Core」片段排进 top-k）。
+> 因此工程文档与产品语料分开放。
 
 ---
 

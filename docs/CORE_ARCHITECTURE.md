@@ -166,7 +166,7 @@ defs = get_tool_definitions()          # 该应用应有的工具描述
 > 同层并行 Worker 同时修改同一文件仍会互相覆盖；当前的安全保障是
 > 「写集声明 + 冲突分层」这一**约定与调度**机制，而不是隔离机制。真正的隔离
 > （每个 Worker 独立 git worktree，或进程外执行）属于独立立项，见
-> [`plan-subagent-hardening.md`](plan-subagent-hardening.md) Phase 5 —— 该方案刻意
+> [`../notes/plan-subagent-hardening.md`](../notes/plan-subagent-hardening.md) Phase 5 —— 该方案刻意
 > 不把 worktree 作为默认路径：它不消除并发写，只是把问题推到 git 合并层。
 >
 > 因此：**读密集**任务（检索、审查、日志分析）适合并行；**写密集**任务必须先

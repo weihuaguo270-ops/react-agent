@@ -1,6 +1,6 @@
 """Subagent 加固的契约测试：工具面声明、写冲突分层、深度/并发上限、fork 语义。
 
-这些测试锁住 docs/plan-subagent-hardening.md 里三个已定稿决策：
+这些测试锁住 notes/plan-subagent-hardening.md 里三个已定稿决策：
 1. 写冲突检测**默认开启**；
 2. 未声明写集按**保守串行**处理；
 3. fork 必须**如实标注**只看到摘要、且不继承工具与权限。

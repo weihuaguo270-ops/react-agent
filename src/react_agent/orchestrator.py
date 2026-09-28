@@ -6,7 +6,7 @@ Orchestrator — 独立的多 Agent 协作模块
 - **没有**：Worker 之间**没有工作区/文件系统隔离**。同层并行 Worker 共享同一个
   进程与同一个工作目录，并行修改同一文件仍会互相覆盖。当前的安全依赖是
   「写集声明 + 冲突分层」（见 planner.Task.writes），而不是隔离。真正的隔离
-  （独立 worktree 或进程外执行）属于后续独立立项，见 docs/plan-subagent-hardening.md
+  （独立 worktree 或进程外执行）属于后续独立立项，见 notes/plan-subagent-hardening.md
   Phase 5。
 
 本模块刻意不导入 react_loop / tools 等重模块（除函数内懒加载），以避免导入环。
