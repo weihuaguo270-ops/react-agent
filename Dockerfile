@@ -16,7 +16,18 @@ COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 COPY schemas ./schemas
 
-RUN pip install --no-cache-dir -e . \
+ARG REACT_AGENT_INSTALL_EXTRAS=""
+ARG REACT_AGENT_TORCH_VERSION="2.7.1+cpu"
+# 默认装 [service]：镜像里因此同时具备 stdlib 服务面与 FastAPI 入口点
+# （react-agent-api）。REACT_AGENT_INSTALL_EXTRAS 可追加 rag / langgraph 等；
+# rag 走 PyTorch CPU 源，避免在 slim 镜像里拉入 CUDA 版 torch。
+RUN if [ "$REACT_AGENT_INSTALL_EXTRAS" = "rag" ]; then \
+      pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu "torch==${REACT_AGENT_TORCH_VERSION}"; \
+    fi; \
+    pip install --no-cache-dir -e ".[service]"; \
+    if [ -n "$REACT_AGENT_INSTALL_EXTRAS" ] && [ "$REACT_AGENT_INSTALL_EXTRAS" != "service" ]; then \
+      pip install --no-cache-dir -e ".[${REACT_AGENT_INSTALL_EXTRAS}]"; \
+    fi \
     && mkdir -p /app/data
 
 # Mutable runtime data (approvals / trajectories / reports) lives in a volume.
@@ -28,4 +39,6 @@ EXPOSE 8765
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/ready', timeout=2)"
 
+# 默认沿用 stdlib 服务面（端口与 /ready 契约不变）。镜像内已安装 [service]，
+# 如需 FastAPI 服务面，用 `docker run ... react-agent:ci react-agent-api --host 0.0.0.0 --port 8765` 覆盖 CMD。
 CMD ["react-agent-server", "--host", "0.0.0.0", "--port", "8765"]

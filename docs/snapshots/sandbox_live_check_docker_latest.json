@@ -1,0 +1,135 @@
+{
+  "schema_version": "sandbox-live-check/v2",
+  "backend": {
+    "strategy": "on",
+    "backend": "container",
+    "required": true,
+    "secure_configured": true,
+    "runtime_checked": true,
+    "runtime_ready": true,
+    "runtime_error": null
+  },
+  "machine": {
+    "applicable": false
+  },
+  "image": {
+    "available": true,
+    "id": "sha256:f316803d40a8bb5952f16999da48e686c87c976c9e8246194e8b916e3803b42d",
+    "created": "2026-09-11T11:57:44.958088994Z",
+    "error": null
+  },
+  "host_namespace_control": {
+    "user": 4026531837,
+    "ipc": 4026532210,
+    "uid_map": "0          0 4294967295"
+  },
+  "calculator_result": "42",
+  "probe_results": [
+    "{\"api_key_present\": false, \"cgroup\": {\"cpu_max\": \"50000 100000\", \"memory_max\": \"268435456\", \"memory_swap_max\": \"0\", \"pids_max\": \"64\"}, \"etc_write\": \"OSError\", \"gid\": 65532, \"gid_map\": \"0          0 4294967295\", \"init_reaps_orphan\": true, \"namespaces\": {\"ipc\": 4026532540, \"net\": 4026532543, \"pid\": 4026532541, \"user\": 4026531837}, \"network\": \"OSError\", \"nofile\": [64, 64], \"status\": {\"CapBnd\": \"0000000000000000\", \"CapEff\": \"0000000000000000\", \"Gid\": \"65532\\t65532\\t65532\\t65532\", \"NoNewPrivs\": \"1\", \"Seccomp\": \"2\", \"Uid\": \"65532\\t65532\\t65532\\t65532\"}, \"tmp_exec\": \"PermissionError\", \"tmp_write\": \"writable\", \"uid\": 65532, \"uid_map\": \"0          0 4294967295\"}\n\n[状态] 退出码 0，耗时 0.91s",
+    "{\"api_key_present\": false, \"cgroup\": {\"cpu_max\": \"50000 100000\", \"memory_max\": \"268435456\", \"memory_swap_max\": \"0\", \"pids_max\": \"64\"}, \"etc_write\": \"OSError\", \"gid\": 65532, \"gid_map\": \"0          0 4294967295\", \"init_reaps_orphan\": true, \"namespaces\": {\"ipc\": 4026532540, \"net\": 4026532543, \"pid\": 4026532541, \"user\": 4026531837}, \"network\": \"OSError\", \"nofile\": [64, 64], \"status\": {\"CapBnd\": \"0000000000000000\", \"CapEff\": \"0000000000000000\", \"Gid\": \"65532\\t65532\\t65532\\t65532\", \"NoNewPrivs\": \"1\", \"Seccomp\": \"2\", \"Uid\": \"65532\\t65532\\t65532\\t65532\"}, \"tmp_exec\": \"PermissionError\", \"tmp_write\": \"writable\", \"uid\": 65532, \"uid_map\": \"0          0 4294967295\"}\n\n[状态] 退出码 0，耗时 0.90s"
+  ],
+  "probe_values": [
+    {
+      "api_key_present": false,
+      "cgroup": {
+        "cpu_max": "50000 100000",
+        "memory_max": "268435456",
+        "memory_swap_max": "0",
+        "pids_max": "64"
+      },
+      "etc_write": "OSError",
+      "gid": 65532,
+      "gid_map": "0          0 4294967295",
+      "init_reaps_orphan": true,
+      "namespaces": {
+        "ipc": 4026532540,
+        "net": 4026532543,
+        "pid": 4026532541,
+        "user": 4026531837
+      },
+      "network": "OSError",
+      "nofile": [
+        64,
+        64
+      ],
+      "status": {
+        "CapBnd": "0000000000000000",
+        "CapEff": "0000000000000000",
+        "Gid": "65532\t65532\t65532\t65532",
+        "NoNewPrivs": "1",
+        "Seccomp": "2",
+        "Uid": "65532\t65532\t65532\t65532"
+      },
+      "tmp_exec": "PermissionError",
+      "tmp_write": "writable",
+      "uid": 65532,
+      "uid_map": "0          0 4294967295"
+    },
+    {
+      "api_key_present": false,
+      "cgroup": {
+        "cpu_max": "50000 100000",
+        "memory_max": "268435456",
+        "memory_swap_max": "0",
+        "pids_max": "64"
+      },
+      "etc_write": "OSError",
+      "gid": 65532,
+      "gid_map": "0          0 4294967295",
+      "init_reaps_orphan": true,
+      "namespaces": {
+        "ipc": 4026532540,
+        "net": 4026532543,
+        "pid": 4026532541,
+        "user": 4026531837
+      },
+      "network": "OSError",
+      "nofile": [
+        64,
+        64
+      ],
+      "status": {
+        "CapBnd": "0000000000000000",
+        "CapEff": "0000000000000000",
+        "Gid": "65532\t65532\t65532\t65532",
+        "NoNewPrivs": "1",
+        "Seccomp": "2",
+        "Uid": "65532\t65532\t65532\t65532"
+      },
+      "tmp_exec": "PermissionError",
+      "tmp_write": "writable",
+      "uid": 65532,
+      "uid_map": "0          0 4294967295"
+    }
+  ],
+  "timeout_result": "[沙箱] 工具 'execute_python' 执行超时（1秒）",
+  "timeout_elapsed_seconds": 1.391,
+  "leftover_containers": [],
+  "checks": {
+    "machine_running": true,
+    "image_available": true,
+    "calculator": true,
+    "non_root_uid": true,
+    "non_root_gid": true,
+    "user_namespace_private": true,
+    "ipc_namespace_private": true,
+    "seccomp": true,
+    "no_new_privileges": true,
+    "capabilities_dropped": true,
+    "rootfs_read_only": true,
+    "tmpfs_writable": true,
+    "tmpfs_noexec": true,
+    "init_reaps_orphans": true,
+    "resource_memory": true,
+    "resource_memory_swap": true,
+    "resource_pids": true,
+    "resource_cpu": true,
+    "resource_nofile": true,
+    "network_blocked": true,
+    "host_api_key_hidden": true,
+    "timeout_triggered": true,
+    "timeout_cleanup": true
+  },
+  "passed": true,
+  "evidence_boundary": "Two disposable containers plus a one-second timeout check; Docker userns remap is runtime-specific and is not asserted on Docker Desktop; this does not replace escape testing, image scanning, or host security review."
+}
