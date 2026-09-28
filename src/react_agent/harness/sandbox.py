@@ -313,23 +313,28 @@ class Sandbox:
 
     @property
     def enabled(self) -> bool:
+        """返回策略是否要求至少一类工具进入隔离后端。"""
         return self.strategy != "off"
 
     @enabled.setter
     def enabled(self, value: bool) -> None:
+        """切换普通模式策略；required 模式禁止降级关闭。"""
         if not value and self.required:
             raise ValueError("required 模式禁止关闭沙箱")
         self.strategy = "auto" if value else "off"
 
     @property
     def secure(self) -> bool:
+        """返回配置是否要求全部非控制面工具使用容器后端。"""
         return self.backend == "container" and self.strategy == "on"
 
     @property
     def warm_status(self) -> str:
+        """返回进程后端的预热状态，容器可用性不由此表示。"""
         return "已预热" if self._prewarmed else "未预热"
 
     def status(self) -> dict[str, Any]:
+        """返回配置和最近一次运行时探测结果，不主动触发探测。"""
         return {
             "strategy": self.strategy,
             "backend": self.backend,
@@ -345,6 +350,7 @@ class Sandbox:
         }
 
     def should_sandbox(self, tool_name: str) -> bool:
+        """按当前策略和工具风险分类判断是否进入隔离后端。"""
         return should_sandbox_by_risk(tool_name, self.strategy)
 
     def external_tool_block_reason(self, tool_name: str) -> str | None:
@@ -361,6 +367,11 @@ class Sandbox:
         )
 
     def verify_runtime(self) -> tuple[bool, str | None]:
+        """验证容器命令和固定镜像是否可用，并缓存探测结果。
+
+        进程后端不提供系统权限隔离，因此只返回“无需容器探测”；调用方
+        必须结合 :attr:`secure` 判断当前配置是否构成安全边界。
+        """
         if self.backend != "container":
             return True, None
         if self._runtime_checked:
@@ -434,14 +445,20 @@ class Sandbox:
             return self.egress_network
         return "none"
 
+    def _container_userns(self) -> str:
+        """Docker Desktop supplies the default container user namespace."""
+        return ""
+
     def _container_command(
         self, executable: str, name: str, tool_name: str
     ) -> list[str]:
-        return [
+        """Construct the least-privileged container command for one tool call."""
+        command = [
             executable,
             "run",
             "--rm",
             "--interactive",
+            "--init",
             "--name",
             name,
             "--pull",
@@ -449,6 +466,8 @@ class Sandbox:
             "--network",
             self._container_network(tool_name),
             "--read-only",
+            "--ipc",
+            "private",
             "--cap-drop",
             "ALL",
             "--security-opt",
@@ -463,6 +482,8 @@ class Sandbox:
             self.cpus,
             "--ulimit",
             f"nofile={self.pids_limit}:{self.pids_limit}",
+            "--ulimit",
+            "core=0:0",
             "--user",
             "65532:65532",
             "--tmpfs",
@@ -485,7 +506,12 @@ class Sandbox:
             f"REACT_AGENT_SANDBOX_MAX_OUTPUT={self.max_output}",
             "--env",
             f"REACT_AGENT_SANDBOX_MAX_INPUT={self.max_input}",
-        ] + [
+        ]
+        userns = self._container_userns()
+        if userns:
+            insert_at = command.index("--ipc")
+            command[insert_at:insert_at] = ["--userns", userns]
+        return command + [
             item
             for key in sorted(_CONTAINER_ENV_ALLOWLIST)
             if key in os.environ
@@ -504,6 +530,7 @@ class Sandbox:
             pass
 
     def _run_container(self, tool_name: str, payload: str) -> str:
+        """Run one call in a disposable container and clean it up on exit."""
         ok, error = self.verify_runtime()
         if not ok:
             return f"[沙箱] 安全后端不可用，已拒绝执行: {error}"
@@ -537,6 +564,7 @@ class Sandbox:
             self._remove_container(executable, name)
 
     def run(self, tool_call: dict[str, Any]) -> str:
+        """Apply risk policy, input limits and backend-specific isolation."""
         function = tool_call.get("function") or {}
         tool_name = str(function.get("name") or "")
         if not tool_name:

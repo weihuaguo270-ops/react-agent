@@ -1,7 +1,7 @@
 # 部署与交付（P0）
 
 **读者：** 运维、集成方、面试 Demo 演示  
-**定位：** 单实例、离线可用的「证据化文档排障」HTTP 服务 — **不是**多租户平台。
+**定位：** 单实例、离线可用的「证据化文档排障」FastAPI 服务 — **不是**多租户平台。
 
 ## 最快启动（Docker Compose）
 
@@ -18,6 +18,14 @@ curl -s http://127.0.0.1:8765/v1/chat \
   -d '{"app":"expense","claim":{"category":"餐饮","amount":128,"has_receipt":true}}' | jq .
 ```
 
+默认容器现在启动 `react-agent-api`（FastAPI + Uvicorn）。原有标准库入口仍可用：
+`react-agent-server --host 0.0.0.0 --port 8765`。设置 `REACT_AGENT_API_KEY` 后，
+对话、任务、Workflow、安全案件和 Skill 执行接口要求 `Authorization: Bearer <key>`；健康检查和
+服务信息接口保持公开，便于容器编排探针使用。
+
+在本地执行 `python -m react_agent.server` 时，安装了 `react-agent[service]` 会默认使用
+FastAPI；只有未安装 service 依赖时才回退到标准库 HTTP。
+
 **可视化：** 主场景 UI 内置于 HTTP 服务（`/`、`/ui`），展示 Workflow 五步、引用来源、拒答状态、结构化 diagnosis，**不是**泛聊天窗口。实验性 ReAct 轨迹面板见 `python -m react_agent.dashboard.server`（需 Flask + 可选 LLM）。
 
 默认 **offline** 路径，不消耗 LLM API Key。
@@ -28,6 +36,10 @@ curl -s http://127.0.0.1:8765/v1/chat \
 docker build -t react-agent:local .
 docker run --rm -p 8765:8765 react-agent:local
 ```
+
+镜像始终安装 FastAPI 服务依赖；如需 Milvus 后端，可用
+`--build-arg REACT_AGENT_INSTALL_EXTRAS=rag`，它会在 FastAPI 依赖之上再安装 RAG/Milvus
+依赖。
 
 ## 健康检查
 
@@ -61,6 +73,9 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 | `REACT_AGENT_REQUIRE_HOST_ALLOWLIST` | 未设 | `1` 时启用严格模式：绑定非回环且未声明 `REACT_AGENT_ALLOWED_HOSTS` 则**拒绝启动**（exit 2） |
 
 ## API 面（交付边界）
+
+默认容器使用 FastAPI/Uvicorn，以下接口由 `react_agent.server.fastapi_app` 提供；标准库
+入口保留相同的基础 Chat/Task/Workflow 路径，用于无额外依赖的兼容运行。
 
 ```
 GET  /health
