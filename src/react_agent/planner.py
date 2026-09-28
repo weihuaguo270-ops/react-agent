@@ -25,12 +25,26 @@ class Task:
         id:         任务编号（"1", "2", ...）
         description: 任务描述
         depends_on:  依赖的任务 ID 列表，这些任务必须完成才能执行本任务
+        writes:      该任务**可能写入**的路径列表；None 表示未声明。
+                     ``["unknown"]`` 表示 planner 明确表示无法判断。未声明与
+                     unknown 在调度时都按「可能冲突」保守处理（见
+                     orchestrator._write_sets_may_conflict）。
+        context_mode: 该 Worker 的上下文策略（"spawn" 全新 / "fork" 摘要式续接）
         result:      执行结果（执行前为 None）
     """
-    def __init__(self, id: str, description: str, depends_on: list[str] = None):
+    def __init__(
+        self,
+        id: str,
+        description: str,
+        depends_on: list[str] = None,
+        writes: list[str] | None = None,
+        context_mode: str = "spawn",
+    ):
         self.id = id
         self.description = description
         self.depends_on = depends_on or []
+        self.writes = writes
+        self.context_mode = context_mode
         self.result = None
 
     def ready(self, completed_ids: set[str]) -> bool:
@@ -39,7 +53,8 @@ class Task:
 
     def __repr__(self):
         deps = f", 依赖: {self.depends_on}" if self.depends_on else ""
-        return f"<Task #{self.id}: {self.description[:40]}{deps}>"
+        writes = f", 写: {self.writes}" if self.writes else ""
+        return f"<Task #{self.id}: {self.description[:40]}{deps}{writes}>"
 
 
 # ============================================================
@@ -52,7 +67,11 @@ _PLAN_PROMPT = """你是一个专业的任务分解专家。将用户的请求�
 - 每个子任务只做一件事
 - 用 task_N: 描述 的格式
 - 如果某个任务依赖其他任务先完成，在后面加 | depends_on: N, M
-- 没有依赖的任务可以并行执行
+- 如果某个任务会**写入文件**，必须加 | writes: 路径1, 路径2（写目录就写目录）
+- 无法判断会写哪些文件时，写 | writes: unknown —— 不要猜，也不要省略
+- 只有当该子任务**必须基于前面的对话结论才能做**时，才加 | context: fork
+  （fork 只会拿到父会话的答案摘要，不是完整历史，因此不要滥用）
+- 没有依赖且写集不相交的任务才会被并行执行
 - 不要解释，直接输出任务列表
 
 例子1（搜索+对比）:
@@ -87,9 +106,97 @@ task_2: 计算平均值和标准差 | depends_on: 1
 task_1: 用Python生成3x3随机矩阵
 task_2: 计算每行每列的和 | depends_on: 1
 
+例子6（分文件写入，写集不相交可并行）:
+请求: 给前端页面加错误提示，给后端接口加校验，各自补测试
+输出:
+task_1: 修改前端页面的错误提示 | writes: src/pages/login.tsx
+task_2: 给后端接口加参数校验 | writes: src/api/validate.py
+task_3: 补前端测试 | writes: tests/test_login.py | depends_on: 1
+task_4: 补后端测试 | writes: tests/test_validate.py | depends_on: 2
+
 现在处理以下请求：
 请求: {query}
 输出:"""
+
+
+# ============================================================
+# 指令段解析辅助（模块级，便于单测）
+# ============================================================
+
+def _normalize_directive_name(name: str) -> str:
+    """把指令名归一化：去掉 ``_``/``-``/空格并转小写。
+
+    LLM 常见变体（``depends-on`` / ``dependsOn`` / ``DEPENDS ON``）因此都能命中，
+    避免"因为写法不同所以整条指令丢失"。
+    """
+    return "".join(
+        ch for ch in (name or "").strip().lower() if ch.isalnum()
+    )
+
+
+def _split_directive(segment: str) -> tuple[str, str]:
+    """把 ``"depends_on: 1, 2"`` 拆成 ``("dependson", "1, 2")``。
+
+    无冒号时按「首个空白」拆名与值（``"writes src/a.py"``），
+    这样模型偶尔漏掉冒号也不会把整条指令当成未知指令。
+    """
+    if ":" in segment:
+        name, _, value = segment.partition(":")
+        return _normalize_directive_name(name), value.strip()
+    parts = segment.split(None, 1)
+    if not parts:
+        return "", ""
+    return _normalize_directive_name(parts[0]), (parts[1].strip() if len(parts) > 1 else "")
+
+
+def _looks_like_write_path(candidate: str) -> bool:
+    """判断一个 ``writes`` 值是否像**真实路径**。
+
+    这是安全性判断（宁可误杀不可放过）：一个"看起来像声明、实际是垃圾"的值会让
+    调度器误以为该任务写集已知且不相交，从而放行并行写——这比保守串行危险得多。
+    因此只接受严格形态：带引号、无空白的单 token，或裸的窄字符集 token（允许空格
+    是因为 Windows 上确有带空格的文件名）。
+    """
+    token = candidate.strip()
+    if len(token) >= 2 and token[0] == token[-1] and token[0] in "\"'":
+        inner = token[1:-1].strip()
+        return bool(inner) and not any(ch in inner for ch in "\"';|*?<>")
+    if not token or len(token) > 260:
+        return False
+    if any(ch in token for ch in "()[]{}`;|*?<>\"'"):
+        return False
+    if any(ord(ch) < 32 for ch in token):
+        return False
+    # 允许空格，但禁止"说明性文字"的典型形态
+    bad_words = ("新建", "修改", "新增", "以及", "和", "等等", "待定", "todo")
+    if any(word in token.lower() for word in bad_words):
+        return False
+    return True
+
+
+def _parse_writes_value(value: str) -> tuple[list[str] | None, list[str]]:
+    """解析 ``writes`` 的值，返回 ``(写集或 None, 被判为非路径的值)``。
+
+    只要有**任何一个**值不像路径，整条声明就降级为 ``None``（未声明 → 调度器按
+    可能冲突保守串行），并把可疑值返回给调用方打印告警。不做部分采纳——部分采纳
+    会制造「以为声明完整、其实漏了一个路径」的假安全。
+    """
+    if not value.strip():
+        return None, []
+    raw = [
+        item.strip()
+        for item in value.replace("，", ",").split(",")
+        if item.strip()
+    ]
+    if not raw:
+        return None, []
+    suspicious = [item for item in raw if not _looks_like_write_path(item)]
+    if suspicious:
+        return None, suspicious
+    unknown_markers = {"unknown", "?", "unset", "none", "null", "tbd", "n/a"}
+    if all(item.strip().lower() in unknown_markers for item in raw):
+        return raw, []
+    return raw, []
 
 
 class Planner:
@@ -171,6 +278,19 @@ class Planner:
         解析格式:
             task_1: 描述文字
             task_2: 描述文字 | depends_on: 1
+            task_3: 描述文字 | writes: src/a.py, tests/a_test.py
+            task_4: 描述文字 | writes: unknown
+
+        多个指令可以并列出现（``| depends_on: 1 | writes: a.py | context: fork``）。
+
+        鲁棒性约定（对齐 Phase 1 的「未知即可见」原则）：
+        - 指令名归一化后（去掉 ``_``/``-``/空格、转小写）前缀匹配，因此
+          ``writes`` / ``Writes`` / ``WRITES`` / ``writes_on`` 均可识别；
+        - **不再用宽泛的 ``in`` 匹配指令名**——那会让 ``writes: depends_on_x.py``
+          被误判成依赖指令，产生一个永远无法满足的垃圾依赖；
+        - 不认识的指令、以及解析不出值的指令，**直接丢弃并打印告警**，绝不静默；
+        - ``writes`` 的值若不像路径（含 ``;``、说明性文字、反引号等），整条声明按
+          ``unknown`` 处理——**宁可保守串行，也不接受一个假的"安全声明"**。
         """
         tasks = []
         for line in text.split("\n"):
@@ -183,27 +303,46 @@ class Planner:
                 continue
 
             # 去掉 task_N: 前缀
-            # task_1: 描述 | depends_on: 2, 3
             rest = line.split(":", 1)[1].strip() if ":" in line else ""
 
-            # 分离描述和依赖部分
-            description = rest
-            depends_on = []
+            # 分离描述与指令段（描述里出现 | 会截断，这是格式契约的一部分）
+            segments = [seg.strip() for seg in rest.split("|")]
+            description = segments[0].strip() if segments else ""
+            depends_on: list[str] = []
+            writes: list[str] | None = None
+            context_mode = "spawn"
 
-            if "|" in rest:
-                parts = rest.split("|", 1)
-                description = parts[0].strip()
-                dep_part = parts[1].strip().lower()
-                if "depends_on" in dep_part or "depends on" in dep_part:
-                    # 提取数字列表
-                    dep_text = dep_part.replace("depends_on:", "").replace("depends on:", "").strip()
-                    depends_on = [d.strip() for d in dep_text.split(",") if d.strip()]
+            for seg in segments[1:]:
+                if not seg:
+                    continue
+                name, value = _split_directive(seg)
+                if name == "dependson":
+                    depends_on = [
+                        d.strip() for d in value.replace("，", ",").split(",") if d.strip()
+                    ]
+                elif name == "writes":
+                    writes, rejected = _parse_writes_value(value)
+                    if rejected:
+                        print(
+                            f"[Planner] writes 值不像路径，按 unknown 处理（保守串行）: "
+                            f"{', '.join(rejected)}"
+                        )
+                elif name == "context":
+                    # 只有显式写 fork 才启用；不猜测、不默认继承父会话
+                    context_mode = "fork" if value.strip().lower() == "fork" else "spawn"
+                else:
+                    print(
+                        f"[Planner] 忽略无法识别的指令 {seg!r}"
+                        f"（已支持 depends_on / writes / context）"
+                    )
 
             if description:
                 tasks.append(Task(
                     id=str(len(tasks) + 1),
                     description=description,
                     depends_on=depends_on,
+                    writes=writes,
+                    context_mode=context_mode,
                 ))
 
         return tasks
@@ -249,6 +388,39 @@ class Planner:
             parallel = "（可并行）" if len(level) > 1 else ""
             lines.append(f"  第{i+1}层: {task_desc}{parallel}")
         return "\n".join(lines)
+
+    @staticmethod
+    def schedule_with_write_conflicts(tasks: list[Task]) -> list[list[Task]]:
+        """拓扑排序 + **同层写冲突分层**。
+
+        在 :meth:`schedule` 的分层基础上，把同一层内写集可能相交的任务拆到
+        后续子层，保证「同一层内并行执行的任务写集互不相交」。
+
+        未声明写集（``None``）与 ``["unknown"]`` 一律按「可能冲突」处理：
+        宁可串行，不猜。
+
+        依赖关系不受影响——被推迟的任务仍在同一次调用内执行完毕，只是排到
+        本层的后续段。
+        """
+        # 懒加载以避免与 runtime 层形成导入环
+        from react_agent.write_sets import write_sets_may_conflict
+
+        levels = Planner.schedule(tasks)
+        stratified: list[list[Task]] = []
+        for level in levels:
+            groups: list[list[Task]] = []
+            for task in level:
+                for group in groups:
+                    if all(
+                        not write_sets_may_conflict(task.writes, other.writes)
+                        for other in group
+                    ):
+                        group.append(task)
+                        break
+                else:
+                    groups.append([task])
+            stratified.extend(groups)
+        return stratified
 
 
 # ============================================================
@@ -311,7 +483,8 @@ def tool_plan_tasks(query: str) -> str:
     output = [f"[Planner] 分解为 {len(tasks)} 个子任务："]
     for t in tasks:
         deps = f"（等待 {'、'.join(['#' + d for d in t.depends_on])}）" if t.depends_on else "（无依赖，可立即执行）"
-        output.append(f"  #{t.id}: {t.description} {deps}")
+        writes = f" 写集: {', '.join(t.writes)}" if t.writes else " 写集: 未声明"
+        output.append(f"  #{t.id}: {t.description} {deps}{writes}")
 
     output.append("")
     output.append(planner.describe_schedule(levels))

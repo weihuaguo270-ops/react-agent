@@ -146,3 +146,39 @@ defs = get_tool_definitions()          # 该应用应有的工具描述
 - CLI（`agent`）是顶层入口，用户已显式选择 app，`main()` 中仍可显式挂载。
 - 若某工具会读取宿主环境或发起出站请求，应显式标注权限等级（见
   `safety/permissions.py`），不要依赖“没人能调到它”。
+
+## Orchestrator / Worker 的能力边界（含**无工作区隔离**的声明）
+
+多 Agent 编排（`react_agent/orchestrator.py` + `react_agent/planner.py`）的能力边界
+必须按实际情况表述，不要夸大：
+
+| 能力 | 现状 |
+|------|------|
+| Worker 工具面 | **按显式声明收窄**（`tools/scope.py` 的 `ToolScope`）；声明里的未知工具名会告警，strict 模式（`REACT_AGENT_SCOPE_STRICT=1`）直接抛 `UnknownToolScopeError`，不会静默放行 |
+| 同层并行 | **写冲突检测默认开启**（`REACT_AGENT_WRITE_CONFLICT_SERIALIZE`，默认 `1`）：写集可能相交的任务被拆到不同执行段串行 |
+| 写集来源 | Planner 显式输出 `| writes: 路径`；未声明或 `writes: unknown` **一律按冲突处理**（保守串行，不猜） |
+| 委派深度 | 上限 `REACT_AGENT_SUBAGENT_MAX_DEPTH`，默认 `1`（允许直接子级、禁止更深嵌套）；超限明确拒绝 |
+| 并发上限 | `REACT_AGENT_SUBAGENT_MAX_CONCURRENCY`，默认 `4`（`0` = 不限） |
+| Worker 记忆 | Worker 不读也不写长期记忆；回写需显式开启 `REACT_AGENT_WORKER_MEMORY_WRITE=1` |
+| **工作区隔离** | **无** |
+
+> ⚠️ **并行 Worker 共享同一进程与同一工作目录，没有文件系统隔离。**
+> 同层并行 Worker 同时修改同一文件仍会互相覆盖；当前的安全保障是
+> 「写集声明 + 冲突分层」这一**约定与调度**机制，而不是隔离机制。真正的隔离
+> （每个 Worker 独立 git worktree，或进程外执行）属于独立立项，见
+> [`plan-subagent-hardening.md`](plan-subagent-hardening.md) Phase 5 —— 该方案刻意
+> 不把 worktree 作为默认路径：它不消除并发写，只是把问题推到 git 合并层。
+>
+> 因此：**读密集**任务（检索、审查、日志分析）适合并行；**写密集**任务必须先
+> 声明写集，且 `writes` 声明不完整时调度器会保守串行——这是设计意图，不是缺陷。
+
+### Worker 上下文策略（spawn / fork）
+
+`Task.context_mode` 决定 Worker 的初始上下文：
+
+- `spawn`（默认）：全新会话，仅任务描述 + 上游依赖结果，看不到父会话历史。
+- `fork`（Phase 4A，**摘要式**）：额外注入父会话最终答案摘要 + 上游结果，并在
+  提示词中**如实说明"你只看到摘要，不是完整对话历史，也不继承父会话的工具与权限"**。
+
+`fork` 是**一次性快照**：父级此后新增的内容不会回流到该 Worker。真正的"已完成
+轮次前缀"（对齐 DSH `fork` 后端语义）需要先补回合级会话日志，属 Phase 4B 另立项。
