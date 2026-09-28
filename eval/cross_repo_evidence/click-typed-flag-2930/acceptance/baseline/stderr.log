@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "D:\agent_learning\react-agent\eval\cross_repo_evidence\click-typed-flag-2930\acceptance\hidden-tests\check_flags.py", line 42, in <module>
+    assert not failures, 'target_flag_behavior: ' + ','.join(failures)
+           ^^^^^^^^^^^^
+AssertionError: target_flag_behavior: bool-on,bool-toggle,click-bool-on,str-on

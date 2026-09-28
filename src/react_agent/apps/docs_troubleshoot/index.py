@@ -23,6 +23,7 @@ _CACHE_PATH = _INDEX_DIR / "index_cache.json"
 
 
 def corpus_dir() -> Path:
+    """返回内置文档排障语料目录。"""
     return _CORPUS_DIR
 
 
@@ -80,6 +81,7 @@ def get_index() -> RAG:
 
 
 def reset_index() -> RAG:
+    """重建进程内索引并返回新的 RAG 实例。"""
     get_index.cache_clear()
     if _MANIFEST_PATH.is_file():
         try:

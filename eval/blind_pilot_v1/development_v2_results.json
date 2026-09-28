@@ -1,0 +1,66 @@
+{
+  "task_verified_count": 6,
+  "scope": "development only",
+  "agent_runs": 4,
+  "hidden_pass_rate": 0.0,
+  "results": [
+    {
+      "task_id": "pydantic-identity-review",
+      "split": "development",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 38.28,
+      "tokens": 21063,
+      "completion_tokens": 1102,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    },
+    {
+      "task_id": "httpx-identity-review",
+      "split": "development",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 19.38,
+      "tokens": 19375,
+      "completion_tokens": 952,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    },
+    {
+      "task_id": "httpx-activity-review",
+      "split": "development",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 17.69,
+      "tokens": 19475,
+      "completion_tokens": 993,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    },
+    {
+      "task_id": "werkzeug-auth-whitespace-3129",
+      "split": "development",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 32.0,
+      "tokens": 18315,
+      "completion_tokens": 1051,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    }
+  ],
+  "golden_count": 0,
+  "run_dir": "D:\\agent_learning\\react-agent\\eval\\blind_pilot_v1\\runs\\dev-v2-20260919-153059",
+  "total_tokens": 78228,
+  "elapsed_seconds": 107.35,
+  "interpretation": "development calibration only; all stopped by conservative reservation; protocol not ready for held-out",
+  "cost": null
+}

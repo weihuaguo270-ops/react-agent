@@ -24,6 +24,7 @@ REPORTS_DIR = str(runtime_dir('reports', env_var='REACT_AGENT_REPORT_DIR'))
 
 @app.route('/')
 def index():
+    """返回本地 dashboard 静态入口。"""
     return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
 
 
@@ -31,6 +32,7 @@ def index():
 
 @app.route('/api/trajectories')
 def list_trajectories():
+    """按修改时间返回最近 100 条轨迹摘要，跳过损坏文件。"""
     if not os.path.exists(TRAJECTORIES_DIR):
         return jsonify([])
     files = sorted(glob.glob(os.path.join(TRAJECTORIES_DIR, '*.json')),
@@ -59,6 +61,7 @@ def list_trajectories():
 
 @app.route('/api/trajectories/<name>')
 def get_trajectory(name):
+    """读取一条本地轨迹；该开发路由不提供租户或鉴权隔离。"""
     # 兼容带 traj_ 前缀和不带的情况
     safe_name = name if name.startswith('traj_') else f'traj_{name}'
     for fname in (safe_name, name):
@@ -71,6 +74,7 @@ def get_trajectory(name):
 
 @app.route('/api/trajectories/clear', methods=['POST'])
 def clear_trajectories():
+    """删除超过保留天数的轨迹；``days=0`` 表示全部删除。"""
     data = request.get_json(force=True)
     days = data.get('days', 0)
     if not os.path.exists(TRAJECTORIES_DIR):
@@ -99,6 +103,10 @@ def clear_trajectories():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    """在独立 Python 子进程执行 Agent 查询并返回最新轨迹。
+
+    该接口面向本地调试，继承服务环境且没有用户鉴权，不应直接暴露公网。
+    """
     data = request.get_json(force=True)
     query = data.get('query', '')
     if not query:
@@ -224,6 +232,7 @@ def run_eval():
 
 @app.route('/api/shutdown', methods=['POST'])
 def shutdown():
+    """立即终止本地 dashboard 进程，不执行 Flask 清理钩子。"""
     os._exit(0)
 
 

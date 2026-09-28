@@ -29,6 +29,12 @@ except ImportError:  # pragma: no cover - exercised when installed without [rag]
 
 
 class Memory:
+    """持久化的单用户事实记忆，支持语义检索和关键词降级。
+
+    查询会更新访问统计并写回文件。该类不提供租户隔离、脱敏或并发
+    写入保护，服务端接入时必须在外层补齐这些数据治理边界。
+    """
+
     MAX_FACTS = 100
 
     def __init__(self, save_path=None):
@@ -97,6 +103,7 @@ class Memory:
             }, f, ensure_ascii=False, separators=(",", ":"))
 
     def add(self, fact):
+        """添加完全不重复的事实并持久化，返回是否实际写入。"""
         if fact not in self.facts:
             self.facts.append(fact)
             if self._semantic_ready():
@@ -118,6 +125,11 @@ class Memory:
     _CONFLICT = 0.60
 
     def add_or_update(self, new_fact):
+        """按相似度跳过重复、替换潜在冲突或新增事实。
+
+        返回 ``(状态, 说明或旧事实)``；无向量依赖时只能判断精确重复，
+        不会执行语义冲突替换。
+        """
         if not new_fact.strip():
             return ("skipped", "空内容")
         if not self._semantic_ready():
@@ -171,6 +183,7 @@ class Memory:
         return [{"fact": f, "score": float(s)} for s, f in scored[:top_k]]
 
     def query(self, question, top_k=3):
+        """返回高于阈值的 Top-K 记忆，并更新命中项访问统计。"""
         if not self.facts:
             return []
         if not self._semantic_ready():
@@ -191,6 +204,7 @@ class Memory:
             return self._keyword_query(question, top_k)
 
     def remove(self, fact_or_query):
+        """按精确、包含或语义匹配删除首个事实，返回删除数量。"""
         if fact_or_query in self.facts:
             self._remove_at(self.facts.index(fact_or_query))
             self._save()
@@ -239,6 +253,7 @@ class Memory:
             print(f"[记忆] 自动遗忘: {removed}")
 
     def clear(self):
+        """清空内存和持久化文件中的全部事实。"""
         self.facts.clear()
         self.vecs.clear()
         self.access_count.clear()

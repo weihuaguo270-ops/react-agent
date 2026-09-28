@@ -25,12 +25,12 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
 
     if use_llm:
         try:
-            os.environ["REACT_AGENT_APP"] = "docs_troubleshoot"
             from react_agent.harness.recorder import current_trajectory
             from react_agent.react_loop import react_loop
-            from react_agent.tools import enable_app_tools
+            from react_agent.tools import set_request_app
 
-            enable_app_tools()
+            # 请求级作用域：不再用 os.environ 全局改动 app
+            set_request_app("docs_troubleshoot")
             answer = react_loop(message, max_steps=int(body.get("max_steps") or 6))
             if not isinstance(answer, str):
                 answer = str(answer.get("output", answer))

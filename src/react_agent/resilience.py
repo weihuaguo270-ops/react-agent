@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 import json
+import threading
 import time
 import random
 import functools
@@ -404,16 +405,27 @@ class ToolGuard:
             timeout = self._TOOL_TIMEOUTS.get(name, 60)
             last_error = ""
 
+            # 兜底：后台已积压太多「超时但仍在跑」的调用时快速失败，不再叠加线程。
+            detached = detached_call_count()
+            if detached >= MAX_DETACHED_CALLS:
+                return json.dumps({
+                    "error": f"已有 {detached} 个工具调用超时后仍在后台运行，暂不接受新调用",
+                    "blocked": True,
+                })
+
             for attempt in range(max_retries + 1):
                 try:
                     result = _call_with_timeout(original_fn, tool_call, timeout)
                     breaker.on_success()
                     return result
-                except TimeoutError:
+                except TimeoutError as e:
                     last_error = f"超时 ({timeout}s)"
                     breaker.on_failure()
-                    if attempt < max_retries:
-                        time.sleep(0.5)
+                    # 被放弃的调用仍在后台运行时不再重试：线程无法终止，重试只会为
+                    # 同一个卡住的工具再叠加一个线程；对写类工具还会重复并发执行。
+                    if getattr(e, "detached", False) or attempt >= max_retries:
+                        break
+                    time.sleep(0.5)
                 except Exception as e:
                     last_error = str(e)[:100]
                     cat = classify_error(e)
@@ -427,25 +439,77 @@ class ToolGuard:
         return wrapped
 
 
+# ══════════════════════════════════════════════
+#  工具超时执行（收敛结构性的线程泄漏）
+# ══════════════════════════════════════════════
+
+# Python 无法终止线程：超时只能「放弃等待」，被放弃的调用会继续在后台跑到结束。
+# 这里把这种结构性泄漏收敛住：
+#   1. 区分「超时但已结束」与「超时且仍在跑」，后者由 ToolGuard.wrap 决定不再重试
+#      （重试只会在同一个卡住的工具上再叠加一个线程，对写类工具还会重复并发执行）；
+#   2. 给「仍在后台运行」的调用数设上限，触顶时快速失败而不是继续堆积。
+MAX_DETACHED_CALLS = 8
+
+_detached_lock = threading.Lock()
+_detached_calls = 0
+
+
+class ToolTimeout(TimeoutError):
+    """工具调用超时。
+
+    ``detached`` 为 True 表示被放弃的调用此刻仍在后台运行（线程无法终止），
+    调用方据此判断重试是否有意义。
+    """
+
+    def __init__(self, message: str, detached: bool = False):
+        super().__init__(message)
+        self.detached = detached
+
+
+def detached_call_count() -> int:
+    """当前「已超时但仍在后台运行」的调用数。"""
+    with _detached_lock:
+        return _detached_calls
+
+
 def _call_with_timeout(func, arg, timeout):
-    """带超时的函数调用"""
-    import threading
-    result = [None]
-    error = [None]
+    """在守护线程里执行 ``func(arg)``，超过 ``timeout`` 秒则放弃等待。
+
+    成功时返回结果；``func`` 抛出的异常原样抛出；超时抛 :class:`ToolTimeout`。
+    线程无法终止，所以超时只是「不再等待」——``ToolTimeout.detached`` 会告知该
+    调用是否仍在后台运行。
+    """
+    global _detached_calls
+
+    state = {"result": None, "error": None, "finished": False, "counted": False}
     done = threading.Event()
 
     def runner():
+        global _detached_calls
         try:
-            result[0] = func(arg)
-        except Exception as e:
-            error[0] = e
+            state["result"] = func(arg)
+        except Exception as exc:  # noqa: BLE001 — 原样交给调用方分类处理
+            state["error"] = exc
         finally:
+            # 与超时侧的记账同在锁内完成：避免「恰好在这一瞬间结束」的调用被永久计入。
+            with _detached_lock:
+                state["finished"] = True
+                if state["counted"]:
+                    state["counted"] = False
+                    _detached_calls -= 1
             done.set()
 
-    t = threading.Thread(target=runner, daemon=True)
-    t.start()
+    thread = threading.Thread(target=runner, daemon=True)
+    thread.start()
+
     if not done.wait(timeout=timeout):
-        raise TimeoutError(f"超时 ({timeout}s)")
-    if error[0]:
-        raise error[0]
-    return result[0]
+        with _detached_lock:
+            if not state["finished"]:
+                state["counted"] = True
+                _detached_calls += 1
+            counted = state["counted"]
+        raise ToolTimeout(f"超时 ({timeout}s)", detached=counted)
+
+    if state["error"] is not None:
+        raise state["error"]
+    return state["result"]

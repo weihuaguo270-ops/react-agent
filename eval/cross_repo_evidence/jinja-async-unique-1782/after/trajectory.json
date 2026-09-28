@@ -1,0 +1,1 @@
+{"phase":"after","fix_commit":"76af7110ead6083e75072f9e76242c9ce79b76ed","runs":[{"log":"after/run-1.log","exit_code":0},{"log":"after/run-2.log","exit_code":0}]}

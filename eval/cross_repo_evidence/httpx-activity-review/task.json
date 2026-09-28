@@ -1,0 +1,18 @@
+{
+  "task_id": "httpx-activity-review",
+  "status": "verified",
+  "repository": "encode/httpx",
+  "issue_url": "https://github.com/encode/httpx/pull/2701",
+  "issue_title": "Fix for gen-delims escaping behaviour in path/query/fragment",
+  "issue_body": "Path gen-delimiters should preserve square brackets instead of percent-encoding them.",
+  "issue_author": "lovelydinosaur",
+  "base_commit": "df5dbc05580a4c3225e70153729e2a306d67a472",
+  "problem_statement": "HTTPX percent-encodes square brackets in URL paths.",
+  "expected_behavior": "Square brackets remain raw in path bytes.",
+  "reproduction_command": "PYTHONPATH=tmp/httpx2701-before-src python -c import httpx; assert httpx.URL('http://example.com/a[b]').raw_path == b'/a[b]'",
+  "failing_test": "assert httpx.URL('http://example.com/a[b]').raw_path == b'/a[b]'",
+  "environment": "Windows AMD64; Python 3.11.15; fixed source tarballs",
+  "image": "local:python311",
+  "acceptance_test": "hidden test checks square brackets remain in URL path",
+  "missing": []
+}

@@ -15,11 +15,40 @@ _MANIFEST_VERSION = 2
 _DOC_SUFFIXES = {".md", ".txt", ".yaml", ".yml", ".json"}
 
 
+def _stream_lf_normalized(path: Path, chunk_size: int = 65536):
+    """按块产出**换行归一化**后的字节（CRLF/CR -> LF）。
+
+    流式处理并按块边界处理挂起的 ``\\r``，因此不需要把整个文件读进内存。
+    """
+    pending_cr = False
+    with path.open("rb") as fh:
+        while True:
+            chunk = fh.read(chunk_size)
+            if not chunk:
+                break
+            if pending_cr:
+                chunk = b"\r" + chunk
+                pending_cr = False
+            if chunk.endswith(b"\r"):
+                chunk = chunk[:-1]
+                pending_cr = True
+            yield chunk.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    if pending_cr:
+        yield b"\n"
+
+
 def sha256_file(path: Path) -> str:
+    """计算文档内容哈希，供语料 manifest 和漂移检查使用。
+
+    **换行归一化**：哈希前把 CRLF/CR 统一为 LF。否则同一份内容在 Windows
+    （``core.autocrlf=true`` 检出为 CRLF）与 Linux/CI（LF）上得到不同哈希，
+    语料基线就变成"只在生成它的那台机器上成立"——本项目的 CI 同时在
+    ubuntu 与 windows 上跑 ``test_git_docs_corpus_drift``，跨平台不可复现
+    会让该测试在一侧永远红灯。归一化后哈希只反映内容，不反映检出行尾。
+    """
     h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(65536), b""):
-            h.update(chunk)
+    for chunk in _stream_lf_normalized(path):
+        h.update(chunk)
     return h.hexdigest()
 
 
@@ -163,6 +192,7 @@ def openapi_to_chunks(spec: dict[str, Any], source: str) -> list[tuple[str, str]
 
 
 def ingest_openapi(rag: RAG, path: Path) -> int:
+    """解析一个 OpenAPI 文档并将端点级片段写入索引。"""
     raw = path.read_text(encoding="utf-8")
     if path.suffix.lower() in (".yaml", ".yml"):
         try:
@@ -183,6 +213,7 @@ def ingest_openapi(rag: RAG, path: Path) -> int:
 
 
 def git_ingest_from_env() -> tuple[Path | None, str]:
+    """解析可选 Git 语料根目录和固定 revision 配置。"""
     raw = os.environ.get("REACT_AGENT_DOCS_GIT_ROOT", "").strip()
     if not raw:
         return None, ""
@@ -198,6 +229,7 @@ def build_manifest(
     git_root: Path | None = None,
     git_prefix: str = "",
 ) -> dict[str, Any]:
+    """生成绑定语料文件、哈希和 Git revision 的可复现清单。"""
     files = _collect_doc_files(corpus_dir, *extra_dirs)
     git_meta: dict[str, Any] = {}
     if git_root and git_root.is_dir():
@@ -231,6 +263,7 @@ def rebuild_index(
     git_root: Path | None = None,
     git_prefix: str = "",
 ) -> dict[str, Any]:
+    """清空并重建文档索引，返回可审计的摄取清单。"""
     extra_dirs = extra_dirs or []
     openapi_paths = openapi_paths or []
     rag.clear()
@@ -252,6 +285,7 @@ def rebuild_index(
 
 
 def extra_ingest_dirs_from_env() -> list[Path]:
+    """返回环境配置的额外语料目录，忽略空条目。"""
     raw = os.environ.get("REACT_AGENT_DOCS_INGEST_DIRS", "").strip()
     if not raw:
         return []
@@ -259,6 +293,7 @@ def extra_ingest_dirs_from_env() -> list[Path]:
 
 
 def openapi_paths_from_env(app_dir: Path) -> list[Path]:
+    """返回显式 OpenAPI 路径或应用目录中的默认候选。"""
     paths: list[Path] = []
     env = os.environ.get("REACT_AGENT_OPENAPI_SPEC", "").strip()
     if env:

@@ -70,6 +70,7 @@ def extract_claimed_sources(answer: str) -> list[str]:
 
 
 def answer_has_citation_marker(answer: str) -> bool:
+    """返回答案是否含受支持的显式引用标记。"""
     text = answer or ""
     if any(p.search(text) for p in _SOURCE_PATTERNS):
         return True

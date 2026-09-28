@@ -1,0 +1,190 @@
+{
+  "schema_version": "software-task-dataset/v1",
+  "dataset_id": "public-history-software-tasks",
+  "version": "0.1.0",
+  "status": "active",
+  "license": "CC-BY-4.0 (manifest); upstream repository licenses apply per task",
+  "source_policy": "Only publicly traceable issues with an explicit upstream license, frozen base commit, independent acceptance tests, and manual inclusion review.",
+  "tasks": [
+    {
+      "schema_version": "software-task/v1",
+      "task_id": "fastapi-15764-apiroute-tags",
+      "repository": "https://github.com/fastapi/fastapi.git",
+      "issue_url": "https://github.com/fastapi/fastapi/issues/15764",
+      "base_commit": "e0f8cadf094bb4cb7a21e7757333d5dfbae46712",
+      "split": "dev",
+      "test_command": [
+        "python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_swagger_ui_escape.py"
+      ],
+      "hidden_test_command": [
+        "python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "/hidden-tests/test_route_tags.py"
+      ],
+      "hidden_test_asset": "fastapi-15764/test_route_tags.py",
+      "acceptance_criteria": [
+        "The public Swagger UI escaping smoke tests pass.",
+        "A strict Mypy check accepts APIRoute.tags in a documented callback.",
+        "Only allowed paths are modified."
+      ],
+      "allowed_paths": [
+        "fastapi/routing.py"
+      ],
+      "timeout_seconds": 300,
+      "max_output_bytes": 2000000,
+      "repository_cluster": "fastapi/fastapi",
+      "source": {
+        "kind": "external_issue",
+        "issue_url": "https://github.com/fastapi/fastapi/issues/15764",
+        "license": "MIT",
+        "provenance_url": "https://github.com/fastapi/fastapi/pull/15765"
+      },
+      "build": {
+        "runtime_image": "react-agent-review-fastapi-15764:20260912e",
+        "install": [
+          "pydantic>=2.9.0",
+          "starlette>=0.46.0",
+          "typing-extensions>=4.8.0",
+          "typing-inspection>=0.4.2",
+          "annotated-doc>=0.0.2",
+          "email-validator>=2.0.0",
+          "pydantic-extra-types>=2.0.0",
+          "python-multipart>=0.0.18",
+          "httpx>=0.23.0,<1.0",
+          "httpx2>=2.0.0",
+          "pytest>=9.0.0",
+          "pytest-timeout>=2.4.0",
+          "mypy>=1.14.0"
+        ]
+      }
+    },
+    {
+      "schema_version": "software-task/v1",
+      "task_id": "fastapi-15974-router-cache-race",
+      "repository": "https://github.com/fastapi/fastapi.git",
+      "issue_url": "https://github.com/fastapi/fastapi/issues/15974",
+      "base_commit": "7cb06f360dd44efac059848df1a9beee7643b018",
+      "split": "dev",
+      "test_command": [
+        "python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_swagger_ui_escape.py"
+      ],
+      "hidden_test_command": [
+        "python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "/hidden-tests/test_included_router_concurrent_rebuild.py"
+      ],
+      "hidden_test_asset": "fastapi-15974/test_included_router_concurrent_rebuild.py",
+      "acceptance_criteria": [
+        "Concurrent first requests all return HTTP 200.",
+        "Included router candidate cache contains exactly one entry per route.",
+        "Only allowed paths are modified."
+      ],
+      "allowed_paths": [
+        "fastapi/routing.py"
+      ],
+      "timeout_seconds": 300,
+      "max_output_bytes": 2000000,
+      "repository_cluster": "fastapi/fastapi",
+      "source": {
+        "kind": "external_issue",
+        "issue_url": "https://github.com/fastapi/fastapi/issues/15974",
+        "license": "MIT",
+        "provenance_url": "https://github.com/fastapi/fastapi/pull/15975"
+      },
+      "build": {
+        "runtime_image": "react-agent-review-fastapi-15764:20260912e",
+        "install": [
+          "pydantic>=2.9.0",
+          "starlette>=0.46.0",
+          "typing-extensions>=4.8.0",
+          "typing-inspection>=0.4.2",
+          "annotated-doc>=0.0.2",
+          "email-validator>=2.0.0",
+          "pydantic-extra-types>=2.0.0",
+          "python-multipart>=0.0.18",
+          "httpx>=0.23.0,<1.0",
+          "httpx2>=2.0.0",
+          "pytest>=9.0.0",
+          "pytest-timeout>=2.4.0",
+          "mypy>=1.14.0"
+        ]
+      }
+    },
+    {
+      "schema_version": "software-task/v1",
+      "task_id": "fastapi-16253-docs-template-xss",
+      "repository": "https://github.com/fastapi/fastapi.git",
+      "issue_url": "https://github.com/fastapi/fastapi/issues/16253",
+      "base_commit": "49033471594ea5d99a80abdf1043231b7791ee49",
+      "split": "dev",
+      "test_command": [
+        "python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_swagger_ui_escape.py"
+      ],
+      "hidden_test_command": [
+        "python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "/hidden-tests/test_swagger_ui_escape.py"
+      ],
+      "hidden_test_asset": "fastapi-16253/test_swagger_ui_escape.py",
+      "acceptance_criteria": [
+        "Untrusted title and asset URL values are HTML and JavaScript escaped.",
+        "Swagger UI and ReDoc XSS payloads are not emitted as executable markup.",
+        "Only allowed paths are modified."
+      ],
+      "allowed_paths": [
+        "fastapi/openapi/docs.py"
+      ],
+      "timeout_seconds": 300,
+      "max_output_bytes": 2000000,
+      "repository_cluster": "fastapi/fastapi",
+      "source": {
+        "kind": "external_issue",
+        "issue_url": "https://github.com/fastapi/fastapi/issues/16253",
+        "license": "MIT",
+        "provenance_url": "https://github.com/fastapi/fastapi/pull/16255"
+      },
+      "build": {
+        "runtime_image": "react-agent-review-fastapi-15764:20260912e",
+        "install": [
+          "pydantic>=2.9.0",
+          "starlette>=0.46.0",
+          "typing-extensions>=4.8.0",
+          "typing-inspection>=0.4.2",
+          "annotated-doc>=0.0.2",
+          "email-validator>=2.0.0",
+          "pydantic-extra-types>=2.0.0",
+          "python-multipart>=0.0.18",
+          "httpx>=0.23.0,<1.0",
+          "httpx2>=2.0.0",
+          "pytest>=9.0.0",
+          "pytest-timeout>=2.4.0",
+          "mypy>=1.14.0"
+        ]
+      }
+    }
+  ]
+}

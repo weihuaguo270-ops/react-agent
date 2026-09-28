@@ -1,0 +1,25 @@
+{
+  "task_id": "werkzeug-auth-whitespace-3129",
+  "status": "verified",
+  "repository": "pallets/werkzeug",
+  "issue_url": "https://github.com/pallets/werkzeug/issues/3127",
+  "issue_title": "WWW-Authenticate trailing white-space with empty parameters",
+  "issue_body": "Hello there \ud83d\udc4b \n\nI tried to follow the guidelines at:\n* https://palletsprojects.com/contributing/pr\n* https://palletsprojects.com/contributing/issue\n* This issue template\n\nLegal: no GenAI tool were used, nowhere, and I'm making this PR on behave of my employer.\n\nThank you for Werkzeug!\n\n---\n\nWhen a WWWAuthenticate header with no realm or other parameter is converted to a response header, the header contains an invalid trailing white-space.\n\nWhen loading that header in `h11.Response` it is rejected because of the trailing white-space.\n\n- Python version: 3.12.3-0ubuntu2.1\n- Werkzeug version: 3.0.1-3ubuntu0.2\n- h11 version: 0.14.0-1ubuntu0.24.04.1\n\nSuch parameter-less headers are standard: https://httpwg.org/specs/rfc9110.html#challenge.and.response\n\nSimple reproduction steps:\n```py\nwa = WWWAuthenticate('bearer')\nassert wa.to_header() == \"Bearer\"  # must not be \"Bearer \"\n```\n\nThe exact problem we are having, when loading the response in h11:\n\nOur controller does:\n```py\nraise Unauthorized('Missing \"Authorization\"', www_authenticate=WWWAuthenticate('bearer'))\n```\n\nIt ultimately reaches our WSGI server:\n```py\ndef start_response(self, status, response_headers, exc_info):\n    status_code, _, reason = status.partition(' ')\n    status_code = HTTPStatus(int(status_code))\n    response_headers = [\n        (header.encode('ascii').lower(), value.encode('latin-1'))\n        for header, value in response_headers\n    ]\n    ...\n    h11_response = h11.Response(\n        status_code=status_code,\n        reason=reason,\n        headers=response_headers,\n    )\n```\n\nAnd h11 rejects the header:\n```\n  File \"/home/julien/Odoo/community/odoo/http/server.py\", line 307, in start_response\n    h11_response = h11_response_cls(\n                   ^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/h11/_events.py\", line 151, in __init__\n    self, \"headers\", normalize_and_validate(headers, _parsed=_parsed)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/h11/_headers.py\", line 164, in normalize_and_validate\n    validate(_field_value_re, value, \"Illegal header value {!r}\", value)\n  File \"/usr/lib/python3/dist-packages/h11/_util.py\", line 91, in validate\n    raise LocalProtocolError(msg)\nh11._util.LocalProtocolError: Illegal header value b'Bearer '\n```\n\nWe are doing the following patch in our wsgi server to mitigate the problem:\n```diff\n+        if get_header(b'www-authenticate'):\n+            for index, (header, value) in enumerate(response_headers):\n+                if header == b'www-authenticate':\n+                    break\n+            response_headers[index] = (header, value.rstrip())\n+\n```\n\nI've fixed the issue inside werkzeug and I would like to make a PR, what branch can I target?\n\nRegards,\nJulien (juc)",
+  "issue_author": "Julien00859",
+  "base_commit": "795f4eaf6ef1fdc2fd1d7114c61ad384ede4322c",
+  "fix_commit": "051fd66352cf8b3f0797249858068dedaead6d39",
+  "problem_statement": "Parameterless WWW-Authenticate has invalid trailing whitespace.",
+  "expected_behavior": "Emit scheme only; preserve tokens and parameters.",
+  "reproduction_command": [
+    "D:\\agent_learning\\tmp\\werkzeug3129-venv\\Scripts\\python.exe",
+    "-I",
+    "D:\\agent_learning\\react-agent\\eval\\cross_repo_evidence\\werkzeug-auth-whitespace-3129\\acceptance\\hidden-tests\\check_auth.py",
+    "D:\\agent_learning\\tmp\\werkzeug3129-before\\pallets-werkzeug-795f4ea\\src"
+  ],
+  "failing_test": "parameterless Bearer header equality",
+  "environment": "metadata.json",
+  "image": "dedicated Windows Python venv",
+  "acceptance_test": "acceptance/hidden-tests/check_auth.py",
+  "evidence_dir": "react-agent/eval/cross_repo_evidence/werkzeug-auth-whitespace-3129",
+  "split": "unassigned"
+}

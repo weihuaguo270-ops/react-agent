@@ -136,6 +136,7 @@ def match_cause_rules(
     query: str,
     evidence_bundle: dict[str, Any],
 ) -> list[Rule]:
+    """按结构化现场证据命中可解释根因规则。"""
     field = _field_evidence(evidence_bundle)
     ql = (query or "").lower()
     matched: list[Rule] = []
@@ -157,6 +158,7 @@ def match_cause_rules(
 
 
 def aggregate_from_rules(rules: list[Rule]) -> dict[str, Any]:
+    """聚合规则命中为根因、置信度和修复建议。"""
     causes: list[dict[str, Any]] = []
     verify: list[str] = []
     fixes: list[str] = []

@@ -1,0 +1,7 @@
+{
+  "exit_code": 1,
+  "command": "PYTHONPATH=tmp/pydantic-identity-src python reproduction.py",
+  "status": "failed",
+  "failure": "RootModel[str](\"a\") == RootModel[SomeStr](\"a\") evaluated false and the assertion failed",
+  "base_commit": "617abdb1bb95b6a5d7808937cac7ef2fdbe918d9"
+}

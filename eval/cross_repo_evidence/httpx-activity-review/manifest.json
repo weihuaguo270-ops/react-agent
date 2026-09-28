@@ -1,0 +1,56 @@
+{
+  "task_id": "httpx-activity-review",
+  "status": "verified",
+  "verified": true,
+  "acceptance_status": "passed",
+  "before_status": "failed",
+  "after_status": "passed",
+  "before_exit_code": 1,
+  "after_exit_code": 0,
+  "base_commit": "df5dbc05580a4c3225e70153729e2a306d67a472",
+  "head_commit": "7be2dc0e7e7aa1f91d8b35d891bbb3d7971d9644",
+  "evidence_sha256": {
+    "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\task.json": "f8a5042706f53ba6b7b2c265f9b4f3c589c1593b403ce628d06b1495f1309e39",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\metadata.json": "cf8bff7153c18b589975dd057efb22bd35f053a5effdc232a7b4f0693b54b792",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\before\\trajectory.json": "fd397ce109a76fa927588474b3b384c7baae7950fd4c88c9a8db07cde8a6cbed",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\before\\test-result.json": "600cb661e07366d1c144b54960abb35ca7cffa8d5584642d70ccb867d5b26856",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\before\\stdout.log": "653a7285d4cdf16df40004ed776b8cd2c229d0089d74c244362fca2a18a5f7b4",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\acceptance\\hidden-tests\\test_gen_delims_path.py": "4155b7c0b7708bc74cce4700df4ca002d6774993b979aff363f0fc96a4c620b1",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\after\\test-result.json": "2297039b910254ae4a0df002eb3ab2c4560ea19f1fdf03b9d36a357fb84b4123",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\after\\stdout.log": "023df5e73482817511b8dd2aa08b7fd110c0abf296b91de8b020342f3f8d73e1"
+  },
+  "evidence_files": [
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\task.json",
+      "size": 1040
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\metadata.json",
+      "size": 205
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\before\\trajectory.json",
+      "size": 27
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\before\\test-result.json",
+      "size": 139
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\before\\stdout.log",
+      "size": 59
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\acceptance\\hidden-tests\\test_gen_delims_path.py",
+      "size": 131
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\after\\test-result.json",
+      "size": 113
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-activity-review\\after\\stdout.log",
+      "size": 74
+    }
+  ]
+}

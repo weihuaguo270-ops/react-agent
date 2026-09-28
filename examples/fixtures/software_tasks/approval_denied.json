@@ -1,0 +1,35 @@
+{
+  "session_id": "golden_approval_denied",
+  "query": "写入临时文件",
+  "model": "mock-gpt",
+  "timestamp": "2026-09-14T00:00:01Z",
+  "steps": [
+    {
+      "step": 1,
+      "thought": "[mcp_approval_request]",
+      "action": {
+        "name": "mcp_approval_request",
+        "arguments": "{\"name\": \"write\", \"server_label\": \"files\"}"
+      },
+      "observation": "{\"name\": \"write\"}",
+      "duration_seconds": 0.1
+    },
+    {
+      "step": 2,
+      "thought": "[mcp_approval_response]",
+      "action": {
+        "name": "mcp_approval_response",
+        "arguments": "{\"approval_request_id\": \"apr_1\", \"approve\": false}"
+      },
+      "observation": "[错误] mcp approval denied [responses.mcp.approval_denied]",
+      "duration_seconds": 0.1
+    },
+    {
+      "step": 3,
+      "thought": "FINAL ANSWER: 写入临时文件未获批准，无法完成",
+      "observation": ""
+    }
+  ],
+  "final_answer": "写入临时文件未获批准，无法完成",
+  "total_duration_seconds": 0.4
+}

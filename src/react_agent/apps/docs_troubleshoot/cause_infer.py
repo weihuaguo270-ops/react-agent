@@ -136,6 +136,7 @@ def field_doc_alignment(
     evidence_bundle: dict[str, Any],
     doc_causes: list[dict[str, Any]],
 ) -> bool:
+    """返回现场字段是否得到至少一条文档根因证据支持。"""
     if not evidence_bundle.get("count"):
         return False
     return any(c.get("aligned_field") for c in doc_causes)

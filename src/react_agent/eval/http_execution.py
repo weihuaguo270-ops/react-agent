@@ -12,6 +12,7 @@ HttpChatFn = Callable[[str, dict], tuple[int, dict]]
 
 
 def http_chat(base_url: str, body: dict, *, timeout: float = 60) -> tuple[int, dict]:
+    """调用外部 Agent HTTP 接口并返回状态码和 JSON 响应。"""
     url = base_url.rstrip("/") + "/v1/chat"
     req = urllib.request.Request(
         url,

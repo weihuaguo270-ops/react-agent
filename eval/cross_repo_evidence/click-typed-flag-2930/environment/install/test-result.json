@@ -1,0 +1,16 @@
+{
+  "command": [
+    "D:\\agent_learning\\tmp\\click2930-pykndky7\\venv\\Scripts\\python.exe",
+    "-m",
+    "pip",
+    "install",
+    "--no-index",
+    "--find-links",
+    "D:\\agent_learning\\react-agent\\eval\\cross_repo_evidence\\click-typed-flag-2930\\wheels",
+    "colorama==0.4.6"
+  ],
+  "cwd": "D:\\agent_learning\\tmp\\click2930-pykndky7",
+  "exit_code": 0,
+  "status": "passed",
+  "captured_at": "2026-09-19T06:46:09.907586+00:00"
+}

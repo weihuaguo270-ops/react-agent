@@ -7,6 +7,7 @@ import re
 import urllib.error
 import urllib.request
 from typing import Any
+from urllib.parse import urlparse
 
 from react_agent.multimodal import attach_evidence, inspect_artifact
 
@@ -84,8 +85,23 @@ def parse_request_headers(headers_json: str = "") -> dict[str, Any]:
 
 
 def read_config_snapshot(prefixes: str = "REACT_AGENT_") -> dict[str, Any]:
-    """Read non-secret env vars matching prefixes (comma-separated)."""
-    pfx = [p.strip() for p in (prefixes or "REACT_AGENT_").split(",") if p.strip()]
+    """Read non-secret env vars matching prefixes (comma-separated).
+
+    前缀受限于 ``REACT_AGENT_`` 命名空间：调用方可控的 prefixes 否则可以指向
+    任意宿主变量（例如 ``A`` 命中 ``AWS_ACCESS_KEY_ID``），而 ``_REDACT_KEYS``
+    只覆盖名字里含 secret/token/password/api_key 的键。
+    """
+    allowed_prefix = "REACT_AGENT_"
+    raw_prefixes = [p.strip() for p in (prefixes or allowed_prefix).split(",") if p.strip()]
+    pfx = [p for p in raw_prefixes if p.startswith(allowed_prefix)]
+    rejected = [p for p in raw_prefixes if not p.startswith(allowed_prefix)]
+    if not pfx:
+        return {
+            "ok": False,
+            "type": "config_snapshot",
+            "error": f"prefixes 必须位于 {allowed_prefix} 命名空间内",
+            "rejected": rejected,
+        }
     snap: dict[str, str] = {}
     for key, val in sorted(os.environ.items()):
         if not any(key.startswith(p) for p in pfx):
@@ -94,7 +110,75 @@ def read_config_snapshot(prefixes: str = "REACT_AGENT_") -> dict[str, Any]:
             snap[key] = "<redacted>"
         else:
             snap[key] = val[:120]
-    return {"ok": True, "type": "config_snapshot", "env": snap}
+    result: dict[str, Any] = {"ok": True, "type": "config_snapshot", "env": snap}
+    if rejected:
+        result["rejected_prefixes"] = rejected
+    return result
+
+
+def _self_health_target(target: str) -> str | None:
+    """判断目标是否是「本服务自身的健康端点」。
+
+    若是，返回 ``"liveness"`` / ``"readiness"``，调用方改为**进程内**取值，
+    不再经 TCP 回环请求自己——那既浪费也会与探针鉴权/Host 校验策略耦合。
+    """
+    try:
+        parsed = urlparse(target)
+    except ValueError:
+        return None
+    if (parsed.scheme or "").lower() not in ("http", "https"):
+        return None
+    host = (parsed.hostname or "").lower()
+    if host not in ("127.0.0.1", "localhost", "::1"):
+        return None
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    # 仅当端口与本服务配置端口一致才视为自探，避免误判同端口的其它服务
+    configured = os.environ.get("REACT_AGENT_PORT", "8765").strip() or "8765"
+    if str(port) != configured:
+        return None
+    path = (parsed.path or "/").rstrip("/") or "/"
+    if path in ("/health", "/v1/health"):
+        return "liveness"
+    if path in ("/ready", "/v1/ready"):
+        return "readiness"
+    return None
+
+
+def _in_process_health(kind: str, target: str) -> dict[str, Any]:
+    """进程内读取健康状态，返回与 HTTP 探活同形的结果。"""
+    try:
+        if kind == "liveness":
+            import uuid as _uuid
+
+            from react_agent.server.health import liveness_payload
+
+            status_code = 200
+            body = json.dumps(
+                liveness_payload(request_id=str(_uuid.uuid4())), ensure_ascii=False
+            )
+        else:
+            from react_agent.server.health import readiness_check
+
+            ready, payload = readiness_check()
+            status_code = 200 if ready else 503
+            body = json.dumps(payload, ensure_ascii=False)
+    except Exception as exc:  # 与 HTTP 路径保持一致：失败也返回结构化结果
+        return {
+            "ok": False,
+            "type": "health_probe",
+            "url": target,
+            "in_process": True,
+            "error": str(exc)[:200],
+        }
+    return {
+        "ok": True,
+        "type": "health_probe",
+        "url": target,
+        "status_code": status_code,
+        "body_preview": body[:400],
+        "in_process": True,
+        "probe_kind": kind,
+    }
 
 
 def probe_service_health(url: str = "", timeout_sec: float = 3.0) -> dict[str, Any]:
@@ -102,9 +186,24 @@ def probe_service_health(url: str = "", timeout_sec: float = 3.0) -> dict[str, A
     target = (url or os.environ.get("REACT_AGENT_HEALTH_URL") or "http://127.0.0.1:8765/health").strip()
     if not target:
         return {"ok": False, "type": "health_probe", "error": "no_url"}
+
+    # 自探走进程内：不产生回环 HTTP，也不依赖探针的鉴权/Host 策略
+    self_kind = _self_health_target(target)
+    if self_kind is not None:
+        return _in_process_health(self_kind, target)
+
+    # SSRF 守卫：只允许 http/https，且解析后的 IP 不得是内网/保留地址；
+    # 本函数的默认目标是回环地址，属于显式放行的运维用途。
+    from react_agent.safety.net_guard import build_opener, validate_url
+
+    loopback_default = target == "http://127.0.0.1:8765/health" and not url
+    if not loopback_default:
+        ok, reason = validate_url(target)
+        if not ok:
+            return {"ok": False, "type": "health_probe", "url": target, "error": f"blocked: {reason}"}
     req = urllib.request.Request(target, method="GET")
     try:
-        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+        with build_opener().open(req, timeout=timeout_sec) as resp:
             body = resp.read(4096).decode("utf-8", errors="replace")
             return {
                 "ok": True,

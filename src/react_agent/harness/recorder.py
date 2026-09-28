@@ -9,9 +9,11 @@ import os
 import time
 import random
 import string
+from contextvars import ContextVar
 from typing import Any, Optional
 
 from react_agent.paths import runtime_dir
+from react_agent.safety.redaction import redact_arguments, redact_text
 
 TRAJECTORY_DIR = str(
     runtime_dir("trajectories", env_var="REACT_AGENT_TRAJECTORY_DIR")
@@ -117,13 +119,16 @@ class Trajectory:
                  observation: str = "", tokens: int = 0):
         entry = {
             "step": step,
-            "thought": thought[:500] if thought else "",
+            "thought": redact_text(thought)[:500] if thought else "",
             "duration_seconds": round(time.time() - self._step_durations.get(step, time.time()), 2),
         }
         if action_name:
-            entry["action"] = {"name": action_name, "arguments": action_args[:300]}
+            entry["action"] = {
+                "name": action_name,
+                "arguments": redact_arguments(action_args)[:300],
+            }
         if observation:
-            entry["observation"] = observation[:500]
+            entry["observation"] = redact_text(observation)[:500]
         if tokens:
             entry["tokens_estimated"] = tokens
             self.total_tokens_estimated += tokens
@@ -131,7 +136,7 @@ class Trajectory:
         self._watch_step_entry(entry)
 
     def add_thought(self, step: int, thought: str):
-        self._update_step(step, thought=thought[:500])
+        self._update_step(step, thought=redact_text(thought)[:500])
         entry = self._find_step_entry(step)
         if entry:
             self._watch_step_entry(entry)
@@ -139,8 +144,9 @@ class Trajectory:
     def add_tool_call(self, step: int, name: str, arguments: str,
                       result: str, duration: float = 0):
         self._update_step(step,
-                          action={"name": name, "arguments": arguments[:300]},
-                          observation=result[:500])
+                          action={"name": name,
+                                  "arguments": redact_arguments(arguments)[:300]},
+                          observation=redact_text(result)[:500])
         entry = self._find_step_entry(step)
         if entry:
             self._watch_step_entry(entry)
@@ -159,7 +165,7 @@ class Trajectory:
         self.steps.append(entry)
 
     def set_final_answer(self, answer: str):
-        self.final_answer = answer[:1000] if answer else ""
+        self.final_answer = redact_text(answer)[:1000] if answer else ""
 
     def add_output_artifact(self, artifact: dict[str, Any]) -> None:
         """记录最终产物引用。"""
@@ -214,7 +220,13 @@ class Trajectory:
         return filepath
 
 
-_current_trajectory: Optional[Trajectory] = None
+# 当前轨迹按 context 隔离，而不是模块级全局：并行 worker（Orchestrator 的
+# ThreadPoolExecutor 路径）各自持有自己的轨迹，否则后启动的 worker 会覆盖先启动
+# 的那个——先启动者的后续步骤会被写进别人的轨迹，而任一方 finish 后把值清空还会
+# 让另一方静默停止记录。调用方在单个 context 内看到的行为与旧的全局实现一致。
+_current_trajectory: ContextVar[Optional[Trajectory]] = ContextVar(
+    "react_agent_current_trajectory", default=None
+)
 
 
 def start_trajectory(
@@ -226,8 +238,7 @@ def start_trajectory(
     acceptance_criteria: Optional[list[str]] = None,
     input_artifacts: Optional[list[dict[str, Any]]] = None,
 ) -> Trajectory:
-    global _current_trajectory
-    _current_trajectory = Trajectory(
+    trajectory = Trajectory(
         query=query,
         model=model,
         system_prompt=system_prompt,
@@ -235,20 +246,21 @@ def start_trajectory(
         acceptance_criteria=acceptance_criteria,
         input_artifacts=input_artifacts,
     )
-    return _current_trajectory
+    _current_trajectory.set(trajectory)
+    return trajectory
 
 
 def current_trajectory() -> Optional[Trajectory]:
-    return _current_trajectory
+    return _current_trajectory.get()
 
 
 def finish_trajectory(final_answer: str = "") -> Optional[str]:
-    global _current_trajectory
-    if _current_trajectory is None:
+    trajectory = _current_trajectory.get()
+    if trajectory is None:
         return None
-    _current_trajectory.set_final_answer(final_answer)
-    filepath = _current_trajectory.save()
-    _current_trajectory = None
+    trajectory.set_final_answer(final_answer)
+    filepath = trajectory.save()
+    _current_trajectory.set(None)
     return filepath
 
 

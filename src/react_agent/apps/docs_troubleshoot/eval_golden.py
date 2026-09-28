@@ -25,6 +25,7 @@ _APP_ROOT = Path(__file__).resolve().parent
 
 
 def load_golden() -> list[dict[str, Any]]:
+    """加载版本化 Golden 用例，保持清单顺序。"""
     return json.loads(_GOLDEN.read_text(encoding="utf-8"))
 
 
@@ -204,6 +205,7 @@ def run_golden_eval(*, path: str = "agent") -> dict[str, Any]:
 
 
 def eval_gate_ok(report: dict[str, Any], *, gate: str = "all") -> bool:
+    """按完整或指定切片判断 Golden 报告是否达到发布门槛。"""
     if gate == "all":
         return report["passed"] == report["total"]
     if gate == "non_held_out":

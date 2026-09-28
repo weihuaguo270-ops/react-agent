@@ -1,0 +1,56 @@
+{
+  "task_id": "httpx-identity-review",
+  "status": "verified",
+  "verified": true,
+  "acceptance_status": "passed",
+  "before_status": "failed",
+  "after_status": "passed",
+  "before_exit_code": 1,
+  "after_exit_code": 0,
+  "base_commit": "ae1b9f66238f75ced3ced5e4485408435de10768",
+  "head_commit": "1bdeaf65c328dce2ec6396b9af6ec621ae6954fe",
+  "evidence_sha256": {
+    "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\task.json": "f0ebe9a3c27def0beb4a0ba304b490db609bd4107715cb5d2e25b6671a56a3f8",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\metadata.json": "cf8bff7153c18b589975dd057efb22bd35f053a5effdc232a7b4f0693b54b792",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\before\\trajectory.json": "fd397ce109a76fa927588474b3b384c7baae7950fd4c88c9a8db07cde8a6cbed",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\before\\test-result.json": "204ca9bb8c588c14f313eae8d77d600d6eade83113e28b02dd34d5d164d2e6bf",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\before\\stdout.log": "f4f98eb03c66744df90b16bac8b3032691a2161f407e353e2cbb90b4d9883148",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\acceptance\\hidden-tests\\test_pipe_path_encoding.py": "f4e0ff756bda0a21bccbdb3da06ee85445ffd29c9ceb4195737af62d74506a08",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\after\\test-result.json": "69043ded55940330cbf13db6cc5f95c76e6db3a6399c7f0c59ffa725814d051c",
+    "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\after\\stdout.log": "2367ef05bc06403dac0aea7dff99b82d10bb6aca267885126126491a9d9aa81e"
+  },
+  "evidence_files": [
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\task.json",
+      "size": 996
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\metadata.json",
+      "size": 205
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\before\\trajectory.json",
+      "size": 27
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\before\\test-result.json",
+      "size": 135
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\before\\stdout.log",
+      "size": 55
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\acceptance\\hidden-tests\\test_pipe_path_encoding.py",
+      "size": 127
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\after\\test-result.json",
+      "size": 114
+    },
+    {
+      "path": "react-agent\\eval\\cross_repo_evidence\\httpx-identity-review\\after\\stdout.log",
+      "size": 75
+    }
+  ]
+}

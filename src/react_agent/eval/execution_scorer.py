@@ -84,7 +84,21 @@ def execute_tool_step(tool: str, arguments: dict) -> str:
             execute_registered_tool(tool, arguments or {}, TOOL_REGISTRY)
         )
     except Exception as e:
-        return json.dumps({"error": f"执行错误: {e}"})
+        # 闸门的结构化拦截（尤其 approval_required）必须原样透传：外层再包一层
+        # {"error": "执行错误: ..."} 会把 JSON 糊成字符串，审批凭据随之丢失。
+        message = str(e)
+        stripped = message.strip()
+        if stripped.startswith("{"):
+            try:
+                payload = json.loads(stripped)
+            except (json.JSONDecodeError, ValueError):
+                payload = None
+            if isinstance(payload, dict) and (
+                payload.get("approval_id")
+                or payload.get("error") == "approval_required"
+            ):
+                return stripped
+        return json.dumps({"error": f"执行错误: {message}"})
 
 
 def _collect_tools(stdout: str, trajectory: Optional[dict]) -> set[str]:

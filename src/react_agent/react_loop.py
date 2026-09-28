@@ -21,6 +21,7 @@ import os
 import json
 import re
 import time
+from contextvars import ContextVar
 from typing import Optional
 from urllib import request as req
 from urllib.error import URLError
@@ -31,23 +32,97 @@ from react_agent.prompts import ROLE_MANAGER
 from react_agent.context import CONTEXT
 from react_agent.harness import start_trajectory, current_trajectory, finish_trajectory
 from react_agent.harness import SANDBOX
-from react_agent.llm import LLM_DEFAULT, LLM, get_default_llm
-from react_agent.tools import TOOL_REGISTRY, TOOL_DEFINITIONS
+from react_agent.llm import LLM_DEFAULT, LLM, get_default_llm, LLMCancelled
+from react_agent.tools import TOOL_REGISTRY, TOOL_DEFINITIONS, get_registry, get_tool_definitions
 from react_agent.harness.flaky_inject import install_flaky_tools
 
 # 可选：REACT_AGENT_INJECT_FLAKY=calculator:2 用于 live 可靠性对照
 install_flaky_tools(TOOL_REGISTRY)
 
-# 供外部读取的上一次轨迹步骤数据（Orchestrator 共享数据用）
-last_trajectory_steps = []
+# 最近一次轨迹步骤。权威值按 context 隔离，并行 worker 之间互不覆盖。
+# last_trajectory_steps 保留为兼容视图：单线程读取时行为不变，但并行场景下会被
+# 其他 worker 覆盖，请改用 get_last_trajectory_steps()。
+last_trajectory_steps: list = []
+_last_trajectory_steps: ContextVar[Optional[list]] = ContextVar(
+    "react_agent_last_trajectory_steps", default=None
+)
+
+
+def get_last_trajectory_steps() -> list:
+    """读取当前 context 的最近一次轨迹步骤（并行 worker 安全）。"""
+    return _last_trajectory_steps.get() or []
+
+
+def _stream_event(event: str, data=None):
+    """Best-effort progress event; the core loop also runs without HTTP/SSE."""
+    try:
+        from react_agent.server.streaming import emit_event
+
+        emit_event(event, data or {})
+    except Exception:
+        return
+
+
+# 流式答案的上下文：当前步与总步数（供 answer_delta/answer 事件携带）
+_stream_ctx: dict = {"step": 0, "max_steps": 0}
+_answer_emitted = False
+
+
+def _stream_answer(answer: str) -> None:
+    """发出完整答案事件（幂等，避免同一轮重复推送）。"""
+    global _answer_emitted
+    if _answer_emitted or not (answer or "").strip():
+        return
+    _answer_emitted = True
+    _stream_event("answer", {
+        "step": _stream_ctx.get("step", 0),
+        "max_steps": _stream_ctx.get("max_steps", 0),
+        "answer": answer.strip(),
+    })
+
+
+def _answer_delta(piece: str) -> None:
+    """LLM 增量正文回调。
+
+    两件事：(1) 把增量推给 SSE，(2) 客户端已断开时抛 LLMCancelled 终止本次
+    LLM 流——这是「用户离开后仍烧 token」的直接止血点。
+    """
+    from react_agent.server.streaming import emit_event, is_cancelled
+    from react_agent.llm import LLMCancelled as _LLMCancelled
+
+    if is_cancelled():
+        raise _LLMCancelled("client disconnected")
+    if piece:
+        emit_event("answer_delta", {
+            "step": _stream_ctx.get("step", 0),
+            "max_steps": _stream_ctx.get("max_steps", 0),
+            "delta": piece,
+        })
+
+
+def _ensure_not_cancelled() -> None:
+    """步间检查：已取消则立刻停止，不再发起下一次 LLM 调用。"""
+    from react_agent.server.streaming import is_cancelled
+    from react_agent.llm import LLMCancelled as _LLMCancelled
+
+    if is_cancelled():
+        raise _LLMCancelled("client disconnected")
+
 
 def _finish_with_save(answer: str = ""):
     """finish_trajectory 封装：先保存轨迹步骤供外部读取"""
-    global last_trajectory_steps
     traj = current_trajectory()
     if traj and hasattr(traj, 'steps'):
-        last_trajectory_steps[:] = list(traj.steps)
-    finish_trajectory(answer)
+        steps = list(traj.steps)
+        _last_trajectory_steps.set(steps)
+        last_trajectory_steps[:] = steps
+    filepath = finish_trajectory(answer)
+    if traj:
+        _stream_event("trajectory", {
+            "trajectory_id": getattr(traj, "session_id", "") or getattr(traj, "id", ""),
+            "steps": len(getattr(traj, "steps", []) or []),
+            "saved": bool(filepath),
+        })
 
 MCP_CLIENTS = []
 
@@ -121,14 +196,25 @@ def _active_llm():
 # 第三步：调用 LLM
 # ============================================================
 def call_llm(messages, max_retries=2, tool_defs=None,
-             temperature=None, max_tokens=None):
+             temperature=None, max_tokens=None, on_delta=None):
     """调用 LLM，返回消息对象。使用 _current_llm（可通过 LLM_PROVIDER 切换）"""
     return _active_llm().chat(
         messages,
-        tool_defs=tool_defs if tool_defs is not None else TOOL_DEFINITIONS,
+        tool_defs=tool_defs if tool_defs is not None else get_tool_definitions(),
         temperature=temperature,
         max_tokens=max_tokens,
         max_retries=max_retries,
+        on_delta=on_delta,
+    )
+
+
+def _llm_stream_enabled() -> bool:
+    """是否对 LLM 启用流式（答案增量 + 中途取消）。
+
+    默认开启；``REACT_AGENT_LLM_STREAM=0`` 可回退到一次性返回。
+    """
+    return os.environ.get("REACT_AGENT_LLM_STREAM", "1").strip().lower() not in (
+        "0", "false", "off", "no",
     )
 
 
@@ -203,8 +289,11 @@ def _execute_tool_call_raw(tool_call):
     # 权限闸门（Harness）：模型 tool_call ≠ 允许执行；先于沙箱
     from react_agent.safety.permission_gate import permission_block_message
 
+    # 工具视图按「本次请求所属应用」隔离：默认应用不应看到 docs_troubleshoot 工具
+    registry = get_registry()
+
     # 先查本地注册的工具
-    if func_name in TOOL_REGISTRY:
+    if func_name in registry:
         blocked = permission_block_message(func_name, arguments)
         if blocked is not None:
             print(f"  [Permission] blocked {func_name}: {blocked[:120]}")
@@ -216,7 +305,7 @@ def _execute_tool_call_raw(tool_call):
                 return sandbox_result
         # 直接执行（沙箱关闭或 safe 工具）
         # 故意不吞异常：让 ToolGuard 能对 timeout 等做重试
-        return str(TOOL_REGISTRY[func_name](**arguments))
+        return str(registry[func_name](**arguments))
     # 不在本地注册表 → 尝试遍历所有 MCP Client
     for _mcp_client in MCP_CLIENTS:
         if func_name in [t["name"] for t in _mcp_client.tools]:
@@ -331,9 +420,9 @@ def _force_finalize(messages: list, *, reason: str) -> str:
 # ============================================================
 def react_loop(user_query, max_steps=None, tool_defs=None):
     _ensure_rag_loaded()
-    from react_agent.tools import enable_app_tools
-
-    enable_app_tools()
+    # 不再在此调用 enable_app_tools()：那会把某个垂直应用的工具永久并入全局
+    # 注册表（进而对其他应用可见）。应用工具改由 tools.get_registry() /
+    # get_tool_definitions() 按请求作用域提供。
     max_steps = _resolve_max_steps(max_steps)
     base_prompt = """你是一个可以使用工具的 AI 助手。规则：
 1. 用 THOUGHT / ACTION / OBSERVATION / FINAL ANSWER 格式
@@ -367,6 +456,16 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
 
     # 开始轨迹记录
     start_trajectory(user_query, llm.model, system_prompt)
+    global _answer_emitted
+    _answer_emitted = False
+    _stream_ctx["step"] = 0
+    _stream_ctx["max_steps"] = max_steps
+    _stream_event("runtime", {
+        "status": "started",
+        "mode": "llm",
+        "model": getattr(llm, "model", ""),
+        "max_steps": max_steps,
+    })
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -382,7 +481,18 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
     search_count = 0
     last_tool_key = None  # (name, normalized_args) 防相邻完全重复调用
     for step in range(1, max_steps + 1):
+        # 客户端已断开则立刻停止：不再发起新的 LLM 调用，也不再执行工具。
+        try:
+            _ensure_not_cancelled()
+        except LLMCancelled:
+            print("  [取消] 客户端已断开，停止本次 ReAct 循环")
+            _stream_event("cancelled", {"step": step - 1, "reason": "client_disconnected"})
+            _finish_with_save("")
+            raise
         print(f"--- Step {step}/{max_steps} ---")
+        _stream_ctx["step"] = step
+        _stream_ctx["max_steps"] = max_steps
+        _stream_event("step", {"step": step, "max_steps": max_steps, "status": "started"})
         traj = current_trajectory()
         if traj:
             traj.start_step(step)
@@ -408,7 +518,18 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
             })
 
         # (1) 调 LLM（支持传入自定义工具列表）
-        msg = call_llm(messages, tool_defs=step_tool_defs)
+        # 流式开启时把正文增量实时推给 SSE；回调内检测到取消会抛 LLMCancelled。
+        try:
+            msg = call_llm(
+                messages,
+                tool_defs=step_tool_defs,
+                on_delta=_answer_delta if _llm_stream_enabled() else None,
+            )
+        except LLMCancelled:
+            print("  [取消] 客户端已断开，停止本次 ReAct 循环")
+            _stream_event("cancelled", {"step": step, "reason": "client_disconnected"})
+            _finish_with_save("")
+            raise
         last_content = msg.get("content", "") or ""
         if last_content.strip():
             print(f"[LLM思考] {last_content[:200]}")
@@ -427,6 +548,7 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
             if answer.strip():
                 print(f"\n>>> 最终答案: {answer.strip()}")
             _finish_with_save(answer.strip())
+            _stream_answer(answer)
             return answer
 
         if not tool_calls:
@@ -435,34 +557,48 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
             if fa is not None:
                 print(f"\n>>> 最终答案: {fa}")
                 _finish_with_save(fa)
+                _stream_answer(fa)
+                _stream_event("step", {"step": step, "status": "completed", "kind": "final"})
                 return fa
             # 上一步用了工具，这一步没调但给出了实质内容 → 作为答案
             if tools_were_used and len(last_content.strip()) > 10:
                 print(f"\n>>> 最终答案: {last_content.strip()}")
                 _finish_with_save(last_content.strip())
+                _stream_answer(last_content)
+                _stream_event("step", {"step": step, "status": "completed", "kind": "final"})
                 return last_content
             # 收尾步无工具也无标记：若有实质内容直接收；否则强制总结
             if reserve_final:
                 if len(last_content.strip()) > 10:
                     print(f"\n>>> 最终答案: {last_content.strip()}")
                     _finish_with_save(last_content.strip())
+                    _stream_answer(last_content)
                     return last_content
                 answer = _force_finalize(messages, reason="reserve_final_empty")
                 _finish_with_save(answer.strip())
+                _stream_answer(answer)
                 return answer
             # 连续 4 步寒暄（没调工具也不是明确答案）→ 结束
             if not tools_were_used and len(last_content.strip()) > 5 and step >= 4:
                 print(f"\n(连续 {step} 步寒暄未调用工具，自动结束)")
                 _finish_with_save(last_content)
+                _stream_answer(last_content)
                 return last_content
             continue
 
         # 执行工具
         tools_were_used = True
         for tc in tool_calls:
+            # 每个工具执行前再查一次：客户端断开后立即停手，不跑完剩余工具
+            _ensure_not_cancelled()
             name = tc["function"]["name"]
             args = tc["function"]["arguments"]
             print(f"[调工具] {name}({args})")
+            _stream_event("tool_call", {
+                "step": step,
+                "tool": name,
+                "arguments": args,
+            })
 
             # 搜索次数限制（只阻止搜索，不影响其他工具）
             if name == "web_search":
@@ -501,6 +637,12 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
 
             result = execute_tool_call(tc)
             print(f"[工具返回] {result[:100]}")
+            _stream_event("tool_result", {
+                "step": step,
+                "tool": name,
+                "ok": not looks_like_tool_error(result),
+                "observation": result[:500],
+            })
             last_tool_key = tool_key
 
             content_for_llm = result
@@ -550,6 +692,7 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
     if fa:
         print(f">>> 最终答案: {fa}")
         _finish_with_save(fa)
+        _stream_answer(fa)
         return fa
 
     # 工具成功但无最终答案 → 强制无工具总结（核心修复）
@@ -558,11 +701,13 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
         if answer.strip():
             print(f">>> 最终答案: {answer.strip()}")
         _finish_with_save(answer.strip())
+        _stream_answer(answer)
         return answer
 
     if last_content.strip():
         print(f">>> 最终答案: {last_content.strip()}")
     _finish_with_save(last_content.strip() if last_content.strip() else "")
+    _stream_answer(last_content)
     return last_content
 
 # ============================================================
@@ -576,7 +721,18 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
 # ============================================================
 
 def auto_extract_memory(user_query, assistant_answer):
-    """从对话中自动提取值得记住的信息（独立函数，依赖 call_llm）"""
+    """从对话中自动提取值得记住的信息（独立函数，依赖 call_llm）
+
+    **记忆边界**：Worker（被委派的子 Agent）默认**不写**长期记忆。并行 Worker
+    同时回写同一个模块级 ``MEMORY`` 单例会造成交叉污染，且子 Agent 的单轮经验
+    不足以代表用户偏好。需要放开时显式设置 ``REACT_AGENT_WORKER_MEMORY_WRITE=1``。
+    """
+    from react_agent.orchestrator import in_worker_context, worker_memory_write_enabled
+
+    if in_worker_context() and not worker_memory_write_enabled():
+        print("[记忆] 跳过：当前处于 Worker 委派上下文，子 Agent 不写长期记忆")
+        return 0
+
     if not assistant_answer or len(assistant_answer) < 20 or any(w in user_query for w in ["忘记", "删除"]):
         return 0
     
@@ -617,13 +773,45 @@ def auto_extract_memory(user_query, assistant_answer):
     return saved
 
 
-def multi_agent_chain(user_query, parallel=False):
-    """多 Agent 协作（内部使用 Orchestrator 类；懒加载以免 Core 默认路径导入）。"""
-    from react_agent.orchestrator import Orchestrator
+def multi_agent_chain(user_query, parallel=False, parent_summary=None):
+    """多 Agent 协作（内部使用 Orchestrator 类；懒加载以免 Core 默认路径导入）。
 
-    return Orchestrator(call_llm, react_loop, tool_definitions=TOOL_DEFINITIONS).execute(
-        user_query, parallel=parallel
+    参数:
+        parent_summary: 父会话（当前会话）的最终答案摘要。仅在某个子任务显式声明
+            ``context: fork`` 时才会注入该 Worker 的提示词，且提示词会**如实说明**
+            这是摘要而非完整历史。不传则 fork 任务拿不到父级上下文。
+
+    深度守卫：委派深度超过 ``REACT_AGENT_SUBAGENT_MAX_DEPTH``（默认 1）时**明确
+    拒绝**，而不是静默截断。拒绝会让本次调用返回一段说明文本，不产生任何子
+    Agent 副作用——对齐 Codex ``agents.max_depth`` 默认 1 的取向。
+    """
+    from react_agent.orchestrator import (
+        Orchestrator,
+        current_delegation_depth,
+        max_delegation_depth,
+        max_worker_concurrency,
+        write_conflict_serialize_enabled,
     )
+
+    depth = current_delegation_depth()
+    limit = max_delegation_depth()
+    if depth >= limit:
+        message = (
+            f"[Orchestrator] 拒绝委派：当前深度 {depth} 已达上限 {limit}。"
+            f"子 Agent 不能再派生更深层的子 Agent（如需放宽请设置 "
+            f"REACT_AGENT_SUBAGENT_MAX_DEPTH，但不建议递归委派）。"
+        )
+        print(message)
+        return message
+
+    orchestrator = Orchestrator(call_llm, react_loop, tool_definitions=TOOL_DEFINITIONS)
+    orchestrator.parent_summary = parent_summary or ""
+    if write_conflict_serialize_enabled():
+        # 写冲突串行化默认开启：并行度会因此下降，显式打印一次以便可观测
+        print(
+            f"[Orchestrator] 写冲突串行化：开启（并发上限 {max_worker_concurrency() or '不限'}）"
+        )
+    return orchestrator.execute(user_query, parallel=parallel)
 
 def _setup_config():
     """交互式配置向导：创建/更新 llm_config.json"""
@@ -748,6 +936,12 @@ def main():
     """命令行入口：支持交互模式和单次问题模式。"""
     global TOOL_DEFINITIONS
 
+    # CLI 是顶层入口，用户已显式选择 app（REACT_AGENT_APP），因此这里可以
+    # 显式挂载该 app 的工具到全局视图；HTTP 请求路径不走此分支（改用请求作用域）。
+    from react_agent.tools import enable_app_tools
+
+    enable_app_tools()
+
     # 处理配置相关命令（不依赖 LLM）
     _sys_argv = sys.argv[1:] if len(sys.argv) > 1 else []
     if "--setup" in _sys_argv or "setup" in _sys_argv:
@@ -842,6 +1036,8 @@ def main():
             except Exception as e:
                 print(f"  -> 连接失败: {e}\n")
     _skip_query = False
+    # 主会话最后一轮答案：仅当子任务显式声明 context: fork 时作为摘要注入
+    _last_answer = ""
     if _sys_argv:
         q = " ".join(_sys_argv)
         # 处理"忘记/删除"——直接删，不走 react_loop
@@ -866,10 +1062,13 @@ def main():
         try:
             full_q = memory_context + q if memory_context and not _skip_query else q
             if any(w in q for w in ["同时", "并且", "还有", "另外", "且"]):
-                result = multi_agent_chain(full_q, parallel=_parallel_mode)
+                result = multi_agent_chain(
+                    full_q, parallel=_parallel_mode, parent_summary=_last_answer
+                )
             else:
                 result = react_loop(full_q, max_steps=_cli_max_steps)
             if result:
+                _last_answer = result
                 auto_extract_memory(q, result)
         except Exception as e:
             import traceback; traceback.print_exc()
@@ -914,10 +1113,11 @@ def main():
             try:
                 full_q = memory_context + q if memory_context else q
                 if any(w in q for w in ["同时", "并且", "还有", "另外", "且"]):
-                    result = multi_agent_chain(full_q)
+                    result = multi_agent_chain(full_q, parent_summary=_last_answer)
                 else:
                     result = react_loop(full_q)
                 if result:
+                    _last_answer = result
                     auto_extract_memory(q, result)
             except Exception as e:
                 import traceback; traceback.print_exc()

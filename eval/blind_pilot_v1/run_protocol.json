@@ -1,0 +1,45 @@
+{
+  "status": "pilot_completed_budget_limited",
+  "blockers": [],
+  "model": "deepseek-flash",
+  "model_requirement": "Record requested alias and returned model ID; do not claim immutable version",
+  "temperature": 0,
+  "attempts_per_task": 1,
+  "wall_time_seconds": 900,
+  "total_token_budget": 32000,
+  "budget_enforcement": "Conservative per-request UTF-8 bytes plus 4096 framing reservation; max_tokens capped by remaining reservation; cumulative API total_tokens checked; may stop substantially below 32000. Not calibrated exact tokenizer accounting.",
+  "tools": [
+    "read files",
+    "edit files",
+    "shell in disposable input-only container"
+  ],
+  "network_for_tools": "none",
+  "mounts": "only problem.md and baseline repo; never workspace root, Docker socket, credentials, hidden tests, source snapshots or after evidence",
+  "prompt_file": "prompt.md",
+  "agent_runs": 6,
+  "scores": {
+    "observed_hidden_passes": 0,
+    "total": 6,
+    "capability_estimate_valid": false
+  },
+  "cost": null,
+  "cost_rule": "provider usage times recorded price version; unavailable pricing remains null",
+  "provider_config": "react-agent/llm_config.json:providers.deepseek",
+  "credential_source": "DEEPSEEK_API_KEY (environment or project .env; never copied into agent container)",
+  "endpoint": "https://api.deepseek.com",
+  "requested_model": "DeepSeek V4.1 Flash",
+  "available_model_ids": [
+    "deepseek-flash",
+    "deepseek-v4-pro"
+  ],
+  "model_probe_at": "2026-09-19T07:13:10.855076+00:00",
+  "model_candidate": "deepseek-flash",
+  "model_identity_status": "user_approved_service_alias",
+  "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc",
+  "regression_scope": "bundled hidden assertions only; full upstream regressions not run",
+  "returned_model_ids": [
+    "deepseek-flash"
+  ],
+  "calibration_status": "v2_development_only_incomplete",
+  "held_out_rerun_allowed": false
+}

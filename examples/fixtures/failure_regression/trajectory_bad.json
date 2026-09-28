@@ -1,0 +1,32 @@
+{
+  "session_id": "failure_regression_bad_001",
+  "schema_version": "1",
+  "query": "查找 Python list.sort 文档",
+  "model": "mock-gpt",
+  "timestamp": "2026-07-14T12:00:00Z",
+  "system_prompt_preview": "You are a helpful ReAct agent.",
+  "total_steps": 2,
+  "total_duration_seconds": 1.2,
+  "total_tokens_estimated": 200,
+  "final_answer": "",
+  "steps": [
+    {
+      "step": 1,
+      "thought": "先搜索文档。",
+      "action": {
+        "name": "web_search",
+        "arguments": "{\"query\": \"Python list.sort\"}"
+      },
+      "observation": "Error: ConnectionTimeout while calling web_search",
+      "duration_seconds": 0.8,
+      "tokens_estimated": 120
+    },
+    {
+      "step": 2,
+      "thought": "工具失败，无法继续。",
+      "observation": "",
+      "duration_seconds": 0.2,
+      "tokens_estimated": 80
+    }
+  ]
+}

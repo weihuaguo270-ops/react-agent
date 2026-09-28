@@ -17,10 +17,12 @@ DEFAULT_MIN_EVIDENCE_SUFFICIENCY = 0.5
 
 
 def production_corpus_dir() -> Path:
+    """返回生产盲测专用语料目录。"""
     return _PRODUCTION_CORPUS
 
 
 def load_production_cases() -> list[dict[str, Any]]:
+    """加载与开发集隔离的 production/held-out 用例。"""
     return json.loads(_CASES.read_text(encoding="utf-8"))
 
 
@@ -65,6 +67,7 @@ def run_production_eval(
     include_held_out: bool = True,
     min_evidence_sufficiency: float | None = DEFAULT_MIN_EVIDENCE_SUFFICIENCY,
 ) -> dict[str, Any]:
+    """运行生产盲测并将证据充分性作为硬门禁写入报告。"""
     _configure_production_ingest()
 
     from react_agent.tools import enable_app_tools
