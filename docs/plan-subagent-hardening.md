@@ -240,10 +240,25 @@ Task(id, description, depends_on, writes: list[str] | None = None)
 > 注：`tool_scope.py` / `write_sets.py` 刻意放在**顶层**而非 `tools/` 包内 —— `react_agent.tools.__init__` 会挂载 app/workflow/experimental 工具（连带 RAG），Orchestrator 不能在 core 路径上触发那次装配。
 
 **验证**：
-- 新增 + 既有并发测试：`tests/test_subagent_hardening.py` + `tests/test_orchestrator_isolation.py` = **28 passed**
-- 相关回归组（含 workflow / permissions / docs / llm payload / eval contract / rag / duplicate / final answer / corpus drift）：**72 passed, 1 skipped**
-  - 其中 1 failed 为 `test_git_docs_corpus_drift::test_drift_clean_when_matching_baseline`，属**基线前置漂移**，与本次改动无关（见上"已知边界 3"）
-- 全量离线套件：改动前后失败集**完全一致**（12 项既有环境失败：`git clone` 在受限沙箱下的 `exit 128`、`test_trace_debugger_failure_contracts` 确定性失败）。已用 `git worktree` 建 HEAD 干净副本逐项对照确认，非本次改动引入。
+- 新增 + 既有并发测试：`tests/test_subagent_hardening.py` + `tests/test_orchestrator_isolation.py` = **36 passed**
+- 相关回归组（含 workflow / permissions / docs / llm payload / eval contract / rag / duplicate / final answer / corpus drift）：通过
+- 全量离线套件：失败数与基线一致（12–13 项既有失败）。已用 `git worktree` 建干净副本逐项对照确认，非本次改动引入。
+
+**提交**：`8f27fcc`（RAG 语料装配修复，独立提交）· `c3dbd75`（本方案的实现 + 指令解析三处修复）。
+
+### 7.4 指令解析鲁棒性（实测驱动，2026-09-25 补充）
+
+起因：`writes` 依赖 Planner 的 LLM 输出，需要量化"模型不遵循格式"的风险。用 14 种真实偏差场景实测当前解析器后，确认风险**低且失效方向正确**（漏写/拼错/反引号等落为 `None` → 保守串行，不存在"静默并行写同一文件"的路径），但发现三处失真并已修复：
+
+| # | 问题 | 修复 |
+|---|---|---|
+| 1 | `depends_on` 用宽泛 `in` 匹配，`\| writes: depends_on_helper.py` 被误判为依赖指令，产出垃圾依赖 `['writes: _helper.py']`，任务永远无法 `ready()` | 指令名归一化（去 `_`/`-`/空格 + 小写）后前缀匹配 |
+| 2 | `writes` 值不做形态校验，`src/a.tsx (新建)`、`src/b.py; src/c.py` 被当成**有效声明**——垃圾路径既不匹配真实路径、也不触发 unknown 兜底，会让两个写同一文件的任务被判为不相交而放行并行 | 值形态校验；任一值不像路径则**整条降级为未声明**并打印被拒值（引号路径仍接受） |
+| 3 | 拼错的指令（如 `\| write:`）被静默丢弃 | 打印「忽略无法识别的指令」，未知即可见 |
+
+附带修复：`Orchestrator.run_worker` 原先无条件调用 `_registry_names()` 校验工具名，而该调用会装配整个 `react_agent.tools` 包（连带 RAG）。改为先与本次可用工具定义求交（零成本），仅当声明出现可用集之外的名字时才查注册表，并区分「拼错」与「已注册但本次未暴露」。
+
+**已定稿决策**：写冲突检测**默认开启**（同层写集相交即串行，宁可慢不可猜）。
 
 **已知边界（必须如实说明）**：
 
@@ -251,10 +266,10 @@ Task(id, description, depends_on, writes: list[str] | None = None)
 2. **命中前先执行**：写集来自 Planner 的 LLM 输出，模型可能不遵循 `writes:` 格式；此时 `writes` 为 `None` → 保守串行。**这是设计意图**：宁可慢，不可猜。
 3. **`docs/` 同时是评测语料**：`docs/` 同时是 git-docs 评测的 RAG 语料。本次新增/修改了 3 个 docs 文件，语料 sha256 基线（`git_docs_corpus_baseline.json`）**未刷新**。注意该基线在改动前**已经**与 `docs/` 漂移（18 个文件，其中多数非本次改动），因此刷新它属于独立事项，不应混进本次改动。
 
-**顺带发现的既有缺陷（未修，不在本方案范围）**：
+**顺带发现的既有缺陷（已在 `8f27fcc` 单独修复）**：
 
-`tests/test_core_lazy_imports.py::test_react_loop_import_does_not_load_experimental_modules` 在 **HEAD 上就失败**。已用干净 worktree 复现（`HEAD rag leak: True`，`1 failed`）。
+`tests/test_core_lazy_imports.py::test_react_loop_import_does_not_load_experimental_modules` 在本方案开始前于 HEAD 上就失败。已用干净 worktree 复现（`HEAD rag leak: True`，`1 failed`）。
 
-- 导入链：`react_agent.tools.__init__` → `enable_workflow_tools()`（模块级调用）→ `react_agent.workflow.tools` → `workflow.builtins` → `apps.docs_troubleshoot.diagnosis/draft` → `apps/docs_troubleshoot/index.py:15` → `react_agent.rag`。
-- 即 **Core 默认路径会连带装配 RAG 语料**（实测启动时打印 `[RAG] 已加载 591 个文档片段`），与"实验工具默认不注册"的设计意图不符。
-- 修法（建议独立提交）：把 `enable_workflow_tools()` 改为惰性挂载，或让 `workflow.builtins` 对 docs_troubleshoot 的 import 延迟到实际执行时。本方案**未改动**它，以免把"subagent 加固"与"core 装配瘦身"两件事混在一个变更里。
+- 导入链：`react_agent.tools.__init__` → `enable_workflow_tools()`（模块级调用）→ `react_agent.workflow.tools` → `workflow.builtins` → `apps.docs_troubleshoot.diagnosis/draft` → `apps/docs_troubleshoot/__init__.py` → `tools.py` → `apps/docs_troubleshoot/index.py:15` → `react_agent.rag`。
+- 后果：**Core 默认路径会连带装配 RAG 语料**（实测启动打印 `[RAG] 已加载 591 个文档片段`），与"实验工具默认不注册"的设计意图不符；`import react_loop` 实测 **2.46s → 1.32s**（修复后）。
+- 修复方式：`index`（→ `rag`）在 `tools.py` 中只在真正检索时需要，改为经 `_load_index()` 按需导入。
