@@ -13,13 +13,26 @@ from react_agent.apps.docs_troubleshoot.evidence import (
     read_config_snapshot,
 )
 from react_agent.apps.docs_troubleshoot.trace_backend import fetch_trace_bundle
-from react_agent.apps.docs_troubleshoot.index import get_index
 from react_agent.apps.docs_troubleshoot.policy import verify_citations
+
+# 注意：``index``（→ ``react_agent.rag``）**刻意不在模块级导入**。
+# ``workflow.builtins`` 会在模块级 import 本模块所在包，而 ``tools/__init__``
+# 又会在 import 时挂载 workflow 工具，于是 ``index`` 的模块级导入会把整个 RAG
+# 语料装配带进 Core 默认路径（实测启动即打印「[RAG] 已加载 591 个文档片段」，
+# import react_loop 约 2.5s）。RAG 只在真正检索时才需要，所以改为按需导入：
+# 见 ``_load_index()``。
+
+
+def _load_index():
+    """按需加载 docs 索引（首次调用才会装配 RAG 语料）。"""
+    from react_agent.apps.docs_troubleshoot.index import get_index
+
+    return get_index()
 
 
 def search_docs(query: str, top_k: int = 3) -> str:
     """Search internal docs/runbooks for troubleshooting context."""
-    rag = get_index()
+    rag = _load_index()
     hits = rag.query(query, top_k=top_k)
     if not hits:
         return json.dumps(
@@ -48,7 +61,7 @@ def lookup_api(topic: str, top_k: int = 3) -> str:
         re.I,
     ):
         return json.dumps({"ok": True, "results": []}, ensure_ascii=False)
-    rag = get_index()
+    rag = _load_index()
     q = f"API {topic} endpoint error Authorization"
     hits = rag.query(q, top_k=max(top_k * 2, 4))
     api_hits = [h for h in hits if "api" in (h.get("source") or "").lower()]
@@ -75,7 +88,7 @@ def verify_citations_tool(answer: str, allowed_sources: str = "") -> str:
     if allowed_sources and allowed_sources.strip():
         allowed = [s.strip() for s in allowed_sources.split(",") if s.strip()]
     else:
-        rag = get_index()
+        rag = _load_index()
         allowed = list({s for s in rag.sources if s})
     check = verify_citations(answer, allowed_sources=allowed)
     return json.dumps(check, ensure_ascii=False)
