@@ -721,7 +721,18 @@ def react_loop(user_query, max_steps=None, tool_defs=None):
 # ============================================================
 
 def auto_extract_memory(user_query, assistant_answer):
-    """从对话中自动提取值得记住的信息（独立函数，依赖 call_llm）"""
+    """从对话中自动提取值得记住的信息（独立函数，依赖 call_llm）
+
+    **记忆边界**：Worker（被委派的子 Agent）默认**不写**长期记忆。并行 Worker
+    同时回写同一个模块级 ``MEMORY`` 单例会造成交叉污染，且子 Agent 的单轮经验
+    不足以代表用户偏好。需要放开时显式设置 ``REACT_AGENT_WORKER_MEMORY_WRITE=1``。
+    """
+    from react_agent.orchestrator import in_worker_context, worker_memory_write_enabled
+
+    if in_worker_context() and not worker_memory_write_enabled():
+        print("[记忆] 跳过：当前处于 Worker 委派上下文，子 Agent 不写长期记忆")
+        return 0
+
     if not assistant_answer or len(assistant_answer) < 20 or any(w in user_query for w in ["忘记", "删除"]):
         return 0
     
@@ -762,13 +773,45 @@ def auto_extract_memory(user_query, assistant_answer):
     return saved
 
 
-def multi_agent_chain(user_query, parallel=False):
-    """多 Agent 协作（内部使用 Orchestrator 类；懒加载以免 Core 默认路径导入）。"""
-    from react_agent.orchestrator import Orchestrator
+def multi_agent_chain(user_query, parallel=False, parent_summary=None):
+    """多 Agent 协作（内部使用 Orchestrator 类；懒加载以免 Core 默认路径导入）。
 
-    return Orchestrator(call_llm, react_loop, tool_definitions=TOOL_DEFINITIONS).execute(
-        user_query, parallel=parallel
+    参数:
+        parent_summary: 父会话（当前会话）的最终答案摘要。仅在某个子任务显式声明
+            ``context: fork`` 时才会注入该 Worker 的提示词，且提示词会**如实说明**
+            这是摘要而非完整历史。不传则 fork 任务拿不到父级上下文。
+
+    深度守卫：委派深度超过 ``REACT_AGENT_SUBAGENT_MAX_DEPTH``（默认 1）时**明确
+    拒绝**，而不是静默截断。拒绝会让本次调用返回一段说明文本，不产生任何子
+    Agent 副作用——对齐 Codex ``agents.max_depth`` 默认 1 的取向。
+    """
+    from react_agent.orchestrator import (
+        Orchestrator,
+        current_delegation_depth,
+        max_delegation_depth,
+        max_worker_concurrency,
+        write_conflict_serialize_enabled,
     )
+
+    depth = current_delegation_depth()
+    limit = max_delegation_depth()
+    if depth >= limit:
+        message = (
+            f"[Orchestrator] 拒绝委派：当前深度 {depth} 已达上限 {limit}。"
+            f"子 Agent 不能再派生更深层的子 Agent（如需放宽请设置 "
+            f"REACT_AGENT_SUBAGENT_MAX_DEPTH，但不建议递归委派）。"
+        )
+        print(message)
+        return message
+
+    orchestrator = Orchestrator(call_llm, react_loop, tool_definitions=TOOL_DEFINITIONS)
+    orchestrator.parent_summary = parent_summary or ""
+    if write_conflict_serialize_enabled():
+        # 写冲突串行化默认开启：并行度会因此下降，显式打印一次以便可观测
+        print(
+            f"[Orchestrator] 写冲突串行化：开启（并发上限 {max_worker_concurrency() or '不限'}）"
+        )
+    return orchestrator.execute(user_query, parallel=parallel)
 
 def _setup_config():
     """交互式配置向导：创建/更新 llm_config.json"""
@@ -993,6 +1036,8 @@ def main():
             except Exception as e:
                 print(f"  -> 连接失败: {e}\n")
     _skip_query = False
+    # 主会话最后一轮答案：仅当子任务显式声明 context: fork 时作为摘要注入
+    _last_answer = ""
     if _sys_argv:
         q = " ".join(_sys_argv)
         # 处理"忘记/删除"——直接删，不走 react_loop
@@ -1017,10 +1062,13 @@ def main():
         try:
             full_q = memory_context + q if memory_context and not _skip_query else q
             if any(w in q for w in ["同时", "并且", "还有", "另外", "且"]):
-                result = multi_agent_chain(full_q, parallel=_parallel_mode)
+                result = multi_agent_chain(
+                    full_q, parallel=_parallel_mode, parent_summary=_last_answer
+                )
             else:
                 result = react_loop(full_q, max_steps=_cli_max_steps)
             if result:
+                _last_answer = result
                 auto_extract_memory(q, result)
         except Exception as e:
             import traceback; traceback.print_exc()
@@ -1065,10 +1113,11 @@ def main():
             try:
                 full_q = memory_context + q if memory_context else q
                 if any(w in q for w in ["同时", "并且", "还有", "另外", "且"]):
-                    result = multi_agent_chain(full_q)
+                    result = multi_agent_chain(full_q, parent_summary=_last_answer)
                 else:
                     result = react_loop(full_q)
                 if result:
+                    _last_answer = result
                     auto_extract_memory(q, result)
             except Exception as e:
                 import traceback; traceback.print_exc()

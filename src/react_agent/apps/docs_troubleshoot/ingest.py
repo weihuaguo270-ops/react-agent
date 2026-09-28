@@ -15,12 +15,40 @@ _MANIFEST_VERSION = 2
 _DOC_SUFFIXES = {".md", ".txt", ".yaml", ".yml", ".json"}
 
 
+def _stream_lf_normalized(path: Path, chunk_size: int = 65536):
+    """按块产出**换行归一化**后的字节（CRLF/CR -> LF）。
+
+    流式处理并按块边界处理挂起的 ``\\r``，因此不需要把整个文件读进内存。
+    """
+    pending_cr = False
+    with path.open("rb") as fh:
+        while True:
+            chunk = fh.read(chunk_size)
+            if not chunk:
+                break
+            if pending_cr:
+                chunk = b"\r" + chunk
+                pending_cr = False
+            if chunk.endswith(b"\r"):
+                chunk = chunk[:-1]
+                pending_cr = True
+            yield chunk.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    if pending_cr:
+        yield b"\n"
+
+
 def sha256_file(path: Path) -> str:
-    """计算原始文档内容哈希，供语料 manifest 和漂移检查使用。"""
+    """计算文档内容哈希，供语料 manifest 和漂移检查使用。
+
+    **换行归一化**：哈希前把 CRLF/CR 统一为 LF。否则同一份内容在 Windows
+    （``core.autocrlf=true`` 检出为 CRLF）与 Linux/CI（LF）上得到不同哈希，
+    语料基线就变成"只在生成它的那台机器上成立"——本项目的 CI 同时在
+    ubuntu 与 windows 上跑 ``test_git_docs_corpus_drift``，跨平台不可复现
+    会让该测试在一侧永远红灯。归一化后哈希只反映内容，不反映检出行尾。
+    """
     h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(65536), b""):
-            h.update(chunk)
+    for chunk in _stream_lf_normalized(path):
+        h.update(chunk)
     return h.hexdigest()
 
 

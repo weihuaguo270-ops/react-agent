@@ -1,0 +1,103 @@
+{
+  "task_verified_count": 6,
+  "agent_runs": 6,
+  "hidden_pass_rate": 0.0,
+  "results": [
+    {
+      "task_id": "pydantic-identity-review",
+      "split": "development",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 24.78,
+      "tokens": 16329,
+      "completion_tokens": 825,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    },
+    {
+      "task_id": "httpx-identity-review",
+      "split": "development",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 9.72,
+      "tokens": 12772,
+      "completion_tokens": 423,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    },
+    {
+      "task_id": "httpx-activity-review",
+      "split": "development",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 9.38,
+      "tokens": 9452,
+      "completion_tokens": 307,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    },
+    {
+      "task_id": "werkzeug-auth-whitespace-3129",
+      "split": "development",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 13.45,
+      "tokens": 12276,
+      "completion_tokens": 572,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    },
+    {
+      "task_id": "click-typed-flag-2930",
+      "split": "held_out_provisional",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 19.72,
+      "tokens": 14211,
+      "completion_tokens": 605,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    },
+    {
+      "task_id": "jinja-async-unique-1782",
+      "split": "held_out_provisional",
+      "run_status": "budget_exhausted",
+      "hidden_passed": false,
+      "elapsed_seconds": 12.76,
+      "tokens": 13283,
+      "completion_tokens": 739,
+      "cost": null,
+      "cost_reason": "provider billing price not verified",
+      "regression_suite": "only bundled hidden assertions; no full upstream suite",
+      "image": "sha256:d082dcda265ca5d4f2a383fb54e10e39f3631fe9e22602591a242d350c7105bc"
+    }
+  ],
+  "golden_count": 0,
+  "run_dir": "D:\\agent_learning\\react-agent\\eval\\blind_pilot_v1\\runs\\20260919-152559",
+  "total_tokens": 78323,
+  "elapsed_seconds": 89.81,
+  "actual_cost": null,
+  "regression_failures": null,
+  "assessment": "Infrastructure pilot only: all runs stopped by conservative budget reservation; not a valid clean estimate of repair ability.",
+  "returned_model_ids": [
+    "deepseek-flash"
+  ],
+  "patch_sizes": {
+    "click-typed-flag-2930": 0,
+    "httpx-activity-review": 0,
+    "httpx-identity-review": 0,
+    "jinja-async-unique-1782": 0,
+    "pydantic-identity-review": 0,
+    "werkzeug-auth-whitespace-3129": 0
+  }
+}
