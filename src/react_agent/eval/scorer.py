@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 
 # 跨仓 Python API 契约版本（CI test_eval_engine_contract 会校验）
 # Bump EVAL_API_VERSION when ProcessRewardScorer kwargs / success payload shape breaks.
-EVAL_API_VERSION = "0.2"
+# 0.3: eval-engine 的 ProcessRewardReport.overall_score 变为 Optional[float]
+#      （None = 没有任何步被评分）。见 score_with_eval_engine 的未评估分支。
+EVAL_API_VERSION = "0.3"
 EVAL_ENGINE_API_CONTRACT = f"ProcessRewardScorer.extra_contracts@{EVAL_API_VERSION}"
 
 
@@ -287,13 +289,26 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
                 details={"api_contract": EVAL_ENGINE_API_CONTRACT},
             )
 
-        total = int(round(report.overall_score * 2))
+        overall_score = report.overall_score
+        if overall_score is None:
+            # 未评估 ≠ 0 分：没有任何步被评上时不给数值，而是按集成失败上报，
+            # 免得下游把"没评过"读成"最差"。
+            raise EvalIntegrationError(
+                "eval-engine 未评估该轨迹（没有任何步被评分）",
+                details={
+                    "api_contract": EVAL_ENGINE_API_CONTRACT,
+                    "num_steps": report.num_steps,
+                    "num_scored": report.num_scored,
+                },
+            )
+
+        total = int(round(overall_score * 2))
         if total <= 0:
             raise EvalIntegrationError(
                 "eval-engine 评分为 0（可能是 Judge 输出字段与 fast_mode 不兼容）",
                 details={
                     "api_contract": EVAL_ENGINE_API_CONTRACT,
-                    "overall_score": report.overall_score,
+                    "overall_score": overall_score,
                     "num_steps": report.num_steps,
                 },
             )
@@ -305,7 +320,7 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
             "passed": not report.needs_revision,
             "eval_engine": True,
             "api_contract": EVAL_ENGINE_API_CONTRACT,
-            "overall_score": report.overall_score,
+            "overall_score": overall_score,
             "num_steps": report.num_steps,
             "failed_steps": report.num_failed_steps,
             "details": {

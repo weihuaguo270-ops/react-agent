@@ -323,17 +323,23 @@ def _process_reward_quality(
             trajectory=traj,
             final_state=dict(episode.get("final_state") or {}),
         )
-        scores.append(float(report.overall_score))
+        episode_score = report.overall_score
+        # 未评估（None）的 episode 不进均值分母：把"没评过"当 0 分会凭空压低整体分
+        if episode_score is not None:
+            scores.append(float(episode_score))
         details.append(
             {
                 "episode_id": episode.get("episode_id"),
-                "overall_score": report.overall_score,
+                "overall_score": episode_score,
+                "num_scored": report.num_scored,
                 "needs_revision": report.needs_revision,
                 "num_steps": report.num_steps,
             }
         )
     if not scores:
-        raise FailureRegressionError("no trajectories available for process reward scoring")
+        raise FailureRegressionError(
+            "no scored trajectories available for process reward scoring"
+        )
     overall = round(sum(scores) / len(scores), 3)
     return {
         "overall_score": overall,
