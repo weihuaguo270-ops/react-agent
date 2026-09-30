@@ -62,8 +62,8 @@ def _episode() -> dict:
 
 
 def test_eval_api_version_matches_llm_eval_engine():
-    assert EVAL_API_VERSION == EE_EVAL_API_VERSION == "0.2"
-    assert EVAL_ENGINE_API_CONTRACT.endswith("@0.2")
+    assert EVAL_API_VERSION == EE_EVAL_API_VERSION == "0.3"
+    assert EVAL_ENGINE_API_CONTRACT.endswith("@0.3")
 
 
 def test_evaluation_episode_v1_required_fields():

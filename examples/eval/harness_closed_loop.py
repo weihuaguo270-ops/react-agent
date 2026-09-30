@@ -133,8 +133,10 @@ def _score_eval(traj: dict) -> dict | None:
 
     scorer = ProcessRewardScorer(judge_fn=mock_judge)
     report = scorer.score_trajectory(dag, fast_mode=True)
+    # 未评估（None）时不要 format 成 0.000：那是"没评过"，不是"最差"
+    overall_score = report.overall_score
     summary = {
-        "overall_score": round(float(report.overall_score), 3),
+        "overall_score": round(overall_score, 3) if overall_score is not None else None,
         "num_steps": report.num_steps,
         "pass_rate": traj.get("mock_pass_rate", report.pass_rate),
     }

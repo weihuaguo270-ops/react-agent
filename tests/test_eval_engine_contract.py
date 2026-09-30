@@ -33,11 +33,24 @@ _TRAJ = {
 
 
 def test_eval_api_version_pinned():
-    assert EVAL_API_VERSION == "0.2"
+    assert EVAL_API_VERSION == "0.3"
     assert EVAL_ENGINE_API_CONTRACT == f"ProcessRewardScorer.extra_contracts@{EVAL_API_VERSION}"
     from eval_engine.core.process_reward import EVAL_API_VERSION as ee_ver
 
     assert ee_ver == EVAL_API_VERSION
+
+
+def test_unscored_trajectory_is_an_integration_error_not_a_zero():
+    """eval-engine 未评估（overall_score=None）→ 抛集成错误，而不是当成 0 分。
+
+    llm-eval-engine 0.3 起 ``overall_score`` 是 Optional：``0.0`` 只表示"确实评了 0 分"，
+    "一个步都没评上"必须是 ``None``。这里钉住 react-agent 不会把后者读成前者。
+    """
+    with pytest.raises(EvalIntegrationError) as excinfo:
+        score_with_eval_engine({"expected_tool": "web_search"}, _TRAJ, judge_fn=lambda _p: {})
+
+    assert "未评估" in str(excinfo.value)
+    assert excinfo.value.details["api_contract"] == EVAL_ENGINE_API_CONTRACT
 
 
 def test_process_reward_scorer_accepts_extra_contracts_not_verifiers():
