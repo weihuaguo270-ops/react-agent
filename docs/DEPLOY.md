@@ -105,6 +105,7 @@ POST /v1/approvals/{id}  {"decision":"approve"|"deny","scope":"once"|"session"}
 | `tool_call` / `tool_result` | 工具调用的参数与观测 |
 | `answer_delta` | **答案增量**（`delta` 字段）；仅在 LLM 流式开启时出现 |
 | `answer` | 完整答案（终态答案，供客户端对账） |
+| `approval_required` | 命中 `CONFIRM` 级工具：本次不执行，携带 `approval_id`；批准后带同一 id 重试 |
 | `result` / `error` | 最终载荷或错误 envelope |
 | `cancelled` | 客户端断开导致中止（非错误） |
 | `heartbeat` | 10s 无事件时的保活帧 |
