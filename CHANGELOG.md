@@ -4,6 +4,22 @@
 
 ### Added
 
+- `/v1/chat/stream` now behaves the same on both HTTP surfaces. The FastAPI entry point used
+  to run the chat handler to completion and then emit a single terminal `completed` event, so
+  the event table `DEPLOY.md` documents for this endpoint (`runtime`, `step`, `tool_call` /
+  `tool_result`, `answer_delta`, `answer`, `trajectory`, `result` / `error`, `cancelled`,
+  `heartbeat`, `done`) only ever held for the stdlib surface, and its frames carried no `id:`.
+  It now runs the handler on a worker thread that installs the request-local event sink, hands
+  events to the ASGI stream through `loop.call_soon_threadsafe`, emits `heartbeat` when idle
+  (`streaming.HEARTBEAT_SECONDS`, default 10s), turns an `LLMCancelled` into `cancelled` +
+  `done {status: 499}`, and sets the request cancel signal when the generator is reclaimed so a
+  disconnected client actually stops the agent instead of burning LLM calls. The terminal event
+  is now the documented `done` (the undocumented `completed` is gone), and the `GET
+  /v1/chat/stream` query-parameter form exists on both surfaces. Frame construction and
+  query-parameter parsing moved into `server/streaming.py` (`sse_frame`, `query_body`) so the
+  two surfaces cannot drift again; `tests/test_stream_surface_parity.py` drives the real stdlib
+  endpoint and the FastAPI ASGI app through one parser and one event-vocabulary assertion.
+
 - The FastAPI surface (the container's default `react-agent-api` entry point) now implements
   the async approval chain `DEPLOY.md` already documented for it: `GET /v1/approvals`,
   `POST /v1/approvals/{approval_id}`, an `awaiting_approval` + `approval_id` response when a

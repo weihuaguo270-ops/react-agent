@@ -233,9 +233,9 @@ def test_stream_emits_approval_required(approval_env):
     text = resp.text
 
     assert "event: approval_required" in text
-    assert "event: completed" in text
+    assert "event: done" in text
     # 审批事件先于终态事件（先告诉客户端要批什么，再给结果）
-    assert text.index("event: approval_required") < text.index("event: completed")
+    assert text.index("event: approval_required") < text.index("event: done")
 
     data_line = text.split("event: approval_required\ndata: ", 1)[1].split("\n", 1)[0]
     approval_id = json.loads(data_line)["approval_id"]

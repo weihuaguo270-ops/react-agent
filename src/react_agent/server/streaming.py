@@ -8,12 +8,20 @@ events through this module.
 本模块同时承载**请求级取消信号**：客户端断开 SSE 连接时，写出方置位取消事件，
 Agent 循环在步间与流式读取中检查它，避免「用户已离开但 Agent 仍跑完全部步骤」，
 从而不再白白消耗 LLM 调用。
+
+另外，两个服务面（stdlib ``server/app.py`` 与 FastAPI ``server/fastapi_app.py``）
+的 **SSE 帧格式**与 **EventSource 查询参数解析**也放在这里共用：格式一旦分叉，
+同一个客户端在两个入口点上就会解析出不同的东西。
 """
 from __future__ import annotations
 
+import json
 import threading
 from contextvars import ContextVar
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Iterable, Optional
+
+#: SSE 心跳间隔（秒）：这么久没有事件就发一帧 ``heartbeat`` 保活。
+HEARTBEAT_SECONDS = 10.0
 
 
 EventSink = Callable[[str, dict[str, Any]], None]
@@ -21,6 +29,38 @@ _sink: ContextVar[Optional[EventSink]] = ContextVar("react_agent_stream_sink", d
 _cancel: ContextVar[Optional[threading.Event]] = ContextVar(
     "react_agent_stream_cancel", default=None
 )
+
+
+def sse_frame(event: str, data: Optional[dict[str, Any]] = None, event_id: str = "") -> str:
+    """构造一帧 SSE 文本。
+
+    ``data`` 按行拆成多个 ``data:`` 字段，因此载荷里的换行不会截断帧；``event_id``
+    非空时带上 ``id:`` 字段（服务面按事件序号自增）。
+    """
+    payload = json.dumps(dict(data or {}), ensure_ascii=False, separators=(",", ":"))
+    lines = []
+    if event_id:
+        lines.append(f"id: {event_id}")
+    lines.append(f"event: {event}")
+    lines.extend(f"data: {line}" for line in payload.splitlines() or [""])
+    return "\n".join(lines) + "\n\n"
+
+
+def query_body(pairs: Iterable[tuple[str, str]]) -> dict[str, Any]:
+    """EventSource 查询参数 → 请求体。
+
+    同名参数取**最后一个**（与 ``parse_qs(...)[key][-1]`` 一致），``max_steps``
+    转成 int（转不了就原样保留，交给下游校验）。
+    """
+    body: dict[str, Any] = {}
+    for key, value in pairs:
+        body[key] = value
+    if "max_steps" in body:
+        try:
+            body["max_steps"] = int(body["max_steps"])
+        except (TypeError, ValueError):
+            pass
+    return body
 
 
 def install(sink: EventSink):

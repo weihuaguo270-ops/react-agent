@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os
 import json
+import threading
+import time
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any, Callable
@@ -164,6 +167,131 @@ def _run_chat(
         payload["status"] = "awaiting_approval"
         payload["approval_id"] = approval_id
     return status, payload
+
+
+def _stream_worker(
+    chat_handler: ChatHandler,
+    body: dict[str, Any],
+    request_id: str,
+    publish: Callable[[str, dict[str, Any]], None],
+    cancel_signal: dict[str, Any],
+) -> None:
+    """在后台线程里跑一次对话，把进度事件交给 ``publish``。
+
+    与 stdlib 面（``app._send_sse`` 的 worker）保持同一套顺序与语义：
+    请求级上下文与事件 sink 都必须在**本线程内**安装，Agent 循环才读得到
+    （ContextVar 不跨线程共享）；``cancel_event`` 由本线程创建后放进
+    ``cancel_signal``，因为连接侧只有拿到同一个 Event 对象才能把取消送达。
+    """
+    from react_agent.llm import LLMCancelled
+    from react_agent.safety.permission_gate import set_approval_credential, set_request_id
+    from react_agent.server.health import capture_approval_status
+    from react_agent.server.streaming import install, reset
+
+    set_request_id(request_id)
+    set_approval_credential(str(body.get("approval_id") or "").strip())
+
+    tokens, cancel_event = install(publish)
+    cancel_signal["event"] = cancel_event
+    try:
+        publish("started", {"app": body.get("app") or body.get("application") or ""})
+        status, payload = chat_handler(body, request_id)
+        if "request_id" not in payload and "error" not in payload:
+            payload["request_id"] = request_id
+        # 离线处理器只给最终 agent_steps（没有 live 回调），补发 step 事件
+        for index, step in enumerate(payload.get("agent_steps") or [], 1):
+            publish("step", {"step": index, "status": "completed", "detail": step})
+        approval_id = capture_approval_status(payload)
+        if approval_id:
+            payload["status"] = "awaiting_approval"
+            payload["approval_id"] = approval_id
+            publish("approval_required", {"approval_id": approval_id, "request_id": request_id})
+        if status >= 400 or "error" in payload:
+            publish("error", {"status": status, "error": payload.get("error", payload)})
+        else:
+            publish("result", {"status": status, "result": payload})
+        publish("done", {"status": status, "ok": status < 400})
+    except LLMCancelled:
+        # 客户端已断开：这是预期终止，不是错误
+        publish("cancelled", {"request_id": request_id, "reason": "client_disconnected"})
+        publish("done", {"status": 499, "ok": False, "cancelled": True})
+    except Exception as exc:
+        publish(
+            "error",
+            {"status": 500, "error": {"code": "internal_error", "message": str(exc)[:300]}},
+        )
+        publish("done", {"status": 500, "ok": False})
+    finally:
+        reset(tokens)
+
+
+async def _chat_event_stream(chat_handler: ChatHandler, body: dict[str, Any], request_id: str):
+    """把一次对话的进度事件转成 SSE 帧。
+
+    线程与事件循环之间用 ``asyncio.Queue`` 交接：``asyncio.Queue`` 不是线程安全的，
+    所以 worker 侧一律经 ``loop.call_soon_threadsafe`` 投递。空闲超过
+    ``HEARTBEAT_SECONDS`` 就发一帧 ``heartbeat`` 保活；收到 ``done`` 收尾。
+
+    生成器被回收（客户端断开）时置位取消信号：只停止推送是不够的，必须让 Agent
+    真正停下来，否则用户离开后仍会跑完全部步数、空烧 LLM 调用。
+    """
+    from react_agent.server.streaming import HEARTBEAT_SECONDS, request_cancel, sse_frame
+
+    loop = asyncio.get_running_loop()
+    events: asyncio.Queue[tuple[str, dict[str, Any]]] = asyncio.Queue()
+    disconnected = threading.Event()
+    cancel_signal: dict[str, Any] = {}
+    sequence = 0
+
+    def publish(event: str, data: dict[str, Any]) -> None:
+        if disconnected.is_set():
+            return
+        message = dict(data or {})
+        message.setdefault("request_id", request_id)
+        try:
+            loop.call_soon_threadsafe(events.put_nowait, (event, message))
+        except RuntimeError:
+            # 事件循环已关闭（断连后生成器已回收）：丢弃事件并停止后续投递
+            disconnected.set()
+
+    thread = threading.Thread(
+        target=_stream_worker,
+        args=(chat_handler, body, request_id, publish, cancel_signal),
+        name=f"agent-sse-{request_id[:8]}",
+        daemon=True,
+    )
+    thread.start()
+    try:
+        while True:
+            try:
+                event, data = await asyncio.wait_for(events.get(), timeout=HEARTBEAT_SECONDS)
+            except asyncio.TimeoutError:
+                sequence += 1
+                yield sse_frame(
+                    "heartbeat", {"request_id": request_id, "ts": time.time()}, str(sequence)
+                )
+                continue
+            sequence += 1
+            yield sse_frame(event, data, str(sequence))
+            if event == "done":
+                break
+    finally:
+        disconnected.set()
+        # 正常结束时 worker 已交付 done，再置位无副作用；断连时则保证它停下来
+        request_cancel(cancel_signal.get("event"))
+
+
+def _sse_response(chat_handler: ChatHandler, body: dict[str, Any], request_id: str) -> StreamingResponse:
+    return StreamingResponse(
+        _chat_event_stream(chat_handler, body, request_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "Connection": "close",
+            "X-Accel-Buffering": "no",
+            "X-Request-Id": request_id,
+        },
+    )
 
 
 def _bound_host() -> str:
@@ -351,34 +479,20 @@ def create_app(
         request: ChatRequest,
         x_request_id: str | None = Header(default=None),
     ) -> StreamingResponse:
-        request_id = _request_id(x_request_id)
-
-        async def events():
-            yield f"event: started\ndata: {json.dumps({'request_id': request_id})}\n\n"
-            status, payload = await run_in_threadpool(
-                _run_chat, chat_handler, request.model_dump(exclude_none=True), request_id
-            )
-            payload.setdefault("request_id", request_id)
-            # 审批是状态而非消息：先告诉客户端「要批什么」，由独立请求批准，
-            # 再带 approval_id 重试；因此这里发事件即可，不需要挂住连接。
-            if payload.get("approval_id"):
-                yield (
-                    "event: approval_required\ndata: "
-                    + json.dumps(
-                        {"approval_id": payload["approval_id"], "request_id": request_id},
-                        ensure_ascii=False,
-                    )
-                    + "\n\n"
-                )
-            event = "error" if status >= 400 else "completed"
-            data = {"status": status, **payload} if event == "error" else payload
-            yield f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
-
-        return StreamingResponse(
-            events(),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "Connection": "close"},
+        return _sse_response(
+            chat_handler, request.model_dump(exclude_none=True), _request_id(x_request_id)
         )
+
+    @api.get("/v1/chat/stream")
+    async def chat_stream_get(
+        request: Request,
+        x_request_id: str | None = Header(default=None),
+    ) -> StreamingResponse:
+        """EventSource 只能发 GET：查询参数形式，与 stdlib 面同一套解析。"""
+        from react_agent.server.streaming import query_body
+
+        body = query_body(request.query_params.multi_items())
+        return _sse_response(chat_handler, body, _request_id(x_request_id))
 
     @api.get("/v1/approvals")
     async def pending_approvals(

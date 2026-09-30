@@ -93,7 +93,7 @@ POST /v1/approvals/{id}  {"decision":"approve"|"deny","scope":"once"|"session"}
 
 响应含 `request_id`；错误为统一 envelope：`error.code / message / request_id`。
 
-`/v1/chat` 保持同步 JSON 返回；`/v1/chat/stream` 在请求级队列中转发 Runtime 进度，并以 `done` 作为终态。SSE 事件中的工具参数和观测结果应视为调试/产品内事件，生产接入前仍需按租户策略脱敏、鉴权和限制事件保留周期。
+`/v1/chat` 保持同步 JSON 返回；`/v1/chat/stream` 在请求级队列中转发 Runtime 进度，并以 `done` 作为终态。两个入口点（FastAPI 与标准库）共用同一套事件词表与帧格式（`id:` 序号 + `event:` + 多行安全 `data:`），GET 查询参数形式与 POST JSON 形式也解析成同一个请求体。SSE 事件中的工具参数和观测结果应视为调试/产品内事件，生产接入前仍需按租户策略脱敏、鉴权和限制事件保留周期。
 
 ### `/v1/chat/stream` 事件表
 
@@ -105,6 +105,7 @@ POST /v1/approvals/{id}  {"decision":"approve"|"deny","scope":"once"|"session"}
 | `tool_call` / `tool_result` | 工具调用的参数与观测 |
 | `answer_delta` | **答案增量**（`delta` 字段）；仅在 LLM 流式开启时出现 |
 | `answer` | 完整答案（终态答案，供客户端对账） |
+| `trajectory` | 轨迹已落盘（`trajectory_id` / `steps` / `saved`） |
 | `approval_required` | 命中 `CONFIRM` 级工具：本次不执行，携带 `approval_id`；批准后带同一 id 重试 |
 | `result` / `error` | 最终载荷或错误 envelope |
 | `cancelled` | 客户端断开导致中止（非错误） |
