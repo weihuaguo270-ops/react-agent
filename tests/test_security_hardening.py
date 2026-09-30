@@ -95,6 +95,8 @@ class _Server:
     # 这些变量会影响校验档位，测试间必须互不污染
     _ISOLATED_ENV = (
         "REACT_AGENT_AUTH_TOKEN",
+        # 历史别名：server/auth.py 仍认它，留在环境里会静默打开鉴权
+        "REACT_AGENT_API_KEY",
         "REACT_AGENT_ALLOWED_HOSTS",
         "REACT_AGENT_HOST_VALIDATION",
         "REACT_AGENT_REQUIRE_HOST_ALLOWLIST",

@@ -15,6 +15,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from react_agent.server.auth import (
+    HostValidationError,
+    authorized_headers,
+    host_header_allowed,
+    unauthenticated_exposure_warning,
+    validate_host_configuration,
+)
 from react_agent.server.chat_router import handle_chat, list_applications, normalize_app
 from react_agent.server.health import liveness_payload, package_version, readiness_payload
 from react_agent.server.http_util import error_response
@@ -112,17 +119,18 @@ def _task_payload(record: Any, request_id: str) -> dict[str, Any]:
     return {"request_id": request_id, **record.public()}
 
 
-def _api_key_configured() -> str:
-    """Return the optional API key without making local demos require auth."""
-    return os.environ.get("REACT_AGENT_API_KEY", "").strip()
+def _bound_host() -> str:
+    """ASGI 侧的绑定地址。
+
+    uvicorn 不把 bind host 暴露给应用，因此按 ``REACT_AGENT_HOST`` 读取；``main()``
+    会把 ``--host`` 写回该变量。取不到时按「仅回环可达」处理，即只放行本地 Host。
+    """
+    return os.environ.get("REACT_AGENT_HOST", "").strip()
 
 
 def _authorized(request: Request) -> bool:
-    expected = _api_key_configured()
-    if not expected:
-        return True
-    authorization = request.headers.get("authorization", "")
-    return authorization == f"Bearer {expected}"
+    """除探针（``auth.PUBLIC_PATHS``）外全接口要求凭据——与 stdlib 面同一规则。"""
+    return authorized_headers(request.headers, request.url.path)
 
 
 def create_app(
@@ -168,15 +176,20 @@ def create_app(
     @api.middleware("http")
     async def request_guard(request: Request, call_next):
         request_id = _request_id(request.headers.get("X-Request-Id"))
-        protected_prefixes = (
-            "/v1/chat",
-            "/v1/tasks",
-            "/v1/security/",
-            "/v1/skills/",
-            "/v1/workflows/",
-        )
-        if request.url.path.startswith(protected_prefixes) and not _authorized(request):
-            status, payload = error_response("unauthorized", "valid bearer token required", request_id, 401)
+        # Host 先于鉴权：伪造 Host 且无凭据时必须回 421（Host 问题），
+        # 不能回 401 暴露「该接口存在」——与 stdlib 面的顺序一致。
+        if not host_header_allowed(request.headers.get("host", ""), _bound_host()):
+            status, payload = error_response(
+                "invalid_host",
+                "Host header is not allowed for this server binding",
+                request_id,
+                421,
+            )
+            return JSONResponse(payload, status_code=status)
+        if not _authorized(request):
+            status, payload = error_response(
+                "unauthorized", "missing or invalid credentials", request_id, 401
+            )
             return JSONResponse(payload, status_code=status, headers={"WWW-Authenticate": "Bearer"})
 
         content_length = request.headers.get("content-length")
@@ -511,6 +524,22 @@ def main() -> None:
     parser.add_argument("--host", default=os.environ.get("REACT_AGENT_HOST", "127.0.0.1"))
     parser.add_argument("--port", type=int, default=int(os.environ.get("REACT_AGENT_PORT", "8765")))
     args = parser.parse_args()
+    # Host 校验要知道绑定地址，而 uvicorn 不把它传给应用：写回环境变量供
+    # _bound_host() 按请求读取（app 在 import 期就建好了，只能走环境变量）。
+    os.environ["REACT_AGENT_HOST"] = args.host
+
+    # 启动期 fail-closed：严格 Host 校验模式下未声明允许域名则拒绝启动，
+    # 与 stdlib 面（server/app.py serve）保持同一语义。
+    try:
+        validate_host_configuration(args.host)
+    except HostValidationError as exc:
+        print(f"[server] FATAL: {exc}")
+        raise SystemExit(2) from exc
+
+    warning = unauthenticated_exposure_warning(args.host)
+    if warning:
+        print(warning)
+
     uvicorn.run(
         "react_agent.server.fastapi_app:app",
         host=args.host,

@@ -1,16 +1,25 @@
-"""Server authentication helper (stdlib only).
+"""Shared auth / Host validation for both HTTP surfaces.
 
 The HTTP surface is unauthenticated by default for local development.  Setting
 ``REACT_AGENT_AUTH_TOKEN`` turns on a shared-secret Bearer check for every
 endpoint except liveness/readiness probes.
+
+stdlib 服务面（``server/app.py``）与 FastAPI 服务面（``server/fastapi_app.py``）
+共用这里的判定逻辑：两个入口点必须有同一套鉴权与 Host 校验语义，否则默认入口
+（容器里的 ``react-agent-api``）会静默少一道防线。
 """
 from __future__ import annotations
 
 import hmac
 import os
 from http.server import BaseHTTPRequestHandler
+from typing import Any
 
 AUTH_TOKEN_ENV = "REACT_AGENT_AUTH_TOKEN"
+
+# 历史别名：FastAPI 服务面早期读的是 ``REACT_AGENT_API_KEY``，文档从未记录过它。
+# 保留兼容以免打断已有部署；两者同时设置时 ``REACT_AGENT_AUTH_TOKEN`` 优先。
+LEGACY_AUTH_TOKEN_ENVS = ("REACT_AGENT_API_KEY",)
 
 # Probes stay open so container orchestrators can health-check without a secret.
 PUBLIC_PATHS = frozenset(
@@ -24,7 +33,11 @@ PUBLIC_PATHS = frozenset(
 
 
 def auth_token() -> str:
-    return os.environ.get(AUTH_TOKEN_ENV, "").strip()
+    for name in (AUTH_TOKEN_ENV, *LEGACY_AUTH_TOKEN_ENVS):
+        value = os.environ.get(name, "").strip()
+        if value:
+            return value
+    return ""
 
 
 def auth_enabled() -> bool:
@@ -41,8 +54,21 @@ def _extract_bearer(header_value: str) -> str:
     return ""
 
 
-def authorized(handler: BaseHTTPRequestHandler, path: str) -> bool:
-    """Return True when the request may proceed (including the open-probe case)."""
+def extract_credential(headers: Any) -> str:
+    """从请求头取凭据：``Authorization: Bearer <token>``，其次 ``X-Api-Key``。
+
+    ``headers`` 只需支持大小写不敏感的 ``.get()``——``http.server`` 的
+    ``self.headers``（``email.message.Message``）与 Starlette 的 ``Headers``
+    都满足，因此两个服务面共用同一取值顺序。
+    """
+    provided = _extract_bearer(str(headers.get("Authorization") or ""))
+    if provided:
+        return provided
+    return str(headers.get("X-Api-Key") or "").strip()
+
+
+def authorized_headers(headers: Any, path: str) -> bool:
+    """header 版鉴权判定，供 ASGI 侧直接调用。"""
     if path in PUBLIC_PATHS:
         return True
     token = auth_token()
@@ -50,10 +76,12 @@ def authorized(handler: BaseHTTPRequestHandler, path: str) -> bool:
         # No token configured: keep local-dev behaviour, but do not silently
         # accept credentials that were never provisioned.
         return True
-    provided = _extract_bearer(handler.headers.get("Authorization", ""))
-    if not provided:
-        provided = (handler.headers.get("X-Api-Key") or "").strip()
-    return hmac.compare_digest(provided, token)
+    return hmac.compare_digest(extract_credential(headers), token)
+
+
+def authorized(handler: BaseHTTPRequestHandler, path: str) -> bool:
+    """Return True when the request may proceed (including the open-probe case)."""
+    return authorized_headers(handler.headers, path)
 
 
 def is_loopback_host(host: str) -> bool:
@@ -138,13 +166,12 @@ def validate_host_configuration(bind_host: str) -> None:
         )
 
 
-def host_allowed(handler: BaseHTTPRequestHandler, bind_host: str) -> bool:
-    """按当前档位校验 Host 头。"""
+def host_header_allowed(host_header: str, bind_host: str) -> bool:
+    """按当前档位校验 Host 头（header 版，供 ASGI 侧直接调用）。"""
     mode = host_validation_mode()
     if mode == _HOST_MODE_PERMISSIVE:
         return True
 
-    host_header = handler.headers.get("Host", "")
     if not host_header:
         # HTTP/1.0 客户端可能不带 Host，不阻断
         return True
@@ -169,6 +196,11 @@ def host_allowed(handler: BaseHTTPRequestHandler, bind_host: str) -> bool:
     if hostname in allowed_bind_hosts(bind_host):
         return True
     return False
+
+
+def host_allowed(handler: BaseHTTPRequestHandler, bind_host: str) -> bool:
+    """按当前档位校验 Host 头。"""
+    return host_header_allowed(handler.headers.get("Host", ""), bind_host)
 
 
 def unauthenticated_exposure_warning(host: str) -> str | None:

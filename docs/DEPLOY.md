@@ -64,6 +64,7 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 | `DEEPSEEK_API_KEY` | — | live 模式需要 |
 | `REACT_AGENT_DOCS_INGEST_DIRS` | — | 额外语料目录（逗号分隔，可 mount） |
 | `REACT_AGENT_AUTH_TOKEN` | 未设 | 共享密钥；设置后除 `/health`、`/ready` 外**所有接口**要求 `Authorization: Bearer <token>`（或 `X-Api-Key`） |
+| `REACT_AGENT_API_KEY` | 未设 | **兼容别名**：等价于 `REACT_AGENT_AUTH_TOKEN`，两者同时设置时后者优先。仅供早期 FastAPI 面部署平滑过渡，新部署请只用 `REACT_AGENT_AUTH_TOKEN` |
 | `REACT_AGENT_STRICT_CONFIRM` | 未设 | `1` 时未注入 HITL 则**拒绝** `CONFIRM` 级工具（失败关闭）；注意会一并禁掉 `execute_python` |
 | `REACT_AGENT_APPROVAL_MODE` | `auto_allow` | `async` 时启用**异步人工审批**：`CONFIRM` 级工具落盘待批项并阻塞，人工经 HTTP 批准后放行 |
 | `REACT_AGENT_APPROVAL_DIR` | 见说明 | 待批项存放目录；默认 `data_dir()/approvals`。**必须可写**，否则闸门失败关闭（拒绝执行） |
