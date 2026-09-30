@@ -21,7 +21,7 @@ async def test_fastapi_skill_discovery_context_route_and_safe_run():
     api = create_app(initialize_runtime=False)
     transport = httpx.ASGITransport(app=api)
     async with httpx.AsyncClient(
-        transport=transport, base_url="http://test"
+        transport=transport, base_url="http://127.0.0.1"
     ) as client:
         catalog_response = await client.get(
             "/v1/skills", headers={"X-Request-Id": "skills-1"}
@@ -88,7 +88,7 @@ async def test_fastapi_skill_errors_are_structured():
     api = create_app(initialize_runtime=False)
     transport = httpx.ASGITransport(app=api)
     async with httpx.AsyncClient(
-        transport=transport, base_url="http://test"
+        transport=transport, base_url="http://127.0.0.1"
     ) as client:
         missing = await client.get("/v1/skills/does_not_exist?level=full")
         assert missing.status_code == 400
@@ -105,11 +105,11 @@ async def test_fastapi_skill_errors_are_structured():
 async def test_fastapi_request_guards_and_stream(monkeypatch):
     from react_agent.server.fastapi_app import create_app
 
-    monkeypatch.setenv("REACT_AGENT_API_KEY", "test-key")
+    monkeypatch.setenv("REACT_AGENT_AUTH_TOKEN", "test-key")
     monkeypatch.setenv("REACT_AGENT_MAX_BODY_BYTES", "64")
     api = create_app(initialize_runtime=False)
     transport = httpx.ASGITransport(app=api)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+    async with httpx.AsyncClient(transport=transport, base_url="http://127.0.0.1") as client:
         # Probe endpoints stay public for container orchestration.
         health = await client.get("/health")
         assert health.status_code == 200
@@ -147,7 +147,7 @@ async def test_fastapi_chat_accepts_structured_application_payload():
 
     api = create_app(chat_handler=handler, initialize_runtime=False)
     transport = httpx.ASGITransport(app=api)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+    async with httpx.AsyncClient(transport=transport, base_url="http://127.0.0.1") as client:
         response = await client.post(
             "/v1/chat",
             json={

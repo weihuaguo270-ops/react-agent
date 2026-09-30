@@ -4,7 +4,7 @@
     "APPLICATION_DIRECTION.md": "e6c20b91db757cb2f2bc45336200b9b7d990486474865a53fbac733237ba052d",
     "ARTIFACT_RETENTION.md": "475c094c40a51dcf3ae89e0f71d56d1a3ffb22b203b628dc9b3c3ba00e6d94af",
     "CORE_ARCHITECTURE.md": "42a1d474134fc218a74553f40db4a73c8e22bac0895bb7a7274d528e096f5d14",
-    "DEPLOY.md": "bb20139c49a845b7619162e4f545c869958c321b777a44e4df968937c0084c3c",
+    "DEPLOY.md": "acd98ab73e5b992a887d9e9c7ce5d4cbaa457dee2459e0c3f3e6cb7129f4b735",
     "DOCS_TROUBLESHOOT_EVAL.md": "1f1807e9ca5c7cd2d9f3cf8549e86cdec52f5b6b81cef09b01b541188d3f8d26",
     "EVAL_INDEX.md": "48e20ce4ff557427edbbc41c0faf878c962f6c847d30fc49ec3f6e2795559414",
     "EVIDENCE.md": "36b9c5162880d31a6b7fab3adb40a052b686f865d1debcb6f967a33b83267fd0",
@@ -81,6 +81,6 @@
     "snapshots/tdebug_failure_flywheel_20260716.json": "6dc0bc4dff8701ef6d8480eae0a1c160883e3c811c7d61dda2a4f114483ab5e7",
     "step_watcher_evidence_baseline.md": "03f803a77c7ce669f15fc4a2cb572797415c94b131769fb470d2dd62d659c892"
   },
-  "generated_at": "2026-09-30T02:53:46Z",
+  "generated_at": "2026-09-30T04:50:57Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }

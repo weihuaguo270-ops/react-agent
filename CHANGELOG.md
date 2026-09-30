@@ -18,6 +18,17 @@
 
 ### Fixed
 
+- The FastAPI surface — the container's default `react-agent-api` entry point — now shares
+  `server/auth.py` for authentication and Host-header validation instead of reading its own
+  `REACT_AGENT_API_KEY`. Following `DEPLOY.md` and setting `REACT_AGENT_AUTH_TOKEN` therefore
+  left the default entry point unauthenticated, and it performed no Host validation at all, so
+  the documented DNS-rebinding defence and the `REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1`
+  fail-closed startup check only ever applied to the stdlib surface. `REACT_AGENT_API_KEY` is
+  kept as a legacy alias (`REACT_AGENT_AUTH_TOKEN` wins), `X-Api-Key` and constant-time
+  comparison now work on both surfaces, `main()` runs the same startup validation and exposure
+  warning, and every non-probe path requires credentials as `DEPLOY.md` already stated.
+  `tests/test_server_surface_parity.py` runs one contract matrix against both entry points so
+  the two cannot drift apart again.
 - Failure-regression suite (`pipeline`, `gate`, `contracts`, `software-task`, `closed-loop`
   decision) now runs against trace-debugger's v0.6.0 failure-gate export —
   `build_failures_export`, `build_scan_snapshot(task_type=...)` and `approval_denied`
