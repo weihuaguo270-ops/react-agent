@@ -134,8 +134,9 @@ async def test_fastapi_request_guards_and_stream(monkeypatch):
             headers={"Authorization": "Bearer test-key"},
         )
         assert stream.status_code == 200
+        # 终态事件是文档承诺的 done（两面已对齐，见 tests/test_stream_surface_parity.py）
         assert "event: started" in stream.text
-        assert "event: completed" in stream.text
+        assert "event: done" in stream.text
 
 
 @pytest.mark.anyio

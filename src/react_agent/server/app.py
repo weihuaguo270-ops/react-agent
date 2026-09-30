@@ -36,7 +36,14 @@ from react_agent.server.health import (
 )
 from react_agent.server.http_util import error_response
 from react_agent.server.static_files import docs_troubleshoot_ui_html
-from react_agent.server.streaming import install, request_cancel, reset
+from react_agent.server.streaming import (
+    HEARTBEAT_SECONDS,
+    install,
+    query_body,
+    request_cancel,
+    reset,
+    sse_frame,
+)
 
 
 class AgentHandler(BaseHTTPRequestHandler):
@@ -104,16 +111,6 @@ class AgentHandler(BaseHTTPRequestHandler):
             status=401,
             WWW_Authenticate="Bearer",
         )
-
-    @staticmethod
-    def _sse_frame(event: str, data: dict, event_id: str = "") -> bytes:
-        payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-        lines = []
-        if event_id:
-            lines.append(f"id: {event_id}")
-        lines.append(f"event: {event}")
-        lines.extend(f"data: {line}" for line in payload.splitlines() or [""])
-        return ("\n".join(lines) + "\n\n").encode("utf-8")
 
     def _send_sse(self, body: dict, request_id: str):
         """Run the existing chat handler and expose request-local progress as SSE."""
@@ -191,13 +188,15 @@ class AgentHandler(BaseHTTPRequestHandler):
         try:
             while True:
                 try:
-                    event, data = events.get(timeout=10.0)
+                    event, data = events.get(timeout=HEARTBEAT_SECONDS)
                 except queue.Empty:
-                    self.wfile.write(self._sse_frame("heartbeat", {"request_id": request_id, "ts": time.time()}))
+                    self.wfile.write(
+                        sse_frame("heartbeat", {"request_id": request_id, "ts": time.time()}).encode("utf-8")
+                    )
                     self.wfile.flush()
                     continue
                 sequence += 1
-                self.wfile.write(self._sse_frame(event, data, str(sequence)))
+                self.wfile.write(sse_frame(event, data, str(sequence)).encode("utf-8"))
                 self.wfile.flush()
                 if event == "done":
                     break
@@ -214,17 +213,11 @@ class AgentHandler(BaseHTTPRequestHandler):
 
     @staticmethod
     def _stream_query(parsed) -> dict:
+        """EventSource 查询参数 → 请求体（解析逻辑与 FastAPI 面共用）。"""
         query = parse_qs(parsed.query, keep_blank_values=True)
-        body = {}
-        for key, values in query.items():
-            if values:
-                body[key] = values[-1]
-        if "max_steps" in body:
-            try:
-                body["max_steps"] = int(body["max_steps"])
-            except (TypeError, ValueError):
-                pass
-        return body
+        return query_body(
+            (key, values[-1]) for key, values in query.items() if values
+        )
 
     def do_GET(self):
         request_id = self.headers.get("X-Request-Id") or str(uuid.uuid4())
