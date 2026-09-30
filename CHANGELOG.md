@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Added
+
+- The FastAPI surface (the container's default `react-agent-api` entry point) now implements
+  the async approval chain `DEPLOY.md` already documented for it: `GET /v1/approvals`,
+  `POST /v1/approvals/{approval_id}`, an `awaiting_approval` + `approval_id` response when a
+  CONFIRM-level tool is gated, and an `approval_required` SSE event on `/v1/chat/stream`.
+  The request-scoped context (`set_request_id`, `set_approval_credential`) and the approval
+  capture now run inside the same threadpool call as the chat handler: the pending signal is a
+  ContextVar, so capturing it across the `run_in_threadpool` boundary always returned `None`
+  and the default entry point could never surface an `approval_id`.
+  `tests/test_fastapi_async_approvals.py` drives the whole loop over HTTP (including the
+  consumed-once and session-grant paths) and fails if the capture moves back outside that
+  boundary.
+
 ### Fixed
 
 - Failure-regression suite (`pipeline`, `gate`, `contracts`, `software-task`, `closed-loop`

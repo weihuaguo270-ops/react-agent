@@ -104,12 +104,59 @@ class SecurityReviewRequest(BaseModel):
     expected_version: int = Field(ge=1)
 
 
+class ApprovalDecisionRequest(BaseModel):
+    """人工审批决议。
+
+    ``decision`` / ``scope`` 刻意只做长度约束、不写成 Literal：取值语义交给
+    ``safety.approvals.resolve`` 判（``invalid_decision`` / ``invalid_scope`` →
+    409），与 stdlib 服务面的错误码一致；写成枚举会变成 422 校验错误，同一个
+    请求在两个入口点会拿到不同的码。
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    decision: str = Field(min_length=1, max_length=20)
+    scope: str = Field(default="once", max_length=20)
+    approver: str | None = Field(default=None, max_length=200)
+
+
 def _request_id(value: str | None) -> str:
     return value or str(uuid.uuid4())
 
 
 def _task_payload(record: Any, request_id: str) -> dict[str, Any]:
     return {"request_id": request_id, **record.public()}
+
+
+def _run_chat(
+    chat_handler: ChatHandler, body: dict[str, Any], request_id: str
+) -> tuple[int, dict[str, Any]]:
+    """跑一次对话，并在**同一个上下文**里设置/读取请求级状态。
+
+    ContextVar 是「每上下文一份」：闸门在工具执行时写入待批信号（见
+    ``approvals.note_approval_required``）与请求 id，只有读回**同一上下文**的
+    ``approvals.take_pending_approval()`` 才拿得到。FastAPI 的 handler 跑在事件
+    循环、真正的对话跑在线程池线程，所以「设置上下文 + 捕获审批状态」必须一起
+    放进这个线程函数，不能横跨 ``run_in_threadpool`` 的边界——跨过去读会永远
+    读到 None。
+    """
+    from react_agent.safety.permission_gate import set_approval_credential, set_request_id
+    from react_agent.server.health import capture_approval_status
+
+    set_request_id(request_id)
+    # 客户端批准后带同一 approval_id 重试，闸门据此放行（once 用掉即作废）
+    set_approval_credential(str(body.get("approval_id") or "").strip())
+
+    status, payload = chat_handler(body, request_id)
+    if "request_id" not in payload and "error" not in payload:
+        payload["request_id"] = request_id
+    # 审批是状态而非消息：把「等待人工审批」显式标注出来，客户端批准后重试即可，
+    # 不需要长连接等待。
+    approval_id = capture_approval_status(payload)
+    if approval_id:
+        payload["status"] = "awaiting_approval"
+        payload["approval_id"] = approval_id
+    return status, payload
 
 
 def _api_key_configured() -> str:
@@ -174,6 +221,9 @@ def create_app(
             "/v1/security/",
             "/v1/skills/",
             "/v1/workflows/",
+            # 审批决议能放行 CONFIRM 级工具（例如 execute_python），必须与
+            # 其余写路径同级鉴权
+            "/v1/approvals",
         )
         if request.url.path.startswith(protected_prefixes) and not _authorized(request):
             status, payload = error_response("unauthorized", "valid bearer token required", request_id, 401)
@@ -281,7 +331,7 @@ def create_app(
     ) -> JSONResponse:
         request_id = _request_id(x_request_id)
         status, payload = await run_in_threadpool(
-            chat_handler, request.model_dump(exclude_none=True), request_id
+            _run_chat, chat_handler, request.model_dump(exclude_none=True), request_id
         )
         payload.setdefault("request_id", request_id)
         return JSONResponse(payload, status_code=status)
@@ -296,8 +346,20 @@ def create_app(
         async def events():
             yield f"event: started\ndata: {json.dumps({'request_id': request_id})}\n\n"
             status, payload = await run_in_threadpool(
-                chat_handler, request.model_dump(exclude_none=True), request_id
+                _run_chat, chat_handler, request.model_dump(exclude_none=True), request_id
             )
+            payload.setdefault("request_id", request_id)
+            # 审批是状态而非消息：先告诉客户端「要批什么」，由独立请求批准，
+            # 再带 approval_id 重试；因此这里发事件即可，不需要挂住连接。
+            if payload.get("approval_id"):
+                yield (
+                    "event: approval_required\ndata: "
+                    + json.dumps(
+                        {"approval_id": payload["approval_id"], "request_id": request_id},
+                        ensure_ascii=False,
+                    )
+                    + "\n\n"
+                )
             event = "error" if status >= 400 else "completed"
             data = {"status": status, **payload} if event == "error" else payload
             yield f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
@@ -308,6 +370,47 @@ def create_app(
             headers={"Cache-Control": "no-cache", "Connection": "close"},
         )
 
+    @api.get("/v1/approvals")
+    async def pending_approvals(
+        x_request_id: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        from react_agent.safety import approvals
+
+        pending = await run_in_threadpool(approvals.list_pending)
+        return {
+            "request_id": _request_id(x_request_id),
+            "mode": approvals.approval_mode(),
+            "pending": pending,
+        }
+
+    @api.post("/v1/approvals/{approval_id}")
+    async def resolve_approval(
+        approval_id: str,
+        request: ApprovalDecisionRequest,
+        x_request_id: str | None = Header(default=None),
+    ) -> JSONResponse:
+        from react_agent.safety import approvals
+
+        request_id = _request_id(x_request_id)
+        ok, record = await run_in_threadpool(
+            approvals.resolve,
+            approval_id,
+            decision=request.decision,
+            scope=request.scope,
+            approver=str(request.approver or approvals.new_approval_token()),
+        )
+        if not ok:
+            # 与 stdlib 面同一套错误映射：找不到 404，其余（已决议/过期/取值非法）409
+            status, payload = error_response(
+                str(record.get("error") or "approval_error"),
+                f"cannot resolve approval {approval_id}",
+                request_id,
+                404 if record.get("error") == "approval_not_found" else 409,
+            )
+            payload["detail"] = record
+            return JSONResponse(payload, status_code=status)
+        return JSONResponse({"request_id": request_id, "approval": record})
+
     @api.post("/v1/tasks", response_model=TaskResponse, status_code=202)
     async def submit_task(
         request: ChatRequest,
@@ -316,7 +419,9 @@ def create_app(
         request_id = _request_id(x_request_id)
 
         def execute() -> dict[str, Any]:
-            status, payload = chat_handler(request.model_dump(exclude_none=True), request_id)
+            status, payload = _run_chat(
+                chat_handler, request.model_dump(exclude_none=True), request_id
+            )
             return {"http_status": status, "payload": payload}
 
         try:
