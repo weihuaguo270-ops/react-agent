@@ -17,12 +17,16 @@ services:
       REACT_AGENT_DISABLE_MCP: "1"
       # Shared-secret Bearer auth for every endpoint except /health and /ready.
       # Strongly recommended whenever this service is reachable off-host.
-      # REACT_AGENT_AUTH_TOKEN: ${REACT_AGENT_AUTH_TOKEN}
+      # 变量名与 .env.example / docs/DEPLOY.md 一致；未在 .env 里设置时替换为空串，
+      # 行为等同未配置（不鉴权），不会让现有部署突然起不来。
+      REACT_AGENT_AUTH_TOKEN: ${REACT_AGENT_AUTH_TOKEN:-}
       # Host-header validation (DNS rebinding). Default mode "loopback" already
       # rejects non-local Host headers; declare the real hostname when a reverse
       # proxy or custom domain is in front. Set REQUIRE_HOST_ALLOWLIST=1 to make a
       # missing declaration fail startup instead of silently serving.
-      # REACT_AGENT_ALLOWED_HOSTS: agent.example.com
+      REACT_AGENT_ALLOWED_HOSTS: ${REACT_AGENT_ALLOWED_HOSTS:-}
+      # 严格档保持 opt-in：配合上面的 REACT_AGENT_HOST=0.0.0.0，未声明 ALLOWED_HOSTS
+      # 时它会**拒绝启动**（exit 2）——这是有意的失败关闭，需要显式开启。
       # REACT_AGENT_REQUIRE_HOST_ALLOWLIST: "1"
       # Async human approval. CONFIRM-level tools (e.g. execute_python) are then
       # blocked with status=awaiting_approval instead of auto-allowed, and a human
