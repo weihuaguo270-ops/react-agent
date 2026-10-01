@@ -98,6 +98,13 @@ jobs:
           gh pr merge "${pr_number}" --repo "${REPO}" --squash --auto \
             || echo "::warning::auto-merge 开启失败，改由本步骤显式合并：${pr_url}" >&2
 
+          # 合并成功后顺手删掉 automation 分支：旧版每天留一个，累计出过 8 个残留分支。
+          merged_done() {
+            echo "Merged ${pr_url}"
+            gh api -X DELETE "repos/${REPO}/git/refs/heads/${branch}" >/dev/null 2>&1 \
+              || echo "::warning::合并成功但删除远端分支失败：${branch}" >&2
+          }
+
           is_merged() {
             [ "$(gh pr view "${pr_number}" --repo "${REPO}" --json state --jq .state)" = "MERGED" ]
           }
@@ -138,7 +145,7 @@ jobs:
 
           seen_run="0"
           for attempt in 1 2 3; do
-            if is_merged; then echo "Merged ${pr_url}"; exit 0; fi
+            if is_merged; then merged_done; exit 0; fi
 
             echo "--- CI round ${attempt}"
             run_id="$(await_pr_run "${seen_run}")" || {
@@ -158,7 +165,7 @@ jobs:
                 --body "CI 未通过：run ${run_id}（branch \`${branch}\`）。修复后重跑该分支的 pull_request CI 即可合并。" || true
               exit 1
             fi
-            if is_merged; then echo "Merged ${pr_url} (auto-merge)"; exit 0; fi
+            if is_merged; then merged_done; exit 0; fi
 
             state="$(gh pr view "${pr_number}" --repo "${REPO}" --json mergeStateStatus --jq .mergeStateStatus)"
             echo "mergeStateStatus=${state}"
@@ -175,7 +182,7 @@ jobs:
             fi
 
             if gh pr merge "${pr_number}" --repo "${REPO}" --squash; then
-              echo "Merged ${pr_url}"
+              merged_done
               exit 0
             fi
             echo "::warning::第 ${attempt} 轮合并未成功（mergeStateStatus=${state}），重试" >&2
