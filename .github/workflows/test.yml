@@ -18,7 +18,9 @@ on:
           - full
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # 事件名参与分组：workflow_dispatch 运行与 pull_request 运行曾因同 ref 互相 cancel，
+  # 必需检查只剩一半结论（#96/#99/#104 的 test 矩阵就是一半 failure 一半 cancelled）。
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

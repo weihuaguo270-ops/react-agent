@@ -28,7 +28,7 @@
     "capability_newcases_20260713.md": "45ab3373f77f4c01863c03103ae7df1e36e394f5f556e2004a2a67624eb39418",
     "capability_snapshot_20260713.md": "3cbc82cfb04116f1345cf412970eee9b3f3548d3f7615c5d24c65a7d43604f95",
     "daily_smoke/README.md": "d572ea74be6b3e8df02d0eb51944c1b0b1697c9deecc16e744fc2f732bede900",
-    "daily_smoke/VARIANCE.md": "89f21afc8ee832fc540e742e80745d1e8d886c7385e893c9b191d7655fbcfa6f",
+    "daily_smoke/VARIANCE.md": "037f8e1ef6ca0bdbbfa64f18b7cf726fc4e387bd956ad517f1478354b1a2ced0",
     "eval_report_20260713.md": "fda031497f9d028693cf281f66d7cc55a7af3845c04e50bec597e4f4e9c63dbd",
     "execution_agent_snapshot_20260715.md": "202caf938ed00212ed560ba6cf8699f626890352652a1af521402ca9ccc5bf47",
     "execution_agent_snapshot_20260715_v2.md": "73f8597dd75b1d6e347fe4771d4ea11fc8a6bd20c73e7178c8d9a766dd27cb60",
@@ -81,6 +81,6 @@
     "snapshots/tdebug_failure_flywheel_20260716.json": "6dc0bc4dff8701ef6d8480eae0a1c160883e3c811c7d61dda2a4f114483ab5e7",
     "step_watcher_evidence_baseline.md": "03f803a77c7ce669f15fc4a2cb572797415c94b131769fb470d2dd62d659c892"
   },
-  "generated_at": "2026-09-30T05:03:17Z",
+  "generated_at": "2026-10-01T09:07:51Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }

@@ -117,7 +117,9 @@ def _render_variance(rows: list[dict]) -> str:
         "| date (UTC) | git | exec offline | exec ok | reliability harness | reliability mock | agent smoke | overall |",
         "|------------|-----|-------------:|:-------:|:-------------------:|:----------------:|:-----------:|:-------:|",
     ]
-    for r in rows[-60:]:  # keep table readable
+    # 全量渲染，不再截断：历史上的 rows[-60:] 会让每日 PR 把更早的行删掉
+    # （#96/#99/#104 就因此丢了 07-17~07-29 共 12 行）。log.jsonl 是唯一事实来源。
+    for r in rows:
         ex = r.get("execution_offline") or {}
         ex_s = (
             f"{ex.get('passed')}/{ex.get('total')}"

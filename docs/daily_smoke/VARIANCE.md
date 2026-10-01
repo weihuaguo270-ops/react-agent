@@ -76,6 +76,10 @@
 | 2026-09-25 | `41fbae5` | 12/12 | PASS | PASS | PASS | skip | PASS |
 | 2026-09-26 | `41fbae5` | 12/12 | PASS | PASS | PASS | skip | PASS |
 | 2026-09-27 | `41fbae5` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-09-28 | `bdb5d42` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-09-29 | `8fcd250` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-09-30 | `6af1bb5` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-01 | `ddb4a2d` | 12/12 | PASS | PASS | PASS | skip | PASS |
 
 ## 怎么读
 
