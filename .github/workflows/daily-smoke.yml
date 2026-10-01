@@ -54,8 +54,9 @@ jobs:
       - name: Commit variance log, open PR and drive it to merge
         env:
           # 可选升级：配置 SMOKE_PAT（fine-grained PAT，需 contents / pull-requests / actions = write）
-          # 后，PR 由真人身份创建，pull_request 触发的 CI 不再被 first-time contributor 门禁拦下，
-          # auto-merge 可以自行闭环；未配置时回落到 GITHUB_TOKEN，由本步骤显式驱动到合并。
+          # 后，PR 由真人身份创建，pull_request 触发的 CI 不会被 first-time contributor 门禁拦下，
+          # 更新分支也会正常触发 CI；未配置时回落到 GITHUB_TOKEN，由本步骤显式批准被拦下的运行。
+          # 若 GITHUB_TOKEN 无权批准，会 ::error:: 明确要求配置 SMOKE_PAT，而不是留下残留 PR。
           GH_TOKEN: ${{ secrets.SMOKE_PAT || secrets.GITHUB_TOKEN }}
           SMOKE_PAT_SET: ${{ secrets.SMOKE_PAT != '' }}
           REPO: ${{ github.repository }}
@@ -79,6 +80,12 @@ jobs:
           git commit -m "chore(daily-smoke): append ${smoke_date} variance row"
           git push origin "HEAD:refs/heads/${branch}"
 
+          if [ "${SMOKE_PAT_SET}" = "true" ]; then
+            echo "token mode: SMOKE_PAT（真人身份，pull_request 运行会正常执行）"
+          else
+            echo "token mode: GITHUB_TOKEN（bot 身份，pull_request 运行会停在 action_required，需要批准）"
+          fi
+
           pr_url="$(gh pr create --repo "${REPO}" \
             --base main \
             --head "${branch}" \
@@ -87,10 +94,7 @@ jobs:
           pr_number="${pr_url##*/}"
           echo "Created ${pr_url}"
 
-          # 兜底：配了 SMOKE_PAT 时 auto-merge 能自己闭环；只有 GITHUB_TOKEN 时，GitHub 把
-          # bot 当 first-time contributor，pull_request 那次运行会停在 action_required（0 个 job），
-          # 必需检查只能靠本步骤 dispatch 的运行提供，所以下面显式驱动它一路到合并，
-          # 免得又留下一个「残留 PR」。
+          # 兜底：真人身份下 auto-merge 能自己闭环；bot 身份下要等下面批准那次运行。
           gh pr merge "${pr_number}" --repo "${REPO}" --squash --auto \
             || echo "::warning::auto-merge 开启失败，改由本步骤显式合并：${pr_url}" >&2
 
@@ -98,16 +102,16 @@ jobs:
             [ "$(gh pr view "${pr_number}" --repo "${REPO}" --json state --jq .state)" = "MERGED" ]
           }
 
-          latest_run_id() {  # $1 = event name
-            gh run list --repo "${REPO}" --branch "${branch}" --event "$1" --limit 1 \
+          latest_pr_run() {
+            gh run list --repo "${REPO}" --branch "${branch}" --event pull_request --limit 1 \
               --json databaseId --jq '.[0].databaseId // 0'
           }
 
-          await_run() {  # $1 = event, $2 = 已经见过的 run id
+          await_pr_run() {  # $1 = 已经见过的 run id
             local run_id
             for _ in $(seq 1 60); do
-              run_id="$(latest_run_id "$1")"
-              if [ "${run_id}" != "0" ] && [ "${run_id}" != "$2" ]; then
+              run_id="$(latest_pr_run)"
+              if [ "${run_id}" != "0" ] && [ "${run_id}" != "$1" ]; then
                 echo "${run_id}"
                 return 0
               fi
@@ -116,28 +120,42 @@ jobs:
             return 1
           }
 
-          seen_pr="0"
-          seen_dispatch="0"
+          # 必需检查只能由 pull_request 那次运行上报：workflow_dispatch 的检查虽然也挂在
+          # 同一个 SHA 上，但不会关联到 PR，分支保护看不见（实测 gh pr checks 只显示
+          # GitGuardian，mergeStateStatus 一直是 BLOCKED）。而 bot 建的 PR，那次运行会停在
+          # action_required（0 个 job），所以必须把它批准起来。
+          ensure_runnable() {  # $1 = run id
+            local concl status
+            concl="$(gh api "repos/${REPO}/actions/runs/$1" --jq '.conclusion // ""')"
+            if [ "${concl}" != "action_required" ]; then return 0; fi
+            echo "run $1 停在 action_required，尝试批准" >&2
+            gh api -X POST "repos/${REPO}/actions/runs/$1/approve" >/dev/null 2>&1 || true
+            sleep 10
+            status="$(gh api "repos/${REPO}/actions/runs/$1" --jq '.status')"
+            echo "run $1 status=${status}" >&2
+            [ "${status}" != "completed" ]
+          }
+
+          seen_run="0"
           for attempt in 1 2 3; do
             if is_merged; then echo "Merged ${pr_url}"; exit 0; fi
 
             echo "--- CI round ${attempt}"
-            if [ "${SMOKE_PAT_SET}" = "true" ]; then
-              # 真人身份的 push 会自己触发 pull_request 运行，不需要也不应该再 dispatch 一次。
-              run_id="$(await_run pull_request "${seen_pr}")" || {
-                echo "::warning::未等到 pull_request 运行，需人工处理：${pr_url}" >&2; exit 0; }
-              seen_pr="${run_id}"
-            else
-              gh workflow run test.yml --repo "${REPO}" --ref "${branch}" -f suite=smoke
-              run_id="$(await_run workflow_dispatch "${seen_dispatch}")" || {
-                echo "::warning::未等到 dispatch 运行，需人工处理：${pr_url}" >&2; exit 0; }
-              seen_dispatch="${run_id}"
+            run_id="$(await_pr_run "${seen_run}")" || {
+              echo "::warning::未等到 pull_request 运行，需人工处理：${pr_url}" >&2; exit 0; }
+            seen_run="${run_id}"
+
+            if ! ensure_runnable "${run_id}"; then
+              echo "::error::GITHUB_TOKEN 无权批准被门禁拦下的 pull_request 运行（run ${run_id}），必需检查不会上报。请配置 SMOKE_PAT（contents/pull-requests/actions = write），或人工批准 ${pr_url}。"
+              gh pr comment "${pr_number}" --repo "${REPO}" \
+                --body "本 PR 的 pull_request 运行停在 \`action_required\`，而 GITHUB_TOKEN 无权批准它，因此 9 项必需检查只会一直处于 expected。请配置 \`SMOKE_PAT\`，或人工批准 run ${run_id}。" || true
+              exit 1
             fi
 
             if ! gh run watch "${run_id}" --repo "${REPO}" --exit-status; then
               echo "::error::CI 未通过（run ${run_id}），PR 保留待人工处理：${pr_url}"
               gh pr comment "${pr_number}" --repo "${REPO}" \
-                --body "CI 未通过：run ${run_id}（branch \`${branch}\`）。修复后重新 dispatch 该分支的 CI 即可自动合并。" || true
+                --body "CI 未通过：run ${run_id}（branch \`${branch}\`）。修复后重跑该分支的 pull_request CI 即可合并。" || true
               exit 1
             fi
             if is_merged; then echo "Merged ${pr_url} (auto-merge)"; exit 0; fi
@@ -145,9 +163,10 @@ jobs:
             state="$(gh pr view "${pr_number}" --repo "${REPO}" --json mergeStateStatus --jq .mergeStateStatus)"
             echo "mergeStateStatus=${state}"
             if [ "${state}" = "BEHIND" ]; then
-              # main 前进过：分支更新后的新 SHA 必须重新跑一遍 CI，所以回到循环开头。
-              # 注意 GITHUB_TOKEN 的 push 不触发 workflow，只有真人身份（SMOKE_PAT）才会。
+              # main 前进过：更新分支会产生新的 SHA 和一次新的 pull_request 运行，
+              # 所以回到循环开头重新批准 + 等待 + 合并。
               if ! gh pr update-branch "${pr_number}" --repo "${REPO}"; then
+                echo "::warning::gh pr update-branch 失败（仓库 allow_update_branch=false？），尝试本地合并 main" >&2
                 git fetch origin main
                 git merge --no-edit origin/main
                 git push origin "HEAD:refs/heads/${branch}"
