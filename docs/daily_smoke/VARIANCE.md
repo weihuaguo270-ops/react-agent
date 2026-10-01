@@ -5,18 +5,6 @@
 
 | date (UTC) | git | exec offline | exec ok | reliability harness | reliability mock | agent smoke | overall |
 |------------|-----|-------------:|:-------:|:-------------------:|:----------------:|:-----------:|:-------:|
-| 2026-07-17 | `ff06d08` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-17 | `556c9da` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-18 | `71fd005` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-19 | `b5ee1b0` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-20 | `a84c364` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-21 | `7e683d0` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-22 | `dca47e6` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-23 | `011bbc2` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-24 | `ed74834` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-25 | `ad20b66` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-26 | `81f5f09` | 12/12 | PASS | PASS | PASS | skip | PASS |
-| 2026-07-29 | `2b7303f` | 12/12 | PASS | PASS | PASS | skip | PASS |
 | 2026-07-30 | `56a0c43` | 12/12 | PASS | PASS | PASS | skip | PASS |
 | 2026-07-31 | `82fd195` | 12/12 | PASS | PASS | PASS | skip | PASS |
 | 2026-08-01 | `b26567e` | 12/12 | PASS | PASS | PASS | skip | PASS |
@@ -76,6 +64,7 @@
 | 2026-09-25 | `41fbae5` | 12/12 | PASS | PASS | PASS | skip | PASS |
 | 2026-09-26 | `41fbae5` | 12/12 | PASS | PASS | PASS | skip | PASS |
 | 2026-09-27 | `41fbae5` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-01 | `ddb4a2d` | 12/12 | PASS | PASS | PASS | skip | PASS |
 
 ## 怎么读
 
