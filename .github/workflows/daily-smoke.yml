@@ -54,7 +54,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/daily_smoke/log.jsonl docs/daily_smoke/VARIANCE.md
+          # docs/ 同时是 git-docs 评测的 RAG 语料：VARIANCE.md 一改，
+          # tests/test_git_docs_corpus_drift.py 就报 changed，必需检查 test 必红，
+          # auto-merge 永远落不了地。所以提交前同步刷新语料基线并一起纳入本次提交。
+          python examples/eval/run_git_docs_eval.py --refresh-baseline
+          git add docs/daily_smoke/log.jsonl docs/daily_smoke/VARIANCE.md \
+                  src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json
           if git diff --staged --quiet; then
             echo "No variance log changes"
             exit 0
