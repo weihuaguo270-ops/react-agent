@@ -21,12 +21,15 @@ permissions:
 jobs:
   daily-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 自闭环最多要跑 3 轮 CI，单轮约 5 分钟
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
           # Needed so the job can push variance log commits.
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # SMOKE_PAT（可选）：真人身份的令牌，能让 pull_request 触发的 CI 正常跑；
+          # 未配置时回落到 GITHUB_TOKEN，行为与旧版一致。
+          token: ${{ secrets.SMOKE_PAT || secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
@@ -48,15 +51,21 @@ jobs:
           fi
           python examples/eval/run_daily_smoke.py $EXTRA
 
-      - name: Commit variance log and open PR
+      - name: Commit variance log, open PR and drive it to merge
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 可选升级：配置 SMOKE_PAT（fine-grained PAT，需 contents / pull-requests / actions = write）
+          # 后，PR 由真人身份创建，pull_request 触发的 CI 不再被 first-time contributor 门禁拦下，
+          # auto-merge 可以自行闭环；未配置时回落到 GITHUB_TOKEN，由本步骤显式驱动到合并。
+          GH_TOKEN: ${{ secrets.SMOKE_PAT || secrets.GITHUB_TOKEN }}
+          SMOKE_PAT_SET: ${{ secrets.SMOKE_PAT != '' }}
+          REPO: ${{ github.repository }}
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # docs/ 同时是 git-docs 评测的 RAG 语料：VARIANCE.md 一改，
           # tests/test_git_docs_corpus_drift.py 就报 changed，必需检查 test 必红，
-          # auto-merge 永远落不了地。所以提交前同步刷新语料基线并一起纳入本次提交。
+          # 合并永远落不了地。所以提交前同步刷新语料基线并一起纳入本次提交。
           python examples/eval/run_git_docs_eval.py --refresh-baseline
           git add docs/daily_smoke/log.jsonl docs/daily_smoke/VARIANCE.md \
                   src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json
@@ -70,25 +79,88 @@ jobs:
           git commit -m "chore(daily-smoke): append ${smoke_date} variance row"
           git push origin "HEAD:refs/heads/${branch}"
 
-          pr_url="$(gh pr create \
+          pr_url="$(gh pr create --repo "${REPO}" \
             --base main \
             --head "${branch}" \
             --title "chore(daily-smoke): append ${smoke_date} variance row" \
             --body "Automated variance log update from Daily smoke run ${GITHUB_RUN_ID} (attempt ${GITHUB_RUN_ATTEMPT}).")"
+          pr_number="${pr_url##*/}"
           echo "Created ${pr_url}"
 
-          # GITHUB_TOKEN-created PRs do not emit another Actions run, so dispatch CI explicitly.
-          gh workflow run test.yml --ref "${branch}" -f suite=smoke
+          # 兜底：配了 SMOKE_PAT 时 auto-merge 能自己闭环；只有 GITHUB_TOKEN 时，GitHub 把
+          # bot 当 first-time contributor，pull_request 那次运行会停在 action_required（0 个 job），
+          # 必需检查只能靠本步骤 dispatch 的运行提供，所以下面显式驱动它一路到合并，
+          # 免得又留下一个「残留 PR」。
+          gh pr merge "${pr_number}" --repo "${REPO}" --squash --auto \
+            || echo "::warning::auto-merge 开启失败，改由本步骤显式合并：${pr_url}" >&2
 
-          # 开启 auto-merge（squash）：必需检查通过后自动合并，无需人工介入。
-          #
-          # 为什么用 auto-merge 而不是直接 merge：
-          # - main 的分支保护 `strict: true` 要求分支与 main 同步；本工作流在
-          #   `gh pr create` 之后无法保证这一点，而 GitHub 原生 auto-merge 会在
-          #   合并前自动把分支更新到最新，从而满足 strict。
-          # - required_approving_review_count = 0，因此 9 项必需检查全绿即可落地。
-          # 前置条件：仓库级 `allow_auto_merge` 必须为 true，否则本步报
-          # "Auto merge is not allowed for this repository"。
-          if ! gh pr merge "${pr_url}" --squash --auto; then
-            echo "::warning::auto-merge 开启失败，该 PR 需人工合并：${pr_url}" >&2
-          fi
+          is_merged() {
+            [ "$(gh pr view "${pr_number}" --repo "${REPO}" --json state --jq .state)" = "MERGED" ]
+          }
+
+          latest_run_id() {  # $1 = event name
+            gh run list --repo "${REPO}" --branch "${branch}" --event "$1" --limit 1 \
+              --json databaseId --jq '.[0].databaseId // 0'
+          }
+
+          await_run() {  # $1 = event, $2 = 已经见过的 run id
+            local run_id
+            for _ in $(seq 1 60); do
+              run_id="$(latest_run_id "$1")"
+              if [ "${run_id}" != "0" ] && [ "${run_id}" != "$2" ]; then
+                echo "${run_id}"
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+
+          seen_pr="0"
+          seen_dispatch="0"
+          for attempt in 1 2 3; do
+            if is_merged; then echo "Merged ${pr_url}"; exit 0; fi
+
+            echo "--- CI round ${attempt}"
+            if [ "${SMOKE_PAT_SET}" = "true" ]; then
+              # 真人身份的 push 会自己触发 pull_request 运行，不需要也不应该再 dispatch 一次。
+              run_id="$(await_run pull_request "${seen_pr}")" || {
+                echo "::warning::未等到 pull_request 运行，需人工处理：${pr_url}" >&2; exit 0; }
+              seen_pr="${run_id}"
+            else
+              gh workflow run test.yml --repo "${REPO}" --ref "${branch}" -f suite=smoke
+              run_id="$(await_run workflow_dispatch "${seen_dispatch}")" || {
+                echo "::warning::未等到 dispatch 运行，需人工处理：${pr_url}" >&2; exit 0; }
+              seen_dispatch="${run_id}"
+            fi
+
+            if ! gh run watch "${run_id}" --repo "${REPO}" --exit-status; then
+              echo "::error::CI 未通过（run ${run_id}），PR 保留待人工处理：${pr_url}"
+              gh pr comment "${pr_number}" --repo "${REPO}" \
+                --body "CI 未通过：run ${run_id}（branch \`${branch}\`）。修复后重新 dispatch 该分支的 CI 即可自动合并。" || true
+              exit 1
+            fi
+            if is_merged; then echo "Merged ${pr_url} (auto-merge)"; exit 0; fi
+
+            state="$(gh pr view "${pr_number}" --repo "${REPO}" --json mergeStateStatus --jq .mergeStateStatus)"
+            echo "mergeStateStatus=${state}"
+            if [ "${state}" = "BEHIND" ]; then
+              # main 前进过：分支更新后的新 SHA 必须重新跑一遍 CI，所以回到循环开头。
+              # 注意 GITHUB_TOKEN 的 push 不触发 workflow，只有真人身份（SMOKE_PAT）才会。
+              if ! gh pr update-branch "${pr_number}" --repo "${REPO}"; then
+                git fetch origin main
+                git merge --no-edit origin/main
+                git push origin "HEAD:refs/heads/${branch}"
+              fi
+              continue
+            fi
+
+            if gh pr merge "${pr_number}" --repo "${REPO}" --squash; then
+              echo "Merged ${pr_url}"
+              exit 0
+            fi
+            echo "::warning::第 ${attempt} 轮合并未成功（mergeStateStatus=${state}），重试" >&2
+            sleep 20
+          done
+
+          echo "::warning::未能在本步骤合并，需人工处理：${pr_url}" >&2
