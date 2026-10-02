@@ -154,7 +154,7 @@ defs = get_tool_definitions()          # 该应用应有的工具描述
 
 | 能力 | 现状 |
 |------|------|
-| Worker 工具面 | **按显式声明收窄**（`tools/scope.py` 的 `ToolScope`）；声明里的未知工具名会告警，strict 模式（`REACT_AGENT_SCOPE_STRICT=1`）直接抛 `UnknownToolScopeError`，不会静默放行 |
+| Worker 工具面 | **按显式声明收窄**（`react_agent/tool_scope.py` 的 `ToolScope`，刻意放在包顶层以免导入时连带装配工具表）；声明里的未知工具名会告警，strict 模式（`REACT_AGENT_SCOPE_STRICT=1`）直接抛 `UnknownToolScopeError`，不会静默放行 |
 | 同层并行 | **写冲突检测默认开启**（`REACT_AGENT_WRITE_CONFLICT_SERIALIZE`，默认 `1`）：写集可能相交的任务被拆到不同执行段串行 |
 | 写集来源 | Planner 显式输出 `| writes: 路径`；未声明或 `writes: unknown` **一律按冲突处理**（保守串行，不猜） |
 | 委派深度 | 上限 `REACT_AGENT_SUBAGENT_MAX_DEPTH`，默认 `1`（允许直接子级、禁止更深嵌套）；超限明确拒绝 |

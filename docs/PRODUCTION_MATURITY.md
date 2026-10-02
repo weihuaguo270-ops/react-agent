@@ -32,8 +32,8 @@
 | **证据化文档问答** | 已具备 | 引用校验 + 无依据拒答；14 篇演示语料 |
 | 黄金集 + 扩展 eval | 已具备 | golden 34 + fault 12 + production 5 + git 5（**验收**） |
 | HTTP `/health` `/ready` + `/v1/chat` | 已具备 | 离线默认可不耗 Key |
-| HTTP `/v1/chat/stream` SSE | 已具备 | started/runtime/step/tool/`answer_delta`/`answer`/`cancelled`/done；答案增量流式；**客户端断连即取消执行**（步间 + 工具前检查），不再空跑完剩余步数 |
-| **服务鉴权 / Host 校验** | 已具备 | `REACT_AGENT_AUTH_TOKEN` → 除 `/health`、`/ready` 外全接口要求 Bearer；Host 头校验（默认 `loopback` 档，`allowlist` 严格档未声明则拒绝启动）防 DNS rebinding |
+| HTTP `/v1/chat/stream` SSE | 已具备 | 事件词表与 `DEPLOY.md` 一致：`started`/`runtime`/`step`/`tool_call`/`tool_result`/`trajectory`/`approval_required`/`answer_delta`/`answer`/`result`/`error`/`cancelled`/`heartbeat`/`done`；答案增量流式；**客户端断连即取消执行**（步间 + 工具前检查）；两个入口点共用同一套帧格式 |
+| **服务鉴权 / Host 校验** | 已具备 | `REACT_AGENT_AUTH_TOKEN` → 除 `/health`、`/ready`（含 `/v1/` 别名）外全接口要求 Bearer；默认入口（FastAPI）与 stdlib 面共用 `server/auth.py`，`REACT_AGENT_API_KEY` 保留为兼容别名；Host 头校验默认 `loopback` 档，`allowlist` 严格档需配合 `REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1` 且绑定非回环才拒绝启动 |
 | **工具执行面加固** | 已具备 | SSRF 守卫（scheme 白名单 + 解析后 IP + 逐跳重定向复检）、`trace_id` 路径穿越防护、MCP/沙箱子进程环境白名单、轨迹落盘脱敏、app 工具作用域隔离、控制面工具移出模型可见面 |
 | 结构化错误 + request_id | 已具备 | 统一 error envelope |
 | 产品 UI（证据链 + Agent 步） | 已具备 | `GET /` |
@@ -42,7 +42,7 @@
 | **现场证据** | 部分 | 调用方传入；不自动抓线上流量 |
 | **结构化 diagnosis** | 部分 | 规则为主；verify_actions 尚未接工具执行 |
 | Bearer API Key（主服务） | 已具备 | `REACT_AGENT_AUTH_TOKEN`：除探针外全接口校验；可选启用，未设置时保持本地开发便利并打印暴露告警。**HTTP JSON 日志仍未做** |
-| HTTP JSON 访问日志 | 主服务未做 | 独立沙箱控制面已完成 Bearer、request_id、JSON 访问日志和审批审计；主服务已有 Bearer 与 request_id，JSON 日志尚未并入 |
+| HTTP JSON 访问日志 | 主服务未做 | 「独立沙箱控制面已完成 Bearer、request_id、JSON 访问日志和审批审计」这条证据来自 sibling 仓 `agent-delivery-sandbox`（本仓无该实现）；主服务已有 Bearer 与 request_id，JSON 日志尚未并入 |
 | 轨迹级 eval 门禁 | 部分 | capability 支持工具选择/有序工具序列；Expense 校验业务终态并可导出 Episode；尚未统一为所有应用的发布硬门禁 |
 | 多租户 / SLA | 本阶段不做 | — |
 

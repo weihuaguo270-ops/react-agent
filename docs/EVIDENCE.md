@@ -3,7 +3,7 @@
 - FastAPI task runner 与 SoftwareTask failure-regression
 - Docker sandbox 权限、资源、断网和清理验证
 - Format B 轨迹、Harness、StepWatcher 与跨仓闭环
-- 可选 Milvus RAG 本机 Compose 联调
+- 语义检索依赖（`[rag]`）本机 Compose 联调；**Milvus 后端未随 main 发布**（实现只在侧分支 `codex/daily-smoke-pr`）
 
 - 闭环已验证 pass/review/hold 三种决策报告
 - 软件交付最小验收集：5 条任务，覆盖 pass、repair、hold、approval_denied、tool_timeout

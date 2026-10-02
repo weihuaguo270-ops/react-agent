@@ -100,7 +100,7 @@ image inspect 检查镜像，检查失败时拒绝运行。仓库测试不会把
 | 资源 | memory=256 MiB、pids=64、cpu.max=`50000 100000`、nofile=64 |
 | 生命周期 | 1 秒超时后强制清理，未发现 `react-agent-sbx-*` 遗留容器 |
 
-安全回归为 `15 passed`，全量回归为 `180 passed, 3 skipped`。这些结果不替代生产
+安全回归当时为 `15 passed`（本仓 `tests/test_sandbox_security.py` 现有 14 个用例，以 CI 实际结果为准），全量回归为 `180 passed, 3 skipped`。这些结果不替代生产
 节点逃逸测试、镜像供应链审计和多租户隔离评审。
 
 ## 边界
