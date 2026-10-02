@@ -88,32 +88,6 @@ class WorkflowRunRequest(BaseModel):
     payload_json: str | None = Field(default=None, max_length=100_000)
 
 
-class SecurityCaseCreateRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    message: str | None = Field(default=None, max_length=100_000)
-    query: str | None = Field(default=None, max_length=100_000)
-    cve_ids: list[str] = Field(default_factory=list, max_length=20)
-    iocs: list[str] = Field(default_factory=list, max_length=50)
-    assets: list[dict[str, Any]] = Field(default_factory=list, max_length=100)
-    sbom: dict[str, Any] | None = None
-
-    @model_validator(mode="after")
-    def require_security_input(self) -> "SecurityCaseCreateRequest":
-        if not (self.message or self.query or self.cve_ids or self.iocs):
-            raise ValueError("provide at least one message, CVE ID, or IOC")
-        return self
-
-
-class SecurityReviewRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    decision: str = Field(min_length=1, max_length=20)
-    reviewer: str = Field(min_length=1, max_length=200)
-    notes: str = Field(default="", max_length=10_000)
-    expected_version: int = Field(ge=1)
-
-
 class ApprovalDecisionRequest(BaseModel):
     """人工审批决议。
 
@@ -313,34 +287,18 @@ def create_app(
     manager: TaskManager | None = None,
     chat_handler: ChatHandler = handle_chat,
     initialize_runtime: bool = True,
-    security_case_store: Any | None = None,
 ) -> FastAPI:
     selected_manager = manager or task_manager
-    selected_security_store = security_case_store
-    owns_security_store = False
-
-    def get_security_store():
-        nonlocal selected_security_store, owns_security_store
-        if selected_security_store is None:
-            from react_agent.apps.security_triage.case_store import SecurityCaseStore
-
-            selected_security_store = SecurityCaseStore()
-            owns_security_store = True
-        return selected_security_store
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
-        try:
-            if initialize_runtime:
-                from react_agent.apps.docs_troubleshoot.index import reset_index
-                from react_agent.tools import enable_app_tools
+        if initialize_runtime:
+            from react_agent.apps.docs_troubleshoot.index import reset_index
+            from react_agent.tools import enable_app_tools
 
-                enable_app_tools()
-                reset_index()
-            yield
-        finally:
-            if owns_security_store and selected_security_store is not None:
-                selected_security_store.close()
+            enable_app_tools()
+            reset_index()
+        yield
 
     api = FastAPI(
         title="react-agent service",
@@ -428,9 +386,6 @@ def create_app(
             "features": [
                 "business_skill_contracts",
                 "progressive_skill_context",
-                "security_case_persistence",
-                "security_asset_correlation",
-                "security_human_review",
             ],
             "request_id": _request_id(x_request_id),
         }
@@ -554,84 +509,6 @@ def create_app(
             status, payload = error_response("queue_full", str(exc), request_id, 429)
             return JSONResponse(payload, status_code=status)
         return _task_payload(record, request_id)
-
-    @api.post("/v1/security/cases", status_code=201)
-    async def create_security_triage_case(
-        request: SecurityCaseCreateRequest,
-        x_request_id: str | None = Header(default=None),
-    ) -> JSONResponse:
-        from react_agent.apps.security_triage.case_service import create_security_case
-
-        request_id = _request_id(x_request_id)
-        try:
-            record = await run_in_threadpool(
-                create_security_case,
-                get_security_store(),
-                request.model_dump(exclude_none=True),
-            )
-        except ValueError as exc:
-            status, payload = error_response("invalid_security_case", str(exc), request_id, 422)
-            return JSONResponse(payload, status_code=status)
-        return JSONResponse({"request_id": request_id, **record}, status_code=201)
-
-    @api.get("/v1/security/cases/{case_id}")
-    async def get_security_triage_case(
-        case_id: str,
-        x_request_id: str | None = Header(default=None),
-    ) -> JSONResponse:
-        request_id = _request_id(x_request_id)
-        record = await run_in_threadpool(get_security_store().get, case_id)
-        if record is None:
-            status, payload = error_response("not_found", "security case not found", request_id, 404)
-            return JSONResponse(payload, status_code=status)
-        return JSONResponse({"request_id": request_id, **record})
-
-    @api.post("/v1/security/cases/{case_id}/reviews")
-    async def review_security_triage_case(
-        case_id: str,
-        request: SecurityReviewRequest,
-        x_request_id: str | None = Header(default=None),
-    ) -> JSONResponse:
-        from react_agent.apps.security_triage.case_store import (
-            SecurityCaseConflict,
-            SecurityCaseNotFound,
-        )
-
-        request_id = _request_id(x_request_id)
-        payload = request.model_dump()
-        expected_version = payload.pop("expected_version")
-        try:
-            record = await run_in_threadpool(
-                get_security_store().review,
-                case_id,
-                expected_version=expected_version,
-                review=payload,
-            )
-        except SecurityCaseNotFound:
-            status, error = error_response("not_found", "security case not found", request_id, 404)
-            return JSONResponse(error, status_code=status)
-        except SecurityCaseConflict as exc:
-            status, error = error_response("case_version_conflict", str(exc), request_id, 409)
-            return JSONResponse(error, status_code=status)
-        except ValueError as exc:
-            status, error = error_response("invalid_security_review", str(exc), request_id, 422)
-            return JSONResponse(error, status_code=status)
-        return JSONResponse({"request_id": request_id, **record})
-
-    @api.get("/v1/security/cases/{case_id}/reviews")
-    async def list_security_triage_reviews(
-        case_id: str,
-        x_request_id: str | None = Header(default=None),
-    ) -> JSONResponse:
-        from react_agent.apps.security_triage.case_store import SecurityCaseNotFound
-
-        request_id = _request_id(x_request_id)
-        try:
-            reviews = await run_in_threadpool(get_security_store().list_reviews, case_id)
-        except SecurityCaseNotFound:
-            status, error = error_response("not_found", "security case not found", request_id, 404)
-            return JSONResponse(error, status_code=status)
-        return JSONResponse({"request_id": request_id, "case_id": case_id, "reviews": reviews})
 
     @api.get("/v1/skills")
     async def skills(x_request_id: str | None = Header(default=None)) -> dict[str, Any]:

@@ -14,7 +14,7 @@
 
 - 服务入口点对齐（2026-09-28）：合并 #72 时 `DEPLOY.md` 声明"默认启动 `react-agent-api`"而 Dockerfile 仍为 stdlib 入口，两者矛盾。已修 `server/__main__.py` 为「装了 `[service]` 走 FastAPI，否则回退 stdlib」、Dockerfile CMD 改回 `react-agent-api`、`DEPLOY.md` 里过时的 `REACT_AGENT_API_KEY` 改为 `REACT_AGENT_AUTH_TOKEN`。见 [#97](https://github.com/weihuaguo270-ops/react-agent/pull/97)。
 
-- daily-smoke 日志断档修复（2026-09-28）：工作流只创建 PR、**从未包含合并步骤**，导致 `docs/daily_smoke/` 停在 2026-08-16，而此后每天的计划任务都成功运行并开出 PR（累计 42 个未合并）。已给工作流加 `gh pr merge --squash --auto` 并启用仓库级 `allow_auto_merge`（#93，机制随后经 #94/#96 实证：auto-merge 由 `app/github-actions` 自行开启）；42 个存量 PR 的内容以**一次性重建**方式补齐（`log.jsonl` 29→71 行、`VARIANCE.md` 42→84 行，日期连续覆盖 2026-08-17~09-27，无重复行）后统一关闭。见 [#93](https://github.com/weihuaguo270-ops/react-agent/pull/93)、[#94](https://github.com/weihuaguo270-ops/react-agent/pull/94)。
+- daily-smoke 日志断档修复（2026-09-28）：工作流只创建 PR、**从未包含合并步骤**，导致 `docs/daily_smoke/` 停在 2026-08-16，而此后每天的计划任务都成功运行并开出 PR（累计 42 个未合并）。已给工作流加 `gh pr merge --squash --auto` 并启用仓库级 `allow_auto_merge`（#93 用 `app/github-actions` 开启了 auto-merge，但当时**并未真正落地**：bot 建的 PR 其 `pull_request` 运行会停在 `action_required`（0 个 job），必需检查只能由 `workflow_dispatch` 提供，而 dispatch 的检查**不关联到 PR**，分支保护因此永远不放行；#96/#99/#104/#106 于是又各自残留了一个 PR。直到 2026-10-01 才修好，见 #107/#108/#110/#112：提交前刷新 docs 语料基线、把合并闭环收回 workflow、改为批准被门禁拦下的 `pull_request` 运行、合并后删除 automation 分支）；42 个存量 PR 的内容以**一次性重建**方式补齐（`log.jsonl` 29→71 行、`VARIANCE.md` 42→84 行，日期连续覆盖 2026-08-17~09-27，无重复行）后统一关闭。见 [#93](https://github.com/weihuaguo270-ops/react-agent/pull/93)、[#94](https://github.com/weihuaguo270-ops/react-agent/pull/94)。
 
 - 语料基线的跨平台缺陷修复（2026-09-28）：`sha256_file` 原按原始字节哈希，而 CI 同时在 ubuntu 与 windows 上跑 `test_git_docs_corpus_drift`；Windows 侧 `core.autocrlf=true` 会把 `docs/` 检出为 CRLF，使基线只在生成它的平台上成立。现改为哈希前把 CRLF/CR 归一化为 LF，并加两条用例锁住该不变量（同内容不同行尾必须同哈希、真实内容变更仍可检出）。
 
@@ -55,10 +55,10 @@
 
 - Pydantic 输入 v2 已单任务重跑：模型正确定位 `RootModel.__eq__` 的 alias 解包缺口，但在 60767 tokens 内未写补丁或运行测试，最终为 `terminal_submitted`、hidden failed、patch 0 bytes。输入歧义已排除，剩余问题是定位后的执行收敛；下一轮协议应增加无编辑进度门禁，不扩大预算。
 
-- 版本基线：v0.10.1（2026-09-15 SoftwareTask failure-regression）
-- 最近验证：FastAPI task runner、失败门禁、修复后复验、Docker sandbox、HTTP 应用与可选 Milvus RAG
+- 版本基线：`pyproject.toml` 为 **0.9.0**（CHANGELOG 最新已发布段同为 0.9.0）。仓库里另有 `v0.10.0` / `v0.10.1` 两个 tag，但它们只存在于侧分支（`backup/pre-split-wip`、`codex/daily-smoke-pr`），**不在 main 历史里**，也未随 CHANGELOG 发布。
+- 最近验证：FastAPI task runner、失败门禁、修复后复验、Docker sandbox、HTTP 应用（可选 Milvus RAG **未随 main 发布**，见 `DEPLOY.md`）
 - 可声称：受控软件任务执行、权限闸门、Format B 轨迹、回归评测、容器工具隔离
-- 不能声称：生产部署、长期线上 SLA、企业多租户权限体系、Milvus 生产容量
+- 不能声称：生产部署、长期线上 SLA、企业多租户权限体系、Milvus 生产容量（该后端未随 main 发布）
 - P0：将 task runner、轨迹、trace-debugger findings 和 eval-engine 发布判断串成单命令验收报告
 - 验证：`python examples/eval/harness_closed_loop.py --fixture`
 - 闭环报告：`python examples/eval/harness_closed_loop.py --fixture --report-out artifacts/portfolio_acceptance.json`

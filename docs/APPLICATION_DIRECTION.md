@@ -65,7 +65,7 @@ python examples/eval/run_docs_troubleshoot_eval.py
 
 **v0.5 已完成：** `/v1/chat` 多 app（`docs_troubleshoot` | `expense` | `default`）；`GET /v1/info` 列出 applications。
 
-**下一步：** Bearer 鉴权；expense Live 路径；neutral 多 app UI。工程交付流程已经输出结构化审计和告警，但 HTTP 服务全链路 JSON 日志仍需单独补齐。
+**已完成：** Bearer 鉴权 + Host 头校验（`REACT_AGENT_AUTH_TOKEN` / `REACT_AGENT_HOST_VALIDATION`，默认入口与 stdlib 面共用 `server/auth.py`）。**下一步：** expense Live 路径；neutral 多 app UI。工程交付流程已经输出结构化审计和告警，但 HTTP 服务全链路 JSON 日志仍需单独补齐。
 
 ---
 
@@ -89,7 +89,7 @@ python examples/eval/run_public_benchmark.py
 python examples/eval/run_public_rag_benchmark.py
 ```
 
-**下一步：** public RAG/agent 子集与 docs 黄金集 **并列** CI 门禁（execution HTTP smoke 已并列）。
+**已完成：** public RAG/agent 子集与 docs 黄金集已并列进 CI（`test` job 内跑 `run_public_benchmark.py`、`run_public_rag_benchmark.py` 与四套 docs 评测）。**下一步：** 把 public RAG 的 drop-off 指标纳入发布硬门禁。
 
 ---
 

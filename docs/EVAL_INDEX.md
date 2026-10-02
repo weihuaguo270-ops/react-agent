@@ -12,7 +12,7 @@
 | [eval_report_20260713.md](./reports/eval_report_20260713.md) | default 功能集 26 条 | 23/26（88%） | 人工整理（见文内失败分析） |
 | [capability_newcases_20260713.md](./reports/capability_newcases_20260713.md) | capability 扩容 6 条 | **5/6（83%）** | [snapshots/…](./snapshots/capability_newcases_20260713.json) |
 | [execution_snapshot_20260715.md](./reports/execution_snapshot_20260715.md) | execution 离线工具集 8 条 | **8/8（100%）** | [snapshots/…](./snapshots/execution_snapshot_20260715.json) |
-| [execution_agent_snapshot_20260715.md](./reports/execution_agent_snapshot_20260715.md) | execution **agent** 端到端 6 条 | **6/6（100%）** | DeepSeek；`DISABLE_MCP=1`；[归档](./snapshots/execution_agent_snapshot_20260715.json) |
+| [execution_agent_snapshot_20260715.md](./reports/execution_agent_snapshot_20260715.md) | execution **agent** 端到端 6 条 | **6/6（100%）** | DeepSeek；`REACT_AGENT_DISABLE_MCP=1`；[归档](./snapshots/execution_agent_snapshot_20260715.json) |
 | [execution_agent_snapshot_20260715_v2.md](./reports/execution_agent_snapshot_20260715_v2.md) | agent 扩容 **24** 条（易/中/难各 8） | **24/24（100%）** | 含双工具/禁工具/算法；[归档](./snapshots/execution_agent_snapshot_20260715_v2.json) |
 | [execution_agent_snapshot_20260716_v3.md](./reports/execution_agent_snapshot_20260716_v3.md) | agent 再扩至 **36** 条（易8/中12/难16） | **36/36（100%）** | [归档](./snapshots/execution_agent_snapshot_20260716_v3.json) |
 | [reliability_snapshot_20260715.md](./reports/reliability_snapshot_20260715.md) | ToolGuard/自修注入对照 4 场景 | **4/4（100%）** | [snapshots/…](./snapshots/reliability_snapshot_20260715.json) |
@@ -29,8 +29,8 @@
 | [public_benchmark_snapshot_offline.md](./reports/public_benchmark_snapshot_offline.md) | GSM8K×10 + HotpotQA×10 | offline 匹配器 20/20 | [归档](./snapshots/public_benchmark_snapshot_offline.json) |
 | [public_benchmark_snapshot_agent_20260717.md](./reports/public_benchmark_snapshot_agent_20260717.md) | 同上 · DeepSeek agent | **19/20（95%）** · GSM8K 10/10 · Hotpot 9/10 · Wilson [76.4, 99.1] | [归档](./snapshots/public_benchmark_snapshot_agent_20260717.json) |
 | 公开 RAG 子集（分层 v2） | HotpotQA-RAG smoke/hard/held_out | `examples/eval/run_public_rag_benchmark.py` | `public_rag_benchmark_subset.json` |
-| GitHub 公开只读业务证据 | 仓库契约 + 当前公开 Issue | `examples/eval/run_github_business_tasks.py` | [github_public_read_only_20260820.json](./snapshots/github_public_read_only_20260820.json) |
-| GitHub 公开只读交付样本 | agent-delivery-sandbox 公开 Issue（10 条） | `examples/eval/run_github_business_tasks.py` | [github_public_read_only_delivery_sandbox_20260820.json](./snapshots/github_public_read_only_delivery_sandbox_20260820.json) |
+| GitHub 公开只读业务证据 | 仓库契约 + 当前公开 Issue | `examples/eval/run_github_business_tasks.py --repository <owner/repo>` | 2026-08-20 的两份快照**未随 main 归档**（只存在于侧分支 `backup/pre-split-wip`） |
+| GitHub 公开只读交付样本 | agent-delivery-sandbox 公开 Issue（10 条） | 采集发生在 sibling 仓 `agent-delivery-sandbox` 侧 | 同上，未随 main 归档 |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 

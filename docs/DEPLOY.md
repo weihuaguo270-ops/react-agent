@@ -20,8 +20,8 @@ curl -s http://127.0.0.1:8765/v1/chat \
 
 默认容器现在启动 `react-agent-api`（FastAPI + Uvicorn）。原有标准库入口仍可用：
 `react-agent-server --host 0.0.0.0 --port 8765`。设置 `REACT_AGENT_AUTH_TOKEN` 后，
-对话、任务、Workflow、安全案件和 Skill 执行接口要求 `Authorization: Bearer <key>`；健康检查和
-服务信息接口保持公开，便于容器编排探针使用。
+对话、任务、Workflow 和 Skill 执行接口要求 `Authorization: Bearer <key>`；只有 `/health`、`/ready`
+（含 `/v1/` 别名）两个探针保持公开，`/v1/info` 同样需要凭据，避免暴露服务面细节。
 
 在本地执行 `python -m react_agent.server` 时，安装了 `react-agent[service]` 会默认使用
 FastAPI；只有未安装 service 依赖时才回退到标准库 HTTP。
@@ -37,9 +37,13 @@ docker build -t react-agent:local .
 docker run --rm -p 8765:8765 react-agent:local
 ```
 
-镜像始终安装 FastAPI 服务依赖；如需 Milvus 后端，可用
-`--build-arg REACT_AGENT_INSTALL_EXTRAS=rag`，它会在 FastAPI 依赖之上再安装 RAG/Milvus
-依赖。
+镜像始终安装 FastAPI 服务依赖；如需语义检索，可用
+`--build-arg REACT_AGENT_INSTALL_EXTRAS=rag`，它会在 FastAPI 依赖之上再安装 RAG 依赖
+（numpy / scikit-learn / sentence-transformers）。
+
+> Milvus 后端**当前不在 main**：`REACT_AGENT_MILVUS_*` 变量与后端实现只存在于侧分支
+> （`backup/pre-split-wip`、`codex/daily-smoke-pr` 的 `d261849`），尚未并入主干，
+> 因此本仓目前没有可用的 Milvus 运行路径。
 
 ## 健康检查
 
@@ -79,14 +83,22 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 入口保留相同的基础 Chat/Task/Workflow 路径，用于无额外依赖的兼容运行。
 
 ```
-GET  /health
-GET  /ready
-GET  /v1/workflows
+GET  /health              （别名 /v1/health）
+GET  /ready               （别名 /v1/ready）
+GET  / · /ui · /v1/ui     内置产品 UI
+GET  /v1/workflows        列出 workflow（别名 /v1/workflows/list）
 POST /v1/workflows/run   {"name":"docs_troubleshoot","query":"..."}
 POST /v1/chat            {"app":"docs_troubleshoot|expense|default", "message":"...", ...}
 POST /v1/chat/stream     同一请求体，返回 text/event-stream；见下方事件表
 GET  /v1/chat/stream?app=default&message=...  EventSource 兼容入口（查询参数形式）
-GET  /v1/info            applications + pillars
+GET  /v1/info            applications + features
+POST /v1/tasks           异步入队一个 chat 请求（202 + task_id）
+GET  /v1/tasks/{id}      查询任务状态
+DELETE /v1/tasks/{id}    取消任务
+GET  /v1/skills          列出已注册 skill（不含 instructions）
+GET  /v1/skills/{name}?level=full  取单个 skill 的完整上下文
+POST /v1/skills/route    按 query 路由到某个 skill
+POST /v1/skills/run      执行 skill（受权限闸门与业务边界约束）
 GET  /v1/approvals       列出未决的人工审批项（异步审批模式）
 POST /v1/approvals/{id}  {"decision":"approve"|"deny","scope":"once"|"session"}
 ```
@@ -204,7 +216,7 @@ REACT_AGENT_AUTH_TOKEN=$(openssl rand -hex 32) \
 react-agent-server --host 0.0.0.0 --port 8765
 ```
 
-**`allowlist`（严格）** — 开启后未声明 `REACT_AGENT_ALLOWED_HOSTS` 即**拒绝启动**（`exit 2`），与 `REACT_AGENT_SANDBOX_REQUIRED=1` 的失败语义一致。适合 CI/生产清单强制校验，避免「以为配了其实没配」。
+**`allowlist`（严格）** — 严格档要 fail-closed，必须同时设 `REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1`，且服务绑定的不是回环地址；此时未声明 `REACT_AGENT_ALLOWED_HOSTS` 即**拒绝启动**（`exit 2`），与 `REACT_AGENT_SANDBOX_REQUIRED=1` 的失败语义一致。只设 `REACT_AGENT_HOST_VALIDATION=allowlist` 而不设前者、或绑定 `127.0.0.1` 时不会拒绝启动。适合 CI/生产清单强制校验，避免「以为配了其实没配」。
 
 ```bash
 REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1 \

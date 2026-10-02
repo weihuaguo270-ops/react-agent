@@ -16,7 +16,6 @@ _DOCS_KEYWORDS = (
 )
 _EXPENSE_KEYWORDS = ("报销", "发票", "收据", "差旅", "费用", "额度", "审批")
 _GITHUB_KEYWORDS = ("github", "issue", "pull request", "draft pr", "代码交付")
-_SECURITY_KEYWORDS = ("cve", "kev", "ioc", "att&ck", "威胁情报", "安全研判", "漏洞研判", "threatfox")
 
 _DOCS_INPUT_SCHEMA = {
     "type": "object",
@@ -142,27 +141,6 @@ def _match_github(query: str, payload: dict[str, Any]) -> int:
     markers = {"repository", "replacements", "test_command", "acceptance_criteria"}
     structured = 120 if markers.issubset(payload) else 0
     return structured + _keyword_score(query, _GITHUB_KEYWORDS)
-
-
-def _match_security(query: str, payload: dict[str, Any]) -> int:
-    structured = 100 if any(key in payload for key in ("cve_ids", "iocs", "assets", "sbom")) else 0
-    return structured + _keyword_score(query, _SECURITY_KEYWORDS)
-
-
-def _run_security(payload: dict[str, Any]) -> dict[str, Any]:
-    from react_agent.apps.security_triage.offline_answer import answer_offline
-
-    return answer_offline(payload)
-
-
-def _verify_security(output: dict[str, Any]) -> dict[str, bool]:
-    case = output.get("case") or {}
-    return {
-        "triage_completed": bool(output.get("ok") and case.get("schema_version") == "security-triage/v1"),
-        "citations_present": bool(case.get("citations")) or not (case.get("cves") or case.get("iocs")),
-        "human_review_gate": case.get("status") == "pending_review",
-        "no_actions_executed": case.get("executed_actions") == [],
-    }
 
 
 def _run_docs(payload: dict[str, Any]) -> dict[str, Any]:
@@ -333,43 +311,6 @@ def register_builtin_skills() -> None:
                 success_conditions=("输出结构化 diagnosis", "引用真实存在或明确拒答", "不执行生产修复"),
                 human_handoff_conditions=("证据不足以区分根因", "需要修改配置、重启或回滚", "访问未授权租户数据"),
                 forbidden_actions=("modify_production", "restart_service", "rollback_production", "claim_unique_root_cause_without_evidence"),
-            ),
-        )
-    )
-    register_skill(
-        SkillDef(
-            name="security_triage",
-            scenario="security_operations_triage",
-            description="Read-only CVE/KEV/ATT&CK/IOC triage with asset evidence, citations, and human review gate.",
-            version="1",
-            workflow="security_triage@1",
-            risk_level="read_only",
-            owner="security-ai",
-            required_inputs=(),
-            required_outputs=("answer", "case"),
-            allowed_tools=("security_lookup_cve", "security_check_kev", "security_triage_report"),
-            instructions=(
-                "Use only public intelligence and caller-supplied asset/SBOM evidence.",
-                "Mark ATT&CK results as inferred and non-authoritative.",
-                "Keep every recommendation not executed and require human review.",
-                "Never claim that absence from a source means safe or unaffected.",
-            ),
-            release_checks=("triage_completed", "citations_present", "human_review_gate", "no_actions_executed"),
-            input_schema={"type": "object"},
-            output_schema={"type": "object", "required": ["answer", "case"]},
-            executor=_run_security,
-            verifier=_verify_security,
-            matcher=_match_security,
-            boundary=_boundary(
-                name="security_triage", scenario="security_operations_triage",
-                purpose="根据公开情报和调用方证据完成只读安全研判，并保留人工复核门。",
-                workflow="security_triage@1", risk_level="read_only", agent_callable=True,
-                owner="security-ai", allowed_tools=("security_lookup_cve", "security_check_kev", "security_triage_report"),
-                required_steps=("整理 CVE、IOC 或资产证据", "查询公开情报", "标注推断与证据", "生成待人工复核的研判"),
-                required_inputs=(), required_outputs=("answer", "case"),
-                success_conditions=("case schema 正确", "保留引用", "executed_actions 为空", "状态为 pending_review"),
-                human_handoff_conditions=("需要处置资产或修改安全策略", "证据来源冲突", "需要访问内部敏感数据"),
-                forbidden_actions=("execute_remediation", "isolate_asset", "modify_security_policy"),
             ),
         )
     )

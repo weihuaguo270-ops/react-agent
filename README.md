@@ -54,7 +54,9 @@ LangGraph environment contract.
 | **② 客服 / 自动化** | 可部署 Chat API、政策/Runbook 问答、工作流 demo | `docker compose up` · [`demo_expense_workflow.py`](examples/demos/demo_expense_workflow.py) |
 | **③ RAG / 研究** | 检索增强、公开 QA 子集、multi-hop | [`demo_rag.py`](examples/demos/demo_rag.py) · [`run_public_benchmark.py`](examples/eval/run_public_benchmark.py) |
 
-**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`POST/GET /v1/chat/stream` 提供 `text/event-stream` 进度事件；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
+**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
+
+**0.9.0 之后（Unreleased）：** `POST/GET /v1/chat/stream` 提供 `text/event-stream` 进度事件，两个服务面共用同一套事件词表与帧格式（`id:` 序号 + `event:` + 多行 `data:`）。
 
 **垂直 demo（② 的子场景）：** [证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 引用/拒答/现场证据；`agent_runner` 默认离线循环 · Live 走 `react_loop`。
 
@@ -155,9 +157,10 @@ query
 
 ```
 src/react_agent/          # Core 默认
-├── workflow/ · react_loop.py · apps/docs_troubleshoot/ · server/
+├── workflow/ · react_loop.py · apps/docs_troubleshoot/ · apps/expense/ · server/
+├── skills/ · multimodal.py         # 可注册 skill 边界 / 制品证据（不调用 OCR/VLM）
 ├── tools/ · tool_scope.py · write_sets.py
-├── orchestrator.py · planner.py    # 多 Agent 编排
+├── orchestrator.py · planner.py · intent/    # 多 Agent 编排 / 意图识别
 ├── safety/ · harness/ · resilience.py · eval/
 examples/
 ├── demos/                # 演示
@@ -262,7 +265,8 @@ Planner 的 `context: fork` 让子任务带上**父会话答案摘要**（不是
 
 `python -m react_agent.server` 与容器镜像**默认使用 FastAPI**（镜像内已装 `[service]`）；
 **仅核心安装**（未装 fastapi）时自动回退到标准库服务面，轻量运行时不受影响。端口与就绪探针
-两者一致（`REACT_AGENT_HOST` / `REACT_AGENT_PORT`，默认 `0.0.0.0:8765`，`/health` + `/ready`）。
+两者一致（`REACT_AGENT_HOST` / `REACT_AGENT_PORT`，`/health` + `/ready`）：两个 Python 入口点的默认绑定是
+`127.0.0.1:8765`；容器镜像与 `docker-compose.yml` 通过 `REACT_AGENT_HOST=0.0.0.0` 对外暴露。
 容器细节与构建参数见 [`docs/DEPLOY.md`](docs/DEPLOY.md)。
 
 能力包按需安装（core 安装保持轻量，`dependencies = []`）：
@@ -393,14 +397,14 @@ Expense 业务集不以答案关键词作为主门禁，而是检查 claim 数�
 | 离线 fixture | `examples/fixtures/harness_closed_loop.json` |
 | 一键 demo | `python examples/eval/harness_closed_loop.py` |
 
-闭环：`Agent 记录 → Trace Debugger 失败分类 → Eval Engine Process Reward`（CI `integration` job 会 clone 两仓并跑 demo + **契约测试**）。
+闭环：`Agent 记录 → Trace Debugger 失败分类 → Eval Engine Process Reward`（CI 的 `test` job 会 clone 两仓并跑 demo + **契约测试**）。
 
 **跨仓集成验证：**
 
 | 验证项 | 命令 / CI |
 |--------|-----------|
 | 跨仓评分 API | `pytest tests/test_eval_engine_contract.py` |
-| Agent→Eval 路径 | `python tests/ci_verify_integration.py`（integration job） |
+| Agent→Eval 路径 | `python tests/ci_verify_integration.py`（由 CI 的 `test` job 执行） |
 | Schema→tdebug→eval | `python examples/eval/harness_closed_loop.py --fixture` |
 
 ```bash
@@ -427,9 +431,16 @@ pytest tests/test_real_llm.py -v -m real_llm
 
 | Job | 触发 | 行为 |
 |-----|------|------|
-| lint / test / integration | push、PR | 离线；不消耗 API |
+| lint | push、PR | flake8（`src/`、`tests/`） |
+| test / test-windows | push、PR | 离线单测与脚本测试；`test` 还会 clone 两个 sibling 仓跑跨仓 demo 与契约测试 |
+| typecheck | push、PR | mypy（`src/react_agent`） |
+| security | push、PR | 干净 venv 里跑 pip-audit |
+| docker-smoke | push、PR | 构建镜像，打 `/ready` 并跑部署冒烟 |
+| **Real LLM gate** | push、PR | 探测 `DEEPSEEK_API_KEY`；无 Key 时下游 live job 显示 Skipped |
 | **Real LLM (smoke)** | push、PR（且已配置 Secret） | 跑 `real_llm_smoke`（事实问答 / 计算器 / 多步推理）；**失败会使该 job 红** |
 | **Real LLM (full)** | Actions → Run workflow → suite=`full` | 全量 `real_llm` |
+
+主干保护要求上述 9 项必需检查（`lint`、`test (3.10)`、`test (3.11)`、`test-windows (3.10)`、`test-windows (3.11)`、`typecheck`、`security`、`docker-smoke`、`Real LLM gate`）全绿。另一个 workflow `daily-smoke`（每日 UTC 01:00 定时 + 手动）只负责写跨日 variance 日志，不参与主干门禁。
 
 在仓库 **Settings → Secrets and variables → Actions** 添加 `DEEPSEEK_API_KEY`（与本地 `.env` 同名即可）。未配置时 **Real LLM gate** 会标记无 Key，smoke/full job 显示为 **Skipped**，不影响离线 CI。
 

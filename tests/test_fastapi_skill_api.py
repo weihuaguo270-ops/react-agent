@@ -33,7 +33,6 @@ async def test_fastapi_skill_discovery_context_route_and_safe_run():
             "docs_troubleshoot",
             "expense_claim_review",
             "github_delivery",
-            "security_triage",
         }
         assert all("instructions" not in item for item in catalog["skills"])
 
