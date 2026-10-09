@@ -11,7 +11,11 @@ requires-python = ">=3.10"
 license = {text = "MIT"}
 # Core install stays light: ReAct loop / tools / harness do not need embedding models.
 # Memory keyword fallback works without sklearn; semantic memory/RAG need [rag].
-dependencies = []
+dependencies = [
+    "sqlalchemy>=2.0,<3",
+    "psycopg[binary]>=3.2,<4",
+    "redis>=5,<8",
+]
 
 [project.optional-dependencies]
 rag = [
@@ -26,8 +30,7 @@ langgraph = [
 ]
 # FastAPI 服务面（react-agent-api）。core install 保持轻量：不装它时
 # react_agent.server.fastapi_app 仍可导入，只是无法作为 ASGI 应用对外提供。
-# 只列实际被 fastapi_app / task_manager 使用的依赖，不含 sqlalchemy/alembic
-# （那两个属于持久化层，当前实现未引用）。
+# SQLAlchemy + psycopg 是 PostgreSQL 任务持久化的运行时依赖。
 service = [
     "fastapi>=0.115,<1",
     "uvicorn>=0.30,<1",
@@ -36,7 +39,7 @@ service = [
 test = [
     "pytest>=9.0.3,<10",
     "pytest-cov>=4.0,<7",
-    "flake8>=6.0,<8",
+    "ruff>=0.8,<1",
     # tests/test_fastapi_skill_api.py 用 httpx 的 ASGI transport 驱动 FastAPI 应用；
     # CI 只装 `.[test]`，因此这两个必须在此自足，不能只依赖 [service]。
     "fastapi>=0.115,<1",
@@ -52,6 +55,7 @@ dev = [
 agent = "react_agent.react_loop:cli_entry"
 react-agent-server = "react_agent.server.app:main"
 react-agent-api = "react_agent.server.fastapi_app:main"
+react-agent-worker = "react_agent.worker:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -71,3 +75,24 @@ markers = [
     "real_llm: live LLM integration tests (need DEEPSEEK_API_KEY)",
     "real_llm_smoke: minimal live LLM subset for CI",
 ]
+# 所有可再生缓存集中到 .cache/，根目录不再出现 .pytest_cache/。
+cache_dir = ".cache/pytest"
+
+# mypy 默认写根目录 .mypy_cache/；同样收进 .cache/。
+[tool.mypy]
+cache_dir = ".cache/mypy"
+
+# Keep the legacy Pyflakes-only lint profile during the migration; additional
+# formatting/import rules can be adopted separately once their findings have
+# been reviewed.
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["F"]
+ignore = ["F401", "F841", "F541"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ALL"]
+"**/test*.py" = ["ALL"]
+"**/__init__.py" = ["ALL"]

@@ -504,9 +504,20 @@ def create_app(
             return {"http_status": status, "payload": payload}
 
         try:
-            record = selected_manager.submit(execute)
+            if hasattr(selected_manager, "submit_payload"):
+                record = selected_manager.submit_payload(
+                    request.model_dump(exclude_none=True), request_id
+                )
+            else:
+                record = selected_manager.submit(execute)
         except RuntimeError as exc:
-            status, payload = error_response("queue_full", str(exc), request_id, 429)
+            unavailable = "unavailable" in str(exc).lower()
+            status, payload = error_response(
+                "queue_unavailable" if unavailable else "queue_full",
+                str(exc),
+                request_id,
+                503 if unavailable else 429,
+            )
             return JSONResponse(payload, status_code=status)
         return _task_payload(record, request_id)
 

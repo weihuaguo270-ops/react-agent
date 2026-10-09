@@ -1,12 +1,59 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-learn}
+      POSTGRES_USER: ${POSTGRES_USER:-learn}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev-password}
+    volumes:
+      - react-agent-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --save
+      - "3600 1 300 100 60 10000"
+      - --aof-use-rdb-preamble
+      - "yes"
+      - --auto-aof-rewrite-percentage
+      - "100"
+      - --auto-aof-rewrite-min-size
+      - 64mb
+    ports:
+      # 6379 is occupied by the pre-existing learn-redis container.
+      # Compose services still use redis:6379 inside the project network.
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - react-agent-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   docs-troubleshoot:
     build: .
     image: react-agent:local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       # Published on loopback only: the HTTP API has no authentication unless
       # REACT_AGENT_AUTH_TOKEN is set. Use "0.0.0.0:8765:8765" deliberately if
       # you expose it, and set the token below.
-      - "127.0.0.1:8765:8765"
+      - "127.0.0.1:${REACT_AGENT_API_HOST_PORT:-8765}:8765"
     environment:
       # Bind inside the container; reachability is governed by the ports mapping above.
       REACT_AGENT_HOST: "0.0.0.0"
@@ -15,6 +62,14 @@ services:
       REACT_AGENT_APP: docs_troubleshoot
       REACT_AGENT_RAG_MODE: keyword
       REACT_AGENT_DISABLE_MCP: "1"
+      REACT_AGENT_TASK_STORE: postgresql
+      REACT_AGENT_DATABASE_URL: ${REACT_AGENT_DATABASE_URL:-postgresql+psycopg://learn:dev-password@postgres:5432/learn}
+      REACT_AGENT_QUEUE_BACKEND: redis
+      REACT_AGENT_REDIS_URL: ${REACT_AGENT_REDIS_URL:-redis://redis:6379/0}
+      REACT_AGENT_QUEUE_NAME: ${REACT_AGENT_QUEUE_NAME:-react-agent:tasks}
+      REACT_AGENT_QUEUE_GROUP: ${REACT_AGENT_QUEUE_GROUP:-react-agent-workers}
+      REACT_AGENT_QUEUE_VISIBILITY_MS: ${REACT_AGENT_QUEUE_VISIBILITY_MS:-900000}
+      REACT_AGENT_QUEUE_MAX_TASKS: ${REACT_AGENT_QUEUE_MAX_TASKS:-10000}
       # Shared-secret Bearer auth for every endpoint except /health and /ready.
       # Strongly recommended whenever this service is reachable off-host.
       # 变量名与 .env.example / docs/DEPLOY.md 一致；未在 .env 里设置时替换为空串，
@@ -58,5 +113,34 @@ services:
       retries: 3
       start_period: 20s
 
+  worker:
+    build: .
+    image: react-agent:local
+    command: ["react-agent-worker"]
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      REACT_AGENT_TASK_STORE: postgresql
+      REACT_AGENT_DATABASE_URL: ${REACT_AGENT_DATABASE_URL:-postgresql+psycopg://learn:dev-password@postgres:5432/learn}
+      REACT_AGENT_QUEUE_BACKEND: redis
+      REACT_AGENT_REDIS_URL: ${REACT_AGENT_REDIS_URL:-redis://redis:6379/0}
+      REACT_AGENT_QUEUE_NAME: ${REACT_AGENT_QUEUE_NAME:-react-agent:tasks}
+      REACT_AGENT_QUEUE_GROUP: ${REACT_AGENT_QUEUE_GROUP:-react-agent-workers}
+      REACT_AGENT_QUEUE_VISIBILITY_MS: ${REACT_AGENT_QUEUE_VISIBILITY_MS:-900000}
+      REACT_AGENT_QUEUE_MAX_TASKS: ${REACT_AGENT_QUEUE_MAX_TASKS:-10000}
+      REACT_AGENT_DATA_DIR: /app/data
+      REACT_AGENT_DEFAULT_APP: docs_troubleshoot
+      REACT_AGENT_RAG_MODE: keyword
+      REACT_AGENT_DISABLE_MCP: "1"
+    volumes:
+      - react-agent-data:/app/data
+
 volumes:
   react-agent-data:
+  react-agent-postgres-data:
+  react-agent-redis-data:
