@@ -81,6 +81,14 @@
 | 2026-09-30 | `6af1bb5` | 12/12 | PASS | PASS | PASS | skip | PASS |
 | 2026-10-01 | `ddb4a2d` | 12/12 | PASS | PASS | PASS | skip | PASS |
 | 2026-10-01 | `4706856` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-02 | `b0b097a` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-03 | `9b4532b` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-04 | `4c71d4d` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-05 | `efd6b29` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-06 | `41fa1b7` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-07 | `cfcb5ba` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-08 | `904724d` | 12/12 | PASS | PASS | PASS | skip | PASS |
+| 2026-10-09 | `5564653` | 12/12 | PASS | PASS | PASS | skip | PASS |
 
 ## 怎么读
 
