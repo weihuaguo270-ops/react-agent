@@ -1,5 +1,15 @@
 # ReAct Agent
 
+## 本地跨项目开发环境
+
+完整闭环验收需要本工作区中的 `trace-debugger` 和 `llm-eval-engine`。在四项目并列目录下，可使用项目虚拟环境安装本地 editable 依赖：
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev-local.txt --no-deps
+```
+
+该文件只引用相邻项目源码，不复制或维护第二份实现。
+
 ## 项目定位
 
 面向编码执行、客服工作流和 RAG 研究场景的受控 Agent 运行时，负责工具调用、权限边界、轨迹记录和任务验收。
@@ -57,6 +67,8 @@ LangGraph environment contract.
 **Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
 
 **0.9.0 之后（Unreleased）：** `POST/GET /v1/chat/stream` 提供 `text/event-stream` 进度事件，两个服务面共用同一套事件词表与帧格式（`id:` 序号 + `event:` + 多行 `data:`）。
+
+**异步任务队列 MVP（Unreleased）：** `POST /v1/tasks` 可将任务写入 Redis Streams，由独立 Worker 执行，任务状态、结果和错误持久化到 PostgreSQL；`GET /v1/tasks/{task_id}` 查询持久化记录，`DELETE /v1/tasks/{task_id}` 支持协作式取消。默认内存任务模式继续用于本地回归，Redis 模式通过 `REACT_AGENT_QUEUE_BACKEND=redis` 启用。完整配置、状态机、故障恢复和验收证据见 [`docs/spec/REDIS_TASK_MVP_SPEC.md`](docs/spec/REDIS_TASK_MVP_SPEC.md)。
 
 **垂直 demo（② 的子场景）：** [证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 引用/拒答/现场证据；`agent_runner` 默认离线循环 · Live 走 `react_loop`。
 
@@ -431,7 +443,7 @@ pytest tests/test_real_llm.py -v -m real_llm
 
 | Job | 触发 | 行为 |
 |-----|------|------|
-| lint | push、PR | flake8（`src/`、`tests/`） |
+| lint | push、PR | Ruff（`src/`、`tests/`，仅启用 `F` 规则） |
 | test / test-windows | push、PR | 离线单测与脚本测试；`test` 还会 clone 两个 sibling 仓跑跨仓 demo 与契约测试 |
 | typecheck | push、PR | mypy（`src/react_agent`） |
 | security | push、PR | 干净 venv 里跑 pip-audit |
