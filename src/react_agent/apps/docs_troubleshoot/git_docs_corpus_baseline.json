@@ -79,7 +79,7 @@
     "snapshots/sandbox_live_check_docker_latest.json": "84f1d2655d95eb0e46a6276b22b32364b0ae81f22d054de65aa3f652fac79013",
     "snapshots/step_watcher_evidence_baseline.json": "0b320b311b225ae93a744a2b9a22d353fc65381e89aeeac621b16e2014ea0961",
     "snapshots/tdebug_failure_flywheel_20260716.json": "6dc0bc4dff8701ef6d8480eae0a1c160883e3c811c7d61dda2a4f114483ab5e7",
-    "spec/REDIS_TASK_MVP_SPEC.md": "31c501379a448466af0e2ae9ccaa05ae71e1d66b3431899c8d7882ee1c0a456b",
+    "spec/REDIS_TASK_MVP_SPEC.md": "247f827506d82b2308e899d82ca91a75abe84e8046b9910407323acbb0162483",
     "step_watcher_evidence_baseline.md": "03f803a77c7ce669f15fc4a2cb572797415c94b131769fb470d2dd62d659c892"
   },
   "generated_at": "2026-10-09T09:38:54Z",
