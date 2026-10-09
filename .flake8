@@ -1,7 +1,0 @@
-[flake8]
-max-line-length = 200
-select = F
-ignore = F401,F841,F541,F824
-per-file-ignores =
-    */test*: ALL
-    */__init__.py: ALL
