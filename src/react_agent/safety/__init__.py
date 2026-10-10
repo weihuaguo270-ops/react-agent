@@ -12,6 +12,7 @@ from react_agent.safety.permissions import (
     get_direction_permission,
     get_tool_permission,
     is_high_risk,
+    is_side_effect_confirm,
 )
 from react_agent.safety.human_in_the_loop import ApprovalRecord, HumanInTheLoop
 from react_agent.safety.permission_gate import (
@@ -33,6 +34,7 @@ __all__ = [
     "get_hitl",
     "get_tool_permission",
     "is_high_risk",
+    "is_side_effect_confirm",
     "permission_block_message",
     "set_hitl",
 ]

@@ -69,8 +69,8 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 | `REACT_AGENT_DOCS_INGEST_DIRS` | — | 额外语料目录（逗号分隔，可 mount） |
 | `REACT_AGENT_AUTH_TOKEN` | 未设 | 共享密钥；设置后除 `/health`、`/ready` 外**所有接口**要求 `Authorization: Bearer <token>`（或 `X-Api-Key`） |
 | `REACT_AGENT_API_KEY` | 未设 | **兼容别名**：等价于 `REACT_AGENT_AUTH_TOKEN`，两者同时设置时后者优先。仅供早期 FastAPI 面部署平滑过渡，新部署请只用 `REACT_AGENT_AUTH_TOKEN` |
-| `REACT_AGENT_STRICT_CONFIRM` | 未设 | `1` 时未注入 HITL 则**拒绝** `CONFIRM` 级工具（失败关闭）；注意会一并禁掉 `execute_python` |
-| `REACT_AGENT_APPROVAL_MODE` | `auto_allow` | `async` 时启用**异步人工审批**：`CONFIRM` 级工具落盘待批项并阻塞，人工经 HTTP 批准后放行 |
+| `REACT_AGENT_STRICT_CONFIRM` | 未设 | 在 `auto_allow` 下：`1` 时未注入 HITL 则**拒绝副作用** `CONFIRM`（失败关闭，含 `execute_python`）；`CONFIRM_READ` 仍放行 |
+| `REACT_AGENT_APPROVAL_MODE` | `async` | 默认异步人工审批：副作用 `CONFIRM` 落盘待批并阻塞。本地/CI 逃生：`auto_allow` 或 `off` |
 | `REACT_AGENT_APPROVAL_DIR` | 见说明 | 待批项存放目录；默认 `data_dir()/approvals`。**必须可写**，否则闸门失败关闭（拒绝执行） |
 | `REACT_AGENT_LLM_STREAM` | `1` | `1` 时 LLM 走流式（`answer_delta` 增量 + 断连即时取消）；`0` 回退一次性返回 |
 | `REACT_AGENT_ALLOWED_HOSTS` | 未设 | 额外允许的 Host（逗号分隔），用于反代/自定义域名 |
@@ -143,47 +143,45 @@ LLM 调用。若不需要该行为可在客户端侧忽略，但服务端终止�
 
 > 说明：本项目不发 CORS 头，也不实现 `OPTIONS`。这能阻止跨源**读取**响应，但挡不住 binding 后的同源读取——所以 Host 校验不可省略。
 
-### ⚠️ 第三道防线：CONFIRM 级工具当前**无人把关**
+### 第三道防线：默认异步审批 + CONFIRM 分级
 
-`safety/human_in_the_loop.py` 有完整的 HITL 实现（授权缓存、超时、审计日志），但**生产入口从未注入它**——`permission_gate.set_hitl()` 只在测试里被调用。因此非严格模式下 `CONFIRM` 级工具会**自动放行**：
+确认族分两档（见 `safety/permissions.py`）：
 
-| 工具 | 默认配置（沙箱 auto/process）下的实际行为 |
-|------|--------------------------------------------|
-| `execute_python` | **在宿主执行**（任意代码） |
-| `clear_trajectories` | **在宿主执行**（删除轨迹） |
-| `read_config_snapshot` / `probe_service_health` / `fetch_trace` | 被沙箱拦下（不在沙箱子进程注册表内），**不可达** |
+| 等级 | 含义 | 默认（async）行为 |
+|------|------|-------------------|
+| `CONFIRM_READ` | 敏感只读 | **直接放行**（`read_config_snapshot`、`probe_service_health`） |
+| `CONFIRM` | 有副作用 | **落盘待批**（`execute_python`、`write_file`、`apply_fix_step` 等） |
 
-也就是说：**权限表看起来有闸门，默认模式下实际没有人工审批**。启动日志会打印告警，`/ready` 的 `confirmation_gate` 字段也会暴露该状态，可用它做部署前检查：
+`fetch_trace` 因 trace_id 会进路径/子进程，仍属副作用 `CONFIRM`。
+
+显式设 `REACT_AGENT_APPROVAL_MODE=auto_allow`（或 `off`）时，副作用工具才会自动放行；启动日志与 `/ready` 的 `confirmation_gate` 会告警：
 
 ```json
 "confirmation_gate": {
   "mode": "auto_allow",
   "unenforced_confirm_tools": ["clear_trajectories", "execute_python"],
-  "unreachable_confirm_tools": ["fetch_trace", "probe_service_health", "read_config_snapshot"],
-  "warning": "CONFIRM 级工具当前自动放行（未注入 HITL）：…"
+  "auto_allowed_confirm_read_tools": [],
+  "warning": "副作用 CONFIRM 工具当前自动放行…"
 }
 ```
 
-**处置选项**：
+| 选项 | 效果 |
+|------|------|
+| 默认 / `async` | 副作用待批；只读放行 |
+| `auto_allow` / `off` | 副作用也放行（开发逃生；会告警） |
+| `STRICT_CONFIRM=1` + `auto_allow` | 副作用拒绝；只读仍放行 |
+| 注入 HITL | 副作用交互式询问 |
 
-| 选项 | 效果 | 代价 |
-|------|------|------|
-| 接受现状 | 无 | `default` 应用的 `execute_python` 无人工把关 |
-| `REACT_AGENT_STRICT_CONFIRM=1` | 未注入 HITL 时**拒绝** `CONFIRM`（失败关闭） | 会一并禁掉 `execute_python`，`default` 应用失去代码执行能力 |
-| 注入 HITL（`set_hitl(...)`） | 真正询问 | 需要客户端交互通道；建议按"异步审批"实现（见 `CORE_ARCHITECTURE.md`） |
+### 异步人工审批（默认）
 
-### 异步人工审批（推荐启用）
-
-`safety/human_in_the_loop.py` 的交互式审批要求通道在中途来回，而 HTTP 请求无法挂着等人几分钟。因此审批被建模为**状态**而非消息——这也是**不需要 WebSocket** 的原因：
+HTTP 请求无法挂着等人几分钟，因此审批被建模为**状态**而非消息——不需要 WebSocket：
 
 ```
-Agent 命中 CONFIRM
+Agent 命中副作用 CONFIRM
   → 待批项落盘 + 本次 run 返回 status=awaiting_approval（含 approval_id）
   ↓（人可以几分钟后再来）
 客户端独立 HTTP 请求决定 → 带 approval_id 重试 → 放行
 ```
-
-启用：`REACT_AGENT_APPROVAL_MODE=async`
 
 | 接口 | 说明 |
 |------|------|
@@ -196,14 +194,14 @@ Agent 命中 CONFIRM
 
 **失败关闭**：待批项写不下（目录不可写）时，闸门返回 `approval_store_unavailable` 并**拒绝执行**，绝不会退化为放行。
 
-三种闸门模式对比（`/ready` 的 `confirmation_gate.mode`）：
+闸门模式对比（`/ready` 的 `confirmation_gate.mode`）：
 
-| 模式 | 触发 | `CONFIRM` 行为 |
-|------|------|----------------|
-| `async` | `REACT_AGENT_APPROVAL_MODE=async` | **落盘待批 + 阻塞**，人工批准后放行 |
+| 模式 | 触发 | 副作用 `CONFIRM` 行为 |
+|------|------|----------------------|
+| `async` | **默认** / `REACT_AGENT_APPROVAL_MODE=async` | **落盘待批 + 阻塞**，人工批准后放行 |
 | `hitl` | 代码注入 `set_hitl(...)` | 交互式询问（需真人在同一通道） |
-| `strict_deny` | `REACT_AGENT_STRICT_CONFIRM=1` | **直接拒绝** |
-| `auto_allow` | 默认 | **自动放行**（无人把关，会打印告警） |
+| `strict_deny` | `auto_allow` + `REACT_AGENT_STRICT_CONFIRM=1` | **直接拒绝**（`CONFIRM_READ` 仍放行） |
+| `auto_allow` | `REACT_AGENT_APPROVAL_MODE=auto_allow` 或 `off` | **自动放行**（会打印告警） |
 
 ### Host 校验三档
 

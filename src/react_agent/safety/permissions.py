@@ -3,8 +3,12 @@
 为 Agent 的每次操作定义风险等级，控制哪些操作需要人工审批。
 本模块是运行时权限闸门依据，不是 OS ACL。
 
-等级：SAFE / NOTIFY / CONFIRM / DENY
-评估顺序：DENY → ASK(CONFIRM) → ALLOW
+等级：SAFE / NOTIFY / CONFIRM_READ / CONFIRM / DENY
+评估顺序：DENY → ASK(确认族) → ALLOW
+
+确认族两档（闸门再分流）：
+  CONFIRM_READ — 敏感只读（读配置、健康探测）；默认 async 下直接放行
+  CONFIRM      — 有副作用（写文件、执行代码等）；默认 async 需人工批准
 
 v2：参数级权限（Argument Rules）
   write_file /tmp/* → SAFE；write_file /etc/* → CONFIRM；
@@ -20,6 +24,7 @@ class PermissionLevel(Enum):
     """操作权限等级"""
     SAFE = "safe"
     NOTIFY = "notify"
+    CONFIRM_READ = "confirm_read"
     CONFIRM = "confirm"
     DENY = "deny"
 
@@ -89,11 +94,13 @@ TOOL_PERMISSIONS: dict[str, PermissionLevel] = {
     "get_memory": PermissionLevel.NOTIFY,
     "search_memory": PermissionLevel.NOTIFY,
 
-    # CONFIRM
+    # CONFIRM_READ — 敏感只读（无本地副作用；闸门在 async/STRICT 下仍放行）
     # 读取宿主环境变量（prefixes 可由调用方控制）——不是 SAFE
-    "read_config_snapshot": PermissionLevel.CONFIRM,
-    # 对外发起 HTTP 请求（SSRF 面）——不是 SAFE
-    "probe_service_health": PermissionLevel.CONFIRM,
+    "read_config_snapshot": PermissionLevel.CONFIRM_READ,
+    # 对外发起 HTTP 请求（SSRF 面由网络守卫约束）——不是 SAFE
+    "probe_service_health": PermissionLevel.CONFIRM_READ,
+
+    # CONFIRM — 有副作用，默认 async 需人工批准
     # 删除历史轨迹（破坏性写操作）
     "clear_trajectories": PermissionLevel.CONFIRM,
     # toggle_sandbox 已从 TOOL_REGISTRY / TOOL_DEFINITIONS 移除（控制面，模型不可见）。
@@ -190,7 +197,7 @@ DEFAULT_PERMISSION = PermissionLevel.CONFIRM
 def _level_to_outcome(level: PermissionLevel) -> Outcome:
     if level == PermissionLevel.DENY:
         return "deny"
-    if level == PermissionLevel.CONFIRM:
+    if level in (PermissionLevel.CONFIRM, PermissionLevel.CONFIRM_READ):
         return "ask"
     return "allow"
 
@@ -254,8 +261,17 @@ def get_direction_permission(action: str) -> PermissionLevel:
     return DIRECTION_CHANGE_LEVELS.get(action, PermissionLevel.CONFIRM)
 
 
+def is_side_effect_confirm(level: PermissionLevel) -> bool:
+    """副作用确认档：需 HITL/async 批准，STRICT 下无人通道则拒绝。"""
+    return level == PermissionLevel.CONFIRM
+
+
 def is_high_risk(level: PermissionLevel) -> bool:
-    return level in (PermissionLevel.CONFIRM, PermissionLevel.DENY)
+    return level in (
+        PermissionLevel.CONFIRM,
+        PermissionLevel.CONFIRM_READ,
+        PermissionLevel.DENY,
+    )
 
 
 def describe_action(tool_name: str, args: Optional[dict] = None) -> str:

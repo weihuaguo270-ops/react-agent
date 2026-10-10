@@ -221,6 +221,20 @@ def test_auto_allow_mode_unaffected(monkeypatch, approval_dir):
     assert permission_block_message("execute_python", {"code": "x"}) is None
 
 
+def test_default_approval_mode_is_async(monkeypatch):
+    monkeypatch.delenv("REACT_AGENT_APPROVAL_MODE", raising=False)
+    from react_agent.safety.approvals import approval_mode
+
+    assert approval_mode() == "async"
+
+
+def test_off_maps_to_auto_allow(monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "off")
+    from react_agent.safety.approvals import approval_mode
+
+    assert approval_mode() == "auto_allow"
+
+
 # ── 响应侧信号 ──
 
 

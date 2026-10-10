@@ -202,10 +202,12 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 权限评估顺序（Harness 强制）：
 
 1. **DENY** — 参数 DENY 规则或工具表 DENY（默认拦截）
-2. **ASK** — CONFIRM 级工具，三种处置之一：
-   - **异步人工审批**（推荐）：`REACT_AGENT_APPROVAL_MODE=async` → 落盘待批项并阻塞，人工经 `GET/POST /v1/approvals` 批准后带 `approval_id` 重试放行
-   - 注入 HITL：交互式询问（需真人在同一通道）
-   - 兜底：`REACT_AGENT_STRICT_CONFIRM=1` 直接拒绝；**默认（两者都未配）会放行**，启动日志与 `/ready` 的 `confirmation_gate` 会明确告警
+2. **ASK** — 确认族工具再分两档：
+   - **`CONFIRM_READ`**（敏感只读）：任意模式直接放行（如 `read_config_snapshot`、`probe_service_health`）
+   - **`CONFIRM`**（副作用）：三种处置之一：
+     - **异步人工审批（默认）**：`REACT_AGENT_APPROVAL_MODE` 未设或为 `async` → 落盘待批，经 `GET/POST /v1/approvals` 批准后带 `approval_id` 重试
+     - 注入 HITL：交互式询问（需真人在同一通道）
+     - 显式 `auto_allow` / `off`：放行（启动日志与 `/ready` 告警）；或 `REACT_AGENT_STRICT_CONFIRM=1` 直接拒绝
 3. **ALLOW** — SAFE / NOTIFY
 
 关闭权限闸门：`REACT_AGENT_PERMISSION_GATE=0`。
@@ -220,7 +222,8 @@ export LLM_PROVIDER=deepseek   # 或 openai / anthropic
 |------|------|------------------|
 | SAFE | 自动放行 | web_search、calculator |
 | NOTIFY | 记录后继续 | 部分读信息工具 |
-| CONFIRM | 询问 / 非交互默许 | write_file、execute_python |
+| CONFIRM_READ | 敏感只读，闸门放行 | read_config_snapshot、probe_service_health |
+| CONFIRM | 默认 async 待批 | write_file、execute_python、apply_fix_step |
 | DENY | 默认拦截 | delete_directory、install_package |
 
 范围与限制：
@@ -470,7 +473,7 @@ gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DE
 |------|------|------|
 | 共享密钥鉴权 | `REACT_AGENT_AUTH_TOKEN` | 除探针外全接口要求 `Authorization: Bearer`（或 `X-Api-Key`） |
 | Host 头校验 | `REACT_AGENT_HOST_VALIDATION`（默认 `loopback`） | 防 **DNS rebinding**；`allowlist` 档未声明域名则拒绝启动，`REACT_AGENT_ALLOWED_HOSTS` 声明域名 |
-| 异步人工审批 | `REACT_AGENT_APPROVAL_MODE=async` | `CONFIRM` 级工具阻塞待批，经 `/v1/approvals` 批准 |
+| 异步人工审批（默认） | `REACT_AGENT_APPROVAL_MODE`（默认 `async`） | 副作用 `CONFIRM` 阻塞待批，经 `/v1/approvals` 批准；本地可设 `auto_allow` / `off` |
 | 答案流式 | `REACT_AGENT_LLM_STREAM`（默认开） | `/v1/chat/stream` 推送 `answer_delta`；客户端断连即**取消执行**，不再空烧 LLM 调用 |
 | 写冲突串行化 | `REACT_AGENT_WRITE_CONFLICT_SERIALIZE`（默认 `1`） | 同层写集可能相交的 Worker 拆段串行；设 `0` 回到历史并行行为 |
 | Worker 工具面严格模式 | `REACT_AGENT_SCOPE_STRICT`（默认 `0`） | `1` 时工具面声明含未知工具名直接抛错，而非仅告警 |
