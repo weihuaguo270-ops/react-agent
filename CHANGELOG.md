@@ -4,6 +4,14 @@
 
 ### Changed
 
+- **Breaking — confirmation gate defaults to async + CONFIRM tiers.**
+  `REACT_AGENT_APPROVAL_MODE` now defaults to `async` (was `auto_allow`): side-effect
+  `CONFIRM` tools (`execute_python`, `write_file`, `apply_fix_step`, …) block for HTTP
+  approval via `/v1/approvals`. Sensitive read tools are a new `CONFIRM_READ` level
+  (`read_config_snapshot`, `probe_service_health`) and are allowed without approval in
+  every mode. Local/CI escape hatch: `REACT_AGENT_APPROVAL_MODE=auto_allow` or `off`.
+  `STRICT_CONFIRM=1` (with `auto_allow`) still denies side-effect `CONFIRM` only.
+
 - Replaced the misleading `examples/` umbrella with honest top-level layout:
   `demos/` (product demos), `scripts/eval/<category>/` (CI/local eval entrypoints
   split into execution, reliability, docs, rag, failure, acceptance, smoke, publish,

@@ -2,7 +2,9 @@
 
 在工具真正执行（及沙箱）之前强制 ``evaluate_tool_permission``：
   deny → 直接拒绝
-  ask  → HITL（若有）或非交互默许（学习/CI 默认）
+  ask  → 确认族分流：
+         CONFIRM_READ → 直接放行
+         CONFIRM → HITL / 默认 async 待批 / STRICT 拒绝 / 显式 auto_allow 放行
   allow → 放行
 
 与 ``harness.sandbox`` 正交：本模块管「准不准」；沙箱管「崩不崩/超时」。
@@ -16,7 +18,11 @@ from contextvars import ContextVar
 from typing import Any, Optional
 
 from react_agent.safety.approvals import approval_mode
-from react_agent.safety.permissions import evaluate_tool_permission
+from react_agent.safety.permissions import (
+    PermissionLevel,
+    evaluate_tool_permission,
+    is_side_effect_confirm,
+)
 
 _HITL = None
 
@@ -169,7 +175,12 @@ def permission_block_message(tool_name: str, tool_args: Optional[dict] = None) -
             ensure_ascii=False,
         )
 
-    # ask (CONFIRM)
+    # ask（确认族）：CONFIRM_READ 任意模式直接放行；仅副作用 CONFIRM 走 HITL/async/STRICT
+    if decision.level == PermissionLevel.CONFIRM_READ or not is_side_effect_confirm(
+        decision.level
+    ):
+        return None
+
     hitl = _HITL
     if hitl is not None:
         if hitl.check_tool_call(tool_name, tool_args or {}, reason=decision.reason):
@@ -186,12 +197,11 @@ def permission_block_message(tool_name: str, tool_args: Optional[dict] = None) -
         )
 
     # 异步审批（HTTP 场景）：审批建模为状态而非消息，故不需要双向通道。
-    # 优先于"非交互默认放行"，让 CONFIRM 级工具真正有人把关。
+    # 默认 async：副作用 CONFIRM 真正有人把关。
     if approval_mode() == "async":
         return _async_approval_block(tool_name, tool_args or {}, decision)
 
-    # 非交互学习默认：CONFIRM 放行（CI / 无 TTY），但带可观测标记
-    # 设 REACT_AGENT_STRICT_CONFIRM=1 则无 HITL 时拒绝 CONFIRM
+    # 显式 auto_allow：副作用 CONFIRM 放行；STRICT / SANDBOX_REQUIRED 则拒绝
     strict = (
         os.environ.get("REACT_AGENT_STRICT_CONFIRM", "").strip().lower()
         in ("1", "true", "yes", "on")
@@ -206,6 +216,10 @@ def permission_block_message(tool_name: str, tool_args: Optional[dict] = None) -
                 "outcome": "ask",
                 "level": decision.level.value,
                 "reason": decision.reason,
+                "hint": (
+                    "副作用 CONFIRM 在严格模式下无人通道则拒绝；"
+                    "CONFIRM_READ（敏感只读）已放行。"
+                ),
             },
             ensure_ascii=False,
         )

@@ -10,6 +10,9 @@ _load_dotenv(override=True)
 
 # 集成测试默认关闭沙箱预热递归风险；需要测沙箱时用例可自行打开
 os.environ.setdefault("REACT_AGENT_SANDBOX_CHILD", "")
+# CI/离线套件需能执行副作用 CONFIRM（如 execute_python）。生产默认仍是 async；
+# 测默认 async 的用例应显式 delenv / 设 async。
+os.environ.setdefault("REACT_AGENT_APPROVAL_MODE", "auto_allow")
 
 
 def _usable_basetemp(path: Path) -> bool:

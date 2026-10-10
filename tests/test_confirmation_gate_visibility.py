@@ -1,11 +1,7 @@
 """CONFIRM 闸门可见性回归测试。
 
-背景：``safety/human_in_the_loop.py`` 有完整的 HITL 实现，但生产入口从未注入
-（``permission_gate.set_hitl`` 只在测试里调用）。因此非严格模式下 ``CONFIRM``
-级工具会**自动放行**——看起来有闸门，实际无人把关。
-
-本模块锁定「该状态必须被显式暴露」：启动告警 + ``/ready`` 的
-``confirmation_gate`` 字段，并区分**实际可达**与**被沙箱拦下**（避免误报）。
+默认 ``REACT_AGENT_APPROVAL_MODE=async``：副作用 CONFIRM 有人把关。
+显式 ``auto_allow`` 时必须暴露未把关的副作用工具清单（启动告警 + ``/ready``）。
 """
 from __future__ import annotations
 
@@ -37,8 +33,16 @@ def _clean_gate_env(monkeypatch):
         set_hitl(original)
 
 
+def test_default_mode_is_async_and_enforced():
+    """未设环境变量时默认 async，不应告警。"""
+    status = confirmation_gate_status()
+    assert status["mode"] == "async"
+    assert status["unenforced_confirm_tools"] == []
+    assert confirmation_gate_startup_warning() is None
+
+
 def test_async_mode_is_reported_as_enforced(monkeypatch):
-    """异步审批模式下 CONFIRM 已有人把关，不应再报 auto_allow。"""
+    """显式 async 下副作用 CONFIRM 已有人把关。"""
     monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "async")
     status = confirmation_gate_status()
     assert status["mode"] == "async"
@@ -46,47 +50,58 @@ def test_async_mode_is_reported_as_enforced(monkeypatch):
     assert confirmation_gate_startup_warning() is None
 
 
-def test_default_mode_is_auto_allow_and_reported():
+def test_auto_allow_mode_is_reported(monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     status = confirmation_gate_status()
     assert status["mode"] == "auto_allow"
-    assert status["unenforced_confirm_tools"], "默认应报告自动放行的 CONFIRM 工具"
+    assert status["unenforced_confirm_tools"], "auto_allow 应报告自动放行的副作用 CONFIRM"
     assert status["warning"]
 
 
-def test_default_mode_lists_reachable_confirm_tools():
+def test_auto_allow_lists_reachable_side_effect_tools(monkeypatch):
     """默认沙箱（auto/process）下真正在宿主执行的是 execute_python 与 clear_trajectories。"""
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     status = confirmation_gate_status()
     assert "execute_python" in status["unenforced_confirm_tools"]
     assert "clear_trajectories" in status["unenforced_confirm_tools"]
+    # CONFIRM_READ 不进副作用未把关清单
+    assert "read_config_snapshot" not in status["unenforced_confirm_tools"]
+    assert "probe_service_health" not in status["unenforced_confirm_tools"]
 
 
-def test_app_tools_are_reported_as_unreachable_under_default_sandbox():
-    """app 层工具不在沙箱子进程注册表里 → 默认配置下不可达，不应算作"已放行"。"""
+def test_confirm_read_reported_unreachable_under_default_sandbox(monkeypatch):
+    """CONFIRM_READ 不在沙箱子进程注册表里 → 默认配置下不可达。"""
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     status = confirmation_gate_status()
     unreachable = status.get("unreachable_confirm_tools") or []
     assert "read_config_snapshot" in unreachable
     assert "read_config_snapshot" not in status["unenforced_confirm_tools"]
+    assert "read_config_snapshot" not in (status.get("auto_allowed_confirm_read_tools") or [])
 
 
-def test_sandbox_off_makes_unreachable_tools_reachable(monkeypatch):
-    """沙箱关闭后，app 工具确实会在宿主执行 → 必须纳入自动放行清单。"""
+def test_sandbox_off_makes_confirm_read_listed(monkeypatch):
+    """沙箱关闭后 CONFIRM_READ 可达 → 进入 auto_allowed_confirm_read_tools。"""
     from react_agent.harness.sandbox import SANDBOX
 
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     original = SANDBOX.strategy
     try:
         SANDBOX.strategy = "off"
         status = confirmation_gate_status()
-        assert "read_config_snapshot" in status["unenforced_confirm_tools"]
-        assert status.get("unreachable_confirm_tools") == []
+        assert "read_config_snapshot" in status["auto_allowed_confirm_read_tools"]
+        assert "read_config_snapshot" not in status["unenforced_confirm_tools"]
     finally:
         SANDBOX.strategy = original
 
 
-def test_strict_mode_reports_no_unenforced_and_no_warning(monkeypatch):
+def test_strict_mode_reports_confirm_read_allowlist(monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     monkeypatch.setenv("REACT_AGENT_STRICT_CONFIRM", "1")
     status = confirmation_gate_status()
     assert status["mode"] == "strict_deny"
     assert status["unenforced_confirm_tools"] == []
+    assert "read_config_snapshot" in status["strict_allowed_confirm_read_tools"]
+    assert "probe_service_health" in status["strict_allowed_confirm_read_tools"]
     assert confirmation_gate_startup_warning() is None
 
 
@@ -101,10 +116,11 @@ def test_injected_hitl_reports_hitl_mode():
     assert confirmation_gate_startup_warning() is None
 
 
-def test_startup_warning_includes_actionable_switch():
+def test_startup_warning_under_auto_allow(monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     warning = confirmation_gate_startup_warning()
     assert warning is not None
-    assert "REACT_AGENT_STRICT_CONFIRM=1" in warning
+    assert "auto_allow" in warning or "STRICT_CONFIRM" in warning
 
 
 def test_ready_payload_exposes_gate_status():
