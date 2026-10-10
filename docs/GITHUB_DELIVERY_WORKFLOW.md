@@ -55,8 +55,8 @@ Agent 生成的修改必须先返回结构化 `replacements` 数组，再由
 
 ```powershell
 $env:PYTHONPATH = "src"
-python examples/demos/run_github_delivery.py `
-  examples/fixtures/github_delivery_task.json `
+python demos/run_github_delivery.py `
+  fixtures/github_delivery_task.json `
   --artifact-dir artifacts/github-delivery `
   --idempotency-key local-delivery-demo-1 `
   --episode-out artifacts/github-delivery/episodes/local-delivery-demo.json
@@ -89,8 +89,8 @@ python examples/demos/run_github_delivery.py `
 候选提交验证：
 
 ```powershell
-python examples/demos/run_github_delivery.py `
-  examples/fixtures/github_delivery_task.json `
+python demos/run_github_delivery.py `
+  fixtures/github_delivery_task.json `
   --artifact-dir artifacts/github-delivery `
   --mode guarded `
   --approval approval.json `

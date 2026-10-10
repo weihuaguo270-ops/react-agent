@@ -1,4 +1,6 @@
-from examples.eval import run_github_business_tasks as module
+from tests._load_eval_script import load_eval_script
+
+module = load_eval_script("run_github_business_tasks")
 
 
 def test_github_business_tasks_preserve_source_and_exclude_pull_requests(monkeypatch):

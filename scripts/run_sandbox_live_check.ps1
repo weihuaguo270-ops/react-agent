@@ -41,7 +41,7 @@ try {
     $env:REACT_AGENT_SANDBOX_RUNTIME = "docker"
     $env:REACT_AGENT_SANDBOX_IMAGE = $Image
 
-    & $Python examples/eval/run_sandbox_live_check.py --out $OutputPath
+    & $Python scripts/eval/smoke/run_sandbox_live_check.py --out $OutputPath
     if ($LASTEXITCODE -ne 0) {
         throw "Sandbox live check 失败。"
     }

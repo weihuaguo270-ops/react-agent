@@ -46,7 +46,7 @@
 
 ```bash
 python -m react_agent.eval --dataset capability
-python examples/eval/publish_eval_snapshot.py --from-report <json路径>
+python scripts/eval/publish/publish_eval_snapshot.py --from-report <json路径>
 ```
 
 > 学习用途快照：样本量有限，不代表生产基准。

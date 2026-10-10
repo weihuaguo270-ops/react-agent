@@ -7,12 +7,12 @@ Core 运行时、**三类主流应用**、评测与实验模块的分区说明�
 | 路径 | 职责 |
 |------|------|
 | `src/react_agent/` | 可安装运行时（Core + 可选实验模块） |
-| `examples/demos/` | 演示脚本（见 `examples/README.md`） |
-| `examples/eval/` | 回归、公开基准与快照发布 |
+| `demos/` | 产品/能力演示（见 `demos/README.md`） |
+| `scripts/eval/` | 评测/回归/验收/冒烟入口（按子目录细分，见 `scripts/eval/README.md`） |
 | `docs/` | 架构与导航；日期报告在 `docs/reports/`；JSON 在 `docs/snapshots/` |
 | `experiments/langgraph/` | LangGraph 对照实现（可选依赖） |
 | `schemas/` | 跨仓轨迹契约（Format B） |
-| `fixtures/` | 离线语料等固定夹具 |
+| `fixtures/` | 语料与评测夹具（harness / software_tasks / docs_troubleshoot 等） |
 | `tests/` | pytest |
 | `__main__.py` / `react_cli.py` | CLI shim（`python -m react_agent` / 根入口） |
 
@@ -52,9 +52,9 @@ src/react_agent/
 | 语料 / 黄金集 / 产品定位 | `apps/docs_troubleshoot/` · [`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md) |
 | HTTP 服务面 | `src/react_agent/server/` |
 | 权限表 | `src/react_agent/safety/permissions.py` |
-| 垂类 Demo | `examples/demos/` |
-| 黄金集评测脚本 | `examples/eval/run_docs_troubleshoot_eval.py` · [`DOCS_TROUBLESHOOT_EVAL.md`](DOCS_TROUBLESHOOT_EVAL.md) |
-| 公开 RAG / capability | `examples/eval/` · [`EVAL_INDEX.md`](EVAL_INDEX.md) |
+| 垂类 Demo | `demos/` |
+| 黄金集评测脚本 | `scripts/eval/docs/run_docs_troubleshoot_eval.py` · [`DOCS_TROUBLESHOOT_EVAL.md`](DOCS_TROUBLESHOOT_EVAL.md) |
+| 公开 RAG / capability | `scripts/eval/` · [`EVAL_INDEX.md`](EVAL_INDEX.md) |
 | 成熟度与范围 | [`PRODUCTION_MATURITY.md`](PRODUCTION_MATURITY.md) |
 | LangGraph 对照 | `experiments/langgraph/` |
 

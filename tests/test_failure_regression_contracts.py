@@ -35,7 +35,7 @@ from react_agent.eval.scorer import EVAL_API_VERSION, EVAL_ENGINE_API_CONTRACT
 from eval_engine.core.process_reward import EVAL_API_VERSION as EE_EVAL_API_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
-OK_TRAJ = ROOT / "examples" / "fixtures" / "failure_regression" / "trajectory_ok.json"
+OK_TRAJ = ROOT / "fixtures" / "failure_regression" / "trajectory_ok.json"
 
 
 def _episode() -> dict:

@@ -7,7 +7,9 @@ from react_agent.apps.expense.eval_business import (
 
 
 def test_expense_eval_cli_profiles_are_explicit():
-    from examples.eval.run_expense_business_eval import _no_action_agent
+    from tests._load_eval_script import load_eval_script
+
+    _no_action_agent = load_eval_script("run_expense_business_eval")._no_action_agent
 
     case = load_business_cases()[0]
     result = run_business_case(case, agent_fn=_no_action_agent)

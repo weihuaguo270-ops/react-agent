@@ -15,7 +15,7 @@ query → run_docs() → agent_runner
 ```
 
 ```bash
-python examples/eval/run_docs_troubleshoot_eval.py
+python scripts/eval/docs/run_docs_troubleshoot_eval.py
 python -m react_agent.server --port 8765
 ```
 
@@ -41,7 +41,7 @@ HTTP：`POST /v1/chat`（默认离线；`REACT_AGENT_SERVER_LLM=1` 走真循环�
 
 ```bash
 set REACT_AGENT_DOCS_ENGINE=workflow
-python examples/demos/demo_workflow.py
+python demos/demo_workflow.py
 python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么？"
 ```
 
@@ -53,7 +53,7 @@ python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么�
 | Legacy Workflow | `demo_workflow.py` / workflow CLI | `REACT_AGENT_DOCS_ENGINE=workflow` |
 | 工具级演示 | `demo_docs_troubleshoot.py` | 同上 |
 | HTTP 服务 | `python -m react_agent.server` | 同上 |
-| Context / RAG / MCP / 报销 | `examples/demos/*` | 实验能力，见 [`EXPERIMENTAL.md`](EXPERIMENTAL.md) |
+| Context / RAG / MCP / 报销 | `demos/*` | 实验能力，见 [`EXPERIMENTAL.md`](EXPERIMENTAL.md) |
 
 ## Context / RAG / MCP
 

@@ -2,7 +2,7 @@ import importlib.util
 from pathlib import Path
 
 
-SCRIPT = Path(__file__).parents[1] / "examples" / "eval" / "harness_closed_loop.py"
+SCRIPT = Path(__file__).parents[1] / "scripts" / "eval" / "acceptance" / "harness_closed_loop.py"
 SPEC = importlib.util.spec_from_file_location("harness_closed_loop", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -20,7 +20,7 @@ def test_failure_takes_precedence_over_review():
 
 
 def test_trace_debugger_failure_contracts():
-    fixtures = Path(__file__).parents[1] / "examples" / "fixtures" / "software_tasks"
+    fixtures = Path(__file__).parents[1] / "fixtures" / "software_tasks"
     expected = {
         "tests_still_fail.json": "tool_error",
         "tool_timeout.json": "search_timeout",

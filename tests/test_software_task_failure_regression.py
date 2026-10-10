@@ -13,8 +13,8 @@ pytest.importorskip("trace_debugger")
 pytest.importorskip("eval_engine")
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "examples" / "eval" / "run_software_task_failure_regression.py"
-FIXTURES = ROOT / "examples" / "fixtures" / "software_tasks"
+SCRIPT = ROOT / "scripts" / "eval" / "failure" / "run_software_task_failure_regression.py"
+FIXTURES = ROOT / "fixtures" / "software_tasks"
 OUT_ROOT = ROOT / "artifacts" / "failure-regression" / "pytest-software-tasks"
 
 REQUIRED = (

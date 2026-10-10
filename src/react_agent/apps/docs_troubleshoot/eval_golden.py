@@ -251,7 +251,7 @@ def publish_golden_snapshot(report: dict[str, Any], *, stem: str | None = None) 
         "## 复现",
         "",
         "```bash",
-        "python examples/eval/run_docs_troubleshoot_eval.py",
+        "python scripts/eval/docs/run_docs_troubleshoot_eval.py",
         "```",
         "",
     ]

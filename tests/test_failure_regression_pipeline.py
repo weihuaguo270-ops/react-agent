@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "examples" / "eval" / "run_failure_regression_pipeline.py"
+SCRIPT = ROOT / "scripts" / "eval" / "failure" / "run_failure_regression_pipeline.py"
 OUT_ROOT = ROOT / "artifacts" / "failure-regression" / "pytest-runs"
 
 pytest.importorskip("trace_debugger")

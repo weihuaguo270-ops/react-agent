@@ -2,7 +2,7 @@
 
 - git: 6f1b7c6
 - archived_json: docs/snapshots/execution_snapshot_20260715.json
-- reproduce: python examples/eval/run_execution_suite.py --publish
+- reproduce: python scripts/eval/execution/run_execution_suite.py --publish
 - **report_id:** `execution_snapshot_20260715`
 - **timestamp:** `2026-07-15T08:00:00+00:00`
 - **dataset:** `execution_dataset.json`

@@ -1,4 +1,6 @@
-from examples.eval import run_github_portfolio_dataset as module
+from tests._load_eval_script import load_eval_script
+
+module = load_eval_script("run_github_portfolio_dataset")
 
 
 def _responses(repository):
