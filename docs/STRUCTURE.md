@@ -11,7 +11,7 @@ Core 运行时、**三类主流应用**、评测与实验模块的分区说明�
 | `scripts/eval/` | 评测/回归/验收/冒烟入口（按子目录细分，见 `scripts/eval/README.md`） |
 | `docs/` | 架构与导航；日期报告在 `docs/reports/`；JSON 在 `docs/snapshots/` |
 | `schemas/` | 跨仓轨迹契约（Format B） |
-| `fixtures/` | 语料与评测夹具（harness / software_tasks / docs_troubleshoot 等） |
+| `fixtures/` | 语料与评测夹具（`expense/` · docs_troubleshoot · harness / software_tasks 等） |
 | `tests/` | pytest |
 | `__main__.py` / `react_cli.py` | CLI shim（`python -m react_agent` / 根入口） |
 
@@ -49,6 +49,7 @@ src/react_agent/
 |------|------|
 | 声明式流水线 / builtins | `src/react_agent/workflow/` |
 | 语料 / 黄金集 / 产品定位 | `apps/docs_troubleshoot/` · [`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md) |
+| expense Workflow + 决策 | `apps/expense/` · `fixtures/expense/` · [`spec/EXPENSE_WORKFLOW_DECISION_SPEC.md`](spec/EXPENSE_WORKFLOW_DECISION_SPEC.md) |
 | HTTP 服务面 | `src/react_agent/server/` |
 | 权限表 | `src/react_agent/safety/permissions.py` |
 | 垂类 Demo | `demos/` |

@@ -1,7 +1,7 @@
 {
   "files": {
     "AGENT_WORKFLOW.md": "eea1433a9068f0c45b43f28633c343dcec464b837153c13020713613b53499ca",
-    "APPLICATION_DIRECTION.md": "d60fe8e7bae23f9ace8d85dd4a91d923c561db34c1c8c5213f66a18d6e761479",
+    "APPLICATION_DIRECTION.md": "bd68187bfa230c4649acfe387fc9ff9b5c8a33016b93c3676c495bd2a8e614d7",
     "ARTIFACT_RETENTION.md": "475c094c40a51dcf3ae89e0f71d56d1a3ffb22b203b628dc9b3c3ba00e6d94af",
     "CORE_ARCHITECTURE.md": "d85a1fa9493b1007fe5b2a0b7f7661163d9da6c0e48757ce06d83cb184176d30",
     "DEPLOY.md": "1131f6010a1a168157a7417563c1ea2d0e2564aa3af34d19de59123b090ace9f",
@@ -24,7 +24,7 @@
     "SOFTWARE_TASK_DATASET.md": "611187066ffba163750db0387228be7d79ee13cb9ec44e12b12c5911e16d4cb6",
     "SOFTWARE_TASK_RUNNER.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "STATUS.md": "69f77f83553f7782f4eddf727c78d57162161c6822dc878ddb8571c9678dfca3",
-    "STRUCTURE.md": "67ae9ecf017284861b39c043c2d1f8f06f8b242816c9db57cda5c76de5136d74",
+    "STRUCTURE.md": "890d3fba8f28013e1ec940b9969311c1f80972e6d3dd70dffe6d3b2352aaa404",
     "capability_newcases_20260713.md": "45ab3373f77f4c01863c03103ae7df1e36e394f5f556e2004a2a67624eb39418",
     "capability_snapshot_20260713.md": "3cbc82cfb04116f1345cf412970eee9b3f3548d3f7615c5d24c65a7d43604f95",
     "daily_smoke/README.md": "ed250027416ee625f014f5934a5b13ed4229617a714753cab12149944623c0d7",
@@ -73,9 +73,10 @@
     "snapshots/sandbox_live_check_docker_latest.json": "84f1d2655d95eb0e46a6276b22b32364b0ae81f22d054de65aa3f652fac79013",
     "snapshots/step_watcher_evidence_baseline.json": "0b320b311b225ae93a744a2b9a22d353fc65381e89aeeac621b16e2014ea0961",
     "snapshots/tdebug_failure_flywheel_20260716.json": "6dc0bc4dff8701ef6d8480eae0a1c160883e3c811c7d61dda2a4f114483ab5e7",
+    "spec/EXPENSE_WORKFLOW_DECISION_SPEC.md": "6ad02da199d246a122369a8caf3b77ff2c48252bdc6daf26e5a4c14dd03a8a7f",
     "spec/REDIS_TASK_MVP_SPEC.md": "247f827506d82b2308e899d82ca91a75abe84e8046b9910407323acbb0162483",
     "step_watcher_evidence_baseline.md": "608b25923d5bb2652a380057ea1b5bee916a9c65b25bc2fa05b255900a85787f"
   },
-  "generated_at": "2026-10-10T11:47:56Z",
+  "generated_at": "2026-10-10T12:19:45Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
