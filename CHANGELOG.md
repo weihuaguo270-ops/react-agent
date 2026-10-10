@@ -12,6 +12,8 @@
 
 ### Removed
 
+- Dropped the optional LangGraph twin under `experiments/langgraph/` (extra `[langgraph]`, harness contract test, and docs that framed it as a framework comparison). Task decomposition and sequencing stay on Planner + Orchestrator + `react_loop` / self-built workflow.
+
 - Dropped the frozen GSM8K×10 + HotpotQA×10 **public Agent benchmark** suite
   (`public_benchmark.py` / `public_benchmark_subset.json` / `run_public_benchmark.py` /
   CI Pillar ③ offline step and related snapshots). Offline CI only exercised the gold-derived

@@ -22,10 +22,9 @@ Retention and cleanup rules are defined in
 [`ARTIFACT_RETENTION.md`](ARTIFACT_RETENTION.md). Runtime trajectories and caches are not
 release evidence.
 
-## LangGraph environments
+## Cross-repo environments
 
-The historical LangGraph experiment uses the 0.2 API and remains in the optional
-`react-agent[langgraph]` environment. `llm-eval-engine[sdk]` uses LangGraph 1.x.
-Do not install these extras into the same environment. Run them as separate processes and
-exchange `evaluation-episode/v1` JSON. The protocol boundary is intentional: evaluation and
-trace analysis do not require the Agent SDK that produced an episode.
+Sibling tools such as `llm-eval-engine` may pull their own optional stacks. Keep the Agent
+runtime environment separate from evaluation/SDK environments; exchange
+`evaluation-episode/v1` JSON across the process boundary. Evaluation and trace analysis do
+not require the Agent SDK that produced an episode.
