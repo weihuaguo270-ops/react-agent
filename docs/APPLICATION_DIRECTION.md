@@ -27,10 +27,10 @@
 
 ```bash
 python -m react_agent "用 calculator 算 17*19"
-python examples/eval/run_execution_suite.py              # offline_tools
-python examples/eval/run_execution_suite.py --modes agent   # 需 API Key
+python scripts/eval/execution/run_execution_suite.py              # offline_tools
+python scripts/eval/execution/run_execution_suite.py --modes agent   # 需 API Key
 # HTTP（Pillar ① smoke，需 REACT_AGENT_SERVER_OFFLINE_REACT=1 或 SERVER_LLM=1）
-python examples/eval/run_execution_http_smoke.py --url http://127.0.0.1:8765
+python scripts/eval/execution/run_execution_http_smoke.py --url http://127.0.0.1:8765
 ```
 
 **差异化（运行时，非应用）：** 权限闸门、StepWatcher、failure flywheel、Format B 轨迹 — 见 [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)。
@@ -49,16 +49,16 @@ python examples/eval/run_execution_http_smoke.py --url http://127.0.0.1:8765
 **本仓有什么：**
 
 - **可部署 HTTP 服务：** `python -m react_agent.server` · Docker · 产品 UI（`/`）
-- **业务工作流 demo：** `examples/demos/demo_expense_workflow.py`（政策检索 + 裁决）
+- **业务工作流 demo：** `demos/demo_expense_workflow.py`（政策检索 + 裁决）
 - **垂直知识客服 demo：** `apps/docs_troubleshoot` — 引用 / 拒答 / verify 工具步 / diagnosis
 - **离线 Agent 循环：** `agent_runner`（CI 不耗 Key）
 
 **怎么跑：**
 
 ```bash
-python examples/demos/demo_expense_workflow.py
+python demos/demo_expense_workflow.py
 docker compose up --build    # http://127.0.0.1:8765/
-python examples/eval/run_docs_troubleshoot_eval.py
+python scripts/eval/docs/run_docs_troubleshoot_eval.py
 ```
 
 **docs_troubleshoot 的位置：** 演示 **「有依据才答、没依据拒答」的客服/Runbook 后端**，不是完整 AIOps 平台。
@@ -83,10 +83,11 @@ python examples/eval/run_docs_troubleshoot_eval.py
 
 ```bash
 set REACT_AGENT_EXPERIMENTAL_TOOLS=1
-python examples/demos/demo_rag.py
-python examples/eval/run_public_rag_benchmark.py
+python demos/demo_rag.py
+python scripts/eval/rag/run_public_rag_benchmark.py
 ```
 
+**已完成：** public RAG 子集与 docs 黄金集已并列进 CI（`test` job 内跑 `run_public_rag_benchmark.py` 与四套 docs 评测）。**下一步：** 把 public RAG 的 drop-off 指标纳入发布硬门禁。
 
 ---
 
@@ -96,6 +97,7 @@ python examples/eval/run_public_rag_benchmark.py
 |-----------|----------|
 | Agent 能调工具、有轨迹 | `python -m react_agent "…"` 或 execution suite |
 | 能部署的 Chat / 知识客服 | `docker compose up` + `/v1/chat` |
+| 检索 + 公开 RAG | `run_public_rag_benchmark.py` / `demo_rag.py` |
 | 垂直 Runbook（窄 demo） | `REACT_AGENT_APP=docs_troubleshoot` |
 
 **仓库默认叙事：** 运行时 + 三条主流应用；**不再**把全仓等同于「证据化文档排障」单一产品。

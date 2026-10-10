@@ -26,24 +26,24 @@
 | [SOFTWARE_TASK_RUNNER.md](./SOFTWARE_TASK_RUNNER.md) / [SOFTWARE_TASK_DATASET.md](./SOFTWARE_TASK_DATASET.md) | FastAPI 任务 Runner + 数据集 | 报告 [software_task_execution_20260913.md](./reports/software_task_execution_20260913.md) | Agent 成功率 ≠ 生产收益 |
 | [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) | 项目定位、对外口径与边界 | — | 背景总览 |
 | [flywheel_closed_loop_20260716.md](./reports/flywheel_closed_loop_20260716.md) | 同批 100 条改前/改后 | **llm_offtrack 6→1** | [snapshots/…](./snapshots/flywheel_closed_loop_20260716.json) |
-| 公开 RAG 子集（分层 v2） | HotpotQA-RAG smoke/hard/held_out | `examples/eval/run_public_rag_benchmark.py` | `public_rag_benchmark_subset.json` |
-| GitHub 公开只读业务证据 | 仓库契约 + 当前公开 Issue | `examples/eval/run_github_business_tasks.py --repository <owner/repo>` | 2026-08-20 的两份快照**未随 main 归档**（只存在于侧分支 `backup/pre-split-wip`） |
+| 公开 RAG 子集（分层 v2） | HotpotQA-RAG smoke/hard/held_out | `scripts/eval/rag/run_public_rag_benchmark.py` | `public_rag_benchmark_subset.json` |
+| GitHub 公开只读业务证据 | 仓库契约 + 当前公开 Issue | `scripts/eval/acceptance/run_github_business_tasks.py --repository <owner/repo>` | 2026-08-20 的两份快照**未随 main 归档**（只存在于侧分支 `backup/pre-split-wip`） |
 | GitHub 公开只读交付样本 | agent-delivery-sandbox 公开 Issue（10 条） | 采集发生在 sibling 仓 `agent-delivery-sandbox` 侧 | 同上，未随 main 归档 |
 
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 
 ```bash
-python examples/eval/publish_eval_snapshot.py --run capability --stem capability_snapshot_YYYYMMDD
+python scripts/eval/publish/publish_eval_snapshot.py --run capability --stem capability_snapshot_YYYYMMDD
 ```
 
 ## Execution 成功率
 
 ```bash
 # 工具层（offline，CI 默认）
-python examples/eval/run_execution_suite.py
+python scripts/eval/execution/run_execution_suite.py
 # 端到端 Agent（需 API Key；评测默认关 MCP 以提高确定性）
 set REACT_AGENT_DISABLE_MCP=1
-python examples/eval/run_execution_suite.py --modes agent --publish
+python scripts/eval/execution/run_execution_suite.py --modes agent --publish
 # 可按难度过滤：--difficulty easy,medium,hard
 ```
 
@@ -58,8 +58,8 @@ python examples/eval/run_execution_suite.py --modes agent --publish
 | `held_out` | 设计后冻结 | 不对其调参 |
 
 ```bash
-python examples/eval/run_public_rag_benchmark.py
-python examples/eval/run_public_rag_benchmark.py --tiers hard,held_out --modes rag
+python scripts/eval/rag/run_public_rag_benchmark.py
+python scripts/eval/rag/run_public_rag_benchmark.py --tiers hard,held_out --modes rag
 ```
 
 数据集：`src/react_agent/eval/public_rag_benchmark_subset.json`。
@@ -67,12 +67,12 @@ python examples/eval/run_public_rag_benchmark.py --tiers hard,held_out --modes r
 ## Harness 可靠性对照
 
 ```bash
-python examples/eval/run_reliability_harness.py --publish
-python examples/eval/run_reliability_live.py --mock
+python scripts/eval/reliability/run_reliability_harness.py --publish
+python scripts/eval/reliability/run_reliability_live.py --mock
 set REACT_AGENT_DISABLE_MCP=1
-python examples/eval/run_reliability_live.py --live --publish
-python examples/eval/run_failure_flywheel.py --fixture --publish
-python examples/eval/run_flywheel_closed_loop.py --publish
+python scripts/eval/reliability/run_reliability_live.py --live --publish
+python scripts/eval/failure/run_failure_flywheel.py --fixture --publish
+python scripts/eval/failure/run_flywheel_closed_loop.py --publish
 ```
 
 证据总图见 [P0_EVIDENCE_MAP.md](./P0_EVIDENCE_MAP.md)。
@@ -84,10 +84,10 @@ python examples/eval/run_flywheel_closed_loop.py --publish
 ## 快照发布
 
 ```bash
-python examples/eval/publish_eval_snapshot.py --from-report src/react_agent/eval/reports/eval_XXXX.json
+python scripts/eval/publish/publish_eval_snapshot.py --from-report src/react_agent/eval/reports/eval_XXXX.json
 set REACT_AGENT_SKIP_RAG=1
-python examples/eval/publish_eval_snapshot.py --run capability
-python examples/eval/publish_eval_snapshot.py --run capability --only-new --stem capability_newcases_YYYYMMDD
+python scripts/eval/publish/publish_eval_snapshot.py --run capability
+python scripts/eval/publish/publish_eval_snapshot.py --run capability --only-new --stem capability_newcases_YYYYMMDD
 ```
 
 ## 与 llm-eval-engine 的分工

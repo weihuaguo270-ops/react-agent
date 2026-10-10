@@ -11,7 +11,7 @@ SOURCES = {
     'real_task': ('react-agent/eval/software_task_dataset_manifest.json', 'tasks', 'task_id'),
     'synthetic_failure': ('agent-delivery-sandbox/dataset/manifest.json', 'cases', 'case_id'),
     'rule_regression': ('trace-debugger/fixtures/failure_golden/manifest.json', 'cases', 'id'),
-    'contract_fixture': ('llm-eval-engine/examples/fixtures/evidence_manifest/multimodal.json', 'samples', 'sample_id'),
+    'contract_fixture': ('llm-eval-engine/fixtures/evidence_manifest/multimodal.json', 'samples', 'sample_id'),
 }
 
 def read(path):

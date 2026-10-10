@@ -6,14 +6,14 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("collect_repair", ROOT / "examples/eval/collect_repair_evidence.py")
+SPEC = importlib.util.spec_from_file_location("collect_repair", ROOT / "scripts/eval/failure/collect_repair_evidence.py")
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 # `collect()` 读取 artifacts/software-tasks 下的真实 runner 产物；那些文件由 Docker +
 # FastAPI checkout 的 SoftwareTaskRunner 生成，CI 无法产出（也不在版本库里），
 # 所以同一份目录布局以紧凑夹具提交在下面。用例因此不依赖机器本地遗留产物。
-FIXTURE_ROOT = ROOT / "examples" / "fixtures" / "software_tasks" / "repair_evidence"
+FIXTURE_ROOT = ROOT / "fixtures" / "software_tasks" / "repair_evidence"
 SEED_FILES = (
     "runs/fastapi-15974-baseline.json",
     "runs/fastapi-15974-agent.json",

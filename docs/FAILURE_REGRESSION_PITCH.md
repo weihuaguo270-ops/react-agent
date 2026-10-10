@@ -39,9 +39,9 @@ react-agent（任务 / Episode / Format B）
 |----|------|
 | 编排说明 | [`FAILURE_REGRESSION_PIPELINE.md`](./FAILURE_REGRESSION_PIPELINE.md) |
 | 共享门禁 | `src/react_agent/eval/failure_regression_gate.py` |
-| 夹具流水线 | `examples/eval/run_failure_regression_pipeline.py` + `examples/fixtures/failure_regression/` |
-| SoftwareTask 验收 | `examples/eval/run_software_task_failure_regression.py` |
-| 紧凑 Agent 信封（CI） | `examples/fixtures/software_tasks/fastapi-{15764,15974,16253}-agent.json` |
+| 夹具流水线 | `scripts/eval/failure/run_failure_regression_pipeline.py` + `fixtures/failure_regression/` |
+| SoftwareTask 验收 | `scripts/eval/failure/run_software_task_failure_regression.py` |
+| 紧凑 Agent 信封（CI） | `fixtures/software_tasks/fastapi-{15764,15974,16253}-agent.json` |
 | 真实产物（本地绿跑后） | `artifacts/failure-regression/software-tasks/acceptance_summary.json` |
 | 三任务独立门禁 | `artifacts/failure-regression/software-tasks/good|bad/fastapi-*/{release,findings,process_quality}.json` |
 | 冻结 baseline | `artifacts/failure-regression/software-tasks/frozen_baseline_scan.json` |

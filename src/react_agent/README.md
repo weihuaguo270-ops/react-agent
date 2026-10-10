@@ -22,7 +22,7 @@ Python import 路径不变。本页为模块职责分区；仓库总览见 [`doc
 |------|------|
 | `eval/` | capability / execution / public agent & RAG 基准 |
 
-入口脚本：`examples/eval/`。
+入口脚本：`scripts/eval/`（按 execution / docs / rag / failure 等细分）。
 
 ## Experimental
 

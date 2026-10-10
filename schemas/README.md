@@ -41,4 +41,4 @@ contract. It checks the declared test command against an allowlist and runs it
 in a disposable Docker container with no network, a read-only root,
 non-root UID, resource limits, and one writable workspace mount.
 
-Demo: `python examples/eval/harness_closed_loop.py`
+Demo: `python scripts/eval/acceptance/harness_closed_loop.py`

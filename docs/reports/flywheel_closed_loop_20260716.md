@@ -39,5 +39,5 @@
 ## 复现
 
 ```bash
-python examples/eval/run_flywheel_closed_loop.py --publish
+python scripts/eval/failure/run_flywheel_closed_loop.py --publish
 ```

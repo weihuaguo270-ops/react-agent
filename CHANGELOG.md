@@ -1,4 +1,14 @@
+# Changelog
+
 ## Unreleased
+
+### Changed
+
+- Replaced the misleading `examples/` umbrella with honest top-level layout:
+  `demos/` (product demos), `scripts/eval/<category>/` (CI/local eval entrypoints
+  split into execution, reliability, docs, rag, failure, acceptance, smoke, publish,
+  integration), and merged former `examples/fixtures/` into root `fixtures/` alongside
+  existing corpora. Workflows, docs, and tests now point at the new paths.
 
 ### Removed
 
@@ -7,10 +17,6 @@
   CI Pillar ③ offline step and related snapshots). Offline CI only exercised the gold-derived
   matcher and did not measure agent ability. Shared HotpotQA-style text matching for the
   remaining public RAG suite lives in `eval/answer_match.py`.
-
-# Changelog
-
-## Unreleased
 
 ### Added
 
@@ -61,14 +67,14 @@
   detection — which is on the sidecar's default branch that CI installs.
 - `tests/test_collect_repair_evidence.py` no longer seeds from `artifacts/software-tasks`,
   which only exists after a real Docker SoftwareTaskRunner run. The same layout is committed
-  as compact fixtures under `examples/fixtures/software_tasks/repair_evidence/`, so the test
+  as compact fixtures under `fixtures/software_tasks/repair_evidence/`, so the test
   passes on a clean checkout instead of failing in CI.
 - `GitHubDeliveryWorkflow` runs candidate tests with `PYTHONDONTWRITEBYTECODE=1`. CPython keys
   `.pyc` validity on (source mtime in whole seconds, size), so a candidate that rewrites a file
   to the same size within the same second could be tested against the *previous* candidate's
   bytecode — the repair-loop delivery test flaked between two runs of the same commit
   (`repair_failed` vs `shadow_passed`).
-- `examples/eval/run_failure_flywheel.py`, `run_step_watcher_evidence.py` and
+- `scripts/eval/failure/run_failure_flywheel.py`, `run_step_watcher_evidence.py` and
   `run_flywheel_closed_loop.py` resolve the trace-debugger **source** checkout from the
   importable package (`pip install -e /tmp/trace-debugger` in CI) with
   `REACT_AGENT_TDEBUG_ROOT` and sibling-directory fallbacks, instead of assuming
@@ -208,7 +214,7 @@
 - **`agent_runner`**：离线 Agent 循环（观测驱动选工具 → 强制 `verify_citations` → Harness 轨迹）；默认引擎
 - **产品 UI**：`GET /`、`/ui` — 证据链、拒答状态、结构化 diagnosis、Agent 工具步；`GET /v1/info`
 - **Docker 交付**：`Dockerfile`、`docker-compose.yml`、`docs/DEPLOY.md`；`/ready` 就绪探针
-- **部署自检**：`examples/eval/run_deploy_smoke.py`；CI `docker-smoke` job
+- **部署自检**：`scripts/eval/smoke/run_deploy_smoke.py`；CI `docker-smoke` job
 - **HTTP**：`/v1/chat` 支持 `log_excerpt`、`trace_context`；返回 `agent_steps`、`engine`
 
 ### Changed

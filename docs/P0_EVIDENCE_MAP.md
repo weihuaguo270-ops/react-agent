@@ -21,25 +21,25 @@
 
 ```bash
 # Execution
-python examples/eval/run_execution_suite.py
+python scripts/eval/execution/run_execution_suite.py
 set REACT_AGENT_DISABLE_MCP=1
-python examples/eval/run_execution_suite.py --modes agent --publish
+python scripts/eval/execution/run_execution_suite.py --modes agent --publish
 
 # Reliability
-python examples/eval/run_reliability_harness.py --publish
-python examples/eval/run_reliability_live.py --mock
-python examples/eval/run_reliability_live.py --live --publish
+python scripts/eval/reliability/run_reliability_harness.py --publish
+python scripts/eval/reliability/run_reliability_live.py --mock
+python scripts/eval/reliability/run_reliability_live.py --live --publish
 
 # Failure flywheel（观察→修复→同批对照）
-python examples/eval/run_failure_flywheel.py --fixture --publish
-python examples/eval/run_flywheel_closed_loop.py --publish
+python scripts/eval/failure/run_failure_flywheel.py --fixture --publish
+python scripts/eval/failure/run_flywheel_closed_loop.py --publish
 
 # StepWatcher 跨仓证据（需 sibling trace-debugger）
-python examples/eval/run_step_watcher_evidence.py --publish
+python scripts/eval/failure/run_step_watcher_evidence.py --publish
 python -m pytest tests/test_step_watcher_golden_e2e.py -v
 
 # 跨日 variance（P0 软尾；GitHub Actions 每天 UTC 01:00 ≈ 北京 09:00）
-python examples/eval/run_daily_smoke.py
+python scripts/eval/smoke/run_daily_smoke.py
 # 表：docs/daily_smoke/VARIANCE.md
 ```
 

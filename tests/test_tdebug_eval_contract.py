@@ -23,7 +23,7 @@ from react_agent.harness.schema import (  # noqa: E402
 from trace_debugger.reader import parse as tdebug_parse  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = ROOT / "examples" / "fixtures" / "harness_closed_loop.json"
+FIXTURE = ROOT / "fixtures" / "harness_closed_loop.json"
 
 
 def test_fixture_schema_tdebug_eval_chain():

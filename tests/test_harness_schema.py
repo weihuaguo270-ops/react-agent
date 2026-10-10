@@ -17,7 +17,7 @@ from react_agent.harness.schema import (
     validate_trajectory,
 )
 
-FIXTURE = os.path.join(ROOT, "examples", "fixtures", "harness_closed_loop.json")
+FIXTURE = os.path.join(ROOT, "fixtures", "harness_closed_loop.json")
 
 
 def test_fixture_validates():
