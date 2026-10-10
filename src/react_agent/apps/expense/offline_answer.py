@@ -10,8 +10,8 @@ from typing import Any
 from react_agent.apps.expense import LIMITS_DEFAULT
 
 _REPO = Path(__file__).resolve().parents[4]
-_FIXTURE = _REPO / "fixtures" / "business" / "expense_claims.json"
-_POLICY = _REPO / "fixtures" / "rag_corpus" / "expense_policy.md"
+_FIXTURE = _REPO / "fixtures" / "expense" / "expense_claims.json"
+_POLICY = _REPO / "fixtures" / "expense" / "expense_policy.md"
 
 
 def _load_limits() -> dict[str, float]:

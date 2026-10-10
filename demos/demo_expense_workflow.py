@@ -48,7 +48,7 @@ def decide(claim: dict, limits: dict) -> str:
 
 def main():
     fixture = json.loads(
-        (ROOT / "fixtures" / "business" / "expense_claims.json").read_text(encoding="utf-8")
+        (ROOT / "fixtures" / "expense" / "expense_claims.json").read_text(encoding="utf-8")
     )
     limits = fixture.get("limits") or LIMITS_DEFAULT
 
@@ -56,7 +56,7 @@ def main():
     with tempfile.TemporaryDirectory() as td:
         rag = RAG(save_path=str(Path(td) / "biz.json"))
         rag.clear()
-        rag.ingest(str(ROOT / "fixtures" / "rag_corpus" / "expense_policy.md"))
+        rag.ingest(str(ROOT / "fixtures" / "expense" / "expense_policy.md"))
         policy = rag.query("报销 额度 审批", top_k=2)
         print("=== Step1 政策检索 ===")
         for h in policy:

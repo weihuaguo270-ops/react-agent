@@ -1,4 +1,4 @@
-"""Offline RAG demo：关键词检索 fixtures/rag_corpus（无需 [rag] 向量依赖）。
+"""Offline RAG demo：关键词检索 fixtures/rag_corpus + fixtures/expense（无需 [rag] 向量依赖）。
 
 用法:
   set REACT_AGENT_RAG_MODE=keyword
@@ -20,11 +20,15 @@ from react_agent.rag import RAG
 
 
 def main():
-    corpus = ROOT / "fixtures" / "rag_corpus"
+    corpora = (
+        ROOT / "fixtures" / "rag_corpus",
+        ROOT / "fixtures" / "expense",
+    )
     with tempfile.TemporaryDirectory() as td:
         rag = RAG(save_path=str(Path(td) / "demo_rag.json"))
         rag.clear()
-        rag.ingest_directory(str(corpus))
+        for corpus in corpora:
+            rag.ingest_directory(str(corpus))
         queries = [
             "餐饮报销上限是多少？",
             "如何配置 API Key？",
