@@ -10,7 +10,6 @@ Core 运行时、**三类主流应用**、评测与实验模块的分区说明�
 | `demos/` | 产品/能力演示（见 `demos/README.md`） |
 | `scripts/eval/` | 评测/回归/验收/冒烟入口（按子目录细分，见 `scripts/eval/README.md`） |
 | `docs/` | 架构与导航；日期报告在 `docs/reports/`；JSON 在 `docs/snapshots/` |
-| `experiments/langgraph/` | LangGraph 对照实现（可选依赖） |
 | `schemas/` | 跨仓轨迹契约（Format B） |
 | `fixtures/` | 语料与评测夹具（harness / software_tasks / docs_troubleshoot 等） |
 | `tests/` | pytest |
@@ -56,7 +55,6 @@ src/react_agent/
 | 黄金集评测脚本 | `scripts/eval/docs/run_docs_troubleshoot_eval.py` · [`DOCS_TROUBLESHOOT_EVAL.md`](DOCS_TROUBLESHOOT_EVAL.md) |
 | 公开 RAG / capability | `scripts/eval/` · [`EVAL_INDEX.md`](EVAL_INDEX.md) |
 | 成熟度与范围 | [`PRODUCTION_MATURITY.md`](PRODUCTION_MATURITY.md) |
-| LangGraph 对照 | `experiments/langgraph/` |
 
 ## 阅读顺序
 

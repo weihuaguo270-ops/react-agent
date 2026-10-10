@@ -1,4 +1,4 @@
-"""Core Workflow — declarative multi-step pipelines (self-built, no LangGraph).
+"""Core Workflow — declarative multi-step pipelines (self-built).
 
 Inspired by patterns in production agent stacks (deterministic Flows / skills):
 fixed steps, shared state, tool/policy nodes, auditable run records.

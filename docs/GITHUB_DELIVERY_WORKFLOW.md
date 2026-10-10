@@ -47,7 +47,7 @@ Agent 生成的修改必须先返回结构化 `replacements` 数组，再由
 `planner` 和 `executor`：每轮先校验补丁、执行公开测试；失败时把结构化失败信息
 交回 planner，最多执行 `max_attempts` 轮；公开测试通过后才执行隐藏测试。隐藏测试
 失败或达到轮次上限都会结束任务，不会继续尝试或发布外部写操作。该循环本身不绑定
-具体模型，因此可以接入现有 ReAct，也可以接入可选 LangGraph。
+具体模型，因此可以接入现有 ReAct 或其它可注入的 planner/executor。
 
 默认是 `shadow`，不会修改源仓库，也不会访问 GitHub 写接口。`guarded` 只有在审批文件中的 `plan_sha256` 与任务完全一致时才创建候选提交。推送 Draft PR 还要同时提供 `--publish-draft-pr` 和 `allow_external_write=true`，且源仓库必须配置 GitHub origin。
 

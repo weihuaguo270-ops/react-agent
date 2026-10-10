@@ -28,8 +28,7 @@
 证据目录生成：`python scripts/eval/acceptance/materialize_acceptance_evidence.py`
 
 Mutable runtime artifacts no longer write into the installed package. See
-[`docs/PORTABILITY.md`](docs/PORTABILITY.md) for data-directory overrides and the isolated
-LangGraph environment contract.
+[`docs/PORTABILITY.md`](docs/PORTABILITY.md) for data-directory overrides.
 
 受控工程任务交付：[`docs/GITHUB_DELIVERY_WORKFLOW.md`](docs/GITHUB_DELIVERY_WORKFLOW.md)。默认影子执行；人工审批绑定计划指纹，外部 Draft PR 写入需单独显式授权。
 
@@ -160,7 +159,7 @@ query
   └─ run_workflow("docs_troubleshoot")（legacy DAG）
 ```
 
-多 Agent 编排（Orchestrator / Worker）的能力与边界见 [多 Agent 编排](#多-agent-编排orchestrator--worker)；MCP / RAG / LangGraph 为**实验对照**，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。成熟度评判见 [`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
+多 Agent 编排（Orchestrator / Worker）的能力与边界见 [多 Agent 编排](#多-agent-编排orchestrator--worker)；MCP / RAG 为**实验能力**，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。成熟度评判见 [`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
 
 ### 模块清单
 
@@ -177,7 +176,6 @@ demos/                    # 演示入口
 scripts/eval/             # 评测入口（按类别分子目录）
 fixtures/                 # 评测与演示共用夹具
 docs/                     # STRUCTURE · CORE · EVAL_INDEX；报告在 reports/
-experiments/langgraph/    # 可选对照（非默认）
 ```
 
 ## 核心功能
@@ -288,7 +286,6 @@ Planner 的 `context: fork` 让子任务带上**父会话答案摘要**（不是
 ```bash
 pip install -e ".[service]"     # FastAPI 服务面
 pip install -e ".[rag]"         # 语义检索（numpy / scikit-learn / sentence-transformers）
-pip install -e ".[langgraph]"   # LangGraph 对照
 ```
 
 Skills 与多模态：`react_agent/skills/` 提供可注册的 skill 边界（schema 校验、业务边界、
@@ -332,15 +329,6 @@ python demos/demo_context.py
 python demos/demo_rag.py
 python demos/demo_expense_workflow.py
 python demos/demo_mcp_mock.py
-```
-
-## LangGraph 对照
-
-`experiments/langgraph/`：图编排与 checkpoint 对照实现，不参与 Core 依赖与 CI 主路径。
-
-```bash
-pip install -e ".[langgraph]"
-python experiments/langgraph/demo_checkpoint_hitl.py
 ```
 
 ## 快速开始
@@ -487,7 +475,6 @@ gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DE
 
 - Python 3.10+
 - LLM API key（运行 Agent / 真实评测时需要）
-- LangChain + LangGraph（可选）：`pip install -e ".[langgraph]"`，仅对照实验需要
 
 ## 相关项目
 

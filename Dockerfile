@@ -19,7 +19,7 @@ COPY schemas ./schemas
 ARG REACT_AGENT_INSTALL_EXTRAS=""
 ARG REACT_AGENT_TORCH_VERSION="2.7.1+cpu"
 # 默认装 [service]：镜像里因此同时具备 stdlib 服务面与 FastAPI 入口点
-# （react-agent-api）。REACT_AGENT_INSTALL_EXTRAS 可追加 rag / langgraph 等；
+# （react-agent-api）。REACT_AGENT_INSTALL_EXTRAS 可追加 rag 等；
 # rag 走 PyTorch CPU 源，避免在 slim 镜像里拉入 CUDA 版 torch。
 RUN if [ "$REACT_AGENT_INSTALL_EXTRAS" = "rag" ]; then \
       pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu "torch==${REACT_AGENT_TORCH_VERSION}"; \

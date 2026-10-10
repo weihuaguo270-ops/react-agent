@@ -32,7 +32,6 @@ Python import 路径不变。本页为模块职责分区；仓库总览见 [`doc
 - `orchestrator.py` · `planner.py` · `tot.py`
 - `dashboard/`
 
-LangGraph 对照：`experiments/langgraph/`（仓根，非本包）。
 
 ## 运行产物（已 gitignore）
 

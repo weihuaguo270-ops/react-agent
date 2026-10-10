@@ -13,7 +13,6 @@ set REACT_AGENT_EXPERIMENTAL_TOOLS=1
 | Multi-agent | `orchestrator.py` / `planner.py` / `tool_scope.py` / `write_sets.py` | 见下方专节；`multi_agent_chain` 懒导入，不随 `import react_loop` 拉起 |
 | ToT | `tot.py` | 教学推理工具 |
 | Dashboard | `dashboard/` | 本地可视化 |
-| LangGraph twin | `experiments/langgraph/` | 图编排对照；无严格行为等价测试；见 `demo_checkpoint_hitl.py` |
 
 工作流总览：[`AGENT_WORKFLOW.md`](AGENT_WORKFLOW.md)。
 
@@ -30,9 +29,6 @@ set REACT_AGENT_EXPERIMENTAL_TOOLS=1
 `tool_scope.py` / `write_sets.py` 放在包顶层（而非 `tools/` 内）是刻意的：它们是
 Core 路径模块，导入时不得触发 `tools` 包的 app/workflow/experimental 装配。
 
-LangGraph 依赖：`pip install -e ".[langgraph]"`。  
-无 Key 演示：`python experiments/langgraph/demo_checkpoint_hitl.py`。  
-契约测试：`pytest tests/test_langgraph_harness_contract.py`（recorder → Format B；demo 需已装 langgraph）。
 
 `import react_agent.react_loop` 不应拉起 MCP / Orchestrator / RAG（见 `tests/test_core_lazy_imports.py`）。
 注：RAG 曾因 `apps/docs_troubleshoot/tools.py` 的模块级 `index` 导入而被连带装配，
