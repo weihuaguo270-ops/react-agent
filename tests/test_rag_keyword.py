@@ -10,17 +10,19 @@ from react_agent.rag import RAG
 
 
 @pytest.fixture()
-def corpus_dir():
-    root = Path(__file__).resolve().parents[1] / "fixtures" / "rag_corpus"
-    assert root.is_dir()
-    return root
+def corpus_dirs():
+    root = Path(__file__).resolve().parents[1] / "fixtures"
+    dirs = (root / "rag_corpus", root / "expense")
+    for d in dirs:
+        assert d.is_dir()
+    return dirs
 
 
-def test_keyword_ingest_and_query(tmp_path, monkeypatch, corpus_dir):
+def test_keyword_ingest_and_query(tmp_path, monkeypatch, corpus_dirs):
     monkeypatch.setenv("REACT_AGENT_RAG_MODE", "keyword")
     rag = RAG(save_path=str(tmp_path / "idx.json"))
     rag.clear()
-    n = rag.ingest_directory(str(corpus_dir))
+    n = sum(rag.ingest_directory(str(d)) for d in corpus_dirs)
     assert n >= 1
     assert rag.chunks
 

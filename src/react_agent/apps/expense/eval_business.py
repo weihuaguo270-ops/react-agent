@@ -11,8 +11,8 @@ from typing import Any, Callable
 from .offline_answer import _load_limits
 from .operations import ExpenseLedger
 
-
-DATASET_PATH = Path(__file__).with_name("business_cases.json")
+_REPO = Path(__file__).resolve().parents[4]
+DATASET_PATH = _REPO / "fixtures" / "expense" / "business_cases.json"
 
 
 @dataclass
