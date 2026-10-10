@@ -1,4 +1,4 @@
-"""Demo Core Workflow: docs_troubleshoot (no LLM / no LangGraph)."""
+"""Demo Core Workflow: docs_troubleshoot (no LLM)."""
 from __future__ import annotations
 
 import json

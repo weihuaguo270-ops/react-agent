@@ -71,10 +71,6 @@ python -m react_agent.workflow run docs_troubleshoot --query "401 怎么返回�
 python scripts/eval/docs/run_docs_troubleshoot_eval.py          # 默认 agent 路径
 ```
 
-## 实验对照（可选）
-
-`experiments/langgraph/` 为 **可选** 图编排对照（`pip install -e ".[langgraph]"`），不参与主场景交付与成熟度评判。见 [`EXPERIMENTAL.md`](EXPERIMENTAL.md)。
-
 ## 设计原则
 
 1. **整体贴近主流 ReAct 服务**；**细节**在循环治理与领域工具契约上加深  

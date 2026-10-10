@@ -122,7 +122,7 @@ Workflow 版本演进：`docs_troubleshoot` v3+ 在保留引用 / 拒答 policy 
 | ReAct + ToolGuard + Harness | 探索路径；为诊断闭环提供执行与轨迹 |
 | 权限闸门 | 修复步骤、健康检查、读配置均须走 gate |
 | capability / execution / public RAG | 通用能力轨，**非**下一阶段扩张重点 |
-| LangGraph / 多 Agent | 实验对照，非默认叙事 |
+| 多 Agent（Orchestrator / Worker） | 实验能力，非默认叙事 |
 
 ## 相关文档
 
