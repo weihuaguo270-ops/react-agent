@@ -51,7 +51,7 @@
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
-python examples/eval/run_docs_troubleshoot_eval.py      # 默认 agent 路径
+python scripts/eval/docs/run_docs_troubleshoot_eval.py      # 默认 agent 路径
 python -m react_agent.server --port 8765                 # 浏览器 http://127.0.0.1:8765/
 # GET  /health  /ready  /v1/info
 # POST /v1/chat  {"message":"..."}   # 离线 Agent 或 REACT_AGENT_SERVER_LLM=1

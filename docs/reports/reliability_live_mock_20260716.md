@@ -35,9 +35,9 @@
 ## 复现
 
 ```bash
-python examples/eval/run_reliability_live.py --mock
+python scripts/eval/reliability/run_reliability_live.py --mock
 set REACT_AGENT_DISABLE_MCP=1
-python examples/eval/run_reliability_live.py --live --publish
+python scripts/eval/reliability/run_reliability_live.py --live --publish
 ```
 
 ## 诚实边界

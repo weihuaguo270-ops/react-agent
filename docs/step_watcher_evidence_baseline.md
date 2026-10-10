@@ -22,7 +22,7 @@
 
 ```bash
 pip install -e ../trace-debugger
-python examples/eval/run_step_watcher_evidence.py --publish
+python scripts/eval/failure/run_step_watcher_evidence.py --publish
 python -m pytest tests/test_step_watcher_golden_e2e.py -v
 ```
 

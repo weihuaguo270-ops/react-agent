@@ -44,7 +44,7 @@
 ## 复现
 
 ```bash
-python examples/eval/run_reliability_harness.py --publish
+python scripts/eval/reliability/run_reliability_harness.py --publish
 ```
 
 ## 诚实边界

@@ -37,10 +37,10 @@
 ## 运行与展示
 
 ```bash
-python examples/eval/run_docs_troubleshoot_eval.py
-python examples/eval/run_docs_troubleshoot_eval.py --path chat_offline
-python examples/eval/run_docs_troubleshoot_eval.py --publish
-python examples/eval/run_docs_troubleshoot_eval.py --gate non_held_out
+python scripts/eval/docs/run_docs_troubleshoot_eval.py
+python scripts/eval/docs/run_docs_troubleshoot_eval.py --path chat_offline
+python scripts/eval/docs/run_docs_troubleshoot_eval.py --publish
+python scripts/eval/docs/run_docs_troubleshoot_eval.py --gate non_held_out
 ```
 
 输出 JSON：`passed` / `total` / `by_tag` / `rows[]` / `leakage_guards`。
@@ -50,7 +50,7 @@ CI：`tests/test_docs_troubleshoot.py` — Workflow 与 chat_offline 全量 PASS
 ## 仿真故障集（field evidence）
 
 ```bash
-python examples/eval/run_fault_eval.py
+python scripts/eval/docs/run_fault_eval.py
 ```
 
 **12 条**（`fault_sim` + `fault_held_out`）：携带 `error_response` / `request_headers` / **`log_excerpt`** / **`trace_context`**。
@@ -67,7 +67,7 @@ python examples/eval/run_fault_eval.py
 ## 生产盲测（外部语料）
 
 ```bash
-python examples/eval/run_production_eval.py
+python scripts/eval/docs/run_production_eval.py
 ```
 
 **5 条**（`prod_blind` + `prod_held_out`）：通过 `REACT_AGENT_DOCS_INGEST_DIRS` 注入 `fixtures/docs_troubleshoot/production_corpus/`，问题**不能**仅靠内置 14 篇 corpus 回答。
@@ -99,7 +99,7 @@ Workflow 传入 `trace_id` 时自动拉取 Trace（`fetch_trace` 工具亦可手
 ### Git 文档 held_out
 
 ```bash
-python examples/eval/run_git_docs_eval.py
+python scripts/eval/docs/run_git_docs_eval.py
 ```
 
 通过 `REACT_AGENT_DOCS_GIT_ROOT` + `ls-files docs/`  ingest 本仓库真实文档，**5 条**冻结用例（`git_held_out` 1 条）。

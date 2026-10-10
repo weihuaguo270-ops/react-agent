@@ -86,7 +86,7 @@
 python -m react_agent.eval
 
 # 从 JSON 发布公开 Markdown（若有对应报告文件）
-python examples/eval/publish_eval_snapshot.py --from-report src/react_agent/eval/reports/<report>.json
+python scripts/eval/publish/publish_eval_snapshot.py --from-report src/react_agent/eval/reports/<report>.json
 ```
 
 能力集与归档索引：[EVAL_INDEX.md](../EVAL_INDEX.md)。

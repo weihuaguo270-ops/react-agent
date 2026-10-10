@@ -78,28 +78,28 @@ jobs:
       run: |
         set -e
         export REACT_AGENT_SKIP_RAG=1
-        python examples/eval/run_execution_suite.py
+        python scripts/eval/execution/run_execution_suite.py
     - name: Reliability harness (injected)
       run: |
         export REACT_AGENT_SKIP_RAG=1
-        python examples/eval/run_reliability_harness.py
+        python scripts/eval/reliability/run_reliability_harness.py
     - name: Reliability live (mock)
       run: |
         export REACT_AGENT_SKIP_RAG=1
-        python examples/eval/run_reliability_live.py --mock
+        python scripts/eval/reliability/run_reliability_live.py --mock
     - name: Failure flywheel (fixture)
-      run: python examples/eval/run_failure_flywheel.py --fixture --publish
+      run: python scripts/eval/failure/run_failure_flywheel.py --fixture --publish
     - name: StepWatcher evidence (trace-debugger)
       run: |
         pytest tests/test_step_watcher_golden_e2e.py -q
-        python examples/eval/run_step_watcher_evidence.py --publish
+        python scripts/eval/failure/run_step_watcher_evidence.py --publish
     - name: Failure regression pipeline P0 (pass + hold)
       run: |
         set -e
-        python examples/eval/run_failure_regression_pipeline.py --mode pass --expect-decision pass --out artifacts/failure-regression/ci-pass
-        python examples/eval/run_failure_regression_pipeline.py --mode hold --expect-decision hold --out artifacts/failure-regression/ci-hold
-        python examples/eval/run_failure_regression_pipeline.py --mode pass --expect-decision pass --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-green
-        python examples/eval/run_failure_regression_pipeline.py --mode hold --expect-decision hold --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-red
+        python scripts/eval/failure/run_failure_regression_pipeline.py --mode pass --expect-decision pass --out artifacts/failure-regression/ci-pass
+        python scripts/eval/failure/run_failure_regression_pipeline.py --mode hold --expect-decision hold --out artifacts/failure-regression/ci-hold
+        python scripts/eval/failure/run_failure_regression_pipeline.py --mode pass --expect-decision pass --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-green
+        python scripts/eval/failure/run_failure_regression_pipeline.py --mode hold --expect-decision hold --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-red
         pytest tests/test_failure_regression_pipeline.py -q
     - name: Failure regression gate P1 (Delivery + SoftwareTask)
       run: pytest tests/test_failure_regression_gate.py -q
@@ -108,24 +108,24 @@ jobs:
     - name: SoftwareTask failure regression acceptance (3 FastAPI tasks)
       run: |
         set -e
-        python examples/eval/run_software_task_failure_regression.py --out artifacts/failure-regression/ci-software-tasks --expect-all-pass-good
+        python scripts/eval/failure/run_software_task_failure_regression.py --out artifacts/failure-regression/ci-software-tasks --expect-all-pass-good
         pytest tests/test_software_task_failure_regression.py -q
     - name: "Pillar ③ Public RAG benchmark (offline)"
       run: |
-        python examples/eval/run_public_rag_benchmark.py --modes offline,rag
+        python scripts/eval/rag/run_public_rag_benchmark.py --modes offline,rag
         pytest tests/test_public_rag_benchmark.py -q
     - name: "Pillar ② Docs troubleshoot golden (offline)"
-      run: python examples/eval/run_docs_troubleshoot_eval.py
+      run: python scripts/eval/docs/run_docs_troubleshoot_eval.py
     - name: "Pillar ② Docs fault sim (offline)"
-      run: python examples/eval/run_fault_eval.py
+      run: python scripts/eval/docs/run_fault_eval.py
     - name: Docs troubleshoot production blind (offline)
-      run: python examples/eval/run_production_eval.py
+      run: python scripts/eval/docs/run_production_eval.py
     - name: Docs troubleshoot git docs held-out (offline)
-      run: python examples/eval/run_git_docs_eval.py
+      run: python scripts/eval/docs/run_git_docs_eval.py
     - name: Run Agent to Eval integration
-      run: python examples/eval/agent_to_eval.py
+      run: python scripts/eval/integration/agent_to_eval.py
     - name: Run Harness closed-loop demo
-      run: python examples/eval/harness_closed_loop.py --fixture
+      run: python scripts/eval/acceptance/harness_closed_loop.py --fixture
     - name: Verify cross-repository scoring contracts
       run: |
         python tests/ci_verify_integration.py
@@ -161,7 +161,7 @@ jobs:
       shell: powershell
       run: |
         Remove-Item Env:PYTHONIOENCODING -ErrorAction SilentlyContinue
-        python -c "from pathlib import Path; import json; from react_agent.harness.schema import validate_trajectory; errs=validate_trajectory(json.loads(Path('examples/fixtures/harness_closed_loop.json').read_text(encoding='utf-8'))); print(errs or 'schema OK'); raise SystemExit(1 if errs else 0)"
+        python -c "from pathlib import Path; import json; from react_agent.harness.schema import validate_trajectory; errs=validate_trajectory(json.loads(Path('fixtures/harness_closed_loop.json').read_text(encoding='utf-8'))); print(errs or 'schema OK'); raise SystemExit(1 if errs else 0)"
 
   typecheck:
     runs-on: ubuntu-latest
@@ -227,7 +227,7 @@ jobs:
           sleep 1
         done
         curl -sf http://127.0.0.1:8765/ready
-        PYTHONPATH=src python examples/eval/run_deploy_smoke.py --url http://127.0.0.1:8765
+        PYTHONPATH=src python scripts/eval/smoke/run_deploy_smoke.py --url http://127.0.0.1:8765
     - name: Stop container
       if: always()
       run: docker rm -f react-agent-ci || true

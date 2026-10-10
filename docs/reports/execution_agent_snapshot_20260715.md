@@ -2,7 +2,7 @@
 
 - git: `3cd5e21`
 - archived_json: `docs/snapshots/execution_agent_snapshot_20260715.json`
-- reproduce: `set REACT_AGENT_DISABLE_MCP=1 && python examples/eval/run_execution_suite.py --modes agent --publish`
+- reproduce: `set REACT_AGENT_DISABLE_MCP=1 && python scripts/eval/execution/run_execution_suite.py --modes agent --publish`
 - provider: `deepseek`
 - **report_id:** `execution_agent_snapshot_20260715`
 - **timestamp:** `2026-07-15T08:15:20.319418+00:00`

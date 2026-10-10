@@ -68,7 +68,7 @@ v5 固定路径：**现场证据 → 检索 → synthesize → policy → diagno
 
 ```bash
 python -m react_agent.workflow run docs_troubleshoot --query "401 怎么返回？"
-python examples/eval/run_docs_troubleshoot_eval.py          # 默认 agent 路径
+python scripts/eval/docs/run_docs_troubleshoot_eval.py          # 默认 agent 路径
 ```
 
 ## 实验对照（可选）

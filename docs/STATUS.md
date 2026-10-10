@@ -1,6 +1,6 @@
 # 项目状态
 
-- 当前收口：统一离线验收入口 `examples/eval/run_portfolio_acceptance.py` 与跨仓证据账本已落地；主线闭环可复现，但 held-out/golden 发布门槛仍未满足，不能宣称生产成熟度。
+- 当前收口：统一离线验收入口 `scripts/eval/acceptance/run_portfolio_acceptance.py` 与跨仓证据账本已落地；主线闭环可复现，但 held-out/golden 发布门槛仍未满足，不能宣称生产成熟度。
 
 - 默认入口的安全防线修复（2026-09-30）：容器默认入口是 `react-agent-api`（FastAPI 面），但它读的是从未被文档记录的 `REACT_AGENT_API_KEY`——#97 已把 `DEPLOY.md` 的过时变量名改成 `REACT_AGENT_AUTH_TOKEN`，却漏改了 `fastapi_app` 的读取处，于是**按文档配置等于没配**（鉴权 fail-open），且该面完全没有 Host 头校验，DNS rebinding 防线与 `REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1` 的启动期 fail-closed 都只在 stdlib 面成立。现抽出 `server/auth.py` 的 header 版判据供两面共用（`REACT_AGENT_API_KEY` 保留为 legacy 别名、AUTH_TOKEN 优先），`request_guard` 改为「Host 先于鉴权」并把保护范围对齐文档（除探针外全部），`main()` 补启动期校验与未鉴权暴露告警。配置发现性同步补齐：`.env.example` 增加「服务鉴权与网络暴露」段，`docker-compose.yml` 把两个变量由注释改为直通——此前在 `.env` 里填 token 根本进不了容器。见 [#100](https://github.com/weihuaguo270-ops/react-agent/pull/100)。
 
@@ -60,9 +60,9 @@
 - 可声称：受控软件任务执行、权限闸门、Format B 轨迹、回归评测、容器工具隔离
 - 不能声称：生产部署、长期线上 SLA、企业多租户权限体系、Milvus 生产容量（该后端未随 main 发布）
 - P0：将 task runner、轨迹、trace-debugger findings 和 eval-engine 发布判断串成单命令验收报告
-- 验证：`python examples/eval/harness_closed_loop.py --fixture`
-- 闭环报告：`python examples/eval/harness_closed_loop.py --fixture --report-out artifacts/portfolio_acceptance.json`
-- 统一离线验收：`python examples/eval/run_portfolio_acceptance.py`，输出 `artifacts/portfolio_acceptance_v1.json`
+- 验证：`python scripts/eval/acceptance/harness_closed_loop.py --fixture`
+- 闭环报告：`python scripts/eval/acceptance/harness_closed_loop.py --fixture --report-out artifacts/portfolio_acceptance.json`
+- 统一离线验收：`python scripts/eval/acceptance/run_portfolio_acceptance.py`，输出 `artifacts/portfolio_acceptance_v1.json`
 - 数据账本：[`eval/eval_dataset_ledger.json`](../eval/eval_dataset_ledger.json)，当前真实任务 3 条、全部来自 FastAPI；sandbox 24 条单独计为合成故障样例
 - 第一阶段账本校验：`python scripts/validate_eval_dataset_ledger.py` 已验证 60 条来源记录（真实 3、合成 24、规则回归 29、契约样例 4）；所有来源均逐条登记，`verified` 仅在重新运行验收后回填
 - 规则回归验证：trace-debugger 黄金集 `42 passed`，已通过工作区可写临时目录补跑此前失败初始化的 10 条 step-watcher 用例；29 条规则回归已回填 verified

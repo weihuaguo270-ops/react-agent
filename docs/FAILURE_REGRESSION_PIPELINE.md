@@ -12,13 +12,13 @@ pip install -e ".[test]"
 pip install -e ../trace-debugger -e ../llm-eval-engine
 
 # 绿路径：检出无回归，release=pass
-python examples/eval/run_failure_regression_pipeline.py --mode pass --expect-decision pass
+python scripts/eval/failure/run_failure_regression_pipeline.py --mode pass --expect-decision pass
 
 # 红路径：注入坏轨迹 + 业务态失败，release=hold
-python examples/eval/run_failure_regression_pipeline.py --mode hold --expect-decision hold
+python scripts/eval/failure/run_failure_regression_pipeline.py --mode hold --expect-decision hold
 
 # 修复后复验：关联父 run，要求改善到 pass
-python examples/eval/run_failure_regression_pipeline.py `
+python scripts/eval/failure/run_failure_regression_pipeline.py `
   --mode pass --expect-decision pass `
   --reverify-from artifacts/failure-regression/<parent-hold-id>
 ```
@@ -53,7 +53,7 @@ python examples/eval/run_failure_regression_pipeline.py `
 把已跑通的 FastAPI Agent 信封挂进**同一条** `failure_regression_gate` 流水线（失败则 fail-closed，禁止跳过）：
 
 ```powershell
-python examples/eval/run_software_task_failure_regression.py `
+python scripts/eval/failure/run_software_task_failure_regression.py `
   --out artifacts/failure-regression/software-tasks `
   --expect-all-pass-good
 ```
@@ -63,7 +63,7 @@ python examples/eval/run_software_task_failure_regression.py `
 | **独立 JSON** | 每条任务写出与夹具同结构的 `release` / `findings` / `process_quality` / `repair_feedback` |
 | **冻结 baseline** | 绿跑 seed → `frozen_baseline_scan.json`；坏补丁 → `hold`；好 Agent → `pass`（`baseline_source=provided`） |
 | **复验剧本** | `reverify/parent-hold` → 好信封 `reverify_from` → 仅 `improved_to_pass` 放行 |
-| **输入优先级** | 优先 `artifacts/software-tasks/runs/*-agent.json`；CI 回退 `examples/fixtures/software_tasks/` |
+| **输入优先级** | 优先 `artifacts/software-tasks/runs/*-agent.json`；CI 回退 `fixtures/software_tasks/` |
 
 总览：`artifacts/failure-regression/software-tasks/acceptance_summary.json`（claim：对齐工作流已在夹具 + 3 条 SoftwareTask 上复现）。
 
@@ -89,7 +89,7 @@ python examples/eval/run_software_task_failure_regression.py `
 
 ```powershell
 # 独立脚本复验（P0）
-python examples/eval/run_failure_regression_pipeline.py `
+python scripts/eval/failure/run_failure_regression_pipeline.py `
   --mode pass --expect-decision pass `
   --reverify-from artifacts/failure-regression/<parent-hold-id>
 ```
@@ -114,9 +114,9 @@ python examples/eval/run_failure_regression_pipeline.py `
 
 ```powershell
 # 冻结绿跑 baseline，再对比
-python examples/eval/run_failure_regression_pipeline.py --mode pass --out artifacts/failure-regression/green
-python examples/eval/run_failure_regression_pipeline.py --mode pass --baseline-scan artifacts/failure-regression/green/baseline_scan.json --expect-decision pass
-python examples/eval/run_failure_regression_pipeline.py --mode hold --baseline-scan artifacts/failure-regression/green/baseline_scan.json --expect-decision hold
+python scripts/eval/failure/run_failure_regression_pipeline.py --mode pass --out artifacts/failure-regression/green
+python scripts/eval/failure/run_failure_regression_pipeline.py --mode pass --baseline-scan artifacts/failure-regression/green/baseline_scan.json --expect-decision pass
+python scripts/eval/failure/run_failure_regression_pipeline.py --mode hold --baseline-scan artifacts/failure-regression/green/baseline_scan.json --expect-decision hold
 ```
 
 ## 边界

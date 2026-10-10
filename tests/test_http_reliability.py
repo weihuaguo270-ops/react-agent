@@ -1,8 +1,12 @@
 import threading
 from http.server import ThreadingHTTPServer
 
-from examples.eval.run_http_reliability import probe_recovery, run_reliability_suite
+from tests._load_eval_script import load_eval_script
 from react_agent.server.app import AgentHandler
+
+_mod = load_eval_script("run_http_reliability")
+probe_recovery = _mod.probe_recovery
+run_reliability_suite = _mod.run_reliability_suite
 
 
 def test_http_reliability_suite_reports_load_and_invalid_guard(monkeypatch, tmp_path):

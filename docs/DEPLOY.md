@@ -250,9 +250,9 @@ environment:
 ## 部署后自检
 
 ```bash
-python examples/eval/run_deploy_smoke.py
+python scripts/eval/smoke/run_deploy_smoke.py
 # 或指定 URL：
-python examples/eval/run_deploy_smoke.py --url http://127.0.0.1:8765
+python scripts/eval/smoke/run_deploy_smoke.py --url http://127.0.0.1:8765
 ```
 
 ## 诚实边界（交付说明）
