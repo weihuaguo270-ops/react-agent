@@ -49,7 +49,7 @@ python scripts/eval/execution/run_execution_http_smoke.py --url http://127.0.0.1
 **本仓有什么：**
 
 - **可部署 HTTP 服务：** `python -m react_agent.server` · Docker · 产品 UI（`/`）
-- **业务工作流 demo：** `demos/demo_expense_workflow.py`（政策检索 + 裁决）
+- **业务工作流 demo：** `demos/demo_expense_workflow.py`（政策检索 + 裁决）→ 演进规格 [`spec/EXPENSE_WORKFLOW_DECISION_SPEC.md`](spec/EXPENSE_WORKFLOW_DECISION_SPEC.md)（Workflow + 决策模型）
 - **垂直知识客服 demo：** `apps/docs_troubleshoot` — 引用 / 拒答 / verify 工具步 / diagnosis
 - **离线 Agent 循环：** `agent_runner`（CI 不耗 Key）
 
@@ -65,7 +65,7 @@ python scripts/eval/docs/run_docs_troubleshoot_eval.py
 
 **v0.5 已完成：** `/v1/chat` 多 app（`docs_troubleshoot` | `expense` | `default`）；`GET /v1/info` 列出 applications。
 
-**已完成：** Bearer 鉴权 + Host 头校验（`REACT_AGENT_AUTH_TOKEN` / `REACT_AGENT_HOST_VALIDATION`，默认入口与 stdlib 面共用 `server/auth.py`）。**下一步：** expense Live 路径；neutral 多 app UI。工程交付流程已经输出结构化审计和告警，但 HTTP 服务全链路 JSON 日志仍需单独补齐。
+**已完成：** Bearer 鉴权 + Host 头校验（`REACT_AGENT_AUTH_TOKEN` / `REACT_AGENT_HOST_VALIDATION`，默认入口与 stdlib 面共用 `server/auth.py`）。**下一步：** 按 [`EXPENSE_WORKFLOW_DECISION_SPEC.md`](spec/EXPENSE_WORKFLOW_DECISION_SPEC.md) 推进 expense Workflow + 决策节点（M1）；neutral 多 app UI。工程交付流程已经输出结构化审计和告警，但 HTTP 服务全链路 JSON 日志仍需单独补齐。
 
 ---
 
