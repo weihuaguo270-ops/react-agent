@@ -240,6 +240,8 @@ def test_required_mode_enables_strict_confirmation(monkeypatch):
     )
 
     set_hitl(None)
+    # SANDBOX_REQUIRED 的严格确认在 auto_allow 路径生效（async 优先走待批）
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     monkeypatch.setenv("REACT_AGENT_SANDBOX_REQUIRED", "1")
     blocked = permission_block_message(
         "execute_python",
@@ -247,6 +249,7 @@ def test_required_mode_enables_strict_confirmation(monkeypatch):
     )
     assert blocked is not None
     assert "strict confirm" in blocked
+    assert permission_block_message("read_config_snapshot", {}) is None
 
 def test_oversized_payload_is_rejected(monkeypatch):
     monkeypatch.setenv("REACT_AGENT_SANDBOX_MAX_INPUT", "1024")

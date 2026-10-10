@@ -41,6 +41,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # CI offline pillars/scripts call execute_python without an approval client.
+    # Runtime default remains async; pytest also setdefaults this in conftest.
+    env:
+      REACT_AGENT_APPROVAL_MODE: auto_allow
     strategy:
       matrix:
         python-version: ["3.10", "3.11"]

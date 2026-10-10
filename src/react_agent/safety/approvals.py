@@ -256,11 +256,14 @@ def purge_expired(*, keep_seconds: float = 86400.0) -> int:
 
 
 def approval_mode() -> str:
-    """审批模式：async（异步审批）/ auto_allow（默认放行）。"""
+    """审批模式：async（默认，异步人工审批）/ auto_allow（显式开发放行）。
+
+    未设置环境变量时默认 ``async``。``off`` 映射为 ``auto_allow``，供本地/CI 逃生。
+    """
     raw = os.environ.get("REACT_AGENT_APPROVAL_MODE", "").strip().lower()
     if raw in ("async", "auto_allow", "off"):
         return "auto_allow" if raw == "off" else raw
-    return "auto_allow"
+    return "async"
 
 
 def async_approval_enabled() -> bool:

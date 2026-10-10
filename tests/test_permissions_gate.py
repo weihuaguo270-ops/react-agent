@@ -43,8 +43,17 @@ def test_confirm_is_ask():
     assert d.level == PermissionLevel.CONFIRM
 
 
+def test_confirm_read_is_ask_level():
+    d = evaluate_tool_permission("read_config_snapshot", {})
+    assert d.outcome == "ask"
+    assert d.level == PermissionLevel.CONFIRM_READ
+    d2 = evaluate_tool_permission("probe_service_health", {})
+    assert d2.level == PermissionLevel.CONFIRM_READ
+
+
 def test_gate_blocks_deny(monkeypatch):
     monkeypatch.delenv("REACT_AGENT_PERMISSION_GATE", raising=False)
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     set_hitl(None)
     msg = permission_block_message("shutdown", {})
     assert msg is not None
@@ -65,18 +74,44 @@ def test_gate_can_disable(monkeypatch):
     assert permission_block_message("shutdown", {}) is None
 
 
-def test_strict_confirm_blocks_without_hitl(monkeypatch):
+def test_default_async_blocks_side_effect_confirm(monkeypatch, tmp_path):
+    """默认 async：副作用 CONFIRM 需要审批。"""
     monkeypatch.delenv("REACT_AGENT_PERMISSION_GATE", raising=False)
+    monkeypatch.delenv("REACT_AGENT_STRICT_CONFIRM", raising=False)
+    monkeypatch.delenv("REACT_AGENT_APPROVAL_MODE", raising=False)
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_DIR", str(tmp_path / "approvals"))
+    set_hitl(None)
+    msg = permission_block_message("execute_python", {"code": "print(1)"})
+    assert msg is not None
+    data = json.loads(msg)
+    assert data["error"] == "approval_required"
+    assert data["outcome"] == "ask"
+
+
+def test_default_async_allows_confirm_read(monkeypatch):
+    """默认 async：CONFIRM_READ 直接放行。"""
+    monkeypatch.delenv("REACT_AGENT_PERMISSION_GATE", raising=False)
+    monkeypatch.delenv("REACT_AGENT_APPROVAL_MODE", raising=False)
+    set_hitl(None)
+    assert permission_block_message("read_config_snapshot", {}) is None
+    assert permission_block_message("probe_service_health", {}) is None
+
+
+def test_strict_confirm_blocks_side_effect_allows_read(monkeypatch):
+    monkeypatch.delenv("REACT_AGENT_PERMISSION_GATE", raising=False)
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     monkeypatch.setenv("REACT_AGENT_STRICT_CONFIRM", "1")
     set_hitl(None)
     msg = permission_block_message("execute_python", {"code": "print(1)"})
     assert msg is not None
     assert json.loads(msg)["outcome"] == "ask"
+    assert permission_block_message("read_config_snapshot", {}) is None
 
 
 def test_hitl_can_override_deny(monkeypatch):
     monkeypatch.delenv("REACT_AGENT_PERMISSION_GATE", raising=False)
     monkeypatch.delenv("REACT_AGENT_STRICT_CONFIRM", raising=False)
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
 
     def always_yes(msg, choices):
         return "3"  # permanent allow in _ask_override UI

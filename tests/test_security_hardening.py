@@ -427,10 +427,14 @@ def test_unknown_tool_defaults_to_confirm():
 def test_sensitive_tools_are_not_safe():
     from react_agent.safety.permissions import PermissionLevel, evaluate_tool_permission
 
-    for tool in ("read_config_snapshot", "probe_service_health", "fetch_trace",
-                 "clear_trajectories"):
+    for tool in ("read_config_snapshot", "probe_service_health"):
+        decision = evaluate_tool_permission(tool, {})
+        assert decision.level is PermissionLevel.CONFIRM_READ, tool
+        assert decision.outcome == "ask"
+    for tool in ("fetch_trace", "clear_trajectories"):
         decision = evaluate_tool_permission(tool, {})
         assert decision.level is PermissionLevel.CONFIRM, tool
+        assert decision.outcome == "ask"
 
 
 def test_registry_tools_are_explicitly_classified():
@@ -808,7 +812,8 @@ def test_recorder_redacts_final_answer():
 
 
 def test_execute_registered_tool_enforces_permission_gate(monkeypatch):
-    """非 required 模式下 app/workflow 工具也必须过闸门。"""
+    """非 required 模式下副作用 CONFIRM 工具也必须过闸门。"""
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
     monkeypatch.setenv("REACT_AGENT_STRICT_CONFIRM", "1")
     import react_agent.harness.tool_boundary as boundary
     from react_agent.harness.sandbox import Sandbox
@@ -823,8 +828,28 @@ def test_execute_registered_tool_enforces_permission_gate(monkeypatch):
         return "executed"
 
     with pytest.raises(PermissionError):
-        boundary.execute_registered_tool("probe_service_health", {"url": "x"}, {"probe_service_health": _fake})
+        boundary.execute_registered_tool(
+            "clear_trajectories", {}, {"clear_trajectories": _fake}
+        )
     assert calls == []
+
+
+def test_execute_registered_tool_allows_confirm_read(monkeypatch):
+    """CONFIRM_READ 在 STRICT 下仍可执行。"""
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
+    monkeypatch.setenv("REACT_AGENT_STRICT_CONFIRM", "1")
+    import react_agent.harness.tool_boundary as boundary
+    from react_agent.harness.sandbox import Sandbox
+
+    quiet = Sandbox(strategy="off", backend="process", prewarm=False)
+    monkeypatch.setattr(boundary, "SANDBOX", quiet)
+
+    result = boundary.execute_registered_tool(
+        "probe_service_health",
+        {"url": "x"},
+        {"probe_service_health": lambda **_: "ok"},
+    )
+    assert result == "ok"
 
 
 def test_execute_registered_tool_allows_safe_tool(monkeypatch):

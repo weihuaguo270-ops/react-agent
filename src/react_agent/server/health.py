@@ -40,22 +40,23 @@ def tool_reachable_on_host(tool_name: str) -> bool:
 
 
 def confirmation_gate_status() -> dict[str, Any]:
-    """报告 CONFIRM 级工具当前是「有人把关」还是「自动放行」。
+    """报告副作用 CONFIRM 工具当前是「有人把关」还是「自动放行」。
 
-    背景：``safety/human_in_the_loop.py`` 提供了完整的 HITL，但生产入口从未注入
-    它（``permission_gate.set_hitl`` 只在测试里被调用）。于是非严格模式下
-    ``CONFIRM`` 会**自动放行**——看起来有闸门，实际无人把关。这里把该状态显式
-    暴露出来，避免"以为有审批"的误判。
+    默认 ``REACT_AGENT_APPROVAL_MODE=async``：副作用 CONFIRM 经 HTTP 审批。
+    显式 ``auto_allow`` / ``off`` 时副作用工具会自动放行——这里把该状态暴露出来。
+    ``CONFIRM_READ``（敏感只读）任意模式下由闸门直接放行，单独列出便于运维理解。
     """
     from react_agent.safety.approvals import approval_mode as _approval_mode
     from react_agent.safety.permission_gate import get_hitl
-    from react_agent.safety.permissions import evaluate_tool_permission
+    from react_agent.safety.permissions import (
+        PermissionLevel,
+        evaluate_tool_permission,
+    )
     from react_agent.tools import get_registry
 
     if get_hitl() is not None:
         mode = "hitl"
     elif _approval_mode() == "async":
-        # 异步审批：CONFIRM 由人经 HTTP 批准，已有人把关
         mode = "async"
     elif os.environ.get("REACT_AGENT_STRICT_CONFIRM", "").strip().lower() in (
         "1", "true", "yes", "on",
@@ -74,25 +75,45 @@ def confirmation_gate_status() -> dict[str, Any]:
         except Exception:
             continue
 
-    confirm_tools = sorted(
+    side_effect_tools = sorted(
         name for name in names
-        if evaluate_tool_permission(name, {}).level.value == "confirm"
+        if evaluate_tool_permission(name, {}).level == PermissionLevel.CONFIRM
     )
-    if mode != "auto_allow":
-        return {"mode": mode, "unenforced_confirm_tools": []}
+    confirm_read_tools = sorted(
+        name for name in names
+        if evaluate_tool_permission(name, {}).level == PermissionLevel.CONFIRM_READ
+    )
 
-    unreachable = [n for n in confirm_tools if not tool_reachable_on_host(n)]
-    enforced = [n for n in confirm_tools if n not in unreachable]
+    if mode == "strict_deny":
+        return {
+            "mode": mode,
+            "unenforced_confirm_tools": [],
+            "strict_allowed_confirm_read_tools": confirm_read_tools,
+        }
+
+    if mode != "auto_allow":
+        return {
+            "mode": mode,
+            "unenforced_confirm_tools": [],
+            "confirm_read_tools": confirm_read_tools,
+        }
+
+    unreachable = [n for n in side_effect_tools if not tool_reachable_on_host(n)]
+    enforced = [n for n in side_effect_tools if n not in unreachable]
+    # CONFIRM_READ 由闸门放行；沙箱不可达的仍标 unreachable，避免误报「已在宿主执行」
+    read_unreachable = [n for n in confirm_read_tools if not tool_reachable_on_host(n)]
+    read_allowed = [n for n in confirm_read_tools if n not in read_unreachable]
 
     result: dict[str, Any] = {
         "mode": mode,
         "unenforced_confirm_tools": enforced,
-        "unreachable_confirm_tools": unreachable,
+        "unreachable_confirm_tools": unreachable + read_unreachable,
+        "auto_allowed_confirm_read_tools": read_allowed,
     }
     if enforced:
         result["warning"] = (
-            f"CONFIRM 级工具当前自动放行（未注入 HITL）：{enforced}。"
-            "如需失败关闭请设 REACT_AGENT_STRICT_CONFIRM=1。"
+            f"副作用 CONFIRM 工具当前自动放行（REACT_AGENT_APPROVAL_MODE=auto_allow）："
+            f"{enforced}。生产请改用默认 async，或设 REACT_AGENT_STRICT_CONFIRM=1。"
         )
     return result
 

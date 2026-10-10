@@ -25,7 +25,7 @@
 | ReAct + Tool Calling（Live） | 已具备 | `react_loop`；`REACT_AGENT_SERVER_LLM=1` |
 | 声明式 Workflow v5（legacy） | 已具备 | `REACT_AGENT_DOCS_ENGINE=workflow` |
 | 权限闸门 deny→ask→allow | 已具备 | 非 OS ACL；fix_steps 可进 `pending_fix_steps` |
-| **异步人工审批（HTTP）** | 已具备 | `REACT_AGENT_APPROVAL_MODE=async`：`CONFIRM` 级工具落盘待批项并阻塞，经 `GET/POST /v1/approvals` 批准后带 `approval_id` 重试放行；单次/会话授权、防重放；存储不可写则失败关闭 |
+| **异步人工审批（HTTP）** | 已具备 | 默认 `async`：副作用 `CONFIRM` 落盘待批，经 `/v1/approvals` 批准后重试；`CONFIRM_READ` 直接放行；`auto_allow`/`off` 为本地逃生；存储不可写则失败关闭 |
 | ToolGuard 超时/重试/熔断 | 已具备 | 非容器隔离 |
 | 循环内 guardrails | 已具备 | duplicate 拦截、reserve_final、Harness 自修 |
 | Format B 轨迹 + StepWatcher | 已具备 | 可选 failure tag；flywheel 回灌 |
