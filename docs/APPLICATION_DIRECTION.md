@@ -6,7 +6,7 @@
 |------|----------|----------|-------------|
 | **① 写代码 / 执行** | 工具调用、多步推理、Issue 式任务 | `react_loop` · `run_execution_suite.py` · HTTP `app=default` | execution 36 条 agent · HTTP smoke 3 条 |
 | **② 客服 / 自动化** | 政策问答、工作流、可部署 Chat API | `demo_expense_workflow.py` · `server` · `apps/docs_troubleshoot` | docs 黄金集 34 · fault 12 · HTTP smoke |
-| **③ 通用 RAG / 研究** | 检索增强、公开 QA、Deep Research 形 | `demo_rag.py` · `run_public_rag_benchmark.py` | GSM8K+Hotpot 20 · public RAG 分层 |
+| **③ 通用 RAG / 研究** | 检索增强、公开 QA、Deep Research 形 | `demo_rag.py` · `run_public_rag_benchmark.py` | public RAG 分层 |
 
 **证据化文档排障**（`docs_troubleshoot`）是 **② 客服/知识自动化** 下的 **一个垂直 demo**（引用 + 拒答 + 现场证据），不是全仓唯一产品名。
 
@@ -76,7 +76,6 @@ python examples/eval/run_docs_troubleshoot_eval.py
 **本仓有什么：**
 
 - RAG：`rag.py` · `demo_rag.py` · `REACT_AGENT_RAG_MODE=keyword|semantic`
-- 公开 Agent 子集：GSM8K×10 + HotpotQA×10 — `run_public_benchmark.py`
 - 公开 RAG 分层：HotpotQA-RAG smoke/hard/held_out — `run_public_rag_benchmark.py`
 - 研究形能力：ToT / Planner / Orchestrator（实验轨，见 [`EXPERIMENTAL.md`](EXPERIMENTAL.md)）
 
@@ -85,11 +84,9 @@ python examples/eval/run_docs_troubleshoot_eval.py
 ```bash
 set REACT_AGENT_EXPERIMENTAL_TOOLS=1
 python examples/demos/demo_rag.py
-python examples/eval/run_public_benchmark.py
 python examples/eval/run_public_rag_benchmark.py
 ```
 
-**已完成：** public RAG/agent 子集与 docs 黄金集已并列进 CI（`test` job 内跑 `run_public_benchmark.py`、`run_public_rag_benchmark.py` 与四套 docs 评测）。**下一步：** 把 public RAG 的 drop-off 指标纳入发布硬门禁。
 
 ---
 
@@ -99,7 +96,6 @@ python examples/eval/run_public_rag_benchmark.py
 |-----------|----------|
 | Agent 能调工具、有轨迹 | `python -m react_agent "…"` 或 execution suite |
 | 能部署的 Chat / 知识客服 | `docker compose up` + `/v1/chat` |
-| 检索 + 公开 QA | `run_public_benchmark.py` / `demo_rag.py` |
 | 垂直 Runbook（窄 demo） | `REACT_AGENT_APP=docs_troubleshoot` |
 
 **仓库默认叙事：** 运行时 + 三条主流应用；**不再**把全仓等同于「证据化文档排障」单一产品。

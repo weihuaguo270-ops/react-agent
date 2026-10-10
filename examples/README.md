@@ -16,6 +16,5 @@ python examples/demos/demo_workflow.py
 python examples/eval/run_docs_troubleshoot_eval.py
 
 # 公开评测
-python examples/eval/run_public_benchmark.py --modes offline
 python examples/eval/run_public_rag_benchmark.py
 ```
