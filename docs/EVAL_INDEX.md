@@ -26,8 +26,6 @@
 | [SOFTWARE_TASK_RUNNER.md](./SOFTWARE_TASK_RUNNER.md) / [SOFTWARE_TASK_DATASET.md](./SOFTWARE_TASK_DATASET.md) | FastAPI 任务 Runner + 数据集 | 报告 [software_task_execution_20260913.md](./reports/software_task_execution_20260913.md) | Agent 成功率 ≠ 生产收益 |
 | [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) | 项目定位、对外口径与边界 | — | 背景总览 |
 | [flywheel_closed_loop_20260716.md](./reports/flywheel_closed_loop_20260716.md) | 同批 100 条改前/改后 | **llm_offtrack 6→1** | [snapshots/…](./snapshots/flywheel_closed_loop_20260716.json) |
-| [public_benchmark_snapshot_offline.md](./reports/public_benchmark_snapshot_offline.md) | GSM8K×10 + HotpotQA×10 | offline 匹配器 20/20 | [归档](./snapshots/public_benchmark_snapshot_offline.json) |
-| [public_benchmark_snapshot_agent_20260717.md](./reports/public_benchmark_snapshot_agent_20260717.md) | 同上 · DeepSeek agent | **19/20（95%）** · GSM8K 10/10 · Hotpot 9/10 · Wilson [76.4, 99.1] | [归档](./snapshots/public_benchmark_snapshot_agent_20260717.json) |
 | 公开 RAG 子集（分层 v2） | HotpotQA-RAG smoke/hard/held_out | `examples/eval/run_public_rag_benchmark.py` | `public_rag_benchmark_subset.json` |
 | GitHub 公开只读业务证据 | 仓库契约 + 当前公开 Issue | `examples/eval/run_github_business_tasks.py --repository <owner/repo>` | 2026-08-20 的两份快照**未随 main 归档**（只存在于侧分支 `backup/pre-split-wip`） |
 | GitHub 公开只读交付样本 | agent-delivery-sandbox 公开 Issue（10 条） | 采集发生在 sibling 仓 `agent-delivery-sandbox` 侧 | 同上，未随 main 归档 |
@@ -50,18 +48,6 @@ python examples/eval/run_execution_suite.py --modes agent --publish
 ```
 
 说明：`offline_tools`（现 12 条）与 `agent`（现 **36** 条，easy8/medium12/hard16）为不同指标，须分栏引用。
-
-## 公开 Agent benchmark 子集
-
-冻结 **GSM8K test×10 + HotpotQA validation×10**（非全量榜）：
-
-```bash
-python examples/eval/run_public_benchmark.py
-set REACT_AGENT_DISABLE_MCP=1
-python examples/eval/run_public_benchmark.py --modes agent --publish
-```
-
-数据集：`src/react_agent/eval/public_benchmark_subset.json`。
 
 ## 公开 RAG/Agent 子集（外部可比性 · 分层）
 

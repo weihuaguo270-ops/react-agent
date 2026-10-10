@@ -110,10 +110,6 @@ jobs:
         set -e
         python examples/eval/run_software_task_failure_regression.py --out artifacts/failure-regression/ci-software-tasks --expect-all-pass-good
         pytest tests/test_software_task_failure_regression.py -q
-    - name: "Pillar ③ Public benchmark (offline)"
-      run: |
-        python examples/eval/run_public_benchmark.py --modes offline
-        pytest tests/test_public_benchmark.py -q
     - name: "Pillar ③ Public RAG benchmark (offline)"
       run: |
         python examples/eval/run_public_rag_benchmark.py --modes offline,rag

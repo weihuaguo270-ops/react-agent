@@ -1,3 +1,13 @@
+## Unreleased
+
+### Removed
+
+- Dropped the frozen GSM8K×10 + HotpotQA×10 **public Agent benchmark** suite
+  (`public_benchmark.py` / `public_benchmark_subset.json` / `run_public_benchmark.py` /
+  CI Pillar ③ offline step and related snapshots). Offline CI only exercised the gold-derived
+  matcher and did not measure agent ability. Shared HotpotQA-style text matching for the
+  remaining public RAG suite lives in `eval/answer_match.py`.
+
 # Changelog
 
 ## Unreleased

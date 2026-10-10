@@ -24,7 +24,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from react_agent.eval.execution_scorer import wilson_ci
-from react_agent.eval.public_benchmark import match_gold, normalize_text
+from react_agent.eval.answer_match import match_gold, normalize_text
 
 _EVAL_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PUBLIC_RAG = os.path.join(_EVAL_DIR, "public_rag_benchmark_subset.json")

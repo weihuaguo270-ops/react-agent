@@ -8,7 +8,6 @@
 |---|---|
 | `github_portfolio_dataset_20260813.json` | GitHub 只读业务任务数据集快照 |
 | `execution_agent_snapshot_20260716_v3.json` | Execution Agent 当前冻结结果 |
-| `public_benchmark_snapshot_agent_20260717.json` | 公开任务 Agent 路径结果 |
 | `reliability_live_live_20260716_v2.json` | Live 可靠性复测 |
 | `step_watcher_evidence_baseline.json` | StepWatcher 回归基线 |
 

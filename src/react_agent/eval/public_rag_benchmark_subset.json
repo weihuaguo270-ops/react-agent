@@ -4,8 +4,7 @@
   "protocol": "hotpotqa_rag_distractor_v2_stratified",
   "inspired_by": [
     "HotpotQA (Yang et al., EMNLP 2018) — multi-hop QA with distractors",
-    "RAGAS faithfulness / context-grounding pattern (rule-based proxy)",
-    "Existing repo public_agent_benchmark_subset_v1 Hotpot questions"
+    "RAGAS faithfulness / context-grounding pattern (rule-based proxy)"
   ],
   "license_notes": "Questions/answers derived from HotpotQA (CC BY-SA 4.0). Supporting/distractor passages are short frozen paraphrases for offline RAG eval only; not a redistribution of full Wikipedia dumps.",
   "version": "2",
