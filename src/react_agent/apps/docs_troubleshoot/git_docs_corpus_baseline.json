@@ -73,7 +73,7 @@
     "snapshots/sandbox_live_check_docker_latest.json": "84f1d2655d95eb0e46a6276b22b32364b0ae81f22d054de65aa3f652fac79013",
     "snapshots/step_watcher_evidence_baseline.json": "0b320b311b225ae93a744a2b9a22d353fc65381e89aeeac621b16e2014ea0961",
     "snapshots/tdebug_failure_flywheel_20260716.json": "6dc0bc4dff8701ef6d8480eae0a1c160883e3c811c7d61dda2a4f114483ab5e7",
-    "spec/EXPENSE_WORKFLOW_DECISION_SPEC.md": "6ad02da199d246a122369a8caf3b77ff2c48252bdc6daf26e5a4c14dd03a8a7f",
+    "spec/EXPENSE_WORKFLOW_DECISION_SPEC.md": "f2d74233973f2d6827129ae39a7118b470d0ce05aaa993aba79a84371fbe2cc0",
     "spec/REDIS_TASK_MVP_SPEC.md": "247f827506d82b2308e899d82ca91a75abe84e8046b9910407323acbb0162483",
     "step_watcher_evidence_baseline.md": "608b25923d5bb2652a380057ea1b5bee916a9c65b25bc2fa05b255900a85787f"
   },
