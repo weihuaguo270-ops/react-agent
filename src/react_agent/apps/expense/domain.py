@@ -6,17 +6,17 @@ import json
 import math
 from dataclasses import dataclass, field
 from datetime import date, datetime
-try:
-    from enum import StrEnum
-except ImportError:  # Python 3.10 compatibility
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        """Compatibility fallback for Python versions before 3.11."""
-
+from enum import Enum
 from typing import Any, Mapping
 
 from .contracts import load_policy_facts, normalize_category, validate_claim
+
+
+class StrEnum(str, Enum):
+    """String-valued enum with Python 3.11 ``StrEnum`` semantics."""
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class ContractError(ValueError):
