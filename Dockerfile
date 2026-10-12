@@ -15,6 +15,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 COPY schemas ./schemas
+COPY fixtures/expense ./fixtures/expense
 
 ARG REACT_AGENT_INSTALL_EXTRAS=""
 ARG REACT_AGENT_TORCH_VERSION="2.7.1+cpu"

@@ -1,0 +1,147 @@
+{
+  "policy_version": "expense-policy-sim-v1",
+  "status": "published",
+  "policy_scope": "project_simulation",
+  "profile_id": "project_simulation_v1",
+  "policy_basis": "reference_informed_simulation",
+  "currency": "USD",
+  "source_references": [
+    "https://support.huaweicloud.com/prepare-hctms/hctms-0013.html",
+    "https://pdf.dfcfw.com/pdf/H2_AN201711271058507837_1.pdf",
+    "https://handbook.gitlab.com/handbook/finance/expenses/",
+    "https://www.finance.gov.au/publications/policy/australian-government-travel-policy"
+  ],
+  "global_rules": {
+    "business_purpose_required": true,
+    "receipt_required": true,
+    "receipt_exception": "missing_receipt_affidavit_with_manager_approval",
+    "pre_trip_approval_required_for_business_critical_trip": true,
+    "weekend_alone_is_not_rejection": true,
+    "date_basis": "local_date_at_expense_location",
+    "holiday_policy": "no_automatic_exemption",
+    "dynamic_price_review_pct": 20,
+    "monthly_reimbursement_review_threshold": 10000,
+    "e_group_monthly_reimbursement_review_threshold": 20000,
+    "monthly_reimbursement_review_threshold_currency": "USD",
+    "unsupported_exception": "needs_review",
+    "non_base_currency": "needs_review"
+  },
+  "decision_thresholds": {
+    "manager_max": 200,
+    "finance_max": 1000
+  },
+  "categories": {
+    "meal": {
+      "display_name": "餐饮",
+      "limit_amount": 200,
+      "limit_currency": "USD",
+      "limit_basis": "per_claim",
+      "required_fields": ["expense_type", "business_purpose", "participants"],
+      "expense_types": ["business_meal", "client_meal", "employee_meal", "entertainment"],
+      "entertainment_without_business_purpose": "reject_policy",
+      "weekend_entertainment": "needs_review"
+    },
+    "transport": {
+      "display_name": "交通",
+      "limit_amount": 500,
+      "limit_currency": "USD",
+      "limit_basis": "per_claim",
+      "required_fields": ["transport_mode", "route_scope", "seat_class"],
+      "transport_modes": ["taxi", "train", "flight", "public_transit"],
+      "route_scopes": ["intra_city", "inter_city"],
+      "seat_classes": ["standard", "second_class", "economy", "first_class", "business"],
+      "allowed_combinations": [
+        ["taxi", "intra_city", "standard"],
+        ["train", "inter_city", "second_class"],
+        ["flight", "inter_city", "economy"],
+        ["public_transit", "intra_city", "standard"]
+      ],
+      "unsupported_combination": "needs_review"
+    },
+    "lodging": {
+      "display_name": "住宿",
+      "limit_amount": 300,
+      "limit_currency": "USD",
+      "limit_basis": "per_night",
+      "required_fields": ["city_code", "city_tier", "check_in", "check_out", "nights"],
+      "city_tiers": ["market_high", "market_standard", "market_low", "tier1", "tier2", "tier3", "other"],
+      "city_directory_version": "project-sim-2026-10",
+      "city_directory": {
+        "US-NYC": "market_high",
+        "US-SFO": "market_high",
+        "GB-LON": "market_high",
+        "SG-SIN": "market_high",
+        "JP-TYO": "market_standard",
+        "DE-BER": "market_standard",
+        "CN-BJ": "market_high",
+        "CN-SH": "market_high",
+        "CN-GZ": "market_high",
+        "CN-SZ": "market_high"
+      },
+      "tier_limits_per_night": {
+        "market_high": 300,
+        "market_standard": 250,
+        "market_low": 200,
+        "other": 200
+      },
+      "commercial_accommodation_default": true,
+      "private_rental_without_exception": "needs_review",
+      "unknown_city_or_market_rate": "needs_review"
+    },
+    "office_purchase": {
+      "display_name": "办公采购",
+      "limit_amount": 1000,
+      "limit_currency": "USD",
+      "limit_basis": "per_claim",
+      "required_fields": ["purchase_order_id", "item_type"],
+      "purchase_order_pattern": "^PO-[0-9]+$",
+      "verification_mode": "simulated_registry",
+      "missing_purchase_order": "reject_missing_purchase_order",
+      "unverified_purchase_order": "needs_review"
+    }
+  },
+  "manual_review": {
+    "non_base_currency": "needs_review",
+    "unknown_city_or_calendar": "needs_review",
+    "unverified_purchase_order": "needs_review"
+  },
+  "simulation_assumptions": {
+    "meal_limit": "200 USD per claim; chosen for deterministic simulation, not an external standard",
+    "transport_limit": "500 USD per claim; chosen for deterministic simulation, not an external standard",
+    "office_purchase_limit": "1000 USD per claim; chosen for deterministic simulation, not an external standard",
+    "market_tiers": "illustrative destination groups; unknown cities require manual review",
+    "purchase_order_verification": "the offline prototype treats a syntactically valid PO reference as a simulated registry match only when purchase_order_verified is true"
+  },
+  "source_evidence": {
+    "gitlab_global_policy": {
+      "source": "https://handbook.gitlab.com/handbook/finance/expenses/",
+      "adopted_as_simulation_basis": {
+        "manager_approval_before_business_critical_trip": true,
+        "receipts": {
+          "non_us_all_expenses": true,
+          "us_receipt_required_if_amount_over_usd": 50,
+          "required_fields": ["vendor", "purchase_date", "line_items", "subtotal", "tax"]
+        },
+        "dynamic_price_review_pct": 20,
+        "lodging_standard_room_usd_per_night_inclusive_tax": 300,
+        "lodging_booking_lead_days": 7,
+        "monthly_reimbursement_review_threshold_usd": 10000,
+        "e_group_monthly_reimbursement_review_threshold_usd": 20000,
+        "out_of_policy_requires_manager_and_ap_review": true,
+        "peo_fx_handling": "submit_in_invoice_currency_or_use_Netsuite_rate_on_payroll_transfer_day"
+      },
+      "scope_note": "These source values are adapted into this project's simulation policy, not represented as universally applicable rules."
+    },
+    "domestic_process_examples": {
+      "sources": [
+        "https://support.huaweicloud.com/prepare-hctms/hctms-0013.html",
+        "https://pdf.dfcfw.com/pdf/H2_AN201711271058507837_1.pdf"
+      ],
+      "adopted_as_simulation_basis": ["business_purpose", "receipts", "pre_trip_approval", "exception_review"]
+    },
+    "public_sector_process_example": {
+      "source": "https://www.finance.gov.au/publications/policy/australian-government-travel-policy",
+      "adopted_as_simulation_basis": ["reasonable_cost", "travel_class", "business_necessity"]
+    }
+  }
+}

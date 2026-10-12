@@ -2,34 +2,33 @@
 from __future__ import annotations
 
 import json
-import os
 import re
-from pathlib import Path
 from typing import Any
 
 from react_agent.apps.expense import LIMITS_DEFAULT
 
-_REPO = Path(__file__).resolve().parents[4]
-_FIXTURE = _REPO / "fixtures" / "expense" / "expense_claims.json"
-_POLICY = _REPO / "fixtures" / "expense" / "expense_policy.md"
+from .contracts import PolicyContractError, load_policy_facts, limits_from_policy, validate_claim
+from .domain import ContractError, LegacyClaimAdapter
 
-
-def _load_limits() -> dict[str, float]:
-    if _FIXTURE.is_file():
-        data = json.loads(_FIXTURE.read_text(encoding="utf-8"))
-        return {k: float(v) for k, v in (data.get("limits") or LIMITS_DEFAULT).items()}
-    return {k: float(v) for k, v in LIMITS_DEFAULT.items()}
+def _load_limits(profile: str | None = None) -> dict[str, float]:
+    """Compatibility helper for the business evaluator."""
+    return limits_from_policy(load_policy_facts(profile=profile))
 
 
 def decide(claim: dict[str, Any], limits: dict[str, float]) -> str:
     """按收据、额度和预批状态返回稳定决策码。"""
-    if not claim.get("has_receipt"):
+    receipt_exception_approved = bool(
+        claim.get("missing_receipt_affidavit") and claim.get("manager_approved_missing_receipt")
+    )
+    if not claim.get("has_receipt") and not receipt_exception_approved:
         return "reject_no_receipt"
     cat = str(claim.get("category") or "")
     amount = float(claim.get("amount") or 0)
     limit = float(limits.get(cat, 0))
     if limit and amount > limit and not claim.get("pre_approved"):
         return "reject_over_limit"
+    if cat in {"meal", "餐饮"} and limit and amount > limit and claim.get("pre_approved"):
+        return "approve_director"
     if amount > 1000:
         return "approve_director"
     if amount > 200:
@@ -44,25 +43,6 @@ _DECISION_ZH = {
     "approve_finance": "通过：需财务审批。",
     "approve_manager": "通过：主管审批即可。",
 }
-
-
-def _policy_snippet() -> str:
-    os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
-    try:
-        from react_agent.rag import RAG
-
-        rag = RAG(save_path="")
-        rag.clear()
-        if _POLICY.is_file():
-            rag.ingest(str(_POLICY))
-            hits = rag.query("报销 额度 审批", top_k=1)
-            if hits:
-                return hits[0].get("content", "")[:240]
-    except Exception:
-        pass
-    if _POLICY.is_file():
-        return _POLICY.read_text(encoding="utf-8")[:240]
-    return ""
 
 
 def _parse_claim(body: dict[str, Any]) -> dict[str, Any]:
@@ -84,6 +64,10 @@ def _parse_claim(body: dict[str, Any]) -> dict[str, Any]:
     m = re.search(r"(\d+(?:\.\d+)?)\s*元?", msg)
     if m:
         claim["amount"] = float(m.group(1))
+        if "元" in m.group(0):
+            claim["currency"] = "CNY"
+    elif re.search(r"\bUSD\b|\$", msg, re.IGNORECASE):
+        claim["currency"] = "USD"
     claim["has_receipt"] = any(k in msg for k in ("有发票", "有收据", "has_receipt"))
     claim["pre_approved"] = any(k in msg for k in ("事前", "预批", "pre_approved"))
     return claim
@@ -99,24 +83,93 @@ def answer_offline(body: dict[str, Any]) -> dict[str, Any]:
             "refused": True,
             "app": "expense",
         }
-    limits = _load_limits()
+    formal = bool(claim.get("claim_id") or claim.get("claim_version") or claim.get("occurred_on"))
+    policy_profile = body.get("policy_profile") or claim.get("policy_profile")
+    try:
+        policy = load_policy_facts(profile=policy_profile)
+        if not formal:
+            # Normalize the compatibility envelope without inventing claim identity.
+            # The following validation preserves the legacy review/error response shape.
+            try:
+                claim = LegacyClaimAdapter.normalize(claim, policy=policy).to_dict()
+            except ContractError:
+                pass
+        if not formal and not claim.get("currency"):
+            claim["currency"] = policy["currency"]
+        validation = validate_claim(claim, formal=formal, policy=policy)
+    except PolicyContractError as exc:
+        error_code = "policy_profile_unavailable" if policy_profile else "policy_unavailable"
+        return {
+            "ok": False,
+            "answer": "当前政策配置不可用，无法作出决策。",
+            "refused": True,
+            "error_code": error_code,
+            "errors": [str(exc)],
+            "claim": claim,
+            "policy_profile": policy_profile or "project_simulation_v1",
+            "app": "expense",
+            "mode": "offline",
+        }
+    if not validation["valid"]:
+        return {
+            "ok": False,
+            "answer": "Claim 字段不完整或不合法。",
+            "refused": True,
+            "error_code": validation["error_code"],
+            "errors": validation["errors"],
+            "claim": claim,
+            "policy_profile": policy["selected_profile"],
+            "policy_version": policy["policy_version"],
+            "app": "expense",
+            "mode": "offline",
+        }
+    claim = validation["claim"]
+    if validation["review_required"]:
+        reason = "; ".join(validation["errors"]) or "模拟规则要求复核"
+        return {
+            "ok": True,
+            "answer": f"需要人工审核：{reason}",
+            "refused": False,
+            "decision": "needs_review",
+            "error_code": "needs_review",
+            "claim": claim,
+            "policy_profile": policy["selected_profile"],
+            "policy_version": policy["policy_version"],
+            "review_required": True,
+            "app": "expense",
+            "mode": "offline",
+        }
+    if validation.get("policy_decision"):
+        code = validation["policy_decision"]
+        return {
+            "ok": True,
+            "answer": _DECISION_ZH.get(code, code),
+            "refused": True,
+            "decision": code,
+            "error_code": code,
+            "claim": claim,
+            "policy_profile": policy["selected_profile"],
+            "policy_version": policy["policy_version"],
+            "app": "expense",
+            "mode": "offline",
+        }
+    limits = limits_from_policy(policy)
     code = decide(claim, limits)
-    policy = _policy_snippet()
     answer = (
         f"{_DECISION_ZH.get(code, code)}\n"
         f"决策码: {code}\n"
         f"类目: {claim.get('category')} · 金额: {claim.get('amount')}\n"
-        f"依据: expense_policy.md"
+        f"依据: {policy['selected_profile']} · {policy['policy_version']}"
     )
-    if policy:
-        answer += f"\n政策摘要: {policy[:180].replace(chr(10), ' ')}..."
     return {
         "ok": True,
         "answer": answer,
         "refused": code.startswith("reject"),
         "decision": code,
         "claim": claim,
-        "citations": [{"source": "expense_policy.md"}],
+        "policy_profile": policy["selected_profile"],
+        "policy_version": policy["policy_version"],
+        "citations": [{"source": "expense_policy_v2.json", "policy_version": policy["policy_version"]}],
         "app": "expense",
         "mode": "offline",
     }
