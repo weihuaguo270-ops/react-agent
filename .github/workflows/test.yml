@@ -24,6 +24,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pr-ready:
+    name: PR ready audit
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Check the actual PR head, not GitHub's synthetic merge ref.
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install project dependencies
+      run: pip install -e ".[test]"
+    - name: Check PR readiness
+      env:
+        PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      run: python scripts/ci/check_pr_ready.py --ci --base-sha "$PR_BASE_SHA"
+
   lint:
     timeout-minutes: 5
     runs-on: ubuntu-latest
