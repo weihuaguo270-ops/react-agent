@@ -8,6 +8,7 @@ from react_agent.apps.docs_troubleshoot.draft import as_results, build_draft_fro
 from react_agent.apps.docs_troubleshoot.evidence import collect_evidence_bundle
 from react_agent.workflow.engine import Step, StepKind, WorkflowDef
 from react_agent.workflow.registry import register_workflow
+from react_agent.apps.expense.workflow import build_expense_workflow
 
 
 def _parse_evidence(state: dict[str, Any], **_: Any) -> dict[str, Any]:
@@ -138,3 +139,4 @@ def build_docs_troubleshoot_workflow() -> WorkflowDef:
 
 def register_builtin_workflows() -> None:
     register_workflow(build_docs_troubleshoot_workflow())
+    register_workflow(build_expense_workflow())

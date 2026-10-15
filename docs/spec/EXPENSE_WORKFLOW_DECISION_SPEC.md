@@ -19,7 +19,7 @@
 | 演示 | `demos/demo_expense_workflow.py` |
 | HTTP app | `POST /v1/chat` · `app=expense` |
 | 业务评测 | `scripts/eval/acceptance/run_expense_business_eval.py` |
-| 主线地图 | [`APPLICATION_DIRECTION.md`](../guide/APPLICATION_DIRECTION.md) §② |
+| 主线地图 | [`APPLICATION_DIRECTION.md`](../APPLICATION_DIRECTION.md) §② |
 
 ## 2. 范围
 
@@ -207,9 +207,9 @@ decision_pending -> decision_ready
 
 ### 8.2 Workflow MVP 验收清单
 
-- [ ] expense 存在可运行的 Workflow 定义（注册名稳定，可被 demo 与 HTTP 离线路径调用）。
-- [ ] 节点顺序与 §5.2 一致；轨迹或步骤日志能指出失败节点。
-- [ ] 默认决策路径纯规则，不调用 LLM。
+- [x] expense 存在可运行的 Workflow 定义（注册名稳定，可被 Workflow API 与 HTTP opt-in 离线路径调用；demo 入口迁移仍待 P3）。
+- [x] 节点顺序与 §5.2 一致；轨迹或步骤日志能指出失败节点。
+- [x] 默认决策路径纯规则，不调用 LLM。
 - [ ] 默认规则决策模型结果与当前 `decide()` 基线逐案一致。
 - [ ] 决策审计与父 Workflow 状态写入路径分别经过权限闸门登记。
 - [ ] `docs_troubleshoot` 黄金集 / git-docs 不因本规格文档新增而错误失败（语料基线按仓库约定刷新）。
@@ -246,7 +246,7 @@ REACT_AGENT_EXPENSE_ENGINE=workflow
 |------|------|----------|----------|------------|
 | **P0 基线冻结** | 固定现有行为，建立迁移前参照 | 不改业务代码；记录当前 `pytest`、业务评测、demo 和 HTTP smoke 结果 | 基线报告、命令、提交号、fixture 版本 | 只修复环境/测试问题，不修改基线语义 |
 | **P1 契约与 Fixture** | 统一输入、政策事实、决策输出和错误码 | 拆出共享的 claim/policy/decision 结构；校验 `business_cases.json` 与决策码映射；保留 `decide()` 签名 | 契约测试；所有现有用例可由同一 loader 读取 | 继续使用旧 loader；不得改写 dev/golden/held_out 历史记录 |
-| **P2 Workflow 包装** | 让规则路径由 Core Workflow 可回放地执行 | 拟新增 `src/react_agent/apps/expense/workflow.py`；注册 `expense_claim_review@1`；实现 §5.2 五个节点；保留 legacy adapter | Workflow 注册/运行测试；节点轨迹包含成功、跳过和失败节点 | 通过 `REACT_AGENT_EXPENSE_ENGINE=legacy` 回退，规则结果必须相同 |
+| **P2 Workflow 包装** | 让规则路径由 Core Workflow 可回放地执行 | 新增 `src/react_agent/apps/expense/workflow.py`；注册 `expense_claim_review@1`；实现 §5.2 五个节点；保留 legacy adapter；增加模拟证据 adapter | Workflow 注册/运行测试；节点轨迹包含成功、跳过和失败节点；S3 smoke 覆盖规则、失败关闭、幂等和 adapter | 通过 `REACT_AGENT_EXPENSE_ENGINE=legacy` 回退，规则结果必须相同；完整入口迁移留在 P3 |
 | **P3 入口切换** | HTTP、demo、业务评测共用同一编排 | `chat_router.py`、`demo_expense_workflow.py`、`run_expense_business_eval.py` 改调用 Workflow adapter；保留原响应字段 | HTTP smoke、demo 输出、评测全量通过；逐案与 P0 比较无回归 | 仅回退入口，不回滚契约和审计字段 |
 | **P4 写入与权限** | 将决策审计和 claim 状态写入纳入可观察的权限闸门 | 给 `persist_decision` 和父 Workflow 的状态写入增加幂等重放和冲突错误；补充权限表/测试；只读节点保持 SAFE | gate allow/blocked 两条路径、重复 key、冲突 key 的测试和轨迹 | gate 未通过时不改变业务状态；返回结构化 `approval_required` 或拒绝 |
 | **P5 特化决策模型（可选）** | 引入 JEV 类特化决策模型作为规则模型的候选实现，不增加旁路建议器 | 拟新增版本化 `DecisionModel` 适配器；超时、非法输出、未知决策码均回退规则模型或升级 | 规则模型/候选模型双跑；golden/held_out 逐案决策码和状态不变 | 关闭候选模型配置并回到 P4 规则路径，不重写历史证据 |
@@ -258,6 +258,8 @@ REACT_AGENT_EXPENSE_ENGINE=workflow
 **S2 执行记录（2026-10-12）：** 新增 `src/react_agent/apps/expense/domain.py` 作为共享领域契约，覆盖版本化 Claim、Decision、Handoff、ApprovalRecord、AuditEvent、稳定错误码和 legacy Claim adapter；`offline_answer` 的旧入口先经 adapter 归一化，保留原响应字段和决策码。契约测试新增 12 项，Expense 定向测试合计 40/40 通过。Decision hash 对规范 payload 计算；为避免 `handoff.decision_hash` 的递归定义，hash payload 排除该嵌套字段，计算完成后再回填到 handoff。S2 不包含正式 Claim 持久化、审批 Workflow、HTTP 入口切换或外部系统写入。
 
 **S2 后候选 Runner 执行记录（2026-10-12）：** 新增 `candidate_eval.py` 和 `run_expense_candidate_eval.py`，实现 expanded fixture 的模板展开、显式 `null` 覆盖、逐字段断言、`EvaluationEpisode` 导出、split 隔离和 held_out manifest hash 校验。dev 41 案中 39 通过、2 个采购外部验证 known gap，命令以 exit 1 阻止进入 Workflow；golden 12/12；held_out 显式授权只读执行后 16/16，hash 保持 `f8801e86298c59260b8d510df9c965f953bcbc5430672fefdbb50b523457da36`。住宿按晚计算、交通超额、`pre_approved` 类型和娱乐缺少业务目的的规则缺口已关闭。候选结果不替代 S1 基线，也不表示 Workflow 已实现。
+
+**S3 执行记录（2026-10-14）：** 新增 `src/react_agent/apps/expense/workflow.py` 并注册 `expense_claim_review@1`，实现 `ingest_claim`、`load_policy_facts`、`decide`、`persist_decision`、`finalize` 五节点；HTTP 通过 `REACT_AGENT_EXPENSE_ENGINE=workflow` 选择新路径，默认仍保留 legacy。新增 `SimulationEvidenceAdapter`，采购/报价事实由 adapter 提供，客户端自报的 `purchase_order_verified` 不被信任。demo、business evaluation 和 candidate runner 已改为调用同一 Workflow；`persist_decision` 已在权限表登记为 `NOTIFY`。`tests/apps/expense/test_expense_workflow_smoke.py` 覆盖批准、硬拒绝、人工审核、非法 Claim、政策损坏/未知决策码失败关闭、幂等重放与冲突、采购/报价 adapter、HTTP workflow 与 legacy 回退；Expense + Core Workflow 定向测试合计 68 项通过。candidate dev 41/41、golden 12/12、held_out 16/16，business evaluation 8/8；报告保存在 `artifacts/expense/smoke/s3/`。S3 已满足退出门槛并标记为 `complete`；pytest cache 目录权限警告不影响测试结果。
 
 ### 10.2 目标状态与节点数据契约
 
@@ -301,7 +303,7 @@ Workflow 的共享状态使用稳定键，节点不得依赖未声明的隐式�
 
 | 文件 | 计划动作 | 约束 |
 |------|----------|------|
-| `src/react_agent/apps/expense/workflow.py`（拟新增） | 构造 `WorkflowDef`、节点 handler、输出适配器 | 不复制 `decide()` 规则；版本名固定为 `expense_claim_review@1` |
+| `src/react_agent/apps/expense/workflow.py` | 构造 `WorkflowDef`、节点 handler、输出适配器和模拟证据 adapter | 不复制 `decide()` 规则；版本名固定为 `expense_claim_review@1` |
 | `src/react_agent/workflow/builtins.py` | 注册 expense Workflow，或调用 expense 模块的注册函数 | 不改变 `docs_troubleshoot` 的步骤和版本 |
 | `src/react_agent/apps/expense/offline_answer.py` | 保留解析/规则兼容函数；必要时委托共享契约 loader | 旧调用方的字段和决策码保持兼容 |
 | `src/react_agent/apps/expense/operations.py` | 保留 legacy ledger adapter，增加决策幂等重放标记和冲突错误 | 不改变已有 `snapshot()` 的字段含义 |
@@ -310,7 +312,7 @@ Workflow 的共享状态使用稳定键，节点不得依赖未声明的隐式�
 | `src/react_agent/apps/expense/eval_business.py` | 增加 Workflow reference agent 或 adapter | `EvaluationEpisode` 保留原 schema 和逐案状态断言 |
 | `scripts/eval/acceptance/run_expense_business_eval.py` | 增加 engine/version、报告路径和比较信息 | held_out 仍独立报告，不与 dev/golden 合并统计 |
 | `src/react_agent/safety/permissions.py` | 登记决策审计与 claim 状态写动作的权限等级 | 只读政策/inspect 不得被误标为写入 |
-| `tests/apps/expense/test_expense_workflow.py`（拟新增） | Workflow 注册、节点顺序、失败关闭、输出契约和权限测试 | 测试不依赖真实 LLM 或外部财务系统 |
+| `tests/apps/expense/test_expense_workflow_smoke.py` | Workflow 注册、节点顺序、失败关闭、输出契约、幂等和模拟 adapter smoke | 测试不依赖真实 LLM 或外部财务系统；权限测试留在 P4 |
 | `docs/operations/DEPLOY.md` | P3 后补充配置键和响应示例 | 配置默认值与本规格一致 |
 
 ### 10.4 测试与验收矩阵

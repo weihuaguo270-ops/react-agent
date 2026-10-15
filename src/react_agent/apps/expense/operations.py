@@ -55,6 +55,30 @@ class ExpenseLedger:
         if claim["status"] != "pending":
             raise ValueError(f"claim is already finalized: {claim_id}")
         decision = decide(claim, limits)
+        return self.persist_decision(
+            claim_id,
+            decision=decision,
+            idempotency_key=idempotency_key,
+        )
+
+    def persist_decision(
+        self,
+        claim_id: str,
+        *,
+        decision: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """Persist a validated decision produced by the Workflow adapter."""
+        if not idempotency_key:
+            raise ValueError("idempotency_key is required")
+        for event in self.audit_events:
+            if event["idempotency_key"] == idempotency_key:
+                if event["claim_id"] != claim_id:
+                    raise ValueError("idempotency_key already belongs to another claim")
+                return copy.deepcopy(event["result"])
+        claim = self.inspect_claim(claim_id)
+        if claim["status"] != "pending":
+            raise ValueError(f"claim is already finalized: {claim_id}")
         status = "rejected" if decision.startswith("reject") else "approved"
         self.claims[claim_id]["status"] = status
         self.claims[claim_id]["decision"] = decision

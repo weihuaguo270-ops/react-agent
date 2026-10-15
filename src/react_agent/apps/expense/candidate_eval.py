@@ -14,14 +14,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
-from .contracts import PolicyContractError, limits_from_policy, load_policy_facts, validate_claim
-from .offline_answer import decide
+from .workflow import SimulationEvidenceAdapter, run_expense_workflow
 
 _REPO = Path(__file__).resolve().parents[4]
 EXPANDED_FIXTURE = _REPO / "fixtures" / "expense" / "business_cases_expanded_v1.json"
 ALLOWED_SPLITS = {"dev", "golden", "held_out"}
 EXPECTED_HELD_OUT_MANIFEST_SHA256 = "f8801e86298c59260b8d510df9c965f953bcbc5430672fefdbb50b523457da36"
 RESOLVED_GAP_RULES = {
+    "purchase.verified_registry_match",
+    "purchase.unverified_registry",
     "transport.category_limit_over",
     "lodging.standard_market_exact",
     "lodging.preapproved_over_limit_within_market",
@@ -190,38 +191,54 @@ def _check_expected(expected: Mapping[str, Any], actual: Mapping[str, Any]) -> l
     return checks
 
 
-def _execute_claim(claim: dict[str, Any]) -> dict[str, Any]:
-    profile = claim.get("policy_profile")
-    try:
-        policy = load_policy_facts(profile=profile)
-    except PolicyContractError:
-        return {"valid": False, "error_code": "policy_profile_unavailable" if profile else "policy_unavailable"}
-    validation = validate_claim(claim, formal=True, policy=policy)
-    if not validation["valid"]:
-        return {"valid": False, "error_code": validation["error_code"]}
-    normalized = validation["claim"]
-    actual: dict[str, Any] = {
-        "valid": True,
-        "review_required": bool(validation.get("review_required")),
-    }
-    if validation.get("policy_decision"):
-        actual["policy_decision"] = validation["policy_decision"]
-        actual["decision"] = validation["policy_decision"]
-        return actual
-    if validation.get("review_required"):
-        actual["error_code"] = "needs_review"
-        return actual
-    limits = limits_from_policy(policy)
-    if policy["categories"].get(normalized["category"], {}).get("limit_basis") == "per_night":
-        limits[normalized["category"]] = float("inf")
-    actual["decision"] = decide(normalized, limits)
-    return actual
+def _execute_claim(claim: dict[str, Any], *, case_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Execute candidate claims through the same registered S3 decision path."""
+    workflow_claim = copy.deepcopy(claim)
+    purchase_orders: dict[str, bool] = {}
+    market_prices: dict[str, float] = {}
+    purchase_order_id = workflow_claim.get("purchase_order_id")
+    if purchase_order_id and "purchase_order_verified" in workflow_claim:
+        purchase_orders[str(purchase_order_id)] = bool(workflow_claim.pop("purchase_order_verified"))
+    if "market_price" in workflow_claim:
+        price = workflow_claim.pop("market_price")
+        if price is not None:
+            market_prices[str(workflow_claim.get("claim_id") or case_id)] = float(price)
+    if "market_price_per_night" in workflow_claim:
+        price = workflow_claim.pop("market_price_per_night")
+        if price is not None:
+            market_prices[str(workflow_claim.get("claim_id") or case_id)] = float(price)
+    adapter = SimulationEvidenceAdapter(
+        purchase_orders=purchase_orders,
+        market_prices=market_prices,
+        version="expense-candidate-fixture-v1",
+    )
+    result = run_expense_workflow({
+        "claim": workflow_claim,
+        "policy_profile": workflow_claim.get("policy_profile"),
+        "evidence_adapter": adapter,
+        "idempotency_key": f"expense-candidate:{case_id}",
+    })
+    state = result.state
+    actual: dict[str, Any] = {"valid": bool(state.get("claim_valid"))}
+    if actual["valid"]:
+        decision = state.get("decision") or {}
+        actual["review_required"] = bool(decision.get("review_required"))
+        code = state.get("decision_code")
+        if code:
+            actual["decision"] = code
+            if code.startswith("reject"):
+                actual["policy_decision"] = code
+        if state.get("error_code"):
+            actual["error_code"] = state["error_code"]
+    else:
+        actual["error_code"] = state.get("error_code") or "invalid_claim"
+    return actual, {"workflow": result.workflow, "run_id": result.run_id, "external_adapter": state.get("external_adapter")}
 
 
 def run_candidate_case(case: Mapping[str, Any], data: Mapping[str, Any], *, agent_version: str) -> CandidateCaseResult:
     claim = expand_candidate_case(data, case)
     expected = dict(case["expected"])
-    actual = _execute_claim(claim)
+    actual, execution = _execute_claim(claim, case_id=str(case["id"]))
     checks = _check_expected(expected, actual)
     matched = all(check["passed"] for check in checks)
     declared_gap = case.get("known_gap")
@@ -247,8 +264,8 @@ def run_candidate_case(case: Mapping[str, Any], data: Mapping[str, Any], *, agen
         "expected_state": expected,
         "final_state": actual,
         "state_verification": {"passed": passed, "status": status, "checks": checks},
-        "trajectory": {"steps": [{"step": 1, "action": "validate_claim_and_decide", "claim": claim}], "final_answer": status},
-        "metadata": {"domain": "expense", "verifier": "candidate_contract_subset", "known_gap": known_gap, "resolved_gap": resolved_gap},
+        "trajectory": {"steps": [{"step": 1, "action": "run_expense_claim_review", "claim": claim, **execution}], "final_answer": status},
+        "metadata": {"domain": "expense", "verifier": "candidate_contract_subset", "workflow": execution["workflow"], "external_adapter": execution["external_adapter"], "known_gap": known_gap, "resolved_gap": resolved_gap},
     }
     return CandidateCaseResult(str(case["id"]), str(case["split"]), str(case["rule_id"]), status, passed, known_gap, resolved_gap, expected, actual, checks, episode)
 
