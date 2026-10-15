@@ -55,7 +55,7 @@ def registry_pillars() -> list[str]:
     """已实现应用实际覆盖的 pillar（去重、保持注册顺序）。
 
     注意与对外宣称的三支柱区分：``rag_research`` 目前没有绑定应用，
-    因此不会出现在这里。见 docs/APPLICATION_DIRECTION.md。
+    因此不会出现在这里。见 docs/guide/APPLICATION_DIRECTION.md。
     """
     seen: list[str] = []
     for app in APPLICATIONS:
@@ -87,6 +87,38 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
                 request_id,
                 501,
             )
+        expense_engine = os.environ.get("REACT_AGENT_EXPENSE_ENGINE", "legacy").strip().lower()
+        if expense_engine == "workflow":
+            from react_agent.apps.expense.workflow import EXPENSE_WORKFLOW_NAME
+            from react_agent.workflow import run_workflow
+
+            initial = {
+                "claim": body.get("claim"),
+                "policy_profile": body.get("policy_profile"),
+                "idempotency_key": body.get("idempotency_key"),
+            }
+            result = run_workflow(EXPENSE_WORKFLOW_NAME, initial)
+            state = result.state
+            claim_valid = bool(state.get("claim_valid", False))
+            operational_ok = bool(result.ok)
+            status = 200 if operational_ok and claim_valid else (400 if operational_ok else 503)
+            return status, {
+                "request_id": request_id,
+                "app": "expense",
+                "workflow": result.workflow,
+                "run_id": result.run_id,
+                "ok": operational_ok and claim_valid,
+                "answer": result.answer,
+                "refused": bool(result.refused or state.get("refused")),
+                "decision": state.get("decision_code"),
+                "error_code": state.get("error_code", ""),
+                "errors": state.get("errors") or [],
+                "citations": result.citations,
+                "claim": state.get("claim") or {},
+                "decision_audit": state.get("decision_audit") or {},
+                "workflow_steps": result.to_dict().get("steps") or [],
+                "mode": "workflow",
+            }
         from react_agent.apps.expense.offline_answer import answer_offline
 
         out = answer_offline(body)

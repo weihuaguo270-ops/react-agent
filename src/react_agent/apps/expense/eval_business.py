@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
-from .offline_answer import _load_limits
 from .operations import ExpenseLedger
 
 _REPO = Path(__file__).resolve().parents[4]
@@ -174,11 +173,26 @@ def compare_business_runs(
 def _reference_agent(
     case: dict[str, Any], ledger: ExpenseLedger
 ) -> tuple[str, list[dict[str, Any]]]:
+    from react_agent.workflow import run_workflow
+    from .workflow import EXPENSE_WORKFLOW_NAME
+
     claim_id = str(case["claim"]["id"])
     claim = ledger.inspect_claim(claim_id)
-    result = ledger.decide_claim(
+    workflow_result = run_workflow(
+        EXPENSE_WORKFLOW_NAME,
+        {
+            "claim": {**claim, "id": claim_id},
+            "idempotency_key": f"{case['id']}:decision",
+        },
+    )
+    decision = str(
+        workflow_result.state.get("decision_code")
+        or workflow_result.state.get("error_code")
+        or ""
+    )
+    result = ledger.persist_decision(
         claim_id,
-        limits=_load_limits(),
+        decision=decision,
         idempotency_key=f"{case['id']}:decision",
     )
     steps = [
@@ -193,7 +207,7 @@ def _reference_agent(
         },
         {
             "step": 2,
-            "thought": "Apply the policy once with an idempotency key.",
+            "thought": "Run expense_claim_review@1 and persist its validated decision.",
             "action": {
                 "name": "decide_expense_claim",
                 "arguments": json.dumps(

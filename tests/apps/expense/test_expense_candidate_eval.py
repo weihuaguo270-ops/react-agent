@@ -25,8 +25,13 @@ def test_candidate_runner_executes_dev_and_preserves_known_gap_status():
     result = run_candidate_suite(split="dev", agent_version="test-candidate")
     assert len(result.cases) == 41
     assert result.held_out_manifest_sha256 == "f8801e86298c59260b8d510df9c965f953bcbc5430672fefdbb50b523457da36"
-    assert result.counts["known_gap"] >= 1
+    assert result.counts.get("known_gap", 0) == 0
+    assert result.counts.get("failed", 0) == 0
     assert result.cases[0].episode["schema_version"] == "evaluation-episode/v1"
+    assert result.cases[0].episode["trajectory"]["steps"][0]["action"] == "run_expense_claim_review"
+    purchase = next(case for case in result.cases if case.case_id == "D-PO-001")
+    assert purchase.resolved_gap is not None
+    assert purchase.episode["metadata"]["workflow"] == "expense_claim_review@1"
 
 
 def test_held_out_requires_explicit_opt_in():

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 import sys
-import tempfile
 from pathlib import Path
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
@@ -21,52 +20,37 @@ import os
 os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
 
 from react_agent.rag import RAG
-
-
-LIMITS_DEFAULT = {
-    "餐饮": 200,
-    "交通": 500,
-    "住宿": 600,
-    "办公采购": 1000,
-}
-
-
-def decide(claim: dict, limits: dict) -> str:
-    if not claim.get("has_receipt"):
-        return "reject_no_receipt"
-    cat = claim.get("category", "")
-    amount = float(claim.get("amount", 0))
-    limit = float(limits.get(cat, 0))
-    if limit and amount > limit and not claim.get("pre_approved"):
-        return "reject_over_limit"
-    if amount > 1000:
-        return "approve_director"
-    if amount > 200:
-        return "approve_finance"
-    return "approve_manager"
+from react_agent.apps.expense.workflow import EXPENSE_WORKFLOW_NAME
+from react_agent.workflow import run_workflow
 
 
 def main():
     fixture = json.loads(
         (ROOT / "fixtures" / "expense" / "expense_claims.json").read_text(encoding="utf-8")
     )
-    limits = fixture.get("limits") or LIMITS_DEFAULT
-
     # Step 1: 政策语料入索引（模拟 rag_query）
-    with tempfile.TemporaryDirectory() as td:
-        rag = RAG(save_path=str(Path(td) / "biz.json"))
+    demo_rag_path = ROOT / "artifacts" / "expense" / "demo_rag.json"
+    demo_rag_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        rag = RAG(save_path=str(demo_rag_path))
         rag.clear()
         rag.ingest(str(ROOT / "fixtures" / "expense" / "expense_policy.md"))
         policy = rag.query("报销 额度 审批", top_k=2)
         print("=== Step1 政策检索 ===")
         for h in policy:
             print(f"  {h['source']}: {h['content'][:100].replace(chr(10), ' ')}...")
+    finally:
+        demo_rag_path.unlink(missing_ok=True)
 
-    # Step 2–3: 逐单裁决（模拟工具链 / 规则引擎）
+    # Step 2–3: 逐单调用注册 Workflow（demo 不复制规则实现）
     print("\n=== Step2–3 多单裁决 ===")
     ok = 0
     for claim in fixture["claims"]:
-        got = decide(claim, limits)
+        result = run_workflow(
+            EXPENSE_WORKFLOW_NAME,
+            {"claim": claim, "idempotency_key": f"demo:{claim['id']}:decision"},
+        )
+        got = result.state.get("decision_code") or result.state.get("error_code")
         exp = claim["expect"]
         # fixture expect 与简化规则对齐：C-004 有事前申请且 >1000 → director
         mark = "OK" if got == exp else "DIFF"
@@ -78,8 +62,7 @@ def main():
         )
 
     print(f"\n匹配 {ok}/{len(fixture['claims'])}")
-    print("口述要点: RAG 取政策 → 结构化字段 → 规则/工具裁决 → 可写轨迹 Format B。")
-    print("接 ReAct: 把 decide 换成 tool，由模型填 category/amount/has_receipt。")
+    print("口述要点: RAG 取政策 → 结构化字段 → expense_claim_review@1 → 审计轨迹。")
 
 
 if __name__ == "__main__":

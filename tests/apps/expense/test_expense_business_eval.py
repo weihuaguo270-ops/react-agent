@@ -33,6 +33,7 @@ def test_business_episode_contains_state_and_trace_evidence():
     assert result.episode["agent_version"] == "candidate-v2"
     assert result.episode["state_verification"]["passed"] is True
     assert result.episode["trajectory"]["steps"][0]["action"]["name"] == "inspect_expense_claim"
+    assert "expense_claim_review@1" in result.episode["trajectory"]["steps"][1]["thought"]
 
 
 def test_business_comparison_holds_state_regression():
@@ -46,4 +47,3 @@ def test_business_comparison_holds_state_regression():
     comparison = compare_business_runs(baseline, candidate)
     assert comparison["decision"] == "hold"
     assert len(comparison["regressions"]) == len(baseline.cases)
-

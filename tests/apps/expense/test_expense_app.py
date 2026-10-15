@@ -64,4 +64,3 @@ def test_expense_server_route():
         assert data.get("decision") == "approve_manager"
     finally:
         httpd.shutdown()
-
