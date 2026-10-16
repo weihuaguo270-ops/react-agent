@@ -30,8 +30,12 @@
     "daily_smoke/README.md": "ed250027416ee625f014f5934a5b13ed4229617a714753cab12149944623c0d7",
     "daily_smoke/VARIANCE.md": "d6bc5b2c780506280161cba88f23db8a0000b869c1c3ac337a1ecd53dcb95a74",
     "eval_report_20260713.md": "fda031497f9d028693cf281f66d7cc55a7af3845c04e50bec597e4f4e9c63dbd",
+    "evaluation/HARNESS_BASELINE_20261014.md": "0e00b795f07b24f5af74b2b880f70c6791a7634c862c423273d71c80e89eda79",
+    "evaluation/HARNESS_HEALTH.md": "6f908c12ab0104489a77f0c80aaa6b210d64f0fb70e0f14995db34b664fa0b94",
+    "evaluation/P0_EVIDENCE_MAP.md": "e95266b0d12957422f4ea4cd7fff717026bcc209e144a923a280c1787dec32c1",
     "evaluation/expense/EXPENSE_COVERAGE_MATRIX_V1.md": "c145527a249a7597998fc66f32457cd2f2a1e3c591e26f30c6e17d86870f98a5",
     "evaluation/expense/S1_BASELINE_2026-10-12.md": "88aca8c0e325ae6a9365d2536449544deea9a23827eaaabc9224ca0689769632",
+    "evaluation/step_watcher_evidence_baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d",
     "execution_agent_snapshot_20260715.md": "202caf938ed00212ed560ba6cf8699f626890352652a1af521402ca9ccc5bf47",
     "execution_agent_snapshot_20260715_v2.md": "73f8597dd75b1d6e347fe4771d4ea11fc8a6bd20c73e7178c8d9a766dd27cb60",
     "execution_agent_snapshot_20260716_v3.md": "5094cfbb859a1f91ae61175bb84811d8e6573eeb16254618576056eb6bf2294e",
@@ -83,6 +87,6 @@
     "spec/REDIS_TASK_MVP_SPEC.md": "247f827506d82b2308e899d82ca91a75abe84e8046b9910407323acbb0162483",
     "step_watcher_evidence_baseline.md": "608b25923d5bb2652a380057ea1b5bee916a9c65b25bc2fa05b255900a85787f"
   },
-  "generated_at": "2026-10-14T13:52:24Z",
+  "generated_at": "2026-10-16T04:05:06Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
