@@ -10,7 +10,14 @@ from .observability import (
     RuntimeObservability,
     normalize_runtime_metrics,
 )
-from .policies import IdempotencyPolicy, JsonIdempotencyStore, RetryBudgetExceeded, RetryPolicy
+from .policies import (
+    IdempotencyPolicy,
+    JsonIdempotencyStore,
+    RetryBudgetExceeded,
+    RetryPolicy,
+    configured_idempotency_store,
+)
+from .shared_idempotency import IdempotencyConflict, PostgresIdempotencyStore
 from .structured_output import (
     STRUCTURED_OUTPUT_CONTRACT_VERSION,
     StructuredOutputContract,
@@ -42,6 +49,9 @@ __all__ = [
     "RetryBudgetExceeded",
     "IdempotencyPolicy",
     "JsonIdempotencyStore",
+    "PostgresIdempotencyStore",
+    "IdempotencyConflict",
+    "configured_idempotency_store",
     "STRUCTURED_OUTPUT_CONTRACT_VERSION",
     "StructuredOutputContract",
     "StructuredOutputResult",

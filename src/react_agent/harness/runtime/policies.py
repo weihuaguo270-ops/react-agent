@@ -115,6 +115,27 @@ class JsonIdempotencyStore(MutableMapping[str, tuple[str, Any]]):
                 os.unlink(temporary)
 
 
+def configured_idempotency_store() -> Any:
+    """Build the configured shared store, or return the in-process fallback."""
+    backend = os.environ.get("REACT_AGENT_IDEMPOTENCY_BACKEND", "memory").strip().lower()
+    if backend in {"postgres", "postgresql", "sqlalchemy"}:
+        from .shared_idempotency import PostgresIdempotencyStore
+
+        redis_url = os.environ.get("REACT_AGENT_IDEMPOTENCY_REDIS_URL") or os.environ.get(
+            "REACT_AGENT_REDIS_URL"
+        )
+        return PostgresIdempotencyStore(
+            redis_url=redis_url,
+            cache_ttl_seconds=int(
+                os.environ.get("REACT_AGENT_IDEMPOTENCY_CACHE_TTL", "300")
+            ),
+            claim_lease_seconds=float(
+                os.environ.get("REACT_AGENT_IDEMPOTENCY_CLAIM_LEASE", "120")
+            ),
+        )
+    return {}
+
+
 class RetryBudgetExceeded(TimeoutError):
     """Raised when a retry policy cannot start another attempt within its budget."""
 
@@ -287,6 +308,16 @@ class IdempotencyPolicy:
         )
         if not resolved_key or self.mode == "none":
             return resolved_key, payload_digest, None, False
+        claim = getattr(ledger, "claim_idempotency", None)
+        if claim is not None:
+            state, result = claim(
+                resolved_key,
+                payload_digest,
+                replay_behavior=self.replay_behavior,
+            )
+            if state == "replay":
+                return resolved_key, payload_digest, result, True
+            return resolved_key, payload_digest, None, False
         previous = ledger.get(resolved_key)
         if previous is None or self.replay_behavior == "execute":
             return resolved_key, payload_digest, None, False
@@ -305,7 +336,17 @@ class IdempotencyPolicy:
         result: Any,
     ) -> None:
         if key and self.mode != "none":
+            record = getattr(ledger, "record_idempotency", None)
+            if record is not None:
+                record(key, payload_digest, result)
+                return
             ledger[key] = (payload_digest, result)
 
 
-__all__ = ["IdempotencyPolicy", "JsonIdempotencyStore", "RetryBudgetExceeded", "RetryPolicy"]
+__all__ = [
+    "IdempotencyPolicy",
+    "JsonIdempotencyStore",
+    "RetryBudgetExceeded",
+    "RetryPolicy",
+    "configured_idempotency_store",
+]

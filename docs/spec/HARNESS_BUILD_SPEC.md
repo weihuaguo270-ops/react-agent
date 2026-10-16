@@ -27,7 +27,7 @@
 | Workflow Format B Adapter | Mostly complete | `WorkflowResult.to_trajectory()` 通过共享 serializer 输出正式字段并保留旧 `schema` 标记；工具失败、权限拒绝和工作流拒绝已映射统一 `StopReason`，超时/取消等其他终止分支仍需补齐 |
 | HTTP Adapter/Runner Format B | Mostly complete | HTTP 是 ReAct/Workflow 的传输和评测适配边界，不是第三种执行方式；HTTP 响应携带来源执行方式的正式 `trajectory`，HTTP Runner 保留服务端轨迹、`execution_mode` 和 `runtime_episode_id`；成功、超时、取消、权限拒绝、解析错误和工具错误分支均保留 RuntimeEpisode 关联 |
 | 工具边界接入 ToolCall | Mostly complete | `execute_registered_tool()`、ReAct、Workflow、Evaluation 和真实/Mock MCP `call_tool()` 均已规范化参数；`ToolError` 共享错误信封、输出上限、超时和 ToolSpec 执行约束已有跨路径契约测试 |
-| RetryPolicy / IdempotencyPolicy | Mostly complete | 非流式 LLM、MCP 请求和本地工具边界已接入策略；`JsonIdempotencyStore` 支持跨实例 replay、冲突拒绝、原子替换和跨进程锁，`ToolSpec.retryable` 已纳入声明；生产级共享存储仍需后续接入 |
+| RetryPolicy / IdempotencyPolicy | Implemented / deployment opt-in | 非流式 LLM、MCP 请求和本地工具边界已接入策略；离线使用 `JsonIdempotencyStore`，生产配置使用 PostgreSQL 权威幂等记录和 Redis 完成结果缓存。共享 store 以 pending claim、lease 接管、唯一 key、payload hash 冲突拒绝和完成后缓存保证跨实例 replay；Redis 丢失回退 PostgreSQL，严格 exactly-once 外部副作用仍需业务工具自身幂等 |
 | StructuredOutputContract | Complete / compatibility-period | `runtime.structured_output.StructuredOutputContract` 提供 provider 无关的 JSON/envelope 解析、JSON Schema/validator 校验、bounded repair、`parsed/invalid/missing/refused` 稳定状态和 `truncated` 失败分类；ReAct、Workflow、HTTP Adapter 可选接入同一契约，解析证据写入 Format B metadata，解析失败统一映射 `StopReason.PARSE_ERROR`。原始响应默认不保留，显式保留必须提供脱敏器 |
 | Deterministic Replay | Complete / evidence collected | `runtime.replay.ReplayManifest` 固化轨迹、工具结果、模型响应、Fixture、协议版本和组件/总哈希；`DeterministicReplay` 提供 `record/replay/inspect`，replay 逐步消费记录的工具结果，默认拒绝网络与副作用，并通过 `ReplayLimits` 限制步骤、工具调用和输出大小；`replay-scoring-input/v1` 为 ReAct、Workflow、HTTP Runner 提供相同评分输入，Fixture 缺失、结果缺失或哈希不一致时 fail closed。`scripts/eval/smoke/run_docker_replay_evidence.py` 已在 `react-agent-sandbox:r5-replay` 中完成两次回放，步骤序列、停止原因和评分输入 SHA256 一致；容器隔离证据保存在本地 `.evidence_tmp/docker-replay-evidence-r5.json`。 |
 | Phase 3：Evaluation 收敛 | Complete | Core `EvaluationEpisode`、`FixtureManifest` 和对应 JSON Schema 已加入；`FixtureBundle`、EvalRunner、execution offline/agent suite、SoftwareTaskRunner、public-RAG、reliability 注入/live/HTTP probe、Expense business/candidate、GitHub business/portfolio、acceptance inventory/materializer、Harness closed-loop、StepWatcher 和 failure flywheel 入口均生成 Episode、Format B trajectory artifact SHA256、fixture/batch 证据。待执行占位产物保持 evidence-only 且 `passed=null`；GitHub 数据标记为带哈希 live snapshot，不视为冻结题集；legacy loader 返回值保持兼容 |
@@ -193,8 +193,9 @@ Artifact 只保存 `id`、`media_type`、`uri`、`mime_type`、`sha256` 和受�
 - LLM 非流式请求、MCP 请求和可重试工具使用策略接口
 - 流式响应已经产生增量后默认不得自动重试
 - 业务工具可以声明 `none | safe | required` 幂等等级
+- 生产部署：PostgreSQL 保存权威 key/payload/status/result，Redis 只缓存已完成结果并设置 TTL；缓存失效或不可用时回退 PostgreSQL
 
-验收：注入超时场景能证明重试次数和退避符合策略；相同 key + 相同 payload 可 replay；相同 key + 不同 payload 必须拒绝；重复副作用不会再次执行。
+验收：注入超时场景能证明重试次数和退避符合策略；相同 key + 相同 payload 可 replay；相同 key + 不同 payload 必须拒绝；两个并发实例只能有一个 pending claim 执行；claim 过期后可由新实例接管；重复副作用不会再次执行。严格 exactly-once 外部副作用不由 Harness 单独宣称。
 
 ### R3：编排 Adapter
 
