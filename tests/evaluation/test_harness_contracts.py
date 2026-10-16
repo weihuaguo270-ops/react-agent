@@ -20,6 +20,181 @@ def test_tool_call_rejects_non_object_json():
         ToolCall(name="calculator", arguments="[]")
 
 
+def test_tool_boundary_applies_schema_and_output_contract():
+    from react_agent.harness.tool_boundary import ToolBoundary
+
+    boundary = ToolBoundary(
+        {"demo": lambda value: "x" * value},
+        definitions=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "demo",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"value": {"type": "integer"}},
+                        "required": ["value"],
+                    },
+                },
+            }
+        ],
+    )
+    assert boundary.execute("demo", {"value": 4}) == "xxxx"
+    from react_agent.harness.contracts import ToolCallError
+
+    with pytest.raises(ToolCallError) as caught:
+        boundary.execute("demo", {})
+    assert caught.value.error.to_dict()["error_code"] == "invalid_arguments"
+    assert boundary.execute("demo", {"value": 20}, max_output_chars=5).startswith("xxxxx")
+
+
+def test_tool_boundary_timeout_has_shared_error_envelope():
+    import time
+
+    from react_agent.harness.contracts import ToolCallError
+    from react_agent.harness.tool_boundary import ToolBoundary
+
+    def slow_tool():
+        time.sleep(0.05)
+        return "late"
+
+    boundary = ToolBoundary({"slow": slow_tool})
+    with pytest.raises(ToolCallError) as caught:
+        boundary.execute("slow", {}, timeout_seconds=0.001)
+    assert caught.value.error.to_dict()["error_code"] == "timeout"
+    assert caught.value.error.to_dict()["stop_reason"] == "timeout"
+
+
+def test_tool_spec_formally_carries_execution_and_idempotency_constraints():
+    from react_agent.harness import ToolSpec
+
+    spec = ToolSpec.from_definition(
+        {
+            "type": "function",
+            "function": {
+                "name": "write_once",
+                "parameters": {"type": "object"},
+                "timeout_seconds": 0.25,
+                "max_output_chars": 32,
+                "idempotency_level": "required",
+            },
+        }
+    )
+    assert spec.timeout_seconds == 0.25
+    assert spec.max_output_chars == 32
+    assert spec.idempotency_level == "required"
+
+    from react_agent.harness.tool_boundary import ToolBoundary
+
+    boundary = ToolBoundary(
+        {"write_once": lambda: "ok"},
+        definitions=[
+            {
+                "name": "write_once",
+                "parameters": {"type": "object"},
+                "idempotency_level": "required",
+            }
+        ],
+    )
+    with pytest.raises(ValueError, match="idempotency key is required"):
+        boundary.execute("write_once", {})
+    assert boundary.execute("write_once", {}, idempotency_key="case-1") == "ok"
+
+
+def test_registry_workflow_and_evaluation_use_the_same_tool_boundary(monkeypatch):
+    from react_agent.eval import execution_scorer
+    from react_agent.harness.tool_boundary import execute_registered_tool
+    from react_agent.workflow.engine import Step, StepKind, WorkflowDef, WorkflowRunner
+
+    seen = []
+
+    def demo(**kwargs):
+        seen.append(dict(kwargs))
+        return "ok"
+
+    registry = {"demo": demo}
+    assert execute_registered_tool("demo", {"b": 2, "a": 1}, registry) == "ok"
+    monkeypatch.setattr(execution_scorer, "TOOL_REGISTRY", registry)
+    assert execution_scorer.execute_tool_step("demo", {"a": 1, "b": 2}) == "ok"
+
+    workflow = WorkflowDef(
+        name="r1-boundary",
+        description="shared tool boundary test",
+        steps=[
+            Step(
+                id="call",
+                kind=StepKind.TOOL,
+                tool="demo",
+                args={"a": 1, "b": 2},
+                output_key="result",
+            )
+        ],
+    )
+    result = WorkflowRunner(workflow, registry).run()
+    assert result.ok is True
+    assert len(seen) == 3
+    assert all(item == {"a": 1, "b": 2} for item in seen)
+
+
+def test_four_execution_paths_share_the_same_error_envelope(monkeypatch):
+    """The route may identify its source, but error semantics stay identical."""
+    import json
+
+    from react_agent.eval import execution_scorer
+    from react_agent.mcp_client import MockMCPClient
+    from react_agent.react_loop import _execute_tool_call_raw
+    from react_agent.workflow.engine import Step, StepKind, WorkflowDef, WorkflowRunner
+
+    monkeypatch.setattr(execution_scorer, "TOOL_REGISTRY", {})
+    import react_agent.react_loop as react_loop
+
+    monkeypatch.setattr(react_loop, "get_registry", lambda: {})
+    monkeypatch.setattr(react_loop, "MCP_CLIENTS", [])
+
+    react_payload = json.loads(
+        _execute_tool_call_raw(
+            {"function": {"name": "shared_missing", "arguments": "{}"}}
+        )
+    )
+    workflow = WorkflowRunner(
+        WorkflowDef(
+            name="envelope",
+            description="error envelope",
+            steps=[Step(id="call", kind=StepKind.TOOL, tool="shared_missing")],
+        ),
+        {},
+    ).run()
+    workflow_payload = json.loads(workflow.steps[0].error)
+    evaluation_payload = json.loads(
+        execution_scorer.execute_tool_step("shared_missing", {})
+    )
+    mock = MockMCPClient()
+    mock.connect()
+    mock.discover_tools()
+    try:
+        mock.call_tool("shared_missing", {})
+    except Exception as exc:
+        mock_payload = exc.error.to_dict()
+    else:
+        raise AssertionError("expected mock MCP tool error")
+
+    semantic_fields = ("error_code", "stop_reason", "retryable", "attempt", "tool_name")
+    for payload in (react_payload, workflow_payload, evaluation_payload, mock_payload):
+        assert set(semantic_fields) <= payload.keys()
+        assert payload["error_code"] == "tool_not_found"
+        assert payload["stop_reason"] == "tool_error"
+        assert payload["retryable"] is False
+        assert payload["attempt"] == 1
+        assert payload["tool_name"] == "shared_missing"
+    sources = {
+        payload["source"]
+        for payload in (react_payload, workflow_payload, evaluation_payload, mock_payload)
+    }
+    assert sources == {
+        "react", "workflow", "runtime", "mcp"
+    }
+
+
 def test_episode_hash_is_stable_and_split_is_checked():
     from react_agent.harness import TaskEpisode
 

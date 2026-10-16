@@ -76,9 +76,15 @@ class ToolError:
             code, reason, retryable = "policy_denied", StopReason.POLICY_DENIED, False
         elif isinstance(exc, TimeoutError):
             code, reason, retryable = "timeout", StopReason.TIMEOUT, True
+        elif "-32602" in message or "invalid params" in message.lower():
+            code, reason, retryable = "invalid_arguments", StopReason.PARSE_ERROR, False
         elif isinstance(exc, (ValueError, TypeError)):
             code, reason, retryable = "invalid_arguments", StopReason.PARSE_ERROR, False
-        elif isinstance(exc, KeyError):
+        elif (
+            isinstance(exc, KeyError)
+            or "-32601" in message
+            or "unknown mock tool" in message.lower()
+        ):
             code, reason, retryable = "tool_not_found", StopReason.TOOL_ERROR, False
         elif message.lower().startswith("mcp "):
             code, reason, retryable = "mcp_error", StopReason.TOOL_ERROR, True
