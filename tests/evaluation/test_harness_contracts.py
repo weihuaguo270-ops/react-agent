@@ -258,6 +258,7 @@ def test_retry_policy_supports_categories_and_total_budget():
         total_budget_seconds=0.25,
     )
     assert policy.should_retry("timeout", 1)
+    assert policy.should_retry(TimeoutError("deadline"), 1)
     assert not policy.should_retry("500 service failure", 1)
 
     now = [0.0]
