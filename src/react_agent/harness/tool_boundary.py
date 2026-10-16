@@ -179,7 +179,11 @@ class ToolBoundary:
         idempotency_policy=None,
         idempotency_store: MutableMapping[str, tuple[str, Any]] | None = None,
     ) -> None:
-        from react_agent.harness.runtime import IdempotencyPolicy, RetryPolicy
+        from react_agent.harness.runtime import (
+            IdempotencyPolicy,
+            RetryPolicy,
+            configured_idempotency_store,
+        )
 
         self.registry = registry
         self.default_timeout_seconds = default_timeout_seconds
@@ -187,7 +191,10 @@ class ToolBoundary:
         self.risk_sandbox = risk_sandbox
         self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
         self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
-        self._idempotency_results = idempotency_store if idempotency_store is not None else {}
+        if idempotency_store is not None:
+            self._idempotency_results = idempotency_store
+        else:
+            self._idempotency_results = configured_idempotency_store()
         self.specs = {
             spec.name: spec
             for spec in (ToolSpec.from_definition(item) for item in (definitions or []))

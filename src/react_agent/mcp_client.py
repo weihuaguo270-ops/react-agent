@@ -78,7 +78,11 @@ class MCPClient:
     """通过 stdin/stdout（stdio）连接 MCP Server，实现 JSON-RPC 2.0 通信"""
 
     def __init__(self, command, args=None, env=None, *, retry_policy=None, idempotency_policy=None, idempotency_store=None):
-        from react_agent.harness.runtime import IdempotencyPolicy, RetryPolicy
+        from react_agent.harness.runtime import (
+            IdempotencyPolicy,
+            RetryPolicy,
+            configured_idempotency_store,
+        )
 
         self.command = command
         self.args = args or []
@@ -90,7 +94,11 @@ class MCPClient:
         # Defaults preserve the historical single-attempt/no-cache behavior.
         self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
         self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
-        self._idempotency_results = idempotency_store if idempotency_store is not None else {}
+        self._idempotency_results = (
+            idempotency_store
+            if idempotency_store is not None
+            else configured_idempotency_store()
+        )
 
     # ---------------------------------------------------------------
     # 生命周期
@@ -319,7 +327,11 @@ class MockMCPClient:
     """
 
     def __init__(self, command="mock", args=None, env=None, *, retry_policy=None, idempotency_policy=None, idempotency_store=None):
-        from react_agent.harness.runtime import IdempotencyPolicy, RetryPolicy
+        from react_agent.harness.runtime import (
+            IdempotencyPolicy,
+            RetryPolicy,
+            configured_idempotency_store,
+        )
 
         self.command = command
         self.args = args or []
@@ -329,7 +341,11 @@ class MockMCPClient:
         self._connected = False
         self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
         self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
-        self._idempotency_results = idempotency_store if idempotency_store is not None else {}
+        self._idempotency_results = (
+            idempotency_store
+            if idempotency_store is not None
+            else configured_idempotency_store()
+        )
         self.specs = {}
 
     def connect(self, timeout=15):
