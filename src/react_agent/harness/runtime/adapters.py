@@ -92,6 +92,25 @@ def _parse_structured_output(
     return contract.parse(raw)
 
 
+def _merge_observed_metrics(metrics: dict[str, Any], source: Any) -> dict[str, Any]:
+    """Copy provider/runner measurements when they are explicitly present."""
+    if not isinstance(source, Mapping):
+        return metrics
+    aliases = {
+        "retry_count": ("retry_count", "retries", "retry_attempts"),
+        "tokens": ("tokens", "tokens_estimated", "total_tokens_estimated"),
+        "estimated_cost": ("estimated_cost", "cost", "cost_usd"),
+        "denied": ("denied", "rejected", "policy_denied"),
+        "cancelled": ("cancelled", "cancellations", "cancelled_count"),
+    }
+    for canonical, names in aliases.items():
+        for name in names:
+            if name in source and source[name] is not None:
+                metrics[canonical] = source[name]
+                break
+    return metrics
+
+
 class ReactLoopAdapter:
     """Adapt the existing ReAct function into a RuntimeEpisode."""
 
@@ -108,6 +127,7 @@ class ReactLoopAdapter:
         transport: str = "in_process",
         runtime_episode_id: str | None = None,
         trace_id: str | None = None,
+        evaluation_episode_id: str | None = None,
         structured_output_contract: StructuredOutputContract | None = None,
     ) -> RuntimeEpisode:
         if self.loop is None:
@@ -122,6 +142,7 @@ class ReactLoopAdapter:
             transport=transport,
             runtime_episode_id=runtime_episode_id,
             trace_id=trace_id,
+            evaluation_episode_id=evaluation_episode_id,
             environment=self.environment,
         )
         started = time.monotonic()
@@ -166,6 +187,7 @@ class ReactLoopAdapter:
                 "tool_calls": sum(1 for step in trajectory["steps"] if step.get("action") or step.get("actions")),
                 "duration_seconds": round(time.monotonic() - started, 6),
             }
+            _merge_observed_metrics(metrics, result)
             return episode.finish(
                 trajectory=trajectory,
                 stop_reason=stop_reason,
@@ -194,7 +216,11 @@ class ReactLoopAdapter:
                 trajectory=trajectory,
                 stop_reason=reason,
                 status=status,
-                metrics={"duration_seconds": round(time.monotonic() - started, 6)},
+                metrics={
+                    "duration_seconds": round(time.monotonic() - started, 6),
+                    "cancelled": 1 if reason == StopReason.CANCELLED else 0,
+                    "denied": 1 if reason == StopReason.POLICY_DENIED else 0,
+                },
             )
 
 
@@ -214,6 +240,7 @@ class WorkflowAdapter:
         transport: str = "in_process",
         runtime_episode_id: str | None = None,
         trace_id: str | None = None,
+        evaluation_episode_id: str | None = None,
         structured_output_contract: StructuredOutputContract | None = None,
     ) -> RuntimeEpisode:
         if self.runner is None:
@@ -229,6 +256,7 @@ class WorkflowAdapter:
             transport=transport,
             runtime_episode_id=runtime_episode_id,
             trace_id=trace_id,
+            evaluation_episode_id=evaluation_episode_id,
             environment=self.environment,
         )
         started = time.monotonic()
@@ -268,15 +296,17 @@ class WorkflowAdapter:
                     status = "failed"
             episode.run_id = str(result.run_id)
             episode.session_id = str(trajectory["session_id"])
+            metrics = {
+                "steps": len(trajectory["steps"]),
+                "tool_calls": sum(1 for step in trajectory["steps"] if step.get("action") or step.get("actions")),
+                "duration_seconds": round(time.monotonic() - started, 6),
+            }
+            _merge_observed_metrics(metrics, result if isinstance(result, Mapping) else {})
             return episode.finish(
                 trajectory=trajectory,
                 stop_reason=stop_reason,
                 status=status,
-                metrics={
-                    "steps": len(trajectory["steps"]),
-                    "tool_calls": sum(1 for step in trajectory["steps"] if step.get("action") or step.get("actions")),
-                    "duration_seconds": round(time.monotonic() - started, 6),
-                },
+                metrics=metrics,
             )
         except Exception as exc:
             reason, message = _stop_reason_from_error(exc)
@@ -290,7 +320,11 @@ class WorkflowAdapter:
                 trajectory=trajectory,
                 stop_reason=reason,
                 status="refused" if reason == StopReason.POLICY_DENIED else "failed",
-                metrics={"duration_seconds": round(time.monotonic() - started, 6)},
+                metrics={
+                    "duration_seconds": round(time.monotonic() - started, 6),
+                    "cancelled": 1 if reason == StopReason.CANCELLED else 0,
+                    "denied": 1 if reason == StopReason.POLICY_DENIED else 0,
+                },
             )
 
 
@@ -324,6 +358,7 @@ class HttpRunnerAdapter:
             trace_id=request_id,
             session_id=str((trajectory or {}).get("session_id") or request_id) if isinstance(trajectory, Mapping) else request_id,
             run_id=str(data.get("run_id") or request_id),
+            evaluation_episode_id=str(data.get("evaluation_episode_id") or ""),
             environment={"http_status": status_code},
         )
         if isinstance(trajectory, Mapping):
@@ -375,11 +410,15 @@ class HttpRunnerAdapter:
             status = "cancelled"
         elif reason in {StopReason.MAX_STEPS, StopReason.PARSE_ERROR}:
             status = "failed"
+        metrics = {"http_status": status_code, "steps": len(trajectory["steps"])}
+        _merge_observed_metrics(metrics, data)
+        metrics["cancelled"] = 1 if reason == StopReason.CANCELLED else metrics.get("cancelled", 0)
+        metrics["denied"] = 1 if reason == StopReason.POLICY_DENIED else metrics.get("denied", 0)
         episode.finish(
             trajectory=trajectory,
             stop_reason=reason,
             status=status,
-            metrics={"http_status": status_code, "steps": len(trajectory["steps"])},
+            metrics=metrics,
         )
         data["runtime_episode_id"] = episode.runtime_episode_id
         data["execution_mode"] = mode
