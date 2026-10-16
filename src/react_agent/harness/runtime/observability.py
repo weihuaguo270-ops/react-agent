@@ -226,6 +226,23 @@ class RuntimeObservability:
         embedded_evaluation = episode.evaluation_episode_id or UNKNOWN
         if linked_evaluation != embedded_evaluation:
             raise ObservabilityArtifactError("observability link mismatch: evaluation_episode_id")
+        metadata = episode.trajectory.get("metadata") or {}
+        if isinstance(metadata, Mapping):
+            for field in ("runtime_episode_id", "trace_id", "run_id"):
+                if field in metadata and str(metadata[field]) != str(getattr(episode, field)):
+                    raise ObservabilityArtifactError(
+                        f"observability trajectory mismatch: {field}"
+                    )
+            if episode.stop_reason is not None and "stop_reason" in metadata:
+                if str(metadata["stop_reason"]) != episode.stop_reason.value:
+                    raise ObservabilityArtifactError(
+                        "observability trajectory mismatch: stop_reason"
+                    )
+            if episode.status != "running" and "status" in metadata:
+                if str(metadata["status"]) != episode.status:
+                    raise ObservabilityArtifactError(
+                        "observability trajectory mismatch: status"
+                    )
         return episode
 
     @staticmethod

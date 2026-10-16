@@ -93,3 +93,22 @@ def test_json_idempotency_store_replays_across_tool_boundary_instances(tmp_path)
     assert len(calls) == 1
     with pytest.raises(ValueError, match="conflicts"):
         second.execute("write_once", {"changed": True}, idempotency_key="key-1")
+
+
+def test_json_idempotency_store_serializes_concurrent_writes(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from react_agent.harness import JsonIdempotencyStore
+
+    store_path = tmp_path / "concurrent-idempotency.json"
+
+    def write(index):
+        store = JsonIdempotencyStore(store_path)
+        store[f"key-{index}"] = (f"digest-{index}", {"index": index})
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(write, range(12)))
+
+    final = JsonIdempotencyStore(store_path)
+    assert len(final) == 12
+    assert final["key-11"] == ("digest-11", {"index": 11})
