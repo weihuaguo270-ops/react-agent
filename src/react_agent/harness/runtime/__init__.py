@@ -13,6 +13,17 @@ from .structured_output import (
     ValidationIssue,
     attach_structured_output_evidence,
 )
+from .replay import (
+    REPLAY_MANIFEST_VERSION,
+    DeterministicReplay,
+    ReplayError,
+    ReplayFixtureUnavailable,
+    ReplayIntegrityError,
+    ReplayManifest,
+    ReplayMode,
+    ReplayResult,
+    ReplaySideEffectDenied,
+)
 
 __all__ = [
     "RetryPolicy",
@@ -26,6 +37,15 @@ __all__ = [
     "StructuredOutputParseResult",
     "ValidationIssue",
     "attach_structured_output_evidence",
+    "REPLAY_MANIFEST_VERSION",
+    "DeterministicReplay",
+    "ReplayError",
+    "ReplayFixtureUnavailable",
+    "ReplayIntegrityError",
+    "ReplayManifest",
+    "ReplayMode",
+    "ReplayResult",
+    "ReplaySideEffectDenied",
     "RUNTIME_EPISODE_VERSION",
     "RuntimeEpisode",
     "ReactLoopAdapter",
