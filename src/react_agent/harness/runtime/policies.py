@@ -6,11 +6,15 @@ import json
 import random
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping, TypeVar
+from typing import Any, Callable, Mapping, MutableMapping, TypeVar
 
 from react_agent.resilience import classify_error, is_retryable
 
 T = TypeVar("T")
+
+
+class RetryBudgetExceeded(TimeoutError):
+    """Raised when a retry policy cannot start another attempt within its budget."""
 
 
 @dataclass(frozen=True)
@@ -19,15 +23,40 @@ class RetryPolicy:
     base_delay: float = 1.0
     max_delay: float = 30.0
     jitter_ratio: float = 0.3
+    retryable_categories: frozenset[str] | None = None
+    total_budget_seconds: float | None = None
 
     def __post_init__(self) -> None:
         if self.max_attempts < 1 or self.base_delay < 0 or self.max_delay < 0:
             raise ValueError("invalid retry policy bounds")
         if self.jitter_ratio < 0:
             raise ValueError("jitter_ratio must be non-negative")
+        if self.total_budget_seconds is not None and self.total_budget_seconds <= 0:
+            raise ValueError("total_budget_seconds must be positive")
+        if self.retryable_categories is not None:
+            object.__setattr__(
+                self, "retryable_categories", frozenset(self.retryable_categories)
+            )
 
     def should_retry(self, error: Exception | str, attempt: int) -> bool:
-        return attempt < self.max_attempts and is_retryable(classify_error(error))
+        category = classify_error(error)
+        allowed = (
+            is_retryable(category)
+            if self.retryable_categories is None
+            else category in self.retryable_categories
+        )
+        return attempt < self.max_attempts and allowed
+
+    def with_max_attempts(self, max_attempts: int) -> "RetryPolicy":
+        """Return a copy with a compatibility attempt limit override."""
+        return RetryPolicy(
+            max_attempts=max_attempts,
+            base_delay=self.base_delay,
+            max_delay=self.max_delay,
+            jitter_ratio=self.jitter_ratio,
+            retryable_categories=self.retryable_categories,
+            total_budget_seconds=self.total_budget_seconds,
+        )
 
     def delay(
         self, attempt: int, *, random_fn: Callable[[], float] | None = None
@@ -43,15 +72,31 @@ class RetryPolicy:
         on_retry: Callable[[int, int, float, str, str], None] | None = None,
         sleep_fn: Callable[[float], None] = time.sleep,
         random_fn: Callable[[], float] | None = None,
+        monotonic_fn: Callable[[], float] = time.monotonic,
     ) -> T:
         """Run an operation under this policy and re-raise the terminal error."""
+        started = monotonic_fn()
         for attempt in range(1, self.max_attempts + 1):
+            if (
+                self.total_budget_seconds is not None
+                and monotonic_fn() - started >= self.total_budget_seconds
+            ):
+                raise RetryBudgetExceeded(
+                    f"retry budget exhausted after {self.total_budget_seconds}s"
+                )
             try:
                 return operation()
             except Exception as exc:
                 if not self.should_retry(exc, attempt):
                     raise
                 wait = self.delay(attempt, random_fn=random_fn)
+                if self.total_budget_seconds is not None:
+                    elapsed = monotonic_fn() - started
+                    remaining = self.total_budget_seconds - elapsed
+                    if remaining <= 0 or wait > remaining:
+                        raise RetryBudgetExceeded(
+                            f"retry budget exhausted after {self.total_budget_seconds}s"
+                        ) from exc
                 if on_retry:
                     on_retry(
                         attempt,
@@ -66,13 +111,25 @@ class RetryPolicy:
 
 @dataclass(frozen=True)
 class IdempotencyPolicy:
-    """Bind an idempotency key to the tool name and canonical payload."""
+    """Bind a key to a canonical payload and define duplicate-call behavior."""
 
     mode: str = "none"  # none | safe | required
+    key_source: str = "explicit"  # explicit | call_id | explicit_or_call_id | payload_hash
+    replay_behavior: str = "return_cached"  # return_cached | reject | execute
+    bind_payload: bool = True
 
     def __post_init__(self) -> None:
         if self.mode not in {"none", "safe", "required"}:
             raise ValueError("idempotency mode must be none, safe or required")
+        if self.key_source not in {
+            "explicit",
+            "call_id",
+            "explicit_or_call_id",
+            "payload_hash",
+        }:
+            raise ValueError("unsupported idempotency key source")
+        if self.replay_behavior not in {"return_cached", "reject", "execute"}:
+            raise ValueError("unsupported idempotency replay behavior")
 
     def payload_hash(self, tool_name: str, arguments: Mapping[str, Any] | str) -> str:
         args = json.loads(arguments) if isinstance(arguments, str) else dict(arguments)
@@ -88,5 +145,65 @@ class IdempotencyPolicy:
         if self.mode == "required" and not str(key or "").strip():
             raise ValueError("idempotency key is required")
 
+    def resolve_key(
+        self,
+        key: str | None,
+        *,
+        call_id: str | None = None,
+        tool_name: str = "",
+        arguments: Mapping[str, Any] | str | None = None,
+    ) -> str | None:
+        """Resolve the configured key source before validating or recording it."""
+        if self.key_source == "call_id":
+            resolved = call_id
+        elif self.key_source == "explicit_or_call_id":
+            resolved = key or call_id
+        elif self.key_source == "payload_hash":
+            resolved = self.payload_hash(tool_name, arguments or {})
+        else:
+            resolved = key
+        resolved = str(resolved or "").strip() or None
+        self.validate_key(resolved)
+        return resolved
 
-__all__ = ["RetryPolicy", "IdempotencyPolicy"]
+    def lookup(
+        self,
+        ledger: MutableMapping[str, tuple[str, Any]],
+        tool_name: str,
+        arguments: Mapping[str, Any] | str,
+        *,
+        key: str | None = None,
+        call_id: str | None = None,
+    ) -> tuple[str | None, str, Any | None, bool]:
+        """Return ``(resolved_key, payload_hash, cached_result, replayed)``."""
+        payload_digest = self.payload_hash(tool_name, arguments)
+        resolved_key = self.resolve_key(
+            key,
+            call_id=call_id,
+            tool_name=tool_name,
+            arguments=arguments,
+        )
+        if not resolved_key or self.mode == "none":
+            return resolved_key, payload_digest, None, False
+        previous = ledger.get(resolved_key)
+        if previous is None or self.replay_behavior == "execute":
+            return resolved_key, payload_digest, None, False
+        previous_hash, previous_result = previous
+        if self.bind_payload and previous_hash != payload_digest:
+            raise ValueError("idempotency key conflicts with a different payload")
+        if self.replay_behavior == "reject":
+            raise ValueError("idempotent replay rejected")
+        return resolved_key, payload_digest, previous_result, True
+
+    def record(
+        self,
+        ledger: MutableMapping[str, tuple[str, Any]],
+        key: str | None,
+        payload_digest: str,
+        result: Any,
+    ) -> None:
+        if key and self.mode != "none":
+            ledger[key] = (payload_digest, result)
+
+
+__all__ = ["IdempotencyPolicy", "RetryBudgetExceeded", "RetryPolicy"]

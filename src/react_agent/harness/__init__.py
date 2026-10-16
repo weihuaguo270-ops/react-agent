@@ -36,7 +36,7 @@ from .contracts import (
     serialize_trajectory,
     tool_error_from_exception,
 )
-from .runtime import IdempotencyPolicy, RetryPolicy
+from .runtime import IdempotencyPolicy, RetryBudgetExceeded, RetryPolicy
 from .tool_boundary import (
     ToolBoundary,
     ToolSpec,

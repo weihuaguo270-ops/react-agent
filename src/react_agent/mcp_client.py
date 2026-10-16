@@ -158,6 +158,7 @@ class MCPClient:
         arguments=None,
         *,
         idempotency_key: str | None = None,
+        call_id: str | None = None,
         timeout_seconds: float | None = None,
         max_output_chars: int | None = None,
     ):
@@ -173,6 +174,7 @@ class MCPClient:
         call = ToolCall(
             name=name,
             arguments=arguments or {},
+            call_id=call_id,
             idempotency_key=idempotency_key,
             source="runtime",
         )
@@ -186,20 +188,23 @@ class MCPClient:
             spec = ToolSpec.from_definition(tool_definition)
         if spec is None:
             spec = ToolSpec(call.name)
-        policy = (
-            IdempotencyPolicy(spec.idempotency_level)
-            if spec.idempotency_level != "none"
-            else self.idempotency_policy
+        policy = self.idempotency_policy
+        if spec.idempotency_level != "none":
+            policy = type(policy)(
+                mode=spec.idempotency_level,
+                key_source=policy.key_source,
+                replay_behavior=policy.replay_behavior,
+                bind_payload=policy.bind_payload,
+            )
+        key, payload_hash, cached, replayed = policy.lookup(
+            self._idempotency_results,
+            call.name,
+            call.arguments,
+            key=call.idempotency_key,
+            call_id=call.call_id,
         )
-        policy.validate_key(call.idempotency_key)
-        key = str(call.idempotency_key or "").strip()
-        payload_hash = policy.payload_hash(call.name, call.arguments)
-        if key and policy.mode != "none":
-            previous = self._idempotency_results.get(key)
-            if previous is not None:
-                if previous[0] != payload_hash:
-                    raise ValueError("idempotency key conflicts with a different MCP payload")
-                return previous[1]
+        if replayed:
+            return cached
 
         if tool_definition:
             try:
@@ -220,7 +225,10 @@ class MCPClient:
             return "\n".join(texts)
 
         try:
-            result = self.retry_policy.run(
+            retry_policy = self.retry_policy
+            if policy.mode == "none" and retry_policy.max_attempts > 1:
+                retry_policy = retry_policy.with_max_attempts(1)
+            result = retry_policy.run(
                 lambda: invoke_with_timeout(
                     operation,
                     timeout_seconds if timeout_seconds is not None else spec.timeout_seconds,
@@ -238,8 +246,7 @@ class MCPClient:
             result,
             max_output_chars if max_output_chars is not None else spec.max_output_chars,
         )
-        if key and policy.mode != "none":
-            self._idempotency_results[key] = (payload_hash, result)
+        policy.record(self._idempotency_results, key, payload_hash, result)
         return result
 
     def to_tool_definitions(self):
@@ -380,6 +387,7 @@ class MockMCPClient:
         arguments=None,
         *,
         idempotency_key: str | None = None,
+        call_id: str | None = None,
         timeout_seconds: float | None = None,
         max_output_chars: int | None = None,
     ):
@@ -394,6 +402,7 @@ class MockMCPClient:
         call = ToolCall(
             name=name,
             arguments=arguments or {},
+            call_id=call_id,
             idempotency_key=idempotency_key,
             source="runtime",
         )
@@ -407,20 +416,23 @@ class MockMCPClient:
             spec = ToolSpec.from_definition(tool_definition)
         if spec is None:
             spec = ToolSpec(call.name)
-        policy = (
-            IdempotencyPolicy(spec.idempotency_level)
-            if spec.idempotency_level != "none"
-            else self.idempotency_policy
+        policy = self.idempotency_policy
+        if spec.idempotency_level != "none":
+            policy = type(policy)(
+                mode=spec.idempotency_level,
+                key_source=policy.key_source,
+                replay_behavior=policy.replay_behavior,
+                bind_payload=policy.bind_payload,
+            )
+        key, payload_hash, cached, replayed = policy.lookup(
+            self._idempotency_results,
+            call.name,
+            call.arguments,
+            key=call.idempotency_key,
+            call_id=call.call_id,
         )
-        policy.validate_key(call.idempotency_key)
-        key = str(call.idempotency_key or "").strip()
-        payload_hash = policy.payload_hash(call.name, call.arguments)
-        if key and policy.mode != "none":
-            previous = self._idempotency_results.get(key)
-            if previous is not None:
-                if previous[0] != payload_hash:
-                    raise ValueError("idempotency key conflicts with a different MCP payload")
-                return previous[1]
+        if replayed:
+            return cached
 
         canonical_arguments: dict[str, Any] = json.loads(call.arguments) or {}
         if tool_definition:
@@ -442,7 +454,10 @@ class MockMCPClient:
             raise RuntimeError(f"MCP 错误 [-32601]: Unknown mock tool: {call.name}")
 
         try:
-            result = self.retry_policy.run(
+            retry_policy = self.retry_policy
+            if policy.mode == "none" and retry_policy.max_attempts > 1:
+                retry_policy = retry_policy.with_max_attempts(1)
+            result = retry_policy.run(
                 lambda: invoke_with_timeout(
                     operation,
                     timeout_seconds if timeout_seconds is not None else spec.timeout_seconds,
@@ -460,8 +475,7 @@ class MockMCPClient:
             result,
             max_output_chars if max_output_chars is not None else spec.max_output_chars,
         )
-        if key and policy.mode != "none":
-            self._idempotency_results[key] = (payload_hash, result)
+        policy.record(self._idempotency_results, key, payload_hash, result)
         return result
 
     def to_tool_definitions(self):

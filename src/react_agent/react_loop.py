@@ -194,7 +194,7 @@ def _active_llm():
 # ============================================================
 # 第三步：调用 LLM
 # ============================================================
-def call_llm(messages, max_retries=2, tool_defs=None,
+def call_llm(messages, max_retries=None, tool_defs=None,
              temperature=None, max_tokens=None, on_delta=None):
     """调用 LLM，返回消息对象。使用 _current_llm（可通过 LLM_PROVIDER 切换）"""
     return _active_llm().chat(

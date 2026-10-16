@@ -29,6 +29,8 @@ class ErrorCategory:
 
 def classify_error(error: Exception | str) -> str:
     """将异常分类"""
+    if isinstance(error, TimeoutError):
+        return ErrorCategory.TIMEOUT
     msg = str(error).lower()
 
     if any(k in msg for k in ("401", "unauthorized", "auth", "api key")):

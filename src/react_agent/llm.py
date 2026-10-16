@@ -236,7 +236,7 @@ def _http_error_detail(err: Exception) -> str:
 class LLM:
     """LLM 调用封装，支持任意 OpenAI 兼容 API"""
 
-    def __init__(self, provider: Optional[str] = None):
+    def __init__(self, provider: Optional[str] = None, *, retry_policy=None):
         """
         初始化 LLM 客户端。
 
@@ -257,6 +257,14 @@ class LLM:
         self.temperature = resolved.get("temperature", 0.7)
         self.max_tokens = resolved.get("max_tokens", 2000)
         self.provider_name = provider
+        from react_agent.harness.runtime import RetryPolicy
+
+        self.retry_policy = retry_policy or RetryPolicy(
+            max_attempts=3,
+            base_delay=1.0,
+            max_delay=10.0,
+            total_budget_seconds=60.0,
+        )
 
         # 检查 API Key（仅对需要 key 的 provider 检查）
         needs_key = provider != "ollama"  # Ollama 本地不需要 key
@@ -293,8 +301,9 @@ class LLM:
     def chat(self, messages: list, tool_defs: Optional[list] = None,
              temperature: Optional[float] = None,
              max_tokens: Optional[int] = None,
-             max_retries: int = 2,
-             on_delta: Optional[Callable[[str], None]] = None) -> dict:
+             max_retries: Optional[int] = None,
+             on_delta: Optional[Callable[[str], None]] = None,
+             retry_policy=None) -> dict:
         """
         调用 LLM chat/completions API。
 
@@ -303,9 +312,10 @@ class LLM:
             tool_defs: 工具定义列表（OpenAI Function Calling 格式）
             temperature: 覆盖配置中的 temperature
             max_tokens: 覆盖配置中的 max_tokens
-            max_retries: 失败重试次数
+            max_retries: 兼容用的失败重试次数覆盖；省略时使用 ``retry_policy``
             on_delta: 提供时走流式（``stream: true``），每收到一段增量正文即回调。
                       回调抛出的异常会直接向上传播（用于取消）。
+            retry_policy: 非流式调用使用的 Harness RetryPolicy；流式调用忽略它。
 
         返回:
             LLM 返回的消息对象 {"role": "assistant", "content": "...", "tool_calls": [...]}
@@ -336,8 +346,6 @@ class LLM:
 
         body = json.dumps(payload).encode("utf-8")
 
-        from react_agent.harness.runtime import RetryPolicy
-
         def _do_request():
             # 每次重试新建 Request（避免已读 body / 连接状态问题）
             r = req.Request(url, data=body, headers=headers, method="POST")
@@ -349,12 +357,11 @@ class LLM:
                 # 包装为带响应体的 URLError，便于 classify / 上层展示
                 raise URLError(_http_error_detail(e)) from e
 
+        policy = retry_policy or self.retry_policy
+        if max_retries is not None:
+            policy = policy.with_max_attempts(max_retries + 1)
         try:
-            return RetryPolicy(
-                max_attempts=3,
-                base_delay=1.0,
-                max_delay=10.0,
-            ).run(
+            return policy.run(
                 _do_request,
                 on_retry=lambda a, m, w, c, e: print(
                     f"  [重试] {a}/{m} ({c}) 等待 {w:.0f}s"
