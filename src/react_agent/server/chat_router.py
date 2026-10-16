@@ -102,7 +102,7 @@ def registry_pillars() -> list[str]:
     return seen
 
 
-def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
+def _handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
     app = normalize_app(body.get("app") or body.get("application"))
     use_llm = os.environ.get("REACT_AGENT_SERVER_LLM", "").strip().lower() in (
         "1",
@@ -252,3 +252,18 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
             return error_response("internal_error", str(e)[:300], request_id, 500)
 
     return error_response("invalid_request", f"unknown app: {app}", request_id, 400)
+
+
+def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
+    """Run one HTTP request and attach the source RuntimeEpisode."""
+    from react_agent.harness.runtime import HttpRunnerAdapter
+
+    status, payload = _handle_chat(body, request_id)
+    mode = str(payload.get("mode") or ("workflow" if payload.get("workflow") else "react"))
+    adapted, _episode = HttpRunnerAdapter().adapt_response(
+        payload,
+        request_id=request_id,
+        execution_mode=mode,
+        status_code=status,
+    )
+    return status, adapted
