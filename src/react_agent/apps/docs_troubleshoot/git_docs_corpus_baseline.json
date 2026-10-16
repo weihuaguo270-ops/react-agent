@@ -28,7 +28,7 @@
     "capability_newcases_20260713.md": "45ab3373f77f4c01863c03103ae7df1e36e394f5f556e2004a2a67624eb39418",
     "capability_snapshot_20260713.md": "3cbc82cfb04116f1345cf412970eee9b3f3548d3f7615c5d24c65a7d43604f95",
     "daily_smoke/README.md": "ed250027416ee625f014f5934a5b13ed4229617a714753cab12149944623c0d7",
-    "daily_smoke/VARIANCE.md": "d6bc5b2c780506280161cba88f23db8a0000b869c1c3ac337a1ecd53dcb95a74",
+    "daily_smoke/VARIANCE.md": "11e3f740c8608f4a17324f3bc8ec7543e1ec4d5f3743e24c77d537e2cb5cdb5b",
     "eval_report_20260713.md": "fda031497f9d028693cf281f66d7cc55a7af3845c04e50bec597e4f4e9c63dbd",
     "evaluation/HARNESS_BASELINE_20261014.md": "0e00b795f07b24f5af74b2b880f70c6791a7634c862c423273d71c80e89eda79",
     "evaluation/HARNESS_HEALTH.md": "6f908c12ab0104489a77f0c80aaa6b210d64f0fb70e0f14995db34b664fa0b94",
@@ -89,6 +89,6 @@
     "spec/REDIS_TASK_MVP_SPEC.md": "247f827506d82b2308e899d82ca91a75abe84e8046b9910407323acbb0162483",
     "step_watcher_evidence_baseline.md": "608b25923d5bb2652a380057ea1b5bee916a9c65b25bc2fa05b255900a85787f"
   },
-  "generated_at": "2026-10-16T05:16:21Z",
+  "generated_at": "2026-10-16T05:34:46Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
