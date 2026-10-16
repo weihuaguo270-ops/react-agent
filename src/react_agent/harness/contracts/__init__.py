@@ -353,6 +353,7 @@ class EvaluationEpisode(TaskEpisode):
     environment: dict[str, Any] = field(default_factory=dict)
     created_at: str = ""
     fixture_manifest: FixtureManifest | None = None
+    runtime_episode_id: str | None = None
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -362,6 +363,8 @@ class EvaluationEpisode(TaskEpisode):
             raise ValueError("evaluation episode trajectory must be an object")
         if not isinstance(self.score, Mapping) or not isinstance(self.environment, Mapping):
             raise ValueError("evaluation episode score and environment must be objects")
+        if self.runtime_episode_id is not None and not str(self.runtime_episode_id).strip():
+            raise ValueError("runtime_episode_id must be non-empty when provided")
         refs: list[ArtifactRef] = []
         for artifact in self.artifacts:
             if isinstance(artifact, ArtifactRef):
@@ -403,6 +406,8 @@ class EvaluationEpisode(TaskEpisode):
             "environment": dict(self.environment),
             "created_at": self.created_at,
         }
+        if self.runtime_episode_id:
+            payload["runtime_episode_id"] = self.runtime_episode_id
         if self.fixture_manifest is not None:
             payload["fixture_manifest"] = self.fixture_manifest.to_dict()
         return payload
@@ -431,6 +436,11 @@ class EvaluationEpisode(TaskEpisode):
             environment=dict(value.get("environment") or {}),
             created_at=str(value.get("created_at") or ""),
             fixture_manifest=value.get("fixture_manifest"),
+            runtime_episode_id=(
+                str(value["runtime_episode_id"])
+                if value.get("runtime_episode_id") is not None
+                else None
+            ),
         )
 
     def validate_for_runner(self) -> None:

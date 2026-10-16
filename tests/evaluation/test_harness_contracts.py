@@ -77,12 +77,14 @@ def test_tool_spec_formally_carries_execution_and_idempotency_constraints():
                 "timeout_seconds": 0.25,
                 "max_output_chars": 32,
                 "idempotency_level": "required",
+                "retryable": False,
             },
         }
     )
     assert spec.timeout_seconds == 0.25
     assert spec.max_output_chars == 32
     assert spec.idempotency_level == "required"
+    assert spec.retryable is False
 
     from react_agent.harness.tool_boundary import ToolBoundary
 
@@ -371,6 +373,7 @@ def test_evaluation_episode_round_trips_shared_contract():
         artifacts=(ArtifactRef("trace", "document", "artifacts/trace.json"),),
         environment={"python": "3.10"},
         fixture_manifest=fixture,
+        runtime_episode_id="runtime-1",
     )
     payload = episode.to_dict()
     restored = EvaluationEpisode.from_mapping(payload)
@@ -384,6 +387,7 @@ def test_evaluation_episode_round_trips_shared_contract():
     assert restored.runner == "http"
     assert restored.artifacts[0].uri == "artifacts/trace.json"
     assert restored.fixture_manifest.fixture_ref == "fixture://calc@v1"
+    assert restored.runtime_episode_id == "runtime-1"
     restored.validate_for_runner()
 
 

@@ -37,6 +37,7 @@ class RuntimeEpisode:
     run_id: str = ""
     created_at: float = field(default_factory=time.time)
     finished_at: float | None = None
+    evaluation_episode_id: str = ""
 
     def __post_init__(self) -> None:
         if not str(self.runtime_episode_id).strip():
@@ -68,6 +69,7 @@ class RuntimeEpisode:
         trace_id: str | None = None,
         session_id: str | None = None,
         run_id: str | None = None,
+        evaluation_episode_id: str | None = None,
         environment: Mapping[str, Any] | None = None,
     ) -> "RuntimeEpisode":
         runtime_id = runtime_episode_id or _new_id("runtime")
@@ -79,6 +81,7 @@ class RuntimeEpisode:
             trace_id=trace_id or _new_id("trace"),
             session_id=session_id or _new_id("session"),
             run_id=run_id or _new_id("run"),
+            evaluation_episode_id=str(evaluation_episode_id or ""),
             environment=dict(environment or {}),
         )
 
@@ -109,6 +112,7 @@ class RuntimeEpisode:
                 if value.get("finished_at") is not None
                 else None
             ),
+            evaluation_episode_id=str(value.get("evaluation_episode_id") or ""),
         )
 
     @staticmethod
@@ -184,6 +188,8 @@ class RuntimeEpisode:
             payload["stop_reason"] = self._coerce_stop_reason(self.stop_reason).value
         if self.finished_at is not None:
             payload["finished_at"] = self.finished_at
+        if self.evaluation_episode_id:
+            payload["evaluation_episode_id"] = self.evaluation_episode_id
         if self.trajectory:
             payload["trajectory"] = dict(self.trajectory)
         return payload

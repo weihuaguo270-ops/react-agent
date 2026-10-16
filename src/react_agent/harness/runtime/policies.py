@@ -4,13 +4,72 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+import os
+import tempfile
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping, MutableMapping, TypeVar
+from pathlib import Path
+from collections.abc import Iterator, MutableMapping
+from typing import Any, Callable, Mapping, TypeVar
 
 from react_agent.resilience import classify_error, is_retryable
 
 T = TypeVar("T")
+
+
+class JsonIdempotencyStore(MutableMapping[str, tuple[str, Any]]):
+    """Small durable idempotency ledger for process and worker restarts."""
+
+    def __init__(self, path: str | os.PathLike[str]) -> None:
+        self.path = Path(path)
+        self._data: dict[str, tuple[str, Any]] = {}
+        if self.path.exists():
+            try:
+                payload = json.loads(self.path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ValueError(f"unable to load idempotency store: {self.path}") from exc
+            if not isinstance(payload, Mapping):
+                raise ValueError("idempotency store must contain an object")
+            for key, value in payload.items():
+                if not isinstance(value, list) or len(value) != 2:
+                    raise ValueError("idempotency store entries must be [payload_hash, result]")
+                self._data[str(key)] = (str(value[0]), value[1])
+
+    def __getitem__(self, key: str) -> tuple[str, Any]:
+        return self._data[key]
+
+    def __setitem__(self, key: str, value: tuple[str, Any]) -> None:
+        if not isinstance(value, tuple) or len(value) != 2:
+            raise ValueError("idempotency store values must be (payload_hash, result)")
+        try:
+            json.dumps(value[1], ensure_ascii=False)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("idempotency result must be JSON serializable") from exc
+        self._data[str(key)] = (str(value[0]), value[1])
+        self._flush()
+
+    def __delitem__(self, key: str) -> None:
+        del self._data[key]
+        self._flush()
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._data)
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def _flush(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {key: [digest, result] for key, (digest, result) in self._data.items()}
+        fd, temporary = tempfile.mkstemp(prefix=f".{self.path.name}.", dir=self.path.parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, ensure_ascii=False, sort_keys=True)
+                handle.write("\n")
+            os.replace(temporary, self.path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
 
 
 class RetryBudgetExceeded(TimeoutError):
@@ -206,4 +265,4 @@ class IdempotencyPolicy:
             ledger[key] = (payload_digest, result)
 
 
-__all__ = ["IdempotencyPolicy", "RetryBudgetExceeded", "RetryPolicy"]
+__all__ = ["IdempotencyPolicy", "JsonIdempotencyStore", "RetryBudgetExceeded", "RetryPolicy"]

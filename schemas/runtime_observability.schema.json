@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/weihuaguo270-ops/react-agent/schemas/runtime_observability.schema.json",
+  "title": "Harness Runtime Observability Artifact",
+  "type": "object",
+  "required": ["schema_version", "artifact_type", "emitted_at", "links", "metrics", "retention", "runtime_episode"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "const": "runtime-observability/v1" },
+    "artifact_type": { "const": "runtime_episode_observability" },
+    "emitted_at": { "type": "number" },
+    "links": {
+      "type": "object",
+      "required": ["runtime_episode_id", "evaluation_episode_id", "trace_id", "session_id", "run_id"],
+      "additionalProperties": true,
+      "properties": {
+        "runtime_episode_id": { "type": "string", "minLength": 1 },
+        "evaluation_episode_id": { "type": "string", "minLength": 1 },
+        "trace_id": { "type": "string", "minLength": 1 },
+        "session_id": { "type": "string", "minLength": 1 },
+        "run_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "metrics": { "type": "object" },
+    "retention": { "type": "object" },
+    "runtime_episode": { "type": "object" }
+  }
+}

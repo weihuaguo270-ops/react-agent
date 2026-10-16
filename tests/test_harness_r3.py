@@ -12,12 +12,13 @@ from react_agent.harness import (
 
 def test_react_loop_adapter_emits_runtime_episode_and_format_b():
     adapter = ReactLoopAdapter(loop=lambda query, **kwargs: "answer")
-    episode = adapter.run("hello", max_steps=2)
+    episode = adapter.run("hello", max_steps=2, evaluation_episode_id="eval-1")
 
     assert isinstance(episode, RuntimeEpisode)
     assert episode.execution_mode == "react"
     assert episode.status == "completed"
     assert episode.stop_reason == StopReason.COMPLETED
+    assert episode.evaluation_episode_id == "eval-1"
     assert episode.trajectory["metadata"]["runtime_episode_id"] == episode.runtime_episode_id
     assert_valid(episode.trajectory)
     restored = RuntimeEpisode.from_mapping(episode.to_dict())
@@ -68,6 +69,26 @@ def test_http_runner_adapter_preserves_source_execution_mode():
     assert adapted["runtime_episode"]["transport"] == "http"
     assert adapted["trajectory"]["metadata"]["runtime_episode_id"] == episode.runtime_episode_id
     assert_valid(adapted["trajectory"])
+
+
+def test_http_runner_adapter_preserves_evaluation_episode_link():
+    adapted, episode = HttpRunnerAdapter().adapt_response(
+        {
+            "mode": "react",
+            "evaluation_episode_id": "eval-http-1",
+            "answer": "ok",
+            "trajectory": {
+                "session_id": "req-eval",
+                "query": "q",
+                "final_answer": "ok",
+                "steps": [{"step": 1, "observation": "ok"}],
+            },
+        },
+        request_id="req-eval",
+    )
+
+    assert episode.evaluation_episode_id == "eval-http-1"
+    assert adapted["runtime_episode"]["evaluation_episode_id"] == "eval-http-1"
 
 
 def test_http_runner_adapter_maps_policy_denied_to_refused():
