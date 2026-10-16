@@ -6,10 +6,13 @@ import pytest
 
 from react_agent.harness import (
     DeterministicReplay,
+    ReplayError,
     ReplayFixtureUnavailable,
     ReplayIntegrityError,
     ReplayManifest,
     ReplayMode,
+    ReplayLimits,
+    ReplayResourceExceeded,
     ReplaySideEffectDenied,
 )
 
@@ -112,3 +115,70 @@ def test_inspect_is_explicitly_display_only_and_never_execution_replay():
     assert inspected.display_only is True
     assert inspected.execution_replay is False
     assert inspected.to_dict()["execution_replay"] is False
+    with pytest.raises(ReplayError, match="display-only"):
+        inspected.to_scoring_input(runner="inspect")
+
+
+def test_replay_executes_recorded_tool_results_and_builds_stable_scoring_input():
+    fixture, fixture_data = _fixture_ref()
+    trajectory = _trajectory()
+    trajectory["steps"][0]["action"]["call_id"] = "call-1"
+    manifest = DeterministicReplay.record(
+        trajectory,
+        tool_results={"call-1": {"result": {"value": 4}}},
+        fixture=fixture,
+    )
+
+    result = DeterministicReplay(fixture_loader=lambda _ref: fixture_data).replay(manifest)
+
+    step = result.trajectory["steps"][0]
+    assert step["replay_tool_results"] == [{"value": 4}]
+    assert step["observation"] == '{"value":4}'
+    assert result.resource_usage == {"steps": 1, "tool_calls": 1, "output_bytes": 11}
+    assert result.scoring_input["schema_version"] == "replay-scoring-input/v1"
+    assert result.scoring_input["manifest_id"] == manifest.manifest_id
+    assert result.scoring_input["stop_reason"] == "completed"
+    react_input = result.to_scoring_input(runner="react")
+    workflow_input = result.to_scoring_input(runner="workflow")
+    assert react_input["trajectory"] == workflow_input["trajectory"]
+    assert react_input["tool_results"] == workflow_input["tool_results"]
+    assert react_input["runner"] != workflow_input["runner"]
+
+
+def test_replay_rejects_missing_recorded_tool_result():
+    fixture, fixture_data = _fixture_ref()
+    manifest = DeterministicReplay.record(_trajectory(), fixture=fixture)
+
+    with pytest.raises(ReplayIntegrityError, match="missing recorded tool result"):
+        DeterministicReplay(fixture_loader=lambda _ref: fixture_data).replay(manifest)
+
+
+def test_replay_enforces_step_tool_and_output_limits():
+    fixture, fixture_data = _fixture_ref()
+    trajectory = _trajectory()
+    trajectory["steps"].append(
+        {
+            "step": 2,
+            "action": {"name": "calculator2", "arguments": "{}"},
+        }
+    )
+    manifest = DeterministicReplay.record(
+        trajectory,
+        tool_results={
+            "calculator": {"result": "x"},
+            "calculator2": {"result": "x" * 20},
+        },
+        fixture=fixture,
+    )
+
+    with pytest.raises(ReplayResourceExceeded, match="max_tool_calls"):
+        DeterministicReplay(
+            fixture_loader=lambda _ref: fixture_data,
+            limits=ReplayLimits(max_tool_calls=1, max_output_bytes=100),
+        ).replay(manifest)
+
+    with pytest.raises(ReplayResourceExceeded, match="max_output_bytes"):
+        DeterministicReplay(
+            fixture_loader=lambda _ref: fixture_data,
+            limits=ReplayLimits(max_output_bytes=4),
+        ).replay(manifest)

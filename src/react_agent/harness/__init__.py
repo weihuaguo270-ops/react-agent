@@ -58,6 +58,7 @@ from .runtime import (
 )
 from .runtime import (
     REPLAY_MANIFEST_VERSION,
+    REPLAY_SCORING_INPUT_VERSION,
     DeterministicReplay,
     ReplayError,
     ReplayFixtureUnavailable,
@@ -66,6 +67,9 @@ from .runtime import (
     ReplayMode,
     ReplayResult,
     ReplaySideEffectDenied,
+    ReplayResourceExceeded,
+    ReplayLimits,
+    RecordedToolExecutor,
 )
 from .tool_boundary import (
     ToolBoundary,

@@ -19,6 +19,7 @@ from react_agent.harness.contracts import CONTRACT_VERSION, assert_valid
 
 
 REPLAY_MANIFEST_VERSION = "replay-manifest/v1"
+REPLAY_SCORING_INPUT_VERSION = "replay-scoring-input/v1"
 
 
 class ReplayMode(str, Enum):
@@ -41,6 +42,10 @@ class ReplayIntegrityError(ReplayError):
 
 class ReplaySideEffectDenied(ReplayError):
     """Raised when replay code attempts network or external side effects."""
+
+
+class ReplayResourceExceeded(ReplayError):
+    """Raised when a replay exceeds its deterministic resource budget."""
 
 
 def _canonical(value: Any) -> str:
@@ -217,10 +222,28 @@ class ReplayResult:
     stop_reason: str | None
     network_allowed: bool = False
     side_effects_allowed: bool = False
+    resource_usage: dict[str, int] = field(default_factory=dict)
 
     @property
     def scoring_input_sha256(self) -> str:
         return _sha256(self.scoring_input)
+
+    def to_scoring_input(self, *, runner: str = "") -> dict[str, Any]:
+        """Return the runner-neutral payload consumed by any scorer.
+
+        ``runner`` is provenance only; it does not alter the trajectory or
+        recorded tool results, so ReAct, Workflow and HTTP adapters score the
+        same manifest from the same canonical input.
+        """
+        if not self.execution_replay or self.display_only:
+            raise ReplayError("display-only manifests cannot be used as scoring input")
+        payload = _copy_json(self.scoring_input)
+        payload["runner"] = str(runner or "")
+        trajectory = payload.get("trajectory")
+        if isinstance(trajectory, Mapping):
+            payload["execution_mode"] = str(trajectory.get("execution_mode") or "")
+            payload["transport"] = str(trajectory.get("transport") or "")
+        return payload
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -236,7 +259,51 @@ class ReplayResult:
             "stop_reason": self.stop_reason,
             "network_allowed": self.network_allowed,
             "side_effects_allowed": self.side_effects_allowed,
+            "resource_usage": dict(self.resource_usage),
         }
+
+
+@dataclass(frozen=True)
+class ReplayLimits:
+    """Upper bounds for manifest-driven replay work.
+
+    Replay never calls a live tool. The limits still protect runners from
+    malformed manifests containing unexpectedly large trajectories or result
+    payloads.
+    """
+
+    max_steps: int = 1_000
+    max_tool_calls: int = 1_000
+    max_output_bytes: int = 1_048_576
+
+    def __post_init__(self) -> None:
+        for name in ("max_steps", "max_tool_calls", "max_output_bytes"):
+            value = int(getattr(self, name))
+            if value < 1:
+                raise ValueError(f"replay limit {name} must be >= 1")
+            object.__setattr__(self, name, value)
+
+
+class RecordedToolExecutor:
+    """Resolve tool calls from recorded manifest results only.
+
+    This deliberately has no fallback callback: an unknown call is a hard
+    replay failure instead of an opportunity to invoke a live tool.
+    """
+
+    def __init__(self, tool_results: Any):
+        self._records = tool_results
+        self._ordinal = 0
+
+    def execute(self, action: Mapping[str, Any]) -> Any:
+        self._ordinal += 1
+        call_id = str(action.get("call_id") or action.get("id") or "")
+        name = str(action.get("name") or action.get("tool") or "")
+        record = _lookup_tool_result(self._records, call_id, name, self._ordinal)
+        if record is _MISSING:
+            label = call_id or name or f"ordinal-{self._ordinal}"
+            raise ReplayIntegrityError(f"missing recorded tool result: {label}")
+        return _extract_tool_result(record)
 
 
 class DeterministicReplay:
@@ -248,10 +315,12 @@ class DeterministicReplay:
         fixture_loader: Callable[[Mapping[str, Any]], Any] | None = None,
         network_allowed: bool = False,
         side_effects_allowed: bool = False,
+        limits: ReplayLimits | None = None,
     ) -> None:
         self.fixture_loader = fixture_loader
         self.network_allowed = network_allowed
         self.side_effects_allowed = side_effects_allowed
+        self.limits = limits or ReplayLimits()
 
     @staticmethod
     def record(
@@ -287,13 +356,19 @@ class DeterministicReplay:
         parsed = _coerce_manifest(manifest)
         self._verify(parsed)
         fixture_value = self._resolve_fixture(parsed, fixture)
+        replayed_trajectory, resource_usage = self._execute_recorded_trajectory(parsed)
         scoring_input = {
+            "schema_version": REPLAY_SCORING_INPUT_VERSION,
+            "source": "deterministic_replay",
+            "manifest_id": parsed.manifest_id,
+            "manifest_sha256": parsed.manifest_sha256,
             "protocol_version": parsed.protocol_version,
-            "trajectory": parsed.trajectory,
+            "trajectory": replayed_trajectory,
             "tool_results": parsed.tool_results,
             "model_responses": parsed.model_responses,
             "fixture": parsed.fixture,
             "stop_reason": parsed.stop_reason,
+            "resource_usage": resource_usage,
         }
         if fixture_value is not None:
             scoring_input["fixture_loaded_sha256"] = _fixture_value_hash(fixture_value)
@@ -302,13 +377,14 @@ class DeterministicReplay:
             execution_replay=True,
             display_only=False,
             manifest_id=parsed.manifest_id,
-            trajectory=parsed.trajectory,
+            trajectory=replayed_trajectory,
             tool_results=parsed.tool_results,
             model_responses=parsed.model_responses,
             scoring_input=scoring_input,
             stop_reason=parsed.stop_reason,
             network_allowed=False,
             side_effects_allowed=False,
+            resource_usage=resource_usage,
         )
 
     def inspect(
@@ -355,6 +431,58 @@ class DeterministicReplay:
                 f"unsupported replay protocol version: {manifest.protocol_version}"
             )
 
+    def _execute_recorded_trajectory(
+        self, manifest: ReplayManifest
+    ) -> tuple[dict[str, Any], dict[str, int]]:
+        trajectory = _copy_json(manifest.trajectory)
+        steps = trajectory.get("steps") or []
+        if not isinstance(steps, list):
+            raise ReplayIntegrityError("replay trajectory steps must be an array")
+        if len(steps) > self.limits.max_steps:
+            raise ReplayResourceExceeded("replay max_steps exceeded")
+
+        executor = RecordedToolExecutor(manifest.tool_results)
+        tool_calls = 0
+        output_bytes = 0
+        replayed_steps: list[dict[str, Any]] = []
+        for raw_step in steps:
+            step = dict(raw_step or {})
+            actions: list[Mapping[str, Any]] = []
+            action = step.get("action")
+            if isinstance(action, Mapping) and (action.get("name") or action.get("tool")):
+                actions.append(action)
+            for item in step.get("actions") or []:
+                if isinstance(item, Mapping) and (item.get("name") or item.get("tool")):
+                    actions.append(item)
+            replay_results: list[Any] = []
+            for item in actions:
+                tool_calls += 1
+                if tool_calls > self.limits.max_tool_calls:
+                    raise ReplayResourceExceeded("replay max_tool_calls exceeded")
+                result = executor.execute(item)
+                replay_results.append(_copy_json(result))
+                output_bytes += len(_canonical(result).encode("utf-8"))
+                if output_bytes > self.limits.max_output_bytes:
+                    raise ReplayResourceExceeded("replay max_output_bytes exceeded")
+            if replay_results:
+                step["replay_tool_results"] = replay_results
+                if len(replay_results) == 1:
+                    step["observation"] = _display_tool_result(replay_results[0])
+            replayed_steps.append(step)
+        trajectory["steps"] = replayed_steps
+        metadata = dict(trajectory.get("metadata") or {})
+        metadata["replay_execution"] = "recorded_tool_results"
+        metadata["replay_tool_calls"] = tool_calls
+        metadata["replay_output_bytes"] = output_bytes
+        trajectory["metadata"] = metadata
+        if _trajectory_stop_reason(trajectory) != manifest.stop_reason:
+            raise ReplayIntegrityError("replay stop_reason changed during execution")
+        return trajectory, {
+            "steps": len(steps),
+            "tool_calls": tool_calls,
+            "output_bytes": output_bytes,
+        }
+
     def _resolve_fixture(self, manifest: ReplayManifest, fixture: Any) -> Any:
         if manifest.fixture is None:
             raise ReplayFixtureUnavailable("replay requires a Fixture manifest")
@@ -381,6 +509,56 @@ def _fixture_value_hash(value: Any) -> str:
     return _sha256(value)
 
 
+_MISSING = object()
+
+
+def _lookup_tool_result(records: Any, call_id: str, name: str, ordinal: int) -> Any:
+    if isinstance(records, Mapping):
+        for key in (call_id, name, str(ordinal), ordinal):
+            if key and key in records:
+                return records[key]
+        if ordinal == 1 and len(records) == 1:
+            return next(iter(records.values()))
+        return _MISSING
+    if isinstance(records, Sequence) and not isinstance(records, (str, bytes, bytearray)):
+        index = ordinal - 1
+        if index < len(records):
+            candidate = records[index]
+            if isinstance(candidate, Mapping):
+                candidate_id = str(candidate.get("call_id") or candidate.get("id") or "")
+                candidate_name = str(candidate.get("tool") or candidate.get("name") or "")
+                if (call_id and candidate_id and call_id != candidate_id) or (
+                    name and candidate_name and name != candidate_name
+                ):
+                    return _MISSING
+            return candidate
+    return _MISSING
+
+
+def _extract_tool_result(record: Any) -> Any:
+    if isinstance(record, Mapping):
+        if "error" in record:
+            return {"error": record["error"], **dict(record)}
+        for key in ("result", "output", "observation", "value"):
+            if key in record:
+                return record[key]
+    return record
+
+
+def _display_tool_result(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    return _canonical(value)
+
+
+def _trajectory_stop_reason(trajectory: Mapping[str, Any]) -> str | None:
+    metadata = trajectory.get("metadata")
+    if isinstance(metadata, Mapping) and metadata.get("stop_reason"):
+        return str(metadata["stop_reason"])
+    value = trajectory.get("stop_reason")
+    return str(value) if value else None
+
+
 def _coerce_manifest(
     value: ReplayManifest | Mapping[str, Any] | str | os.PathLike[str],
 ) -> ReplayManifest:
@@ -393,6 +571,7 @@ def _coerce_manifest(
 
 __all__ = [
     "REPLAY_MANIFEST_VERSION",
+    "REPLAY_SCORING_INPUT_VERSION",
     "ReplayMode",
     "ReplayManifest",
     "ReplayResult",
@@ -400,5 +579,8 @@ __all__ = [
     "ReplayFixtureUnavailable",
     "ReplayIntegrityError",
     "ReplaySideEffectDenied",
+    "ReplayResourceExceeded",
+    "ReplayLimits",
+    "RecordedToolExecutor",
     "DeterministicReplay",
 ]

@@ -15,6 +15,7 @@ from .structured_output import (
 )
 from .replay import (
     REPLAY_MANIFEST_VERSION,
+    REPLAY_SCORING_INPUT_VERSION,
     DeterministicReplay,
     ReplayError,
     ReplayFixtureUnavailable,
@@ -23,6 +24,9 @@ from .replay import (
     ReplayMode,
     ReplayResult,
     ReplaySideEffectDenied,
+    ReplayResourceExceeded,
+    ReplayLimits,
+    RecordedToolExecutor,
 )
 
 __all__ = [
@@ -38,6 +42,7 @@ __all__ = [
     "ValidationIssue",
     "attach_structured_output_evidence",
     "REPLAY_MANIFEST_VERSION",
+    "REPLAY_SCORING_INPUT_VERSION",
     "DeterministicReplay",
     "ReplayError",
     "ReplayFixtureUnavailable",
@@ -46,6 +51,9 @@ __all__ = [
     "ReplayMode",
     "ReplayResult",
     "ReplaySideEffectDenied",
+    "ReplayResourceExceeded",
+    "ReplayLimits",
+    "RecordedToolExecutor",
     "RUNTIME_EPISODE_VERSION",
     "RuntimeEpisode",
     "ReactLoopAdapter",
