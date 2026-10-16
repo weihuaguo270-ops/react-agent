@@ -317,14 +317,32 @@ def _execute_tool_call_raw(tool_call):
                 source="react",
                 tool_name=func_name,
             ).to_json()
-        # 沙箱：崩溃/超时隔离（不是权限层；见 harness/sandbox.py）
-        if SANDBOX.strategy != "off" and SANDBOX.should_sandbox(func_name):
-            sandbox_result = SANDBOX.run(canonical_tool_call)
-            if sandbox_result != "__SANDBOX_DISABLED__":
-                return sandbox_result
-        # 直接执行（沙箱关闭或 safe 工具）
-        # 故意不吞异常：让 ToolGuard 能对 timeout 等做重试
-        return str(registry[func_name](**arguments))
+        # Registry 工具统一经过 Harness ToolBoundary；MCP 分支仍在下方
+        # 保留其独立的 JSON-RPC 生命周期，但共享 ToolCall/ToolError 契约。
+        try:
+            from react_agent.harness.tool_boundary import execute_registered_tool
+
+            result = execute_registered_tool(
+                func_name, arguments, registry, risk_sandbox=True
+            )
+            return result if isinstance(result, str) else json.dumps(result, ensure_ascii=False)
+        except PermissionError as exc:
+            from react_agent.harness.contracts import ToolError, StopReason
+
+            return ToolError(
+                code="policy_denied",
+                message=str(exc),
+                stop_reason=StopReason.POLICY_DENIED,
+                source="react",
+                tool_name=func_name,
+            ).to_json()
+        except Exception as exc:
+            from react_agent.harness.contracts import tool_error_from_exception
+
+            return json.dumps(
+                tool_error_from_exception(exc, source="react", tool_name=func_name),
+                ensure_ascii=False,
+            )
     # 不在本地注册表 → 尝试遍历所有 MCP Client
     for _mcp_client in MCP_CLIENTS:
         if func_name in [t["name"] for t in _mcp_client.tools]:

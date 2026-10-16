@@ -32,3 +32,19 @@ def test_mock_unknown_tool_raises():
         assert False, "expected RuntimeError"
     except RuntimeError as e:
         assert "Unknown" in str(e) or "MCP" in str(e)
+        assert e.error.to_dict()["error_code"] == "tool_not_found"
+
+
+def test_mock_tool_schema_failure_uses_shared_error_contract():
+    from react_agent.harness.contracts import ToolCallError
+
+    c = MockMCPClient()
+    c.connect()
+    c.discover_tools()
+    try:
+        c.call_tool("echo_note", {"text": 123})
+        assert False, "expected typed tool error"
+    except ToolCallError as exc:
+        payload = exc.error.to_dict()
+        assert payload["error_code"] == "invalid_arguments"
+        assert payload["stop_reason"] == "parse_error"

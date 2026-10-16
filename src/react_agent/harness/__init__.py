@@ -31,9 +31,21 @@ from .contracts import (
     StopReason,
     TaskEpisode,
     ToolCall,
+    ToolCallError,
+    ToolError,
     serialize_trajectory,
+    tool_error_from_exception,
 )
 from .runtime import IdempotencyPolicy, RetryPolicy
+from .tool_boundary import (
+    ToolBoundary,
+    ToolSpec,
+    IDEMPOTENCY_LEVELS,
+    execute_registered_tool,
+    invoke_with_timeout,
+    limit_tool_output,
+    validate_tool_arguments,
+)
 
 # ----------
 # 统一入口
