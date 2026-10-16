@@ -230,6 +230,15 @@ def test_recorder_uses_shared_trajectory_serializer():
     assert payload["metadata"]["execution_mode"] == "react"
 
 
+def test_recorder_materializes_terminal_step_for_no_tool_run():
+    from react_agent.harness.recorder import Trajectory
+
+    payload = Trajectory("q", model="mock").to_dict()
+    assert len(payload["steps"]) == 1
+    assert payload["steps"][0]["step"] == 1
+    assert payload["steps"][0]["thought"] == "terminal_without_tool_step"
+
+
 def test_contract_parser_is_the_canonical_normalize_validate_entrypoint(tmp_path):
     from react_agent.harness import parse_trajectory
     from react_agent.harness.contracts import (

@@ -183,6 +183,18 @@ class Trajectory:
         from react_agent.harness.contracts import serialize_trajectory
 
         duration = round(time.time() - self._start_time, 2)
+        steps = list(self.steps)
+        if not steps:
+            # Format B requires at least one step. Refusal/error paths can
+            # terminate before a tool call, so retain that outcome explicitly
+            # instead of emitting an invalid empty trajectory.
+            steps = [
+                {
+                    "step": 1,
+                    "thought": "terminal_without_tool_step",
+                    "observation": self.final_answer or "run ended without tool steps",
+                }
+            ]
         extra: dict[str, Any] = {
             "timestamp": self.timestamp,
             "system_prompt_preview": self.system_prompt,
@@ -202,7 +214,7 @@ class Trajectory:
             query=self.query[:500],
             model=self.model,
             final_answer=self.final_answer,
-            steps=self.steps,
+            steps=steps,
             metadata={"execution_mode": "react"},
             extra=extra,
         )
