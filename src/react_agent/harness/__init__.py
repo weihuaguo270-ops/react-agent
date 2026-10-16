@@ -56,6 +56,17 @@ from .runtime import (
     ValidationIssue,
     attach_structured_output_evidence,
 )
+from .runtime import (
+    REPLAY_MANIFEST_VERSION,
+    DeterministicReplay,
+    ReplayError,
+    ReplayFixtureUnavailable,
+    ReplayIntegrityError,
+    ReplayManifest,
+    ReplayMode,
+    ReplayResult,
+    ReplaySideEffectDenied,
+)
 from .tool_boundary import (
     ToolBoundary,
     ToolSpec,
