@@ -25,6 +25,11 @@ See [trace-debugger/schemas/README.md](https://github.com/weihuaguo270-ops/trace
 3. Required: `session_id`, `query`, `steps`, `final_answer`
 4. Optional Task Episode: `task_episode_id`, `acceptance_criteria[]` — see [HARNESS_HEALTH.md](../docs/HARNESS_HEALTH.md)
 
+Evaluation evidence uses the versioned [`evaluation_episode.schema.json`](evaluation_episode.schema.json)
+contract. Runtime code exposes the compatible `EvaluationEpisode` dataclass and
+rejects unsupported major versions instead of silently treating them as v1.
+Fixture lifecycle and dependency metadata use [`fixture_manifest.schema.json`](fixture_manifest.schema.json).
+
 Local alias file: [`harness_trajectory.schema.json`](harness_trajectory.schema.json)
 
 ## Software task contract

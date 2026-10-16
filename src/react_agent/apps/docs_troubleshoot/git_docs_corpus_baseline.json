@@ -41,6 +41,7 @@
     "execution_agent_snapshot_20260716_v3.md": "5094cfbb859a1f91ae61175bb84811d8e6573eeb16254618576056eb6bf2294e",
     "execution_snapshot_20260715.md": "d2cca5762ff9fb70e033edeb66a7b2bcfdbe366f2d2e546faff891749de41063",
     "flywheel_closed_loop_20260716.md": "96930018cdec2e148b8226a10f9bb8e9f53437c05a7c8a68e6c46da8b5bf4555",
+    "guide/HARNESS_CONTRACT_MIGRATION.md": "2f4f1c232447906a12936255215363659739c6b6d1f9b64de77bf7d153a627ff",
     "plan-multi-agent.md": "603acc93e558e7c6cf9ec78c60ebfd8d6426db00d6f2338528a347e8447e8682",
     "reliability_live_live_20260716.md": "5dc7f4f9b3910900209358647412f91bd75f789f3d68bb15c11be759a3b518dc",
     "reliability_live_live_20260716_v2.md": "9c1baaf566fd7d9b35eeb6b9b210b0f6875dbe8f64a527033a85fa19a92b63df",
@@ -84,9 +85,10 @@
     "spec/EXPENSE_IMPLEMENTATION_ROADMAP_SPEC.md": "f291da84c1ca1956932488c8d895a4bfbc938a64557e6c539884cbdbaa72a85a",
     "spec/EXPENSE_POLICY_BOUNDARY_SPEC.md": "1e776e829689761bb358839c624965fa49a6a1138e2bcb347641b89f25c24a53",
     "spec/EXPENSE_WORKFLOW_DECISION_SPEC.md": "ec4d23a04a56d42565d04c75ca15b21f66ca1160ae1f2f642d2d375595b6adde",
+    "spec/HARNESS_BUILD_SPEC.md": "50b8bf701beea4c78f038bc4f08ed057744dea32edcaad110ff8f336902698ee",
     "spec/REDIS_TASK_MVP_SPEC.md": "247f827506d82b2308e899d82ca91a75abe84e8046b9910407323acbb0162483",
     "step_watcher_evidence_baseline.md": "608b25923d5bb2652a380057ea1b5bee916a9c65b25bc2fa05b255900a85787f"
   },
-  "generated_at": "2026-10-16T04:05:06Z",
+  "generated_at": "2026-10-16T05:16:21Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }

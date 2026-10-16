@@ -6,6 +6,43 @@ from typing import Any
 
 from react_agent.server.http_util import error_response
 
+
+def _http_trajectory(
+    *,
+    request_id: str,
+    query: str,
+    answer: str,
+    mode: str,
+    steps: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Serialize an execution result at the HTTP adapter boundary."""
+    from react_agent.harness.contracts import serialize_trajectory
+
+    normalized: list[dict[str, Any]] = []
+    for index, raw in enumerate(steps or [], start=1):
+        item = dict(raw or {})
+        item["step"] = index
+        if "action" not in item:
+            tool = str(item.get("tool") or item.get("action") or "").strip()
+            if tool:
+                item["action"] = {
+                    "name": tool,
+                    "arguments": item.get("arguments") or "{}",
+                }
+        normalized.append(item)
+    if not normalized:
+        return None
+    return serialize_trajectory(
+        session_id=request_id,
+        query=query,
+        final_answer=answer,
+        steps=normalized,
+        metadata={
+            "transport": "http",
+            "execution_mode": mode,
+        },
+    )
+
 APP_ALIASES = {
     "": "default",
     "default": "default",
@@ -118,6 +155,7 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
                 "decision_audit": state.get("decision_audit") or {},
                 "workflow_steps": result.to_dict().get("steps") or [],
                 "mode": "workflow",
+                "trajectory": result.to_trajectory(),
             }
         from react_agent.apps.expense.offline_answer import answer_offline
 
@@ -156,7 +194,7 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
                     request_id,
                     501,
                 )
-            return 200, {
+            payload = {
                 "request_id": request_id,
                 "app": "default",
                 "answer": out.get("answer", ""),
@@ -164,6 +202,14 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
                 "agent_steps": out.get("agent_steps") or [],
                 "mode": "offline_react",
             }
+            payload["trajectory"] = _http_trajectory(
+                request_id=request_id,
+                query=message,
+                answer=str(payload["answer"]),
+                mode="offline_react",
+                steps=list(payload["agent_steps"]),
+            )
+            return 200, payload
 
         if not use_llm:
             return error_response(
@@ -177,7 +223,7 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
         try:
             os.environ.pop("REACT_AGENT_APP", None)
             from react_agent.harness.recorder import current_trajectory
-            from react_agent.react_loop import react_loop
+            from react_agent.react_loop import get_last_trajectory_steps, react_loop
 
             answer = react_loop(message, max_steps=int(body.get("max_steps") or 6))
             if not isinstance(answer, str):
@@ -186,13 +232,22 @@ def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
             tid = ""
             if traj is not None:
                 tid = getattr(traj, "session_id", "") or getattr(traj, "id", "") or ""
-            return 200, {
+            payload = {
                 "request_id": request_id,
                 "app": "default",
                 "answer": answer,
-                "trajectory_id": tid,
+                "trajectory_id": tid or request_id,
+                "agent_steps": get_last_trajectory_steps(),
                 "mode": "llm",
             }
+            payload["trajectory"] = _http_trajectory(
+                request_id=request_id,
+                query=message,
+                answer=answer,
+                mode="llm",
+                steps=list(payload["agent_steps"]),
+            )
+            return 200, payload
         except Exception as e:
             return error_response("internal_error", str(e)[:300], request_id, 500)
 

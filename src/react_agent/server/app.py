@@ -248,7 +248,7 @@ class AgentHandler(BaseHTTPRequestHandler):
                     "applications": list_applications(),
                     # 已实现：由应用注册表派生，保证与实际可路由的 pillar 一致
                     "pillars": registry_pillars(),
-                    # 对外宣称的三支柱定位（见 docs/APPLICATION_DIRECTION.md）；
+                    # 对外宣称的三支柱定位（见 docs/guide/APPLICATION_DIRECTION.md）；
                     # rag_research 目前没有绑定应用，故不出现在上面的 pillars 中
                     "declared_pillars": ["coding_execution", "support_automation", "rag_research"],
                     "default_mode": "offline"

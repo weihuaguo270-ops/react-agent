@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/weihuaguo270-ops/react-agent/schemas/fixture_manifest.schema.json",
+  "title": "Harness Fixture Manifest",
+  "type": "object",
+  "required": ["schema_version", "fixture_id", "version", "data_sha256", "dependencies", "setup_command", "cleanup_command", "environment"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "const": "fixture-manifest/v1" },
+    "fixture_id": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "fixture_ref": { "type": "string", "minLength": 1 },
+    "data_sha256": { "type": "string", "pattern": "^(sha256:)?[a-fA-F0-9]{64}$" },
+    "dependencies": { "type": "object", "additionalProperties": { "type": "string" } },
+    "setup_command": { "type": "array", "items": { "type": "string" } },
+    "cleanup_command": { "type": "array", "items": { "type": "string" } },
+    "environment": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}

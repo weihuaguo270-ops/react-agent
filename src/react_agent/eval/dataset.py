@@ -163,6 +163,23 @@ def load_dataset(path: Optional[str] = None) -> list[TestCase]:
     return [TestCase(item) for item in raw_list]
 
 
+def load_dataset_bundle(path: Optional[str] = None):
+    """Load cases with a hashed FixtureManifest; legacy loader stays unchanged."""
+    from react_agent.harness.evaluation import FixtureBundle, load_json_fixture_bundle
+
+    filepath = resolve_dataset_path(path)
+    bundle = load_json_fixture_bundle(
+        filepath,
+        fixture_id=f"eval:{os.path.splitext(os.path.basename(filepath))[0]}",
+        dependencies={"loader": "react_agent.eval.dataset", "format": "test-case/v1"},
+    )
+    if not isinstance(bundle.value, list):
+        raise ValueError(f"dataset must be an array: {filepath}")
+    return FixtureBundle(
+        value=[TestCase(item) for item in bundle.value], manifest=bundle.manifest
+    )
+
+
 def filter_by_tag(cases: list[TestCase], tag: str) -> list[TestCase]:
     """按 tag 筛选测试用例"""
     return [c for c in cases if c.tag == tag or tag in c.tags]
