@@ -53,13 +53,19 @@ def _trajectory(
     stop_reason: StopReason,
     metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
+    status = {
+        StopReason.COMPLETED: "completed",
+        StopReason.TIMEOUT: "timeout",
+        StopReason.CANCELLED: "cancelled",
+        StopReason.POLICY_DENIED: "refused",
+    }.get(stop_reason, "failed")
     values = {
         "runtime_episode_id": episode.runtime_episode_id,
         "trace_id": episode.trace_id,
         "run_id": episode.run_id,
         "execution_mode": episode.execution_mode,
         "transport": episode.transport,
-        "status": episode.status,
+        "status": status,
         "stop_reason": stop_reason.value,
     }
     values.update(dict(metadata or {}))

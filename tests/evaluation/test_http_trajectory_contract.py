@@ -26,6 +26,7 @@ def test_http_runner_trajectory_is_formal_format_b(monkeypatch):
     assert trajectory["query"] == "2+2"
     assert trajectory["metadata"]["transport"] == "http"
     assert trajectory["metadata"]["execution_mode"] == "offline_react"
+    assert trajectory["metadata"]["runtime_episode_id"].startswith("runtime-http-")
     assert validate_trajectory(trajectory) == []
 
 
@@ -95,6 +96,7 @@ def test_http_runner_records_server_error_with_stop_reason(monkeypatch):
     assert stdout == "upstream timed out"
     assert trajectory["metadata"]["stop_reason"] == "timeout"
     assert trajectory["metadata"]["error_code"] == "timeout"
+    assert trajectory["metadata"]["runtime_episode_id"].startswith("runtime-http-")
     assert validate_trajectory(trajectory) == []
 
 
@@ -110,6 +112,7 @@ def test_http_runner_records_network_timeout(monkeypatch):
     assert exit_code == 1
     assert duration >= 0
     assert trajectory["metadata"]["stop_reason"] == "timeout"
+    assert trajectory["metadata"]["runtime_episode_id"].startswith("runtime-http-")
 
 
 def test_http_runner_records_cancellation_reason(monkeypatch):
@@ -127,6 +130,7 @@ def test_http_runner_records_cancellation_reason(monkeypatch):
     _stdout, trajectory, exit_code, _duration = runner("cancel")
     assert exit_code == 1
     assert trajectory["metadata"]["stop_reason"] == "cancelled"
+    assert trajectory["metadata"]["runtime_episode_id"].startswith("runtime-http-")
 
 
 def test_http_runner_handles_non_object_error_payload(monkeypatch):
@@ -142,3 +146,4 @@ def test_http_runner_handles_non_object_error_payload(monkeypatch):
     assert exit_code == 1
     assert "upstream failure" in stdout
     assert trajectory["metadata"]["stop_reason"] == "tool_error"
+    assert trajectory["metadata"]["runtime_episode_id"].startswith("runtime-http-")

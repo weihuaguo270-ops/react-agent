@@ -7,6 +7,7 @@ import random
 import os
 import tempfile
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from collections.abc import Iterator, MutableMapping
@@ -22,20 +23,58 @@ class JsonIdempotencyStore(MutableMapping[str, tuple[str, Any]]):
 
     def __init__(self, path: str | os.PathLike[str]) -> None:
         self.path = Path(path)
+        self.lock_path = self.path.with_name(f".{self.path.name}.lock")
         self._data: dict[str, tuple[str, Any]] = {}
-        if self.path.exists():
+        self._reload()
+
+    @contextmanager
+    def locked(self, *, timeout: float = 10.0):
+        """Hold a cross-process lock while checking and recording one call.
+
+        The lock is a short-lived exclusive file created beside the ledger. It
+        deliberately uses only the standard library so the same store works on
+        Windows workers and POSIX containers.
+        """
+        deadline = time.monotonic() + timeout
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        while True:
             try:
-                payload = json.loads(self.path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
-                raise ValueError(f"unable to load idempotency store: {self.path}") from exc
-            if not isinstance(payload, Mapping):
-                raise ValueError("idempotency store must contain an object")
-            for key, value in payload.items():
-                if not isinstance(value, list) or len(value) != 2:
-                    raise ValueError("idempotency store entries must be [payload_hash, result]")
-                self._data[str(key)] = (str(value[0]), value[1])
+                fd = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                os.close(fd)
+                break
+            except FileExistsError:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(f"timed out acquiring idempotency lock: {self.lock_path}")
+                time.sleep(0.01)
+        try:
+            self._reload()
+            yield self
+        finally:
+            try:
+                self.lock_path.unlink()
+            except FileNotFoundError:
+                pass
+
+    def _reload(self) -> None:
+        """Refresh the in-memory view so another worker's commit is visible."""
+        if not self.path.exists():
+            self._data = {}
+            return
+        try:
+            payload = json.loads(self.path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"unable to load idempotency store: {self.path}") from exc
+        if not isinstance(payload, Mapping):
+            raise ValueError("idempotency store must contain an object")
+        data: dict[str, tuple[str, Any]] = {}
+        for key, value in payload.items():
+            if not isinstance(value, list) or len(value) != 2:
+                raise ValueError("idempotency store entries must be [payload_hash, result]")
+            data[str(key)] = (str(value[0]), value[1])
+        self._data = data
 
     def __getitem__(self, key: str) -> tuple[str, Any]:
+        self._reload()
         return self._data[key]
 
     def __setitem__(self, key: str, value: tuple[str, Any]) -> None:
@@ -45,17 +84,21 @@ class JsonIdempotencyStore(MutableMapping[str, tuple[str, Any]]):
             json.dumps(value[1], ensure_ascii=False)
         except (TypeError, ValueError) as exc:
             raise ValueError("idempotency result must be JSON serializable") from exc
-        self._data[str(key)] = (str(value[0]), value[1])
-        self._flush()
+        with self.locked():
+            self._data[str(key)] = (str(value[0]), value[1])
+            self._flush()
 
     def __delitem__(self, key: str) -> None:
-        del self._data[key]
-        self._flush()
+        with self.locked():
+            del self._data[key]
+            self._flush()
 
     def __iter__(self) -> Iterator[str]:
+        self._reload()
         return iter(self._data)
 
     def __len__(self) -> int:
+        self._reload()
         return len(self._data)
 
     def _flush(self) -> None:

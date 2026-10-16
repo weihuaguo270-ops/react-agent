@@ -34,6 +34,7 @@ def _failure_trajectory(
     *, question: str, session_id: str, message: str, status: int, code: str = ""
 ) -> dict:
     reason = _failure_stop_reason(status, code)
+    runtime_episode_id = f"runtime-http-{session_id}"
     return serialize_trajectory(
         session_id=session_id,
         query=question,
@@ -44,6 +45,9 @@ def _failure_trajectory(
             "status": status,
             "stop_reason": reason.value,
             "error_code": code or "http_error",
+            "runtime_episode_id": runtime_episode_id,
+            "trace_id": session_id,
+            "run_id": session_id,
         },
     )
 
@@ -137,6 +141,13 @@ def _http_agent_runner_factory(base_url: str) -> Callable[..., tuple]:
                 {
                     "transport": "http",
                     "execution_mode": str(payload.get("mode") or trajectory["metadata"].get("execution_mode") or "unknown"),
+                    "runtime_episode_id": str(
+                        payload.get("runtime_episode_id")
+                        or trajectory["metadata"].get("runtime_episode_id")
+                        or f"runtime-http-{session_id}"
+                    ),
+                    "trace_id": str(payload.get("trace_id") or session_id),
+                    "run_id": str(payload.get("run_id") or session_id),
                 }
             )
             stdout_parts = [f"[调工具] {t}()" for t in list(payload.get("tools_called") or [])]
@@ -175,6 +186,11 @@ def _http_agent_runner_factory(base_url: str) -> Callable[..., tuple]:
                 # reported by the underlying ReAct/Workflow endpoint so the
                 # trajectory remains attributable to its source path.
                 "execution_mode": str(payload.get("mode") or "unknown"),
+                "runtime_episode_id": str(
+                    payload.get("runtime_episode_id") or f"runtime-http-{session_id}"
+                ),
+                "trace_id": str(payload.get("trace_id") or session_id),
+                "run_id": str(payload.get("run_id") or session_id),
             },
         )
         return stdout, trajectory, 0, time.monotonic() - started
