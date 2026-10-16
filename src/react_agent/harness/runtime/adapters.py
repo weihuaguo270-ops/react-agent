@@ -7,6 +7,11 @@ from typing import Any, Callable, Mapping
 
 from react_agent.harness.contracts import StopReason, assert_valid, serialize_trajectory
 from react_agent.harness.runtime.episode import RuntimeEpisode
+from react_agent.harness.runtime.structured_output import (
+    StructuredOutputContract,
+    StructuredOutputResult,
+    attach_structured_output_evidence,
+)
 
 
 def _answer_text(value: Any) -> str:
@@ -74,6 +79,19 @@ def _stop_reason_from_error(exc: BaseException) -> tuple[StopReason, str]:
     return error.stop_reason, error.message
 
 
+def _parse_structured_output(
+    contract: StructuredOutputContract | None,
+    source: Any,
+) -> StructuredOutputResult | None:
+    if contract is None:
+        return None
+    if isinstance(source, Mapping):
+        raw = source.get("structured_output", source.get("answer", source))
+    else:
+        raw = source
+    return contract.parse(raw)
+
+
 class ReactLoopAdapter:
     """Adapt the existing ReAct function into a RuntimeEpisode."""
 
@@ -90,6 +108,7 @@ class ReactLoopAdapter:
         transport: str = "in_process",
         runtime_episode_id: str | None = None,
         trace_id: str | None = None,
+        structured_output_contract: StructuredOutputContract | None = None,
     ) -> RuntimeEpisode:
         if self.loop is None:
             from react_agent.react_loop import react_loop
@@ -114,6 +133,7 @@ class ReactLoopAdapter:
                 kwargs["tool_defs"] = tool_defs
             result = loop(query, **kwargs)
             answer = _answer_text(result)
+            structured_result = _parse_structured_output(structured_output_contract, result)
             steps: Any = result.get("agent_steps") if isinstance(result, Mapping) else None
             try:
                 from react_agent.react_loop import get_last_trajectory_steps
@@ -129,6 +149,9 @@ class ReactLoopAdapter:
                 status = "timeout"
             elif stop_reason in {StopReason.MAX_STEPS, StopReason.PARSE_ERROR}:
                 status = "failed"
+            if structured_result is not None and not structured_result.ok:
+                stop_reason = StopReason.PARSE_ERROR
+                status = "failed"
             trajectory = _trajectory(
                 episode=episode,
                 answer=answer,
@@ -136,6 +159,8 @@ class ReactLoopAdapter:
                 stop_reason=stop_reason,
                 metadata={"model": str((result or {}).get("model") or "") if isinstance(result, Mapping) else ""},
             )
+            if structured_result is not None:
+                trajectory = attach_structured_output_evidence(trajectory, structured_result)
             metrics = {
                 "steps": len(trajectory["steps"]),
                 "tool_calls": sum(1 for step in trajectory["steps"] if step.get("action") or step.get("actions")),
@@ -189,6 +214,7 @@ class WorkflowAdapter:
         transport: str = "in_process",
         runtime_episode_id: str | None = None,
         trace_id: str | None = None,
+        structured_output_contract: StructuredOutputContract | None = None,
     ) -> RuntimeEpisode:
         if self.runner is None:
             from react_agent.workflow import run_workflow
@@ -212,6 +238,10 @@ class WorkflowAdapter:
                 kwargs["tool_registry"] = dict(tool_registry)
             result = runner(workflow, dict(initial_state or {}), **kwargs)
             source_trajectory = result.to_trajectory()
+            structured_result = _parse_structured_output(
+                structured_output_contract,
+                getattr(result, "structured_output", getattr(result, "answer", "")),
+            )
             metadata = dict(source_trajectory.get("metadata") or {})
             metadata.update(
                 {
@@ -231,6 +261,11 @@ class WorkflowAdapter:
                 metadata.get("stop_reason") or (StopReason.COMPLETED if result.ok else StopReason.TOOL_ERROR)
             )
             status = "completed" if result.ok else ("refused" if result.refused else "failed")
+            if structured_result is not None:
+                trajectory = attach_structured_output_evidence(trajectory, structured_result)
+                if not structured_result.ok:
+                    stop_reason = StopReason.PARSE_ERROR
+                    status = "failed"
             episode.run_id = str(result.run_id)
             episode.session_id = str(trajectory["session_id"])
             return episode.finish(
@@ -270,6 +305,7 @@ class HttpRunnerAdapter:
         execution_mode: str | None = None,
         status_code: int = 200,
         transport: str = "http",
+        structured_output_contract: StructuredOutputContract | None = None,
     ) -> tuple[dict[str, Any], RuntimeEpisode]:
         data = dict(payload)
         mode_value = str(execution_mode or data.get("mode") or "react").lower()
@@ -321,6 +357,11 @@ class HttpRunnerAdapter:
                 stop_reason=reason,
                 metadata={"http_status": status_code},
             )
+        structured_result = _parse_structured_output(structured_output_contract, data)
+        if structured_result is not None:
+            trajectory = attach_structured_output_evidence(trajectory, structured_result)
+            if not structured_result.ok:
+                trajectory["metadata"]["stop_reason"] = StopReason.PARSE_ERROR.value
         assert_valid(trajectory)
         reason = RuntimeEpisode._coerce_stop_reason(
             trajectory.get("metadata", {}).get("stop_reason", StopReason.TOOL_ERROR.value)
