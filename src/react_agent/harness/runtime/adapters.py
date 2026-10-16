@@ -148,11 +148,9 @@ class ReactLoopAdapter:
                 metrics=metrics,
             )
         except Exception as exc:
-            try:
-                from react_agent.llm import LLMCancelled
-            except Exception:
-                LLMCancelled = ()
-            if LLMCancelled and isinstance(exc, LLMCancelled):
+            from react_agent.llm import LLMCancelled
+
+            if isinstance(exc, LLMCancelled):
                 reason, message = StopReason.CANCELLED, str(exc) or "execution cancelled"
             else:
                 reason, message = _stop_reason_from_error(exc)
