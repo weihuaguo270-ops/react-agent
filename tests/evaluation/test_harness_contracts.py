@@ -247,6 +247,91 @@ def test_retry_policy_run_retries_and_returns_result():
     assert sleeps == [0]
 
 
+def test_retry_policy_supports_categories_and_total_budget():
+    from react_agent.harness import RetryBudgetExceeded, RetryPolicy
+
+    policy = RetryPolicy(
+        max_attempts=3,
+        base_delay=0.2,
+        jitter_ratio=0,
+        retryable_categories=frozenset({"timeout"}),
+        total_budget_seconds=0.25,
+    )
+    assert policy.should_retry("timeout", 1)
+    assert policy.should_retry(TimeoutError("deadline"), 1)
+    assert not policy.should_retry("500 service failure", 1)
+
+    now = [0.0]
+    attempts = []
+
+    def operation():
+        attempts.append(1)
+        now[0] += 0.1
+        raise TimeoutError("deadline")
+
+    with pytest.raises(RetryBudgetExceeded):
+        policy.run(
+            operation,
+            sleep_fn=lambda delay: now.__setitem__(0, now[0] + delay),
+            monotonic_fn=lambda: now[0],
+        )
+    assert len(attempts) == 1
+
+
+def test_idempotency_policy_resolves_key_replays_and_rejects_conflicts():
+    from react_agent.harness import IdempotencyPolicy
+
+    ledger = {}
+    policy = IdempotencyPolicy("required", key_source="explicit_or_call_id")
+    key, digest, cached, replayed = policy.lookup(
+        ledger, "write", {"value": 1}, call_id="call-1"
+    )
+    assert key == "call-1"
+    assert cached is None and replayed is False
+    policy.record(ledger, key, digest, "stored")
+    _, _, cached, replayed = policy.lookup(
+        ledger, "write", {"value": 1}, key="call-1"
+    )
+    assert cached == "stored" and replayed is True
+    with pytest.raises(ValueError, match="conflicts"):
+        policy.lookup(ledger, "write", {"value": 2}, key="call-1")
+
+    reject = IdempotencyPolicy("safe", replay_behavior="reject")
+    key, digest, _, _ = reject.lookup(ledger, "other", {}, key="k1")
+    reject.record(ledger, key, digest, "done")
+    with pytest.raises(ValueError, match="replay rejected"):
+        reject.lookup(ledger, "other", {}, key="k1")
+
+
+def test_tool_boundary_retries_and_replays_idempotent_side_effect():
+    from react_agent.harness import IdempotencyPolicy, RetryPolicy
+    from react_agent.harness.tool_boundary import ToolBoundary
+
+    calls = []
+
+    def write_once():
+        calls.append(1)
+        if len(calls) == 1:
+            raise TimeoutError("transient")
+        return {"written": True}
+
+    boundary = ToolBoundary(
+        {"write_once": write_once},
+        definitions=[
+            {
+                "name": "write_once",
+                "parameters": {"type": "object"},
+                "idempotency_level": "required",
+            }
+        ],
+        retry_policy=RetryPolicy(max_attempts=2, base_delay=0, jitter_ratio=0),
+        idempotency_policy=IdempotencyPolicy("required"),
+    )
+    assert boundary.execute("write_once", {}, idempotency_key="k1") == {"written": True}
+    assert boundary.execute("write_once", {}, idempotency_key="k1") == {"written": True}
+    assert len(calls) == 2
+
+
 def test_idempotency_policy_binds_tool_and_payload():
     from react_agent.harness import IdempotencyPolicy
 

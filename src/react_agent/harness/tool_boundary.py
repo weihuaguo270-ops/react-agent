@@ -171,11 +171,18 @@ class ToolBoundary:
         default_timeout_seconds: float | None = None,
         default_max_output_chars: int = DEFAULT_MAX_OUTPUT_CHARS,
         risk_sandbox: bool = False,
+        retry_policy=None,
+        idempotency_policy=None,
     ) -> None:
+        from react_agent.harness.runtime import IdempotencyPolicy, RetryPolicy
+
         self.registry = registry
         self.default_timeout_seconds = default_timeout_seconds
         self.default_max_output_chars = default_max_output_chars
         self.risk_sandbox = risk_sandbox
+        self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
+        self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
+        self._idempotency_results: dict[str, tuple[str, Any]] = {}
         self.specs = {
             spec.name: spec
             for spec in (ToolSpec.from_definition(item) for item in (definitions or []))
@@ -190,12 +197,14 @@ class ToolBoundary:
         timeout_seconds: float | None = None,
         max_output_chars: int | None = None,
         idempotency_key: str | None = None,
+        call_id: str | None = None,
     ) -> Any:
         call = ToolCall(
             name=tool_name,
             arguments=arguments or {},
             timeout_seconds=timeout_seconds,
             idempotency_key=idempotency_key,
+            call_id=call_id,
             source="runtime",
         )
         fn = self.registry.get(call.name)
@@ -217,15 +226,31 @@ class ToolBoundary:
         spec = self.specs.get(
             call.name, ToolSpec(call.name, max_output_chars=self.default_max_output_chars)
         )
-        from react_agent.harness.runtime import IdempotencyPolicy
-
-        IdempotencyPolicy(spec.idempotency_level).validate_key(call.idempotency_key)
+        policy = self.idempotency_policy
+        if spec.idempotency_level != "none":
+            policy = type(policy)(
+                mode=spec.idempotency_level,
+                key_source=policy.key_source,
+                replay_behavior=policy.replay_behavior,
+                bind_payload=policy.bind_payload,
+            )
+        key, payload_digest, cached, replayed = policy.lookup(
+            self._idempotency_results,
+            call.name,
+            call.arguments,
+            key=call.idempotency_key,
+            call_id=call.call_id,
+        )
+        if replayed:
+            return cached
         try:
             validate_tool_arguments(canonical_arguments, spec.parameters)
         except Exception as exc:
             raise ToolCallError(
                 ToolError.from_exception(exc, tool_name=call.name, source="runtime")
             ) from exc
+
+        from react_agent.harness.runtime import RetryPolicy
 
         required_sandbox = bool(getattr(SANDBOX, "required", False))
         effective_timeout = (
@@ -239,30 +264,45 @@ class ToolBoundary:
             getattr(SANDBOX, "strategy", "off") != "off"
             and SANDBOX.should_sandbox(call.name)
         ))
-        if use_sandbox:
-            result = SANDBOX.run(
-                {"function": {"name": call.name, "arguments": call.arguments}}
-            )
-            if result == "__SANDBOX_DISABLED__":
-                if required_sandbox:
-                    raise RuntimeError("required mode refused unsandboxed tool execution")
-                result = invoke_with_timeout(
-                    lambda: fn(**canonical_arguments),
-                    effective_timeout,
-                    tool_name=call.name,
+        def operation() -> Any:
+            if use_sandbox:
+                result = SANDBOX.run(
+                    {"function": {"name": call.name, "arguments": call.arguments}}
                 )
-            elif isinstance(result, str) and result.startswith("[沙箱]"):
-                raise RuntimeError(result)
-        else:
-            result = invoke_with_timeout(
+                if result == "__SANDBOX_DISABLED__":
+                    if required_sandbox:
+                        raise RuntimeError("required mode refused unsandboxed tool execution")
+                    return invoke_with_timeout(
+                        lambda: fn(**canonical_arguments),
+                        effective_timeout,
+                        tool_name=call.name,
+                    )
+                if isinstance(result, str) and result.startswith("[沙箱]"):
+                    raise RuntimeError(result)
+                return result
+            return invoke_with_timeout(
                 lambda: fn(**canonical_arguments),
                 effective_timeout,
                 tool_name=call.name,
             )
-        return limit_tool_output(
+
+        retry_policy = self.retry_policy
+        if policy.mode == "none" and retry_policy.max_attempts > 1:
+            retry_policy = RetryPolicy(
+                max_attempts=1,
+                base_delay=retry_policy.base_delay,
+                max_delay=retry_policy.max_delay,
+                jitter_ratio=retry_policy.jitter_ratio,
+                retryable_categories=retry_policy.retryable_categories,
+                total_budget_seconds=retry_policy.total_budget_seconds,
+            )
+        result = retry_policy.run(operation)
+        result = limit_tool_output(
             result,
             max_output_chars if max_output_chars is not None else spec.max_output_chars,
         )
+        policy.record(self._idempotency_results, key, payload_digest, result)
+        return result
 
 
 def execute_registered_tool(
@@ -274,7 +314,10 @@ def execute_registered_tool(
     timeout_seconds: float | None = None,
     max_output_chars: int | None = None,
     idempotency_key: str | None = None,
+    call_id: str | None = None,
     risk_sandbox: bool = False,
+    retry_policy=None,
+    idempotency_policy=None,
 ) -> Any:
     """兼容入口；所有本地工具调用均经过 :class:`ToolBoundary`."""
     if definitions is None:
@@ -285,13 +328,18 @@ def execute_registered_tool(
         except Exception:
             definitions = []
     return ToolBoundary(
-        registry, definitions=definitions, risk_sandbox=risk_sandbox
+        registry,
+        definitions=definitions,
+        risk_sandbox=risk_sandbox,
+        retry_policy=retry_policy,
+        idempotency_policy=idempotency_policy,
     ).execute(
         tool_name,
         arguments,
         timeout_seconds=timeout_seconds,
         max_output_chars=max_output_chars,
         idempotency_key=idempotency_key,
+        call_id=call_id,
     )
 
 

@@ -1,5 +1,5 @@
 """Runtime Harness policies."""
 
-from .policies import IdempotencyPolicy, RetryPolicy
+from .policies import IdempotencyPolicy, RetryBudgetExceeded, RetryPolicy
 
-__all__ = ["RetryPolicy", "IdempotencyPolicy"]
+__all__ = ["RetryPolicy", "RetryBudgetExceeded", "IdempotencyPolicy"]
