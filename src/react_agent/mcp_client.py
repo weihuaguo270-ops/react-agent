@@ -16,6 +16,7 @@ MCP Client — 独立的 MCP 协议实现模块
 import json
 import subprocess
 import os as _os
+from typing import Any
 
 
 # ── MCP 子进程环境白名单 ──
@@ -67,13 +68,19 @@ def _mcp_child_env(extra: dict | None = None, *, allow_proxy: bool | None = None
 class MCPClient:
     """通过 stdin/stdout（stdio）连接 MCP Server，实现 JSON-RPC 2.0 通信"""
 
-    def __init__(self, command, args=None, env=None):
+    def __init__(self, command, args=None, env=None, *, retry_policy=None, idempotency_policy=None):
+        from react_agent.harness.runtime import IdempotencyPolicy, RetryPolicy
+
         self.command = command
         self.args = args or []
         self.env = env or {}
         self.proc = None
         self._req_id = 0
         self.tools = []
+        # Defaults preserve the historical single-attempt/no-cache behavior.
+        self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
+        self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
+        self._idempotency_results: dict[str, tuple[str, str]] = {}
 
     # ---------------------------------------------------------------
     # 生命周期
@@ -128,14 +135,46 @@ class MCPClient:
         print(f"  [MCP] 共 {len(self.tools)} 个工具")
         return self.tools
 
-    def call_tool(self, name, arguments=None):
+    def call_tool(self, name, arguments=None, *, idempotency_key: str | None = None):
         """调用 tools/call -> 返回纯文本结果"""
-        resp = self._rpc("tools/call", {
-            "name": name,
-            "arguments": arguments or {},
-        })
-        texts = [c["text"] for c in resp.get("content", []) if c.get("type") == "text"]
-        return "\n".join(texts)
+        from react_agent.harness.contracts import ToolCall
+
+        call = ToolCall(
+            name=name,
+            arguments=arguments or {},
+            idempotency_key=idempotency_key,
+            source="runtime",
+        )
+        policy = self.idempotency_policy
+        policy.validate_key(call.idempotency_key)
+        key = str(call.idempotency_key or "").strip()
+        payload_hash = policy.payload_hash(call.name, call.arguments)
+        if key and policy.mode != "none":
+            previous = self._idempotency_results.get(key)
+            if previous is not None:
+                if previous[0] != payload_hash:
+                    raise ValueError("idempotency key conflicts with a different MCP payload")
+                return previous[1]
+
+        def operation() -> str:
+            resp = self._rpc("tools/call", {
+                "name": call.name,
+                "arguments": json.loads(call.arguments),
+            })
+            texts = [c["text"] for c in resp.get("content", []) if c.get("type") == "text"]
+            return "\n".join(texts)
+
+        try:
+            result = self.retry_policy.run(operation)
+        except Exception as exc:
+            from react_agent.harness.contracts import ToolCallError, ToolError
+
+            raise ToolCallError(
+                ToolError.from_exception(exc, tool_name=call.name, source="mcp")
+            ) from exc
+        if key and policy.mode != "none":
+            self._idempotency_results[key] = (payload_hash, result)
+        return result
 
     def to_tool_definitions(self):
         """转成 OpenAI Function Calling JSON Schema"""
@@ -195,13 +234,18 @@ class MockMCPClient:
     用于 CI、面试 Demo、无 uvx 环境证明「工具协议合并」路径。
     """
 
-    def __init__(self, command="mock", args=None, env=None):
+    def __init__(self, command="mock", args=None, env=None, *, retry_policy=None, idempotency_policy=None):
+        from react_agent.harness.runtime import IdempotencyPolicy, RetryPolicy
+
         self.command = command
         self.args = args or []
         self.env = env or {}
         self.proc = None
         self.tools = []
         self._connected = False
+        self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
+        self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
+        self._idempotency_results: dict[str, tuple[str, str]] = {}
 
     def connect(self, timeout=15):
         self._connected = True
@@ -246,14 +290,47 @@ class MockMCPClient:
         print(f"  [MCP] 共 {len(self.tools)} 个工具（mock）")
         return self.tools
 
-    def call_tool(self, name, arguments=None):
-        arguments = arguments or {}
-        if name == "get_current_time":
-            tz = arguments.get("timezone") or "Asia/Shanghai"
-            return f"2026-07-19T09:00:00+08:00 ({tz}) [mock]"
-        if name == "echo_note":
-            return f"echo: {arguments.get('text', '')}"
-        raise RuntimeError(f"MCP 错误 [-32601]: Unknown mock tool: {name}")
+    def call_tool(self, name, arguments=None, *, idempotency_key: str | None = None):
+        from react_agent.harness.contracts import ToolCall
+
+        call = ToolCall(
+            name=name,
+            arguments=arguments or {},
+            idempotency_key=idempotency_key,
+            source="runtime",
+        )
+        policy = self.idempotency_policy
+        policy.validate_key(call.idempotency_key)
+        key = str(call.idempotency_key or "").strip()
+        payload_hash = policy.payload_hash(call.name, call.arguments)
+        if key and policy.mode != "none":
+            previous = self._idempotency_results.get(key)
+            if previous is not None:
+                if previous[0] != payload_hash:
+                    raise ValueError("idempotency key conflicts with a different MCP payload")
+                return previous[1]
+
+        canonical_arguments: dict[str, Any] = json.loads(call.arguments) or {}
+
+        def operation() -> str:
+            if call.name == "get_current_time":
+                tz = canonical_arguments.get("timezone") or "Asia/Shanghai"
+                return f"2026-07-19T09:00:00+08:00 ({tz}) [mock]"
+            if call.name == "echo_note":
+                return f"echo: {canonical_arguments.get('text', '')}"
+            raise RuntimeError(f"MCP 错误 [-32601]: Unknown mock tool: {call.name}")
+
+        try:
+            result = self.retry_policy.run(operation)
+        except Exception as exc:
+            from react_agent.harness.contracts import ToolCallError, ToolError
+
+            raise ToolCallError(
+                ToolError.from_exception(exc, tool_name=call.name, source="mcp")
+            ) from exc
+        if key and policy.mode != "none":
+            self._idempotency_results[key] = (payload_hash, result)
+        return result
 
     def to_tool_definitions(self):
         defs = []

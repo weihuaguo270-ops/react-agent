@@ -194,6 +194,25 @@ def load_software_task_dataset(path: str | Path) -> SoftwareTaskDataset:
     return SoftwareTaskDataset.load(path)
 
 
+def load_software_task_dataset_bundle(path: str | Path):
+    """Load the reviewed task manifest with a Shared FixtureManifest."""
+    from react_agent.harness.evaluation import FixtureBundle, build_fixture_manifest
+
+    manifest_path = Path(path)
+    dataset = SoftwareTaskDataset.load(manifest_path)
+    fixture = build_fixture_manifest(
+        manifest_path,
+        fixture_id=f"dataset:{dataset.dataset_id}",
+        version=dataset.version,
+        dependencies={
+            "loader": "react_agent.eval.software_task_dataset",
+            "schema": DATASET_SCHEMA_VERSION,
+        },
+        environment={"dataset_status": dataset.status},
+    )
+    return FixtureBundle(value=dataset, manifest=fixture)
+
+
 def import_software_task_records(
     records_path: str | Path,
     output_path: str | Path,

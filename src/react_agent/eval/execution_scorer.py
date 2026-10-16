@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import time
@@ -20,6 +21,8 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 
 from react_agent.harness.tool_boundary import execute_registered_tool
+from react_agent.harness.contracts import ArtifactRef, FixtureManifest, serialize_trajectory
+from react_agent.harness.evaluation import episode_from_case
 from react_agent.tools import TOOL_REGISTRY
 
 _EVAL_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -50,6 +53,21 @@ def load_execution_dataset(path: Optional[str] = None) -> list[dict]:
     if not isinstance(data, list):
         raise ValueError(f"execution dataset must be a list: {filepath}")
     return data
+
+
+def load_execution_dataset_bundle(path: Optional[str] = None):
+    """Load execution cases with immutable fixture metadata."""
+    from react_agent.harness.evaluation import load_json_fixture_bundle
+
+    filepath = path or DEFAULT_EXECUTION_DATASET
+    bundle = load_json_fixture_bundle(
+        filepath,
+        fixture_id=f"eval:{os.path.splitext(os.path.basename(filepath))[0]}",
+        dependencies={"loader": "react_agent.eval.execution_scorer", "format": "execution-case/v1"},
+    )
+    if not isinstance(bundle.value, list):
+        raise ValueError(f"execution dataset must be a list: {filepath}")
+    return bundle
 
 
 def _check_expectation(result: str, step: dict) -> tuple[bool, str]:
@@ -98,7 +116,11 @@ def execute_tool_step(tool: str, arguments: dict) -> str:
                 or payload.get("error") == "approval_required"
             ):
                 return stripped
-        return json.dumps({"error": f"执行错误: {message}"})
+        from react_agent.harness.contracts import tool_error_from_exception
+
+        payload = tool_error_from_exception(e, source="evaluation", tool_name=tool)
+        payload["error"] = f"执行错误: {message}"
+        return json.dumps(payload, ensure_ascii=False)
 
 
 def _collect_tools(stdout: str, trajectory: Optional[dict]) -> set[str]:
@@ -327,12 +349,134 @@ def score_agent_task(
         "has_final_answer": has_answer,
         "self_repair_seen": self_repair,
         "checks": checks,
+        "trajectory": trajectory,
         "stdout_preview": (stdout or "")[:400],
         "final_answer_preview": str(
             (trajectory or {}).get("final_answer") or ""
         )[:300],
         "reason": "agent outcome ok" if ok else "agent outcome failed",
     }
+
+
+def _execution_acceptance(task: dict) -> list[str]:
+    """Return explicit acceptance criteria without changing legacy task data."""
+    criteria = [str(item) for item in (task.get("acceptance_criteria") or ()) if str(item).strip()]
+    if criteria:
+        return criteria
+    for field, label in (
+        ("expected_answer", "expected answer"),
+        ("must_contain", "required output"),
+        ("must_contain_any", "one required output"),
+        ("expected_tools", "expected tool"),
+        ("require_all_tools", "required tool"),
+    ):
+        value = task.get(field)
+        if value:
+            values = value if isinstance(value, (list, tuple)) else [value]
+            criteria.extend(f"{label}: {item}" for item in values)
+    if not criteria:
+        for index, step in enumerate(task.get("steps") or (), 1):
+            tool = str(step.get("tool") or "tool")
+            expectation = next(
+                (f"{key}={step[key]}" for key in ("expect_equals", "expect_contains", "expect_regex") if key in step),
+                "step succeeds",
+            )
+            criteria.append(f"step {index}: {tool} {expectation}")
+    return criteria
+
+
+def _execution_trajectory(task: dict, result: dict) -> dict:
+    existing = result.get("trajectory")
+    if isinstance(existing, dict) and existing.get("steps"):
+        return serialize_trajectory(
+            session_id=str(existing.get("session_id") or f"execution:{task.get('id') or 'unknown'}"),
+            query=str(task.get("question") or task.get("query") or task.get("name") or task.get("id") or ""),
+            steps=existing["steps"],
+            final_answer=str(existing.get("final_answer") or ""),
+            model=str(existing.get("model") or ""),
+            metadata={
+                **dict(existing.get("metadata") or {}),
+                "transport": "execution",
+                "execution_mode": str(result.get("mode") or task.get("mode") or "agent"),
+                "passed": bool(result.get("passed")),
+            },
+        )
+    steps = []
+    for item in result.get("steps") or ():
+        steps.append({
+            "step": int(item.get("index") or len(steps) + 1),
+            "action": {
+                "name": str(item.get("tool") or "unknown"),
+                "arguments": json.dumps(item.get("arguments") or {}, ensure_ascii=False, sort_keys=True),
+            },
+            "observation": str(item.get("result") or ""),
+        })
+    if not steps:
+        steps = [{
+            "step": 1,
+            "observation": str(result.get("stdout_preview") or result.get("reason") or ""),
+        }]
+    return serialize_trajectory(
+        session_id=f"execution:{task.get('id') or 'unknown'}",
+        query=str(task.get("question") or task.get("query") or task.get("name") or task.get("id") or ""),
+        steps=steps,
+        final_answer=str(result.get("final_answer_preview") or ""),
+        metadata={
+            "transport": "execution",
+            "execution_mode": str(result.get("mode") or task.get("mode") or "offline_tools"),
+            "passed": bool(result.get("passed")),
+        },
+    )
+
+
+def _attach_execution_episode(
+    task: dict,
+    result: dict,
+    *,
+    fixture_manifest: FixtureManifest,
+    batch_id: str,
+) -> None:
+    """Attach shared Episode evidence while preserving the legacy result shape."""
+    acceptance = _execution_acceptance(task)
+    if not acceptance:
+        result["evaluation_episode_error"] = "evaluation episode missing required runner fields: acceptance_criteria"
+        return
+    trajectory = _execution_trajectory(task, result)
+    encoded = json.dumps(
+        trajectory, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    payload = dict(task)
+    payload["id"] = str(task.get("id") or "unknown")
+    payload["question"] = str(
+        task.get("question") or task.get("query") or task.get("name") or payload["id"]
+    )
+    payload["acceptance_criteria"] = acceptance
+    episode = episode_from_case(
+        payload,
+        fixture_manifest=fixture_manifest,
+        runner=f"execution:{task.get('mode') or 'offline_tools'}",
+        batch_id=batch_id,
+        trajectory=trajectory,
+        score={
+            "passed": bool(result.get("passed")),
+            "status": "passed" if result.get("passed") else "failed",
+        },
+        environment={
+            "mode": str(result.get("mode") or task.get("mode") or "offline_tools"),
+            "exit_code": str(result.get("exit_code", "")),
+            "duration_seconds": str(result.get("duration_seconds", "")),
+        },
+        artifacts=(ArtifactRef(
+            id=f"trajectory:{trajectory['session_id']}",
+            media_type="document",
+            uri=f"trajectory://{trajectory['session_id']}",
+            mime_type="application/json",
+            sha256=hashlib.sha256(encoded).hexdigest(),
+            metadata={"format": "harness-trajectory/v1", "task_id": payload["id"]},
+        ),),
+    )
+    result["trajectory"] = trajectory
+    result["evaluation_episode"] = episode.to_dict()
 
 
 def score_task(
@@ -373,7 +517,8 @@ def run_execution_suite(
     difficulties: 可选过滤 easy/medium/hard。
     """
     wanted = set(modes or ["offline_tools"])
-    tasks = load_execution_dataset(path)
+    bundle = load_execution_dataset_bundle(path)
+    tasks = bundle.value
     if only_ids:
         tasks = [t for t in tasks if str(t.get("id")) in only_ids]
     tasks = [t for t in tasks if (t.get("mode") or "offline_tools") in wanted]
@@ -384,9 +529,24 @@ def run_execution_suite(
             if (t.get("difficulty") or "unspecified") in wanted_d
         ]
 
+    manifest = bundle.manifest
+    batch_seed = {
+        "fixture": manifest.content_hash(),
+        "modes": sorted(wanted),
+        "tasks": [str(t.get("id") or "unknown") for t in tasks],
+    }
+    batch_digest = hashlib.sha256(
+        json.dumps(batch_seed, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:16]
+    batch_id = f"eval-batch-{batch_digest}"
     results = []
     for task in tasks:
-        results.append(score_task(task, agent_runner=agent_runner))
+        result = score_task(task, agent_runner=agent_runner)
+        if not result.get("skipped"):
+            _attach_execution_episode(
+                task, result, fixture_manifest=manifest, batch_id=batch_id
+            )
+        results.append(result)
 
     scored = [r for r in results if not r.get("skipped")]
     passed = sum(1 for r in scored if r["passed"])
@@ -428,6 +588,8 @@ def run_execution_suite(
         "report_id": f"execution_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "dataset": os.path.basename(path or DEFAULT_EXECUTION_DATASET),
+        "fixture_manifest": manifest.to_dict(),
+        "batch_id": batch_id,
         "modes": sorted(wanted),
         "summary": {
             "total": total,

@@ -1,4 +1,4 @@
-"""public_rag_benchmark — 公开 RAG/Agent 子集（分层：smoke / hard / held_out）
+"""public_rag_benchmark — 公开 RAG 子集（分层：smoke / hard / held_out）
 
 外部可比性协议（冻结子集，非全量榜）：
   - smoke: 协议冒烟（易；禁止单独当能力宣传）
@@ -11,11 +11,15 @@
   - offline: 指标夹具（CI）
   - rag: 真检索 + 抽取 reader
   - rag_topk1 / rag_no_context / rag_distractors_only: 对照跌落
-  - agent: contexts 注入 prompt（需 API Key）
+  - agent: 可选的 Agent + RAG 集成路径（contexts 注入 prompt，需 API Key）
+
+本 benchmark 的主评测对象是 RAG 的答案匹配、检索召回和上下文支撑度；
+``agent`` 结果单独表示 Agent 使用 RAG 上下文的集成表现，不等同于通用 Agent 能力评测。
 """
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import tempfile
@@ -25,6 +29,8 @@ from typing import Any, Optional
 
 from react_agent.eval.execution_scorer import wilson_ci
 from react_agent.eval.answer_match import match_gold, normalize_text
+from react_agent.harness.contracts import ArtifactRef, FixtureManifest, serialize_trajectory
+from react_agent.harness.evaluation import episode_from_case
 
 _EVAL_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PUBLIC_RAG = os.path.join(_EVAL_DIR, "public_rag_benchmark_subset.json")
@@ -38,6 +44,21 @@ def load_public_rag_benchmark(path: Optional[str] = None) -> dict[str, Any]:
     if not isinstance(data, dict) or not isinstance(data.get("cases"), list):
         raise ValueError(f"public rag benchmark must be object with cases[]: {filepath}")
     return data
+
+
+def load_public_rag_benchmark_bundle(path: Optional[str] = None):
+    """Load the frozen RAG benchmark and attach its source hash."""
+    from react_agent.harness.evaluation import load_json_fixture_bundle
+
+    filepath = path or DEFAULT_PUBLIC_RAG
+    bundle = load_json_fixture_bundle(
+        filepath,
+        fixture_id=f"eval:{os.path.splitext(os.path.basename(filepath))[0]}",
+        dependencies={"loader": "react_agent.eval.public_rag_benchmark", "format": "public-rag/v1"},
+    )
+    if not isinstance(bundle.value, dict) or not isinstance(bundle.value.get("cases"), list):
+        raise ValueError(f"public rag benchmark must be object with cases[]: {filepath}")
+    return bundle
 
 
 def retrieval_recall(
@@ -306,7 +327,85 @@ def run_agent_mode_case(
     )
     row["duration_seconds"] = duration
     row["exit_code"] = exit_code
+    row["trajectory"] = trajectory
     return row
+
+
+def _attach_public_rag_episode(
+    case: dict[str, Any],
+    row: dict[str, Any],
+    *,
+    fixture_manifest: FixtureManifest,
+    batch_id: str,
+) -> None:
+    """Attach a shared Episode to one benchmark result row."""
+    existing = row.get("trajectory")
+    if isinstance(existing, dict) and existing.get("steps"):
+        trajectory = serialize_trajectory(
+            session_id=str(existing.get("session_id") or f"public-rag:{case.get('id') or 'unknown'}"),
+            query=str(case.get("question") or case.get("id") or ""),
+            steps=existing["steps"],
+            final_answer=str(existing.get("final_answer") or row.get("prediction_preview") or ""),
+            model=str(existing.get("model") or ""),
+            metadata={**dict(existing.get("metadata") or {}), "transport": "public-rag"},
+        )
+    else:
+        trajectory = serialize_trajectory(
+            session_id=f"public-rag:{case.get('id') or 'unknown'}:{row.get('mode') or 'unknown'}",
+            query=str(case.get("question") or case.get("id") or ""),
+            steps=[{
+                "step": 1,
+                "action": {
+                    "name": "retrieve_context",
+                    "arguments": json.dumps(
+                        {"mode": row.get("mode"), "top_k": row.get("top_k")},
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    ),
+                },
+                "observation": str(row.get("prediction_preview") or row.get("reason") or ""),
+            }],
+            final_answer=str(row.get("prediction_preview") or ""),
+            metadata={"transport": "public-rag", "execution_mode": str(row.get("mode") or "unknown")},
+        )
+    encoded = json.dumps(
+        trajectory, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    tier = str(case.get("tier") or "smoke")
+    split = "held_out" if tier == "held_out" else "dev"
+    acceptance = [
+        f"answer matches gold: {case.get('gold_answer') or ''}",
+        f"retrieval recall >= {row.get('min_retrieval_recall', 0)}",
+        "answer is grounded in retrieved context",
+    ]
+    episode = episode_from_case(
+        {
+            "id": str(row.get("id") or case.get("id") or "unknown"),
+            "question": str(case.get("question") or case.get("id") or ""),
+            "acceptance_criteria": acceptance,
+            "split": split,
+        },
+        fixture_manifest=fixture_manifest,
+        runner=f"public-rag:{row.get('mode') or 'unknown'}",
+        batch_id=batch_id,
+        trajectory=trajectory,
+        score={
+            "passed": bool(row.get("passed")),
+            "retrieval_recall": row.get("retrieval_recall"),
+            "faithfulness": bool(row.get("faithfulness")),
+        },
+        environment={"tier": tier, "benchmark": str(row.get("benchmark") or "")},
+        artifacts=(ArtifactRef(
+            id=f"trajectory:public-rag:{row.get('id') or case.get('id') or 'unknown'}:{row.get('mode') or 'unknown'}",
+            media_type="document",
+            uri=f"trajectory://public-rag/{row.get('id') or case.get('id') or 'unknown'}/{row.get('mode') or 'unknown'}",
+            mime_type="application/json",
+            sha256=hashlib.sha256(encoded).hexdigest(),
+            metadata={"format": "harness-trajectory/v1", "tier": tier},
+        ),),
+    )
+    row["trajectory"] = trajectory
+    row["evaluation_episode"] = episode.to_dict()
 
 
 def _rate_map(d: dict) -> dict:
@@ -351,7 +450,9 @@ def run_public_rag_benchmark(
     Default modes: offline + rag on all selected tiers, plus control drop-offs on hard.
     """
     wanted = set(modes or ["offline", "rag"])
-    bundle = load_public_rag_benchmark(path)
+    fixture_bundle = load_public_rag_benchmark_bundle(path)
+    bundle = fixture_bundle.value
+    fixture_manifest = fixture_bundle.manifest
     defaults = bundle.get("defaults") or {}
 
     cases = list(bundle.get("cases") or [])
@@ -366,6 +467,16 @@ def run_public_rag_benchmark(
     if limit is not None:
         cases = cases[: int(limit)]
 
+    selected_ids = [str(case.get("id") or "unknown") for case in cases]
+    batch_seed = {
+        "fixture": fixture_manifest.content_hash(),
+        "modes": sorted(wanted),
+        "cases": selected_ids,
+    }
+    batch_digest = hashlib.sha256(
+        json.dumps(batch_seed, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:16]
+    batch_id = f"eval-batch-{batch_digest}"
     results: list[dict] = []
     for case in cases:
         ck = _case_top_k(case, defaults, top_k)
@@ -409,6 +520,12 @@ def run_public_rag_benchmark(
                 )
             )
 
+    for row in results:
+        case = next((item for item in cases if str(item.get("id")) == str(row.get("id"))), {})
+        _attach_public_rag_episode(
+            case, row, fixture_manifest=fixture_manifest, batch_id=batch_id
+        )
+
     # Automatic controls on hard+held_out when running default rag (drop-off evidence)
     control_results: list[dict] = []
     if include_controls and "rag" in wanted:
@@ -431,6 +548,12 @@ def run_public_rag_benchmark(
                         context_filter=filt,
                     )
                 )
+
+    for row in control_results:
+        case = next((item for item in cases if str(item.get("id")) == str(row.get("id"))), {})
+        _attach_public_rag_episode(
+            case, row, fixture_manifest=fixture_manifest, batch_id=batch_id
+        )
 
     total = len(results)
     passed = sum(1 for r in results if r.get("passed"))
@@ -489,6 +612,8 @@ def run_public_rag_benchmark(
         "report_id": f"public_rag_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "dataset": os.path.basename(path or DEFAULT_PUBLIC_RAG),
+        "fixture_manifest": fixture_manifest.to_dict(),
+        "batch_id": batch_id,
         "bundle_name": bundle.get("name"),
         "bundle_version": bundle.get("version"),
         "protocol": bundle.get("protocol"),
@@ -528,7 +653,7 @@ def run_public_rag_benchmark(
 def report_to_markdown(report: dict, *, title: Optional[str] = None) -> str:
     """渲染分模式 RAG 指标，并保留证据等级说明。"""
     s = report.get("summary") or {}
-    title = title or f"公开 RAG/Agent benchmark（{report.get('report_id', '')}）"
+    title = title or f"公开 RAG benchmark（{report.get('report_id', '')}）"
     wilson = s.get("pass_rate_wilson_95") or {}
     lines = [
         f"# {title}",
@@ -538,6 +663,7 @@ def report_to_markdown(report: dict, *, title: Optional[str] = None) -> str:
         f"- **bundle:** `{report.get('bundle_name', '')}` v`{report.get('bundle_version', '')}`",
         f"- **dataset:** `{report.get('dataset', '')}`",
         f"- **modes:** {', '.join(f'`{m}`' for m in (report.get('modes') or []))}",
+        "- **评测对象:** RAG 检索增强生成；`agent` 仅表示可选的 Agent + RAG 集成模式",
         f"- **总通过率:** {s.get('passed', 0)}/{s.get('total', 0)}（{s.get('pass_rate', 0)}%）"
         f" — **勿单独引用；看 by_tier**",
         f"- **Wilson 95% CI:** [{wilson.get('low', '—')}, {wilson.get('high', '—')}]%",

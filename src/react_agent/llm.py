@@ -336,11 +336,8 @@ class LLM:
 
         body = json.dumps(payload).encode("utf-8")
 
-        # 使用 resilience 模块的 retry 机制
-        from react_agent.resilience import retry
+        from react_agent.harness.runtime import RetryPolicy
 
-        @retry(max_attempts=3, base_delay=1.0, max_delay=10.0,
-               on_retry=lambda a, m, w, c, e: print(f"  [重试] {a}/{m} ({c}) 等待 {w:.0f}s"))
         def _do_request():
             # 每次重试新建 Request（避免已读 body / 连接状态问题）
             r = req.Request(url, data=body, headers=headers, method="POST")
@@ -353,7 +350,16 @@ class LLM:
                 raise URLError(_http_error_detail(e)) from e
 
         try:
-            return _do_request()
+            return RetryPolicy(
+                max_attempts=3,
+                base_delay=1.0,
+                max_delay=10.0,
+            ).run(
+                _do_request,
+                on_retry=lambda a, m, w, c, e: print(
+                    f"  [重试] {a}/{m} ({c}) 等待 {w:.0f}s"
+                ),
+            )
         except URLError as e:
             return {"role": "assistant", "content": f"LLM调用失败: {e}"}
         except json.JSONDecodeError as e:

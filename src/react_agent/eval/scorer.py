@@ -255,10 +255,12 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
         from eval_engine.core.trajectory_parser import parse_trajectory
         from eval_engine.core.process_reward import ProcessRewardScorer
         from eval_engine.core.contract import VerifierContract
+        from react_agent.harness.contracts import sibling_compatibility_report
     except ImportError:
         return None
 
     effective_judge = _wrap_judge(judge_fn or _default_mock_judge)
+    compatibility = sibling_compatibility_report()
 
     try:
         dag = parse_trajectory(trajectory)
@@ -286,7 +288,7 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
         if report.num_steps <= 0:
             raise EvalIntegrationError(
                 "eval-engine 返回空轨迹步数",
-                details={"api_contract": EVAL_ENGINE_API_CONTRACT},
+                details={"api_contract": EVAL_ENGINE_API_CONTRACT, "compatibility": compatibility},
             )
 
         overall_score = report.overall_score
@@ -299,6 +301,7 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
                     "api_contract": EVAL_ENGINE_API_CONTRACT,
                     "num_steps": report.num_steps,
                     "num_scored": report.num_scored,
+                    "compatibility": compatibility,
                 },
             )
 
@@ -310,6 +313,7 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
                     "api_contract": EVAL_ENGINE_API_CONTRACT,
                     "overall_score": overall_score,
                     "num_steps": report.num_steps,
+                    "compatibility": compatibility,
                 },
             )
 
@@ -320,6 +324,7 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
             "passed": not report.needs_revision,
             "eval_engine": True,
             "api_contract": EVAL_ENGINE_API_CONTRACT,
+            "compatibility": compatibility,
             "overall_score": overall_score,
             "num_steps": report.num_steps,
             "failed_steps": report.num_failed_steps,
@@ -342,5 +347,9 @@ def score_with_eval_engine(case, trajectory: dict, judge_fn: Optional[Callable] 
         raise EvalIntegrationError(
             f"eval-engine 集成调用失败: {e}",
             cause=e,
-            details={"api_contract": EVAL_ENGINE_API_CONTRACT, "exc_type": type(e).__name__},
+            details={
+                "api_contract": EVAL_ENGINE_API_CONTRACT,
+                "exc_type": type(e).__name__,
+                "compatibility": compatibility,
+            },
         ) from e

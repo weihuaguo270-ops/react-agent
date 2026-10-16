@@ -180,31 +180,32 @@ class Trajectory:
         entry.setdefault("artifacts", []).append(_normalize_artifact(artifact))
 
     def to_dict(self) -> dict:
-        from react_agent.harness.schema import SCHEMA_VERSION
+        from react_agent.harness.contracts import serialize_trajectory
 
         duration = round(time.time() - self._start_time, 2)
-        out = {
-            "schema_version": SCHEMA_VERSION,
-            "session_id": self.session_id,
-            "query": self.query[:500],
-            "model": self.model,
+        extra: dict[str, Any] = {
             "timestamp": self.timestamp,
             "system_prompt_preview": self.system_prompt,
-            "total_steps": len(self.steps),
             "total_duration_seconds": duration,
             "total_tokens_estimated": self.total_tokens_estimated,
-            "final_answer": self.final_answer,
-            "steps": self.steps,
         }
         if self.task_episode_id:
-            out["task_episode_id"] = self.task_episode_id
+            extra["task_episode_id"] = self.task_episode_id
         if self.acceptance_criteria:
-            out["acceptance_criteria"] = self.acceptance_criteria
+            extra["acceptance_criteria"] = self.acceptance_criteria
         if self.input_artifacts:
-            out["input_artifacts"] = self.input_artifacts
+            extra["input_artifacts"] = self.input_artifacts
         if self.output_artifacts:
-            out["output_artifacts"] = self.output_artifacts
-        return out
+            extra["output_artifacts"] = self.output_artifacts
+        return serialize_trajectory(
+            session_id=self.session_id,
+            query=self.query[:500],
+            model=self.model,
+            final_answer=self.final_answer,
+            steps=self.steps,
+            metadata={"execution_mode": "react"},
+            extra=extra,
+        )
 
     def save(self, directory: Optional[str] = None) -> str:
         if self._watcher:

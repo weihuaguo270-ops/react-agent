@@ -70,6 +70,7 @@ class StepRecord:
     input: dict[str, Any] = field(default_factory=dict)
     output: Any = None
     error: str = ""
+    tool_name: str = ""
 
 
 @dataclass
@@ -110,31 +111,81 @@ class WorkflowResult:
         }
 
     def to_trajectory(self) -> dict[str, Any]:
-        """Export a Harness-compatible Format B-ish trajectory for cross-repo tooling."""
+        """Export the canonical Harness Format B trajectory.
+
+        Workflow records use the same wire fields as ReAct Recorder.  The
+        previous ``run_id/schema/action_input`` shape was only Format B-ish
+        and could not be consumed by the shared schema without an adapter.
+        """
+        from react_agent.harness.contracts import StopReason, serialize_trajectory
+
         traj_steps: list[dict[str, Any]] = []
         for i, s in enumerate(self.steps, start=1):
+            observation = (
+                s.error
+                if not s.ok
+                else (
+                    s.output
+                    if isinstance(s.output, str)
+                    else json.dumps(s.output, ensure_ascii=False)[:800]
+                )
+            )
             traj_steps.append(
                 {
                     "step": i,
                     "thought": f"workflow:{self.workflow}/{s.step_id}",
-                    "action": s.kind,
-                    "action_input": s.step_id,
-                    "observation": (
-                        s.error
-                        if not s.ok
-                        else (s.output if isinstance(s.output, str) else json.dumps(s.output, ensure_ascii=False)[:800])
-                    ),
+                    "action": {
+                        "name": s.tool_name or f"workflow.{s.kind}",
+                        "arguments": json.dumps(
+                            s.input if s.tool_name else {"step_id": s.step_id},
+                            ensure_ascii=False,
+                        ),
+                    },
+                    "observation": str(observation),
+                    "duration_seconds": round(s.ended_at - s.started_at, 3),
                 }
             )
-        return {
+        stop_reason = StopReason.COMPLETED.value
+        error_code = ""
+        if self.refused:
+            stop_reason = StopReason.POLICY_DENIED.value
+        elif not self.ok:
+            stop_reason = StopReason.TOOL_ERROR.value
+            for record in reversed(self.steps):
+                if record.ok or not record.error:
+                    continue
+                try:
+                    error_payload = json.loads(record.error)
+                except (TypeError, json.JSONDecodeError):
+                    error_payload = {}
+                if isinstance(error_payload, dict):
+                    error_code = str(error_payload.get("error_code") or "")
+                    candidate = str(error_payload.get("stop_reason") or "")
+                    if candidate in {reason.value for reason in StopReason}:
+                        stop_reason = candidate
+                break
+        trajectory = serialize_trajectory(
+            session_id=self.run_id,
+            query=str(self.state.get("query", "")),
+            final_answer=self.answer,
+            steps=traj_steps,
+            metadata={
+                "workflow": self.workflow,
+                "execution_mode": "workflow",
+                "ok": self.ok,
+                "refused": self.refused,
+                "stop_reason": stop_reason,
+                **({"error_code": error_code} if error_code else {}),
+            },
+        )
+        trajectory.update({
+            # Compatibility marker for consumers that predate the formal
+            # session_id/schema_version fields. New consumers must validate
+            # the complete Format B object.
             "schema": "harness_trajectory_format_b",
-            "run_id": self.run_id,
-            "query": self.state.get("query", ""),
-            "final_answer": self.answer,
             "ok": self.ok,
-            "steps": traj_steps,
-            "meta": {"workflow": self.workflow, "refused": self.refused},
-        }
+        })
+        return trajectory
 
 
 def _resolve_args(args: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
@@ -245,6 +296,7 @@ class WorkflowRunner:
                             raise KeyError(f"tool not found: {step.tool}")
                         kwargs = _resolve_args(step.args, state)
                         rec.input = kwargs
+                        rec.tool_name = step.tool
                         from react_agent.harness.tool_boundary import (
                             execute_registered_tool,
                         )
@@ -282,7 +334,17 @@ class WorkflowRunner:
                         raise ValueError(f"unknown step kind: {step.kind}")
                 except Exception as e:
                     rec.ok = False
-                    rec.error = str(e)[:400]
+                    from react_agent.harness.contracts import tool_error_from_exception
+
+                    if step.kind == StepKind.TOOL:
+                        rec.error = json.dumps(
+                            tool_error_from_exception(
+                                e, source="workflow", tool_name=step.tool
+                            ),
+                            ensure_ascii=False,
+                        )[:800]
+                    else:
+                        rec.error = str(e)[:400]
                     if step.critical:
                         ok = False
                         rec.ended_at = time.time()

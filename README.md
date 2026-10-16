@@ -393,7 +393,7 @@ Expense 业务集不以答案关键词作为主门禁，而是检查 claim 数�
 | 产物 | 路径 |
 |------|------|
 | JSON Schema | [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json) |
-| 校验 / 归一化 | `react_agent.harness.schema` |
+| 校验 / 归一化 | `react_agent.harness.contracts.parse_trajectory()`（旧 `react_agent.harness.schema` 为兼容入口） |
 | 离线 fixture | `fixtures/harness_closed_loop.json` |
 | 一键 demo | `python scripts/eval/acceptance/harness_closed_loop.py` |
 

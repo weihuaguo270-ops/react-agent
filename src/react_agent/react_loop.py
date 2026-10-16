@@ -140,7 +140,7 @@ from react_agent.memory import Memory
 MEMORY = Memory()
 
 # Experimental: MCP / Orchestrator / RAG are lazy-imported (Core default path stays light).
-# See docs/EXPERIMENTAL.md
+# See docs/architecture/EXPERIMENTAL.md
 _rag_loaded = False
 
 
@@ -279,11 +279,23 @@ def self_repair_hint(tool_name: str, result: str) -> str:
 
 
 def _execute_tool_call_raw(tool_call):
-    func_name = tool_call["function"]["name"]
     try:
-        arguments = json.loads(tool_call["function"]["arguments"])
-    except json.JSONDecodeError:
-        return '{"error": "参数解析失败"}'
+        from react_agent.harness.contracts import ToolCall, tool_error_from_exception
+
+        canonical_call = ToolCall.from_mapping(tool_call, source="runtime")
+        func_name = canonical_call.name
+        arguments = json.loads(canonical_call.arguments)
+        canonical_tool_call = {
+            "function": {
+                "name": canonical_call.name,
+                "arguments": canonical_call.arguments,
+            }
+        }
+    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        return json.dumps(
+            tool_error_from_exception(exc, source="react", tool_name=""),
+            ensure_ascii=False,
+        )
 
     # 权限闸门（Harness）：模型 tool_call ≠ 允许执行；先于沙箱
     from react_agent.safety.permission_gate import permission_block_message
@@ -296,10 +308,18 @@ def _execute_tool_call_raw(tool_call):
         blocked = permission_block_message(func_name, arguments)
         if blocked is not None:
             print(f"  [Permission] blocked {func_name}: {blocked[:120]}")
-            return blocked
+            from react_agent.harness.contracts import ToolError, StopReason
+
+            return ToolError(
+                code="policy_denied",
+                message=blocked,
+                stop_reason=StopReason.POLICY_DENIED,
+                source="react",
+                tool_name=func_name,
+            ).to_json()
         # 沙箱：崩溃/超时隔离（不是权限层；见 harness/sandbox.py）
         if SANDBOX.strategy != "off" and SANDBOX.should_sandbox(func_name):
-            sandbox_result = SANDBOX.run(tool_call)
+            sandbox_result = SANDBOX.run(canonical_tool_call)
             if sandbox_result != "__SANDBOX_DISABLED__":
                 return sandbox_result
         # 直接执行（沙箱关闭或 safe 工具）
@@ -314,17 +334,49 @@ def _execute_tool_call_raw(tool_call):
             )
             if blocked is not None:
                 print(f"  [Permission] blocked MCP {func_name}: {blocked[:120]}")
-                return blocked
+                from react_agent.harness.contracts import ToolError, StopReason
+
+                return ToolError(
+                    code="policy_denied",
+                    message=blocked,
+                    stop_reason=StopReason.POLICY_DENIED,
+                    source="react",
+                    tool_name=func_name,
+                ).to_json()
             boundary_block = SANDBOX.external_tool_block_reason(func_name)
             if boundary_block is not None:
                 print(f"  [Sandbox] blocked MCP {func_name}: {boundary_block[:120]}")
-                return boundary_block
+                from react_agent.harness.contracts import ToolError, StopReason
+
+                return ToolError(
+                    code="sandbox_denied",
+                    message=boundary_block,
+                    stop_reason=StopReason.POLICY_DENIED,
+                    source="react",
+                    tool_name=func_name,
+                ).to_json()
             try:
                 print(f"  [MCP] 转发: {func_name}({json.dumps(arguments, ensure_ascii=False)[:100]})")
                 return _mcp_client.call_tool(func_name, arguments)
             except Exception as e:
-                return json.dumps({"error": f"MCP调用失败: {e}"})
-    return json.dumps({"error": f"未知工具: {func_name}"})
+                from react_agent.harness.contracts import tool_error_from_exception
+
+                return json.dumps(
+                    tool_error_from_exception(
+                        RuntimeError(f"MCP调用失败: {e}"),
+                        source="mcp",
+                        tool_name=func_name,
+                    ),
+                    ensure_ascii=False,
+                )
+    from react_agent.harness.contracts import ToolError
+
+    return ToolError(
+        code="tool_not_found",
+        message=f"未知工具: {func_name}",
+        source="react",
+        tool_name=func_name,
+    ).to_json()
 
 
 def execute_tool_call(tool_call):
@@ -338,7 +390,11 @@ def execute_tool_call(tool_call):
         try:
             return _execute_tool_call_raw(tool_call)
         except Exception as e:
-            return json.dumps({"error": f"执行错误: {e}"})
+            from react_agent.harness.contracts import tool_error_from_exception
+
+            return json.dumps(
+                tool_error_from_exception(e, source="react"), ensure_ascii=False
+            )
     if _GUARDED_EXECUTE is None:
         from react_agent.resilience import ToolGuard
         _TOOL_GUARD = ToolGuard()

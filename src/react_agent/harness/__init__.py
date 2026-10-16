@@ -16,13 +16,24 @@
 from .recorder import Trajectory, start_trajectory, current_trajectory, finish_trajectory
 from .sandbox import Sandbox, SANDBOX, SANDBOX_TOOL_DEFINITION, tool_toggle_sandbox
 from .replay import Replay, Replayer
-from .schema import (
+from .contracts import (
     assert_valid,
     load_and_validate,
     normalize_trajectory,
+    parse_trajectory,
     validate_trajectory,
     TrajectorySchemaError,
 )
+from .contracts import (
+    ArtifactRef,
+    EvaluationEpisode,
+    FixtureManifest,
+    StopReason,
+    TaskEpisode,
+    ToolCall,
+    serialize_trajectory,
+)
+from .runtime import IdempotencyPolicy, RetryPolicy
 
 # ----------
 # 统一入口
