@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, MutableMapping
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from dataclasses import dataclass
 from typing import Any
@@ -24,6 +24,7 @@ class ToolSpec:
     max_output_chars: int = DEFAULT_MAX_OUTPUT_CHARS
     timeout_seconds: float | None = None
     idempotency_level: str = "none"
+    retryable: bool | None = None
 
     def __post_init__(self) -> None:
         if not str(self.name).strip():
@@ -34,6 +35,8 @@ class ToolSpec:
             raise ValueError("timeout_seconds must be positive")
         if self.idempotency_level not in IDEMPOTENCY_LEVELS:
             raise ValueError("idempotency_level must be none, safe or required")
+        if self.retryable is not None and not isinstance(self.retryable, bool):
+            raise ValueError("retryable must be a boolean when provided")
 
     @classmethod
     def from_definition(cls, definition: Mapping[str, Any]) -> "ToolSpec":
@@ -54,6 +57,7 @@ class ToolSpec:
             idempotency_level=str(
                 function.get("idempotency_level", function.get("idempotency", "none"))
             ),
+            retryable=function.get("retryable"),
         )
 
 
@@ -173,16 +177,26 @@ class ToolBoundary:
         risk_sandbox: bool = False,
         retry_policy=None,
         idempotency_policy=None,
+        idempotency_store: MutableMapping[str, tuple[str, Any]] | None = None,
+        source: str = "runtime",
     ) -> None:
-        from react_agent.harness.runtime import IdempotencyPolicy, RetryPolicy
+        from react_agent.harness.runtime import (
+            IdempotencyPolicy,
+            RetryPolicy,
+            configured_idempotency_store,
+        )
 
         self.registry = registry
         self.default_timeout_seconds = default_timeout_seconds
         self.default_max_output_chars = default_max_output_chars
         self.risk_sandbox = risk_sandbox
+        self.source = str(source or "runtime")
         self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
         self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
-        self._idempotency_results: dict[str, tuple[str, Any]] = {}
+        if idempotency_store is not None:
+            self._idempotency_results = idempotency_store
+        else:
+            self._idempotency_results = configured_idempotency_store()
         self.specs = {
             spec.name: spec
             for spec in (ToolSpec.from_definition(item) for item in (definitions or []))
@@ -205,16 +219,16 @@ class ToolBoundary:
             timeout_seconds=timeout_seconds,
             idempotency_key=idempotency_key,
             call_id=call_id,
-            source="runtime",
+            source=self.source,
         )
         fn = self.registry.get(call.name)
         if fn is None:
             raise ToolCallError(
-                ToolError(
+                    ToolError(
                     code="tool_not_found",
                     message=f"unknown tool: {call.name}",
                     tool_name=call.name,
-                    source="runtime",
+                        source=self.source,
                 )
             )
         canonical_arguments = json.loads(call.arguments)
@@ -226,6 +240,12 @@ class ToolBoundary:
         spec = self.specs.get(
             call.name, ToolSpec(call.name, max_output_chars=self.default_max_output_chars)
         )
+        try:
+            validate_tool_arguments(canonical_arguments, spec.parameters)
+        except Exception as exc:
+            raise ToolCallError(
+                ToolError.from_exception(exc, tool_name=call.name, source=self.source)
+            ) from exc
         policy = self.idempotency_policy
         if spec.idempotency_level != "none":
             policy = type(policy)(
@@ -243,12 +263,6 @@ class ToolBoundary:
         )
         if replayed:
             return cached
-        try:
-            validate_tool_arguments(canonical_arguments, spec.parameters)
-        except Exception as exc:
-            raise ToolCallError(
-                ToolError.from_exception(exc, tool_name=call.name, source="runtime")
-            ) from exc
 
         from react_agent.harness.runtime import RetryPolicy
 
@@ -273,9 +287,10 @@ class ToolBoundary:
                     if required_sandbox:
                         raise RuntimeError("required mode refused unsandboxed tool execution")
                     return invoke_with_timeout(
-                        lambda: fn(**canonical_arguments),
+                    lambda: fn(**canonical_arguments),
                         effective_timeout,
                         tool_name=call.name,
+                        source=self.source,
                     )
                 if isinstance(result, str) and result.startswith("[沙箱]"):
                     raise RuntimeError(result)
@@ -284,10 +299,11 @@ class ToolBoundary:
                 lambda: fn(**canonical_arguments),
                 effective_timeout,
                 tool_name=call.name,
+                source=self.source,
             )
 
         retry_policy = self.retry_policy
-        if policy.mode == "none" and retry_policy.max_attempts > 1:
+        if spec.retryable is False or (policy.mode == "none" and retry_policy.max_attempts > 1):
             retry_policy = RetryPolicy(
                 max_attempts=1,
                 base_delay=retry_policy.base_delay,
@@ -318,6 +334,8 @@ def execute_registered_tool(
     risk_sandbox: bool = False,
     retry_policy=None,
     idempotency_policy=None,
+    idempotency_store: MutableMapping[str, tuple[str, Any]] | None = None,
+    source: str = "runtime",
 ) -> Any:
     """兼容入口；所有本地工具调用均经过 :class:`ToolBoundary`."""
     if definitions is None:
@@ -333,6 +351,8 @@ def execute_registered_tool(
         risk_sandbox=risk_sandbox,
         retry_policy=retry_policy,
         idempotency_policy=idempotency_policy,
+        idempotency_store=idempotency_store,
+        source=source,
     ).execute(
         tool_name,
         arguments,

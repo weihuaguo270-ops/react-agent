@@ -305,6 +305,7 @@ class WorkflowRunner:
                             step.tool,
                             kwargs,
                             self.tool_registry,
+                            source="workflow",
                         )
                         # Tools often return JSON strings
                         if isinstance(result, str):

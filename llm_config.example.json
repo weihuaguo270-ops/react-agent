@@ -9,7 +9,17 @@
       "model_env": "LLM_MODEL",
       "model": "deepseek-v4-flash",
       "temperature": 0.7,
-      "max_tokens": 2000
+      "max_tokens": 2000,
+      "pricing": {
+        "currency": "USD",
+        "unit": "per_1m_tokens",
+        "models": ["deepseek-v4-flash", "deepseek-flash", "deepseek-v4-flash-vision-exp"],
+        "input_usd_per_million_tokens": 0.30,
+        "output_usd_per_million_tokens": 1.20,
+        "basis": "peak cache-miss rate",
+        "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+        "verified_at": "2026-10-17"
+      }
     },
     "openai": {
       "description": "OpenAI API（兼容 GPT-4o / GPT-4o-mini 等）",
@@ -18,7 +28,17 @@
       "api_key": "",
       "model": "gpt-4o-mini",
       "temperature": 0.7,
-      "max_tokens": 2000
+      "max_tokens": 2000,
+      "pricing": {
+        "currency": "USD",
+        "unit": "per_1m_tokens",
+        "models": ["gpt-4o-mini"],
+        "input_usd_per_million_tokens": 0.15,
+        "output_usd_per_million_tokens": 0.60,
+        "basis": "standard rate, uncached input",
+        "source": "https://developers.openai.com/api/docs/pricing",
+        "verified_at": "2026-10-17"
+      }
     },
     "ollama": {
       "description": "本地 Ollama（需先启动 ollama serve）",
@@ -27,7 +47,9 @@
       "api_key": "",
       "model": "qwen2.5:7b",
       "temperature": 0.7,
-      "max_tokens": 2000
+      "max_tokens": 2000,
+      "pricing": null,
+      "pricing_status": "unknown_local_runtime"
     },
     "custom": {
       "description": "任意 OpenAI 兼容 API（通过环境变量指定）",
@@ -37,7 +59,9 @@
       "model_env": "LLM_MODEL",
       "model": "gpt-4o-mini",
       "temperature": 0.7,
-      "max_tokens": 2000
+      "max_tokens": 2000,
+      "pricing": null,
+      "pricing_status": "unknown_custom_provider"
     }
   }
 }

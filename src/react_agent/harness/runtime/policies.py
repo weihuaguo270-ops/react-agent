@@ -4,13 +4,136 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+import os
+import tempfile
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping, MutableMapping, TypeVar
+from pathlib import Path
+from collections.abc import Iterator, MutableMapping
+from typing import Any, Callable, Mapping, TypeVar
 
 from react_agent.resilience import classify_error, is_retryable
 
 T = TypeVar("T")
+
+
+class JsonIdempotencyStore(MutableMapping[str, tuple[str, Any]]):
+    """Small durable idempotency ledger for process and worker restarts."""
+
+    def __init__(self, path: str | os.PathLike[str]) -> None:
+        self.path = Path(path)
+        self.lock_path = self.path.with_name(f".{self.path.name}.lock")
+        self._data: dict[str, tuple[str, Any]] = {}
+        self._reload()
+
+    @contextmanager
+    def locked(self, *, timeout: float = 10.0):
+        """Hold a cross-process lock while checking and recording one call.
+
+        The lock is a short-lived exclusive file created beside the ledger. It
+        deliberately uses only the standard library so the same store works on
+        Windows workers and POSIX containers.
+        """
+        deadline = time.monotonic() + timeout
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        while True:
+            try:
+                fd = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                os.close(fd)
+                break
+            except FileExistsError:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(f"timed out acquiring idempotency lock: {self.lock_path}")
+                time.sleep(0.01)
+        try:
+            self._reload()
+            yield self
+        finally:
+            try:
+                self.lock_path.unlink()
+            except FileNotFoundError:
+                pass
+
+    def _reload(self) -> None:
+        """Refresh the in-memory view so another worker's commit is visible."""
+        if not self.path.exists():
+            self._data = {}
+            return
+        try:
+            payload = json.loads(self.path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"unable to load idempotency store: {self.path}") from exc
+        if not isinstance(payload, Mapping):
+            raise ValueError("idempotency store must contain an object")
+        data: dict[str, tuple[str, Any]] = {}
+        for key, value in payload.items():
+            if not isinstance(value, list) or len(value) != 2:
+                raise ValueError("idempotency store entries must be [payload_hash, result]")
+            data[str(key)] = (str(value[0]), value[1])
+        self._data = data
+
+    def __getitem__(self, key: str) -> tuple[str, Any]:
+        self._reload()
+        return self._data[key]
+
+    def __setitem__(self, key: str, value: tuple[str, Any]) -> None:
+        if not isinstance(value, tuple) or len(value) != 2:
+            raise ValueError("idempotency store values must be (payload_hash, result)")
+        try:
+            json.dumps(value[1], ensure_ascii=False)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("idempotency result must be JSON serializable") from exc
+        with self.locked():
+            self._data[str(key)] = (str(value[0]), value[1])
+            self._flush()
+
+    def __delitem__(self, key: str) -> None:
+        with self.locked():
+            del self._data[key]
+            self._flush()
+
+    def __iter__(self) -> Iterator[str]:
+        self._reload()
+        return iter(self._data)
+
+    def __len__(self) -> int:
+        self._reload()
+        return len(self._data)
+
+    def _flush(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {key: [digest, result] for key, (digest, result) in self._data.items()}
+        fd, temporary = tempfile.mkstemp(prefix=f".{self.path.name}.", dir=self.path.parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, ensure_ascii=False, sort_keys=True)
+                handle.write("\n")
+            os.replace(temporary, self.path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+
+
+def configured_idempotency_store() -> Any:
+    """Build the configured shared store, or return the in-process fallback."""
+    backend = os.environ.get("REACT_AGENT_IDEMPOTENCY_BACKEND", "memory").strip().lower()
+    if backend in {"postgres", "postgresql", "sqlalchemy"}:
+        from .shared_idempotency import PostgresIdempotencyStore
+
+        redis_url = os.environ.get("REACT_AGENT_IDEMPOTENCY_REDIS_URL") or os.environ.get(
+            "REACT_AGENT_REDIS_URL"
+        )
+        return PostgresIdempotencyStore(
+            redis_url=redis_url,
+            cache_ttl_seconds=int(
+                os.environ.get("REACT_AGENT_IDEMPOTENCY_CACHE_TTL", "300")
+            ),
+            claim_lease_seconds=float(
+                os.environ.get("REACT_AGENT_IDEMPOTENCY_CLAIM_LEASE", "120")
+            ),
+        )
+    return {}
 
 
 class RetryBudgetExceeded(TimeoutError):
@@ -97,6 +220,11 @@ class RetryPolicy:
                         raise RetryBudgetExceeded(
                             f"retry budget exhausted after {self.total_budget_seconds}s"
                         ) from exc
+                from .observability import current_runtime_metrics
+
+                collector = current_runtime_metrics()
+                if collector is not None:
+                    collector.record_retry()
                 if on_retry:
                     on_retry(
                         attempt,
@@ -185,6 +313,16 @@ class IdempotencyPolicy:
         )
         if not resolved_key or self.mode == "none":
             return resolved_key, payload_digest, None, False
+        claim = getattr(ledger, "claim_idempotency", None)
+        if claim is not None:
+            state, result = claim(
+                resolved_key,
+                payload_digest,
+                replay_behavior=self.replay_behavior,
+            )
+            if state == "replay":
+                return resolved_key, payload_digest, result, True
+            return resolved_key, payload_digest, None, False
         previous = ledger.get(resolved_key)
         if previous is None or self.replay_behavior == "execute":
             return resolved_key, payload_digest, None, False
@@ -203,7 +341,17 @@ class IdempotencyPolicy:
         result: Any,
     ) -> None:
         if key and self.mode != "none":
+            record = getattr(ledger, "record_idempotency", None)
+            if record is not None:
+                record(key, payload_digest, result)
+                return
             ledger[key] = (payload_digest, result)
 
 
-__all__ = ["IdempotencyPolicy", "RetryBudgetExceeded", "RetryPolicy"]
+__all__ = [
+    "IdempotencyPolicy",
+    "JsonIdempotencyStore",
+    "RetryBudgetExceeded",
+    "RetryPolicy",
+    "configured_idempotency_store",
+]

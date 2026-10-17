@@ -7,6 +7,13 @@ from typing import Any, Callable, Mapping
 
 from react_agent.harness.contracts import StopReason, assert_valid, serialize_trajectory
 from react_agent.harness.runtime.episode import RuntimeEpisode
+from react_agent.harness.runtime.observability import (
+    RuntimeObservability,
+    configured_runtime_observability,
+    merge_runtime_metrics,
+    start_runtime_metrics,
+    stop_runtime_metrics,
+)
 from react_agent.harness.runtime.structured_output import (
     StructuredOutputContract,
     StructuredOutputResult,
@@ -53,13 +60,19 @@ def _trajectory(
     stop_reason: StopReason,
     metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
+    status = {
+        StopReason.COMPLETED: "completed",
+        StopReason.TIMEOUT: "timeout",
+        StopReason.CANCELLED: "cancelled",
+        StopReason.POLICY_DENIED: "refused",
+    }.get(stop_reason, "failed")
     values = {
         "runtime_episode_id": episode.runtime_episode_id,
         "trace_id": episode.trace_id,
         "run_id": episode.run_id,
         "execution_mode": episode.execution_mode,
         "transport": episode.transport,
-        "status": episode.status,
+        "status": status,
         "stop_reason": stop_reason.value,
     }
     values.update(dict(metadata or {}))
@@ -92,12 +105,42 @@ def _parse_structured_output(
     return contract.parse(raw)
 
 
+def _merge_observed_metrics(metrics: dict[str, Any], source: Any) -> dict[str, Any]:
+    """Copy provider/runner measurements when they are explicitly present."""
+    if not isinstance(source, Mapping):
+        return metrics
+    aliases = {
+        "retry_count": ("retry_count", "retries", "retry_attempts"),
+        "tokens": ("tokens", "tokens_estimated", "total_tokens_estimated"),
+        "estimated_cost": ("estimated_cost", "cost", "cost_usd"),
+        "denied": ("denied", "rejected", "policy_denied"),
+        "cancelled": ("cancelled", "cancellations", "cancelled_count"),
+    }
+    for canonical, names in aliases.items():
+        for name in names:
+            if name in source and source[name] is not None:
+                metrics[canonical] = source[name]
+                break
+    return metrics
+
+
+def _emit_episode(observer: RuntimeObservability, episode: RuntimeEpisode) -> None:
+    observer.emit(episode)
+
+
 class ReactLoopAdapter:
     """Adapt the existing ReAct function into a RuntimeEpisode."""
 
-    def __init__(self, loop: Callable[..., Any] | None = None, *, environment: Mapping[str, Any] | None = None):
+    def __init__(
+        self,
+        loop: Callable[..., Any] | None = None,
+        *,
+        environment: Mapping[str, Any] | None = None,
+        observability: RuntimeObservability | None = None,
+    ):
         self.loop = loop
         self.environment = dict(environment or {})
+        self.observability = observability or configured_runtime_observability()
 
     def run(
         self,
@@ -108,6 +151,7 @@ class ReactLoopAdapter:
         transport: str = "in_process",
         runtime_episode_id: str | None = None,
         trace_id: str | None = None,
+        evaluation_episode_id: str | None = None,
         structured_output_contract: StructuredOutputContract | None = None,
     ) -> RuntimeEpisode:
         if self.loop is None:
@@ -122,8 +166,10 @@ class ReactLoopAdapter:
             transport=transport,
             runtime_episode_id=runtime_episode_id,
             trace_id=trace_id,
+            evaluation_episode_id=evaluation_episode_id,
             environment=self.environment,
         )
+        collector, collector_token = start_runtime_metrics()
         started = time.monotonic()
         try:
             kwargs: dict[str, Any] = {}
@@ -166,12 +212,18 @@ class ReactLoopAdapter:
                 "tool_calls": sum(1 for step in trajectory["steps"] if step.get("action") or step.get("actions")),
                 "duration_seconds": round(time.monotonic() - started, 6),
             }
-            return episode.finish(
+            _merge_observed_metrics(metrics, result)
+            metrics = merge_runtime_metrics(
+                metrics, trajectory=trajectory, stop_reason=stop_reason, collector=collector
+            )
+            completed = episode.finish(
                 trajectory=trajectory,
                 stop_reason=stop_reason,
                 status=status,
                 metrics=metrics,
             )
+            _emit_episode(self.observability, completed)
+            return completed
         except Exception as exc:
             from react_agent.llm import LLMCancelled
 
@@ -190,20 +242,40 @@ class ReactLoopAdapter:
                 steps=[{"step": 1, "thought": "runtime_error", "observation": message}],
                 stop_reason=reason,
             )
-            return episode.fail(
+            failed = episode.fail(
                 trajectory=trajectory,
                 stop_reason=reason,
                 status=status,
-                metrics={"duration_seconds": round(time.monotonic() - started, 6)},
+                metrics=merge_runtime_metrics(
+                    {
+                        "duration_seconds": round(time.monotonic() - started, 6),
+                        "cancelled": 1 if reason == StopReason.CANCELLED else 0,
+                        "denied": 1 if reason == StopReason.POLICY_DENIED else 0,
+                    },
+                    trajectory=trajectory,
+                    stop_reason=reason,
+                    collector=collector,
+                ),
             )
+            _emit_episode(self.observability, failed)
+            return failed
+        finally:
+            stop_runtime_metrics(collector_token)
 
 
 class WorkflowAdapter:
     """Adapt the declarative Workflow runner into a RuntimeEpisode."""
 
-    def __init__(self, runner: Callable[..., Any] | None = None, *, environment: Mapping[str, Any] | None = None):
+    def __init__(
+        self,
+        runner: Callable[..., Any] | None = None,
+        *,
+        environment: Mapping[str, Any] | None = None,
+        observability: RuntimeObservability | None = None,
+    ):
         self.runner = runner
         self.environment = dict(environment or {})
+        self.observability = observability or configured_runtime_observability()
 
     def run(
         self,
@@ -214,6 +286,7 @@ class WorkflowAdapter:
         transport: str = "in_process",
         runtime_episode_id: str | None = None,
         trace_id: str | None = None,
+        evaluation_episode_id: str | None = None,
         structured_output_contract: StructuredOutputContract | None = None,
     ) -> RuntimeEpisode:
         if self.runner is None:
@@ -229,8 +302,10 @@ class WorkflowAdapter:
             transport=transport,
             runtime_episode_id=runtime_episode_id,
             trace_id=trace_id,
+            evaluation_episode_id=evaluation_episode_id,
             environment=self.environment,
         )
+        collector, collector_token = start_runtime_metrics()
         started = time.monotonic()
         try:
             kwargs: dict[str, Any] = {}
@@ -268,34 +343,67 @@ class WorkflowAdapter:
                     status = "failed"
             episode.run_id = str(result.run_id)
             episode.session_id = str(trajectory["session_id"])
-            return episode.finish(
+            metrics = {
+                "steps": len(trajectory["steps"]),
+                "tool_calls": sum(1 for step in trajectory["steps"] if step.get("action") or step.get("actions")),
+                "duration_seconds": round(time.monotonic() - started, 6),
+            }
+            _merge_observed_metrics(metrics, result if isinstance(result, Mapping) else {})
+            metrics = merge_runtime_metrics(
+                metrics, trajectory=trajectory, stop_reason=stop_reason, collector=collector
+            )
+            completed = episode.finish(
                 trajectory=trajectory,
                 stop_reason=stop_reason,
                 status=status,
-                metrics={
-                    "steps": len(trajectory["steps"]),
-                    "tool_calls": sum(1 for step in trajectory["steps"] if step.get("action") or step.get("actions")),
-                    "duration_seconds": round(time.monotonic() - started, 6),
-                },
+                metrics=metrics,
             )
+            _emit_episode(self.observability, completed)
+            return completed
         except Exception as exc:
-            reason, message = _stop_reason_from_error(exc)
+            from react_agent.llm import LLMCancelled
+
+            if isinstance(exc, LLMCancelled):
+                reason, message = StopReason.CANCELLED, str(exc) or "execution cancelled"
+            else:
+                reason, message = _stop_reason_from_error(exc)
+            status = {
+                StopReason.TIMEOUT: "timeout",
+                StopReason.CANCELLED: "cancelled",
+                StopReason.POLICY_DENIED: "refused",
+            }.get(reason, "failed")
             trajectory = _trajectory(
                 episode=episode,
                 answer="",
                 steps=[{"step": 1, "thought": "workflow_error", "observation": message}],
                 stop_reason=reason,
             )
-            return episode.fail(
+            failed = episode.fail(
                 trajectory=trajectory,
                 stop_reason=reason,
-                status="refused" if reason == StopReason.POLICY_DENIED else "failed",
-                metrics={"duration_seconds": round(time.monotonic() - started, 6)},
+                status=status,
+                metrics=merge_runtime_metrics(
+                    {
+                        "duration_seconds": round(time.monotonic() - started, 6),
+                        "cancelled": 1 if reason == StopReason.CANCELLED else 0,
+                        "denied": 1 if reason == StopReason.POLICY_DENIED else 0,
+                    },
+                    trajectory=trajectory,
+                    stop_reason=reason,
+                    collector=collector,
+                ),
             )
+            _emit_episode(self.observability, failed)
+            return failed
+        finally:
+            stop_runtime_metrics(collector_token)
 
 
 class HttpRunnerAdapter:
     """Attach HTTP transport metadata to a ReAct or Workflow result."""
+
+    def __init__(self, *, observability: RuntimeObservability | None = None) -> None:
+        self.observability = observability or configured_runtime_observability()
 
     def adapt_response(
         self,
@@ -324,6 +432,7 @@ class HttpRunnerAdapter:
             trace_id=request_id,
             session_id=str((trajectory or {}).get("session_id") or request_id) if isinstance(trajectory, Mapping) else request_id,
             run_id=str(data.get("run_id") or request_id),
+            evaluation_episode_id=str(data.get("evaluation_episode_id") or ""),
             environment={"http_status": status_code},
         )
         if isinstance(trajectory, Mapping):
@@ -375,12 +484,18 @@ class HttpRunnerAdapter:
             status = "cancelled"
         elif reason in {StopReason.MAX_STEPS, StopReason.PARSE_ERROR}:
             status = "failed"
+        metrics = {"http_status": status_code, "steps": len(trajectory["steps"])}
+        _merge_observed_metrics(metrics, data)
+        metrics["cancelled"] = 1 if reason == StopReason.CANCELLED else metrics.get("cancelled", 0)
+        metrics["denied"] = 1 if reason == StopReason.POLICY_DENIED else metrics.get("denied", 0)
+        metrics = merge_runtime_metrics(metrics, trajectory=trajectory, stop_reason=reason)
         episode.finish(
             trajectory=trajectory,
             stop_reason=reason,
             status=status,
-            metrics={"http_status": status_code, "steps": len(trajectory["steps"])},
+            metrics=metrics,
         )
+        _emit_episode(self.observability, episode)
         data["runtime_episode_id"] = episode.runtime_episode_id
         data["execution_mode"] = mode
         data["runtime_episode"] = episode.to_dict()

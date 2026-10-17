@@ -106,3 +106,64 @@ def test_real_mcp_stdio_uses_tool_spec_and_shared_errors():
         assert timeout_payload["stop_reason"] == "timeout"
     finally:
         c.close()
+
+
+def test_real_mcp_stdio_replays_from_durable_idempotency_store(tmp_path):
+    from react_agent.harness import IdempotencyPolicy, JsonIdempotencyStore
+
+    store_path = tmp_path / "mcp-idempotency.json"
+    first = MCPClient(
+        sys.executable,
+        ["-u", "-c", SERVER],
+        retry_policy=None,
+        idempotency_policy=IdempotencyPolicy("required"),
+        idempotency_store=JsonIdempotencyStore(store_path),
+    )
+    first.connect()
+    first.discover_tools()
+    try:
+        assert first.call_tool("echo", {"text": "persisted"}, idempotency_key="mcp-1").startswith("echo:")
+    finally:
+        first.close()
+
+    second = MCPClient(
+        sys.executable,
+        ["-u", "-c", SERVER],
+        idempotency_policy=IdempotencyPolicy("required"),
+        idempotency_store=JsonIdempotencyStore(store_path),
+    )
+    second.connect()
+    second.discover_tools()
+    try:
+        assert second.call_tool("echo", {"text": "persisted"}, idempotency_key="mcp-1").startswith("echo:")
+    finally:
+        second.close()
+
+
+def test_real_mcp_error_envelope_matches_shared_contract():
+    from react_agent.harness.contracts import ToolCallError
+
+    c = client()
+    c.connect()
+    try:
+        c.discover_tools()
+        with pytest.raises(ToolCallError) as caught:
+            c.call_tool("missing", {})
+        payload = caught.value.error.to_dict()
+        assert {
+            "error",
+            "error_code",
+            "stop_reason",
+            "retryable",
+            "source",
+            "attempt",
+            "tool_name",
+        } <= payload.keys()
+        assert payload["error_code"] == "tool_not_found"
+        assert payload["stop_reason"] == "tool_error"
+        assert payload["retryable"] is False
+        assert payload["attempt"] == 1
+        assert payload["tool_name"] == "missing"
+        assert payload["source"] == "mcp"
+    finally:
+        c.close()

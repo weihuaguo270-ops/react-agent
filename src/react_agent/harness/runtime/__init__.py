@@ -2,7 +2,29 @@
 
 from .adapters import HttpRunnerAdapter, ReactLoopAdapter, WorkflowAdapter
 from .episode import RUNTIME_EPISODE_VERSION, RuntimeEpisode
-from .policies import IdempotencyPolicy, RetryBudgetExceeded, RetryPolicy
+from .observability import (
+    OBSERVABILITY_ARTIFACT_VERSION,
+    UNKNOWN,
+    ObservabilityArtifactError,
+    RedisStreamObservabilityExporter,
+    RetentionPolicy,
+    RuntimeObservability,
+    RuntimeMetricsCollector,
+    current_runtime_metrics,
+    configured_runtime_observability,
+    merge_runtime_metrics,
+    normalize_runtime_metrics,
+    start_runtime_metrics,
+    stop_runtime_metrics,
+)
+from .policies import (
+    IdempotencyPolicy,
+    JsonIdempotencyStore,
+    RetryBudgetExceeded,
+    RetryPolicy,
+    configured_idempotency_store,
+)
+from .shared_idempotency import IdempotencyConflict, PostgresIdempotencyStore
 from .structured_output import (
     STRUCTURED_OUTPUT_CONTRACT_VERSION,
     StructuredOutputContract,
@@ -33,6 +55,10 @@ __all__ = [
     "RetryPolicy",
     "RetryBudgetExceeded",
     "IdempotencyPolicy",
+    "JsonIdempotencyStore",
+    "PostgresIdempotencyStore",
+    "IdempotencyConflict",
+    "configured_idempotency_store",
     "STRUCTURED_OUTPUT_CONTRACT_VERSION",
     "StructuredOutputContract",
     "StructuredOutputResult",
@@ -56,6 +82,19 @@ __all__ = [
     "RecordedToolExecutor",
     "RUNTIME_EPISODE_VERSION",
     "RuntimeEpisode",
+    "OBSERVABILITY_ARTIFACT_VERSION",
+    "UNKNOWN",
+    "ObservabilityArtifactError",
+    "RedisStreamObservabilityExporter",
+    "RetentionPolicy",
+    "RuntimeObservability",
+    "RuntimeMetricsCollector",
+    "current_runtime_metrics",
+    "configured_runtime_observability",
+    "merge_runtime_metrics",
+    "normalize_runtime_metrics",
+    "start_runtime_metrics",
+    "stop_runtime_metrics",
     "ReactLoopAdapter",
     "WorkflowAdapter",
     "HttpRunnerAdapter",

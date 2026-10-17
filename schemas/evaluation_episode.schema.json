@@ -22,6 +22,7 @@
     "artifacts": { "type": "array", "items": { "$ref": "harness_trajectory.schema.json#/$defs/artifact" } },
     "environment": { "type": "object" },
     "created_at": { "type": "string" },
+    "runtime_episode_id": { "type": ["string", "null"] },
     "fixture_manifest": { "$ref": "fixture_manifest.schema.json" }
   }
 }

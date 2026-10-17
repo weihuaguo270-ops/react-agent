@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from urllib.error import URLError
 
+import pytest
+
 
 def test_llm_non_stream_uses_injected_retry_policy(monkeypatch):
     import react_agent.llm as llm_module
@@ -61,3 +63,52 @@ def test_llm_stream_does_not_invoke_retry_policy(monkeypatch):
     )
     assert len(calls) == 1
     assert "LLM调用失败" in result["content"]
+
+
+def test_json_idempotency_store_replays_across_tool_boundary_instances(tmp_path):
+    from react_agent.harness import IdempotencyPolicy, JsonIdempotencyStore, ToolBoundary
+
+    calls = []
+
+    def write_once():
+        calls.append(1)
+        return {"written": True}
+
+    store_path = tmp_path / "idempotency.json"
+    first = ToolBoundary(
+        {"write_once": write_once},
+        definitions=[{"name": "write_once", "idempotency_level": "required"}],
+        idempotency_policy=IdempotencyPolicy("required"),
+        idempotency_store=JsonIdempotencyStore(store_path),
+    )
+    assert first.execute("write_once", {}, idempotency_key="key-1") == {"written": True}
+
+    second = ToolBoundary(
+        {"write_once": write_once},
+        definitions=[{"name": "write_once", "idempotency_level": "required"}],
+        idempotency_policy=IdempotencyPolicy("required"),
+        idempotency_store=JsonIdempotencyStore(store_path),
+    )
+    assert second.execute("write_once", {}, idempotency_key="key-1") == {"written": True}
+    assert len(calls) == 1
+    with pytest.raises(ValueError, match="conflicts"):
+        second.execute("write_once", {"changed": True}, idempotency_key="key-1")
+
+
+def test_json_idempotency_store_serializes_concurrent_writes(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from react_agent.harness import JsonIdempotencyStore
+
+    store_path = tmp_path / "concurrent-idempotency.json"
+
+    def write(index):
+        store = JsonIdempotencyStore(store_path)
+        store[f"key-{index}"] = (f"digest-{index}", {"index": index})
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(write, range(12)))
+
+    final = JsonIdempotencyStore(store_path)
+    assert len(final) == 12
+    assert final["key-11"] == ("digest-11", {"index": 11})

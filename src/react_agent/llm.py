@@ -27,7 +27,7 @@ CLI 切换：
 import json
 import os
 import time
-from typing import Callable, Optional
+from typing import Callable, Mapping, Optional
 
 
 class LLMCancelled(Exception):
@@ -233,6 +233,40 @@ def _http_error_detail(err: Exception) -> str:
     return str(err)
 
 
+def _pricing_for_model(pricing: object, model: str) -> Mapping[str, object] | None:
+    """Use a configured price only when it explicitly covers the resolved model."""
+    if not isinstance(pricing, Mapping):
+        return None
+    models = pricing.get("models")
+    if isinstance(models, list) and model not in models:
+        return None
+    if isinstance(models, tuple) and model not in models:
+        return None
+    if not isinstance(pricing.get("input_usd_per_million_tokens"), (int, float)):
+        return None
+    if not isinstance(pricing.get("output_usd_per_million_tokens"), (int, float)):
+        return None
+    return pricing
+
+
+def _record_usage(
+    usage: object,
+    *,
+    pricing: Mapping[str, object] | None = None,
+) -> None:
+    """Forward provider token usage to the active RuntimeEpisode collector."""
+    if not isinstance(usage, dict):
+        return
+    try:
+        from react_agent.harness.runtime.observability import current_runtime_metrics
+
+        collector = current_runtime_metrics()
+        if collector is not None:
+            collector.record_usage(usage, pricing=pricing)
+    except (ImportError, TypeError, ValueError):
+        return
+
+
 class LLM:
     """LLM 调用封装，支持任意 OpenAI 兼容 API"""
 
@@ -253,6 +287,7 @@ class LLM:
         self.api_key = _normalize_api_key(resolved["api_key"])
         model, thinking = _resolve_model_and_thinking(resolved.get("model", ""))
         self.model = model
+        self.pricing = _pricing_for_model(resolved.get("pricing"), model)
         self.thinking = thinking  # "enabled" | "disabled" | None
         self.temperature = resolved.get("temperature", 0.7)
         self.max_tokens = resolved.get("max_tokens", 2000)
@@ -352,6 +387,7 @@ class LLM:
             try:
                 with req.urlopen(r, timeout=60) as resp:
                     result = json.loads(resp.read().decode("utf-8"))
+                    _record_usage(result.get("usage"), pricing=self.pricing)
                     return result["choices"][0]["message"]
             except HTTPError as e:
                 # 包装为带响应体的 URLError，便于 classify / 上层展示
@@ -382,6 +418,7 @@ class LLM:
         content_parts: list[str] = []
         reasoning_parts: list[str] = []
         tool_fragments: dict[int, dict] = {}
+        usage: dict | None = None
         with req.urlopen(r, timeout=120) as resp:
             for raw_line in resp:
                 line = raw_line.decode("utf-8", errors="replace").strip()
@@ -394,6 +431,8 @@ class LLM:
                     chunk = json.loads(data)
                 except json.JSONDecodeError:
                     continue
+                if isinstance(chunk.get("usage"), dict):
+                    usage = chunk["usage"]
                 choices = chunk.get("choices") or []
                 if not choices:
                     continue
@@ -419,6 +458,7 @@ class LLM:
                     if fn.get("arguments"):
                         slot["arguments"] += fn["arguments"]
 
+        _record_usage(usage, pricing=self.pricing)
         message: dict = {"role": "assistant", "content": "".join(content_parts)}
         if reasoning_parts:
             message["reasoning_content"] = "".join(reasoning_parts)

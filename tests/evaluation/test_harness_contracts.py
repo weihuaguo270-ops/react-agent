@@ -48,6 +48,56 @@ def test_tool_boundary_applies_schema_and_output_contract():
     assert boundary.execute("demo", {"value": 20}, max_output_chars=5).startswith("xxxxx")
 
 
+def test_tool_boundary_validates_before_shared_idempotency_claim():
+    from react_agent.harness import IdempotencyPolicy
+    from react_agent.harness.contracts import ToolCallError
+    from react_agent.harness.runtime.shared_idempotency import PostgresIdempotencyStore
+    from react_agent.harness.tool_boundary import ToolBoundary
+
+    store = PostgresIdempotencyStore("sqlite:///:memory:")
+    boundary = ToolBoundary(
+        {"write": lambda value: value},
+        definitions=[
+            {
+                "name": "write",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"value": {"type": "integer"}},
+                    "required": ["value"],
+                },
+                "idempotency_level": "required",
+            }
+        ],
+        idempotency_policy=IdempotencyPolicy("required"),
+        idempotency_store=store,
+    )
+
+    with pytest.raises(ToolCallError, match="missing required"):
+        boundary.execute("write", {}, idempotency_key="case-1")
+
+    assert boundary.execute("write", {"value": 1}, idempotency_key="case-1") == 1
+
+
+def test_mock_mcp_validates_before_shared_idempotency_claim():
+    from react_agent.harness import IdempotencyPolicy
+    from react_agent.harness.contracts import ToolCallError
+    from react_agent.harness.runtime.shared_idempotency import PostgresIdempotencyStore
+    from react_agent.mcp_client import MockMCPClient
+
+    store = PostgresIdempotencyStore("sqlite:///:memory:")
+    client = MockMCPClient(
+        idempotency_policy=IdempotencyPolicy("required"),
+        idempotency_store=store,
+    )
+    client.connect()
+    client.discover_tools()
+
+    with pytest.raises(ToolCallError, match="missing required"):
+        client.call_tool("echo_note", {}, idempotency_key="case-1")
+
+    assert client.call_tool("echo_note", {"text": "ok"}, idempotency_key="case-1") == "echo: ok"
+
+
 def test_tool_boundary_timeout_has_shared_error_envelope():
     import time
 
@@ -77,12 +127,14 @@ def test_tool_spec_formally_carries_execution_and_idempotency_constraints():
                 "timeout_seconds": 0.25,
                 "max_output_chars": 32,
                 "idempotency_level": "required",
+                "retryable": False,
             },
         }
     )
     assert spec.timeout_seconds == 0.25
     assert spec.max_output_chars == 32
     assert spec.idempotency_level == "required"
+    assert spec.retryable is False
 
     from react_agent.harness.tool_boundary import ToolBoundary
 
@@ -191,7 +243,7 @@ def test_four_execution_paths_share_the_same_error_envelope(monkeypatch):
         for payload in (react_payload, workflow_payload, evaluation_payload, mock_payload)
     }
     assert sources == {
-        "react", "workflow", "runtime", "mcp"
+        "react", "workflow", "evaluation", "mcp"
     }
 
 
@@ -229,6 +281,7 @@ def test_retry_policy_retries_only_retryable_errors():
 
 def test_retry_policy_run_retries_and_returns_result():
     from react_agent.harness import RetryPolicy
+    from react_agent.harness.runtime import start_runtime_metrics, stop_runtime_metrics
 
     attempts = []
     sleeps = []
@@ -239,12 +292,17 @@ def test_retry_policy_run_retries_and_returns_result():
             raise TimeoutError("timeout")
         return "ok"
 
-    result = RetryPolicy(max_attempts=2, base_delay=0, jitter_ratio=0).run(
-        operation, sleep_fn=sleeps.append, random_fn=lambda: 0
-    )
+    collector, token = start_runtime_metrics()
+    try:
+        result = RetryPolicy(max_attempts=2, base_delay=0, jitter_ratio=0).run(
+            operation, sleep_fn=sleeps.append, random_fn=lambda: 0
+        )
+    finally:
+        stop_runtime_metrics(token)
     assert result == "ok"
     assert len(attempts) == 2
     assert sleeps == [0]
+    assert collector.retry_count == 1
 
 
 def test_retry_policy_supports_categories_and_total_budget():
@@ -371,6 +429,7 @@ def test_evaluation_episode_round_trips_shared_contract():
         artifacts=(ArtifactRef("trace", "document", "artifacts/trace.json"),),
         environment={"python": "3.10"},
         fixture_manifest=fixture,
+        runtime_episode_id="runtime-1",
     )
     payload = episode.to_dict()
     restored = EvaluationEpisode.from_mapping(payload)
@@ -384,6 +443,7 @@ def test_evaluation_episode_round_trips_shared_contract():
     assert restored.runner == "http"
     assert restored.artifacts[0].uri == "artifacts/trace.json"
     assert restored.fixture_manifest.fixture_ref == "fixture://calc@v1"
+    assert restored.runtime_episode_id == "runtime-1"
     restored.validate_for_runner()
 
 

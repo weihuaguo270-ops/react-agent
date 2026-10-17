@@ -99,7 +99,7 @@ def _check_expectation(result: str, step: dict) -> tuple[bool, str]:
 def execute_tool_step(tool: str, arguments: dict) -> str:
     try:
         return str(
-            execute_registered_tool(tool, arguments or {}, TOOL_REGISTRY)
+            execute_registered_tool(tool, arguments or {}, TOOL_REGISTRY, source="evaluation")
         )
     except Exception as e:
         # 闸门的结构化拦截（尤其 approval_required）必须原样透传：外层再包一层

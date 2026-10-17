@@ -77,8 +77,12 @@ def _mcp_child_env(extra: dict | None = None, *, allow_proxy: bool | None = None
 class MCPClient:
     """通过 stdin/stdout（stdio）连接 MCP Server，实现 JSON-RPC 2.0 通信"""
 
-    def __init__(self, command, args=None, env=None, *, retry_policy=None, idempotency_policy=None):
-        from react_agent.harness.runtime import IdempotencyPolicy, RetryPolicy
+    def __init__(self, command, args=None, env=None, *, retry_policy=None, idempotency_policy=None, idempotency_store=None):
+        from react_agent.harness.runtime import (
+            IdempotencyPolicy,
+            RetryPolicy,
+            configured_idempotency_store,
+        )
 
         self.command = command
         self.args = args or []
@@ -90,7 +94,11 @@ class MCPClient:
         # Defaults preserve the historical single-attempt/no-cache behavior.
         self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
         self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
-        self._idempotency_results: dict[str, tuple[str, str]] = {}
+        self._idempotency_results = (
+            idempotency_store
+            if idempotency_store is not None
+            else configured_idempotency_store()
+        )
 
     # ---------------------------------------------------------------
     # 生命周期
@@ -188,6 +196,14 @@ class MCPClient:
             spec = ToolSpec.from_definition(tool_definition)
         if spec is None:
             spec = ToolSpec(call.name)
+        canonical_arguments: dict[str, Any] = json.loads(call.arguments) or {}
+        if tool_definition:
+            try:
+                validate_tool_arguments(canonical_arguments, spec.parameters)
+            except Exception as exc:
+                raise ToolCallError(
+                    ToolError.from_exception(exc, tool_name=call.name, source="mcp")
+                ) from exc
         policy = self.idempotency_policy
         if spec.idempotency_level != "none":
             policy = type(policy)(
@@ -206,27 +222,17 @@ class MCPClient:
         if replayed:
             return cached
 
-        if tool_definition:
-            try:
-                validate_tool_arguments(
-                    json.loads(call.arguments), spec.parameters
-                )
-            except Exception as exc:
-                raise ToolCallError(
-                    ToolError.from_exception(exc, tool_name=call.name, source="mcp")
-                ) from exc
-
         def operation() -> str:
             resp = self._rpc("tools/call", {
                 "name": call.name,
-                "arguments": json.loads(call.arguments),
+                "arguments": canonical_arguments,
             })
             texts = [c["text"] for c in resp.get("content", []) if c.get("type") == "text"]
             return "\n".join(texts)
 
         try:
             retry_policy = self.retry_policy
-            if policy.mode == "none" and retry_policy.max_attempts > 1:
+            if spec.retryable is False or (policy.mode == "none" and retry_policy.max_attempts > 1):
                 retry_policy = retry_policy.with_max_attempts(1)
             result = retry_policy.run(
                 lambda: invoke_with_timeout(
@@ -267,6 +273,7 @@ class MCPClient:
                             "timeout_seconds": spec.timeout_seconds,
                             "max_output_chars": spec.max_output_chars,
                             "idempotency_level": spec.idempotency_level,
+                            "retryable": spec.retryable,
                         }
                         if spec is not None
                         else {}
@@ -317,8 +324,12 @@ class MockMCPClient:
     用于 CI、面试 Demo、无 uvx 环境证明「工具协议合并」路径。
     """
 
-    def __init__(self, command="mock", args=None, env=None, *, retry_policy=None, idempotency_policy=None):
-        from react_agent.harness.runtime import IdempotencyPolicy, RetryPolicy
+    def __init__(self, command="mock", args=None, env=None, *, retry_policy=None, idempotency_policy=None, idempotency_store=None):
+        from react_agent.harness.runtime import (
+            IdempotencyPolicy,
+            RetryPolicy,
+            configured_idempotency_store,
+        )
 
         self.command = command
         self.args = args or []
@@ -328,7 +339,11 @@ class MockMCPClient:
         self._connected = False
         self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
         self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
-        self._idempotency_results: dict[str, tuple[str, str]] = {}
+        self._idempotency_results = (
+            idempotency_store
+            if idempotency_store is not None
+            else configured_idempotency_store()
+        )
         self.specs = {}
 
     def connect(self, timeout=15):
@@ -416,6 +431,14 @@ class MockMCPClient:
             spec = ToolSpec.from_definition(tool_definition)
         if spec is None:
             spec = ToolSpec(call.name)
+        canonical_arguments: dict[str, Any] = json.loads(call.arguments) or {}
+        if tool_definition:
+            try:
+                validate_tool_arguments(canonical_arguments, spec.parameters)
+            except Exception as exc:
+                raise ToolCallError(
+                    ToolError.from_exception(exc, tool_name=call.name, source="mcp")
+                ) from exc
         policy = self.idempotency_policy
         if spec.idempotency_level != "none":
             policy = type(policy)(
@@ -434,17 +457,6 @@ class MockMCPClient:
         if replayed:
             return cached
 
-        canonical_arguments: dict[str, Any] = json.loads(call.arguments) or {}
-        if tool_definition:
-            try:
-                validate_tool_arguments(
-                    canonical_arguments, spec.parameters
-                )
-            except Exception as exc:
-                raise ToolCallError(
-                    ToolError.from_exception(exc, tool_name=call.name, source="mcp")
-                ) from exc
-
         def operation() -> str:
             if call.name == "get_current_time":
                 tz = canonical_arguments.get("timezone") or "Asia/Shanghai"
@@ -455,7 +467,7 @@ class MockMCPClient:
 
         try:
             retry_policy = self.retry_policy
-            if policy.mode == "none" and retry_policy.max_attempts > 1:
+            if spec.retryable is False or (policy.mode == "none" and retry_policy.max_attempts > 1):
                 retry_policy = retry_policy.with_max_attempts(1)
             result = retry_policy.run(
                 lambda: invoke_with_timeout(
@@ -495,6 +507,7 @@ class MockMCPClient:
                             "timeout_seconds": spec.timeout_seconds,
                             "max_output_chars": spec.max_output_chars,
                             "idempotency_level": spec.idempotency_level,
+                            "retryable": spec.retryable,
                         }
                         if spec is not None
                         else {}

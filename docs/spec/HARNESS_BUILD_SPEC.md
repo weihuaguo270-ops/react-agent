@@ -23,11 +23,11 @@
 | Phase 0 基线冻结 | Complete / frozen-clean-head-baseline | 已生成 [`HARNESS_BASELINE_20261014.md`](../evaluation/HARNESS_BASELINE_20261014.md)；HEAD clean archive 的 fixture 和聚焦测试已独立重跑，工作区候选结果单独留存 |
 | Phase 1：Shared Contracts | Complete / compatibility-period | 已加入 `ToolCall`、`ArtifactRef`、`TaskEpisode`、`EvaluationEpisode`、`StopReason`、`harness-contracts/v1`、JSON Schema 和 contracts 级 `parse_trajectory()`；契约测试、依赖方向测试、README/迁移说明和 `harness-compatibility/v1` 矩阵已存在。旧 `harness.schema` 按兼容周期保留，禁止新代码新增直接依赖 |
 | Shared trajectory serializer | Complete / compatibility-period | Workflow、ReAct Recorder、服务端 HTTP Adapter 和 HTTP Evaluation Runner 已调用共享 serializer；contracts 提供 `parse_trajectory()`、`normalize_trajectory()`、`validate_trajectory()` 单一迁移入口，旧 `harness.schema` 仅保留兼容实现和导出，最终删除延后到兼容周期结束 |
-| RuntimeEpisode contract | Not started / planned Phase 2 | 当前运行身份、停止原因、执行状态、运行指标和 Format B trajectory 尚未由独立运行时对象统一封装；现有 `Trajectory` 只承载轨迹，`EvaluationEpisode` 只承载评测证据。Phase 2 的 R3/R6 负责实现并接入 |
-| Workflow Format B Adapter | In progress | `WorkflowResult.to_trajectory()` 通过共享 serializer 输出正式字段并保留旧 `schema` 标记；工具失败、权限拒绝和工作流拒绝已映射统一 `StopReason`，超时/取消等其他终止分支仍需补齐 |
-| HTTP Adapter/Runner Format B | In progress | HTTP 是 ReAct/Workflow 的传输和评测适配边界，不是第三种执行方式；HTTP 响应现在携带来源执行方式的正式 `trajectory`，HTTP Runner 优先保留服务端轨迹并记录 `execution_mode`；服务端所有异常分支仍需继续统一，并在 RuntimeEpisode 接入后保留其关联 ID |
-| 工具边界接入 ToolCall | In progress | `execute_registered_tool()`、ReAct、Workflow、Evaluation 和 MCP `call_tool()` 均已规范化参数；新增 `ToolError` 共享错误信封并保留旧 `error` 文本，输出上限和其他外部工具仍需补齐 |
-| RetryPolicy / IdempotencyPolicy | In progress | 非流式 LLM 与 MCP 请求已接入 `RetryPolicy`；MCP 客户端支持相同 key+payload 的进程内 replay 和冲突拒绝，持久化幂等结果存储及可重试工具声明尚未完成 |
+| RuntimeEpisode contract | Complete / R6 evidence collected | `RuntimeEpisode` 已统一运行身份、停止原因、执行状态、基础运行指标和 Format B trajectory；本地 observability artifact、EvaluationEpisode 关联、脱敏、retention、Redis Streams exporter 和重建一致性校验已接入。外部 exporter 通过独立 bounded stream 输出，不复用任务队列；失败事件进入单独 failure stream。Redis failure Stream 的消费组、ACK、pending reclaim 和外部告警接线边界见 [`HARNESS_R6_REDIS_DEPLOYMENT.md`](HARNESS_R6_REDIS_DEPLOYMENT.md) |
+| Workflow Format B Adapter | Complete / R3 matrix collected | `WorkflowResult.to_trajectory()` 通过共享 serializer 输出正式字段并保留旧 `schema` 标记；工具失败、权限拒绝、超时、取消、解析错误和工作流拒绝均有统一 `StopReason` 矩阵测试 |
+| HTTP Adapter/Runner Format B | Mostly complete | HTTP 是 ReAct/Workflow 的传输和评测适配边界，不是第三种执行方式；HTTP 响应携带来源执行方式的正式 `trajectory`，HTTP Runner 保留服务端轨迹、`execution_mode` 和 `runtime_episode_id`；成功、超时、取消、权限拒绝、解析错误和工具错误分支均保留 RuntimeEpisode 关联 |
+| 工具边界接入 ToolCall | Complete / R1 evidence collected | `execute_registered_tool()`、ReAct、Workflow、Evaluation 和真实/Mock MCP `call_tool()` 均已规范化参数；`ToolError` 共享错误信封、输出上限、超时和 ToolSpec 执行约束已有跨路径契约测试，R1 跨路径报告覆盖本地 stdio MCP Server |
+| RetryPolicy / IdempotencyPolicy | Implemented / deployment opt-in | 非流式 LLM、MCP 请求和本地工具边界已接入策略；离线使用 `JsonIdempotencyStore`，生产配置使用 PostgreSQL 权威幂等记录和 Redis 完成结果缓存。共享 store 以 pending claim、lease 接管、唯一 key、payload hash 冲突拒绝和完成后缓存保证跨实例 replay；Redis 丢失回退 PostgreSQL，严格 exactly-once 外部副作用仍需业务工具自身幂等 |
 | StructuredOutputContract | Complete / compatibility-period | `runtime.structured_output.StructuredOutputContract` 提供 provider 无关的 JSON/envelope 解析、JSON Schema/validator 校验、bounded repair、`parsed/invalid/missing/refused` 稳定状态和 `truncated` 失败分类；ReAct、Workflow、HTTP Adapter 可选接入同一契约，解析证据写入 Format B metadata，解析失败统一映射 `StopReason.PARSE_ERROR`。原始响应默认不保留，显式保留必须提供脱敏器 |
 | Deterministic Replay | Complete / evidence collected | `runtime.replay.ReplayManifest` 固化轨迹、工具结果、模型响应、Fixture、协议版本和组件/总哈希；`DeterministicReplay` 提供 `record/replay/inspect`，replay 逐步消费记录的工具结果，默认拒绝网络与副作用，并通过 `ReplayLimits` 限制步骤、工具调用和输出大小；`replay-scoring-input/v1` 为 ReAct、Workflow、HTTP Runner 提供相同评分输入，Fixture 缺失、结果缺失或哈希不一致时 fail closed。`scripts/eval/smoke/run_docker_replay_evidence.py` 已在 `react-agent-sandbox:r5-replay` 中完成两次回放，步骤序列、停止原因和评分输入 SHA256 一致；容器隔离证据保存在本地 `.evidence_tmp/docker-replay-evidence-r5.json`。 |
 | Phase 3：Evaluation 收敛 | Complete | Core `EvaluationEpisode`、`FixtureManifest` 和对应 JSON Schema 已加入；`FixtureBundle`、EvalRunner、execution offline/agent suite、SoftwareTaskRunner、public-RAG、reliability 注入/live/HTTP probe、Expense business/candidate、GitHub business/portfolio、acceptance inventory/materializer、Harness closed-loop、StepWatcher 和 failure flywheel 入口均生成 Episode、Format B trajectory artifact SHA256、fixture/batch 证据。待执行占位产物保持 evidence-only 且 `passed=null`；GitHub 数据标记为带哈希 live snapshot，不视为冻结题集；legacy loader 返回值保持兼容 |
@@ -182,7 +182,7 @@ Artifact 只保存 `id`、`media_type`、`uri`、`mime_type`、`sha256` 和受�
 - 参数校验、输出上限、超时和错误类型统一
 - 现有 `execute_registered_tool()` 保留兼容入口
 
-验收：同一个工具从 ReAct、Workflow、MCP mock 和 Evaluation Runner 调用时，得到相同的规范化参数和错误结构。
+验收：同一个工具从 ReAct、Workflow、MCP mock、真实 MCP Server 和 Evaluation Runner 调用时，得到相同的规范化参数和错误结构；错误 envelope 的字段和分类保持一致，仅 `source` 标识调用路径。
 
 ### R2：统一 `RetryPolicy` 和 `IdempotencyPolicy`
 
@@ -193,8 +193,9 @@ Artifact 只保存 `id`、`media_type`、`uri`、`mime_type`、`sha256` 和受�
 - LLM 非流式请求、MCP 请求和可重试工具使用策略接口
 - 流式响应已经产生增量后默认不得自动重试
 - 业务工具可以声明 `none | safe | required` 幂等等级
+- 生产部署：PostgreSQL 保存权威 key/payload/status/result，Redis 只缓存已完成结果并设置 TTL；缓存失效或不可用时回退 PostgreSQL
 
-验收：注入超时场景能证明重试次数和退避符合策略；相同 key + 相同 payload 可 replay；相同 key + 不同 payload 必须拒绝；重复副作用不会再次执行。
+验收：注入超时场景能证明重试次数和退避符合策略；相同 key + 相同 payload 可 replay；相同 key + 不同 payload 必须拒绝；两个并发实例只能有一个 pending claim 执行；claim 过期后可由新实例接管；重复副作用不会再次执行。严格 exactly-once 外部副作用不由 Harness 单独宣称。
 
 ### R3：编排 Adapter
 
@@ -238,6 +239,11 @@ Artifact 只保存 `id`、`media_type`、`uri`、`mime_type`、`sha256` 和受�
 - 工具调用次数、重试次数、耗时、token、估算成本、拒绝和取消计数
 - JSON artifact 和可选日志/指标 exporter
 - 敏感字段脱敏规则和 retention 配置
+
+当前实现：`RuntimeObservability` 生成 `runtime-observability/v1` JSON artifact，保留
+`runtime_episode_id`、`evaluation_episode_id`、`trace_id`、`session_id`、`run_id` 关联，
+对已观测指标和 `unknown` 缺失值进行稳定序列化，并支持本地重建与可选 exporter。
+外部 exporter 支持可注入的指数退避重试、失败队列和告警回调；队列和告警后端由部署侧提供。Redis Streams 的消费组、ACK、pending reclaim 和告警接线方案见 [`HARNESS_R6_REDIS_DEPLOYMENT.md`](HARNESS_R6_REDIS_DEPLOYMENT.md)。
 
 验收：不依赖外部观测系统也能从本地 artifact 重建一次 `RuntimeEpisode`；字段缺失不能伪造为 0 或成功，运行时状态和停止原因必须与 trajectory、HTTP/Runner 结果一致。
 
