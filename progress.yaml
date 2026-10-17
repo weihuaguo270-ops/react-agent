@@ -1,6 +1,6 @@
 {
   "schema_version": "harness-progress/v1",
-  "updated_at": "2026-10-17T16:09:51.893010+00:00",
+  "updated_at": "2026-10-17T16:28:50.942439+00:00",
   "source_spec": "docs/spec/HARNESS_BUILD_SPEC.md",
   "stages": {
     "P0": {
@@ -116,11 +116,11 @@
       "last_gate": {
         "status": "passed",
         "report": "artifacts/harness/stage-gates/p2-latest.json",
-        "report_sha256": "c20992db8340382c67bd4b58cf39d9003533de67b135fabed597e6afea0fe04a"
+        "report_sha256": "a57a476b4fe4badb70e4c13d47ab0a98822066acb103c93884f1f00efaeaee6b"
       },
       "final_report": {
         "path": "artifacts/harness/p2-final-acceptance.json",
-        "report_sha256": "aac44e47596818cf76e862819ed0391a87dc8c897f34269085382c4e4f2ef088"
+        "report_sha256": "a3ecb2a3fa0cbae1611b93b84687c11361c51c147f4abf6f1823953efc055f0d"
       }
     },
     "P3": {
@@ -180,6 +180,6 @@
     "stage": "P2",
     "status": "passed",
     "report": "artifacts/harness/stage-gates/p2-latest.json",
-    "report_sha256": "c20992db8340382c67bd4b58cf39d9003533de67b135fabed597e6afea0fe04a"
+    "report_sha256": "a57a476b4fe4badb70e4c13d47ab0a98822066acb103c93884f1f00efaeaee6b"
   }
 }
