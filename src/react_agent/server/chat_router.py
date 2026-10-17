@@ -256,14 +256,22 @@ def _handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
 
 def handle_chat(body: dict, request_id: str) -> tuple[int, dict]:
     """Run one HTTP request and attach the source RuntimeEpisode."""
-    from react_agent.harness.runtime import HttpRunnerAdapter
-
-    status, payload = _handle_chat(body, request_id)
-    mode = str(payload.get("mode") or ("workflow" if payload.get("workflow") else "react"))
-    adapted, _episode = HttpRunnerAdapter().adapt_response(
-        payload,
-        request_id=request_id,
-        execution_mode=mode,
-        status_code=status,
+    from react_agent.harness.runtime import (
+        HttpRunnerAdapter,
+        start_runtime_metrics,
+        stop_runtime_metrics,
     )
-    return status, adapted
+
+    _collector, collector_token = start_runtime_metrics()
+    try:
+        status, payload = _handle_chat(body, request_id)
+        mode = str(payload.get("mode") or ("workflow" if payload.get("workflow") else "react"))
+        adapted, _episode = HttpRunnerAdapter().adapt_response(
+            payload,
+            request_id=request_id,
+            execution_mode=mode,
+            status_code=status,
+        )
+        return status, adapted
+    finally:
+        stop_runtime_metrics(collector_token)

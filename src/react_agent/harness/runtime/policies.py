@@ -220,6 +220,11 @@ class RetryPolicy:
                         raise RetryBudgetExceeded(
                             f"retry budget exhausted after {self.total_budget_seconds}s"
                         ) from exc
+                from .observability import current_runtime_metrics
+
+                collector = current_runtime_metrics()
+                if collector is not None:
+                    collector.record_retry()
                 if on_retry:
                     on_retry(
                         attempt,

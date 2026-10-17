@@ -178,6 +178,7 @@ class ToolBoundary:
         retry_policy=None,
         idempotency_policy=None,
         idempotency_store: MutableMapping[str, tuple[str, Any]] | None = None,
+        source: str = "runtime",
     ) -> None:
         from react_agent.harness.runtime import (
             IdempotencyPolicy,
@@ -189,6 +190,7 @@ class ToolBoundary:
         self.default_timeout_seconds = default_timeout_seconds
         self.default_max_output_chars = default_max_output_chars
         self.risk_sandbox = risk_sandbox
+        self.source = str(source or "runtime")
         self.retry_policy = retry_policy or RetryPolicy(max_attempts=1)
         self.idempotency_policy = idempotency_policy or IdempotencyPolicy("none")
         if idempotency_store is not None:
@@ -217,16 +219,16 @@ class ToolBoundary:
             timeout_seconds=timeout_seconds,
             idempotency_key=idempotency_key,
             call_id=call_id,
-            source="runtime",
+            source=self.source,
         )
         fn = self.registry.get(call.name)
         if fn is None:
             raise ToolCallError(
-                ToolError(
+                    ToolError(
                     code="tool_not_found",
                     message=f"unknown tool: {call.name}",
                     tool_name=call.name,
-                    source="runtime",
+                        source=self.source,
                 )
             )
         canonical_arguments = json.loads(call.arguments)
@@ -238,6 +240,12 @@ class ToolBoundary:
         spec = self.specs.get(
             call.name, ToolSpec(call.name, max_output_chars=self.default_max_output_chars)
         )
+        try:
+            validate_tool_arguments(canonical_arguments, spec.parameters)
+        except Exception as exc:
+            raise ToolCallError(
+                ToolError.from_exception(exc, tool_name=call.name, source=self.source)
+            ) from exc
         policy = self.idempotency_policy
         if spec.idempotency_level != "none":
             policy = type(policy)(
@@ -255,12 +263,6 @@ class ToolBoundary:
         )
         if replayed:
             return cached
-        try:
-            validate_tool_arguments(canonical_arguments, spec.parameters)
-        except Exception as exc:
-            raise ToolCallError(
-                ToolError.from_exception(exc, tool_name=call.name, source="runtime")
-            ) from exc
 
         from react_agent.harness.runtime import RetryPolicy
 
@@ -285,9 +287,10 @@ class ToolBoundary:
                     if required_sandbox:
                         raise RuntimeError("required mode refused unsandboxed tool execution")
                     return invoke_with_timeout(
-                        lambda: fn(**canonical_arguments),
+                    lambda: fn(**canonical_arguments),
                         effective_timeout,
                         tool_name=call.name,
+                        source=self.source,
                     )
                 if isinstance(result, str) and result.startswith("[沙箱]"):
                     raise RuntimeError(result)
@@ -296,6 +299,7 @@ class ToolBoundary:
                 lambda: fn(**canonical_arguments),
                 effective_timeout,
                 tool_name=call.name,
+                source=self.source,
             )
 
         retry_policy = self.retry_policy
@@ -331,6 +335,7 @@ def execute_registered_tool(
     retry_policy=None,
     idempotency_policy=None,
     idempotency_store: MutableMapping[str, tuple[str, Any]] | None = None,
+    source: str = "runtime",
 ) -> Any:
     """兼容入口；所有本地工具调用均经过 :class:`ToolBoundary`."""
     if definitions is None:
@@ -347,6 +352,7 @@ def execute_registered_tool(
         retry_policy=retry_policy,
         idempotency_policy=idempotency_policy,
         idempotency_store=idempotency_store,
+        source=source,
     ).execute(
         tool_name,
         arguments,

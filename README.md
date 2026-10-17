@@ -69,6 +69,8 @@ Mutable runtime artifacts no longer write into the installed package. See
 
 **异步任务队列 MVP（Unreleased）：** `POST /v1/tasks` 可将任务写入 Redis Streams，由独立 Worker 执行，任务状态、结果和错误持久化到 PostgreSQL；`GET /v1/tasks/{task_id}` 查询持久化记录，`DELETE /v1/tasks/{task_id}` 支持协作式取消。默认内存任务模式继续用于本地回归，Redis 模式通过 `REACT_AGENT_QUEUE_BACKEND=redis` 启用。完整配置、状态机、故障恢复和验收证据见 [`docs/spec/REDIS_TASK_MVP_SPEC.md`](docs/spec/REDIS_TASK_MVP_SPEC.md)。
 
+该部署由当前目录的 Docker Compose 提供 PostgreSQL 与 Redis：API/Worker 在 Compose 网络内分别连接 `postgres:5432` 和 `redis:6379`；默认项目名下对应 `react-agent-postgres-1` 与 `react-agent-redis-1`。宿主机访问项目 Redis 使用 `127.0.0.1:6380`，PostgreSQL 未发布宿主机端口。已有的 `learn-postgres`、`learn-redis` 是独立容器，不是这套 Compose 服务。用 `docker compose ps postgres redis` 查看本项目服务是否正在运行；若覆盖 `REACT_AGENT_DATABASE_URL` 或 `REACT_AGENT_REDIS_URL`，以覆盖后的地址为准。
+
 **垂直 demo（② 的子场景）：** [证据化文档排障](docs/EVIDENCE_DOCS_TROUBLESHOOT.md) — 引用/拒答/现场证据；`agent_runner` 默认离线循环 · Live 走 `react_loop`。
 
 ```bash

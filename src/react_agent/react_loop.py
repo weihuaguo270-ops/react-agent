@@ -323,7 +323,7 @@ def _execute_tool_call_raw(tool_call):
             from react_agent.harness.tool_boundary import execute_registered_tool
 
             result = execute_registered_tool(
-                func_name, arguments, registry, risk_sandbox=True
+                func_name, arguments, registry, risk_sandbox=True, source="react"
             )
             return result if isinstance(result, str) else json.dumps(result, ensure_ascii=False)
         except PermissionError as exc:
