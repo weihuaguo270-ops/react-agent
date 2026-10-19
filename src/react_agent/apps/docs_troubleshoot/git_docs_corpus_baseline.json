@@ -2,6 +2,7 @@
   "files": {
     "AGENT_WORKFLOW.md": "eea1433a9068f0c45b43f28633c343dcec464b837153c13020713613b53499ca",
     "APPLICATION_DIRECTION.md": "bd68187bfa230c4649acfe387fc9ff9b5c8a33016b93c3676c495bd2a8e614d7",
+    "CI_IMPROVEMENTS.md": "3cbca4402ac48cad67866230b8b499e1d83fd0cd6765d71821c7e3abe0b60e7c",
     "ARTIFACT_RETENTION.md": "475c094c40a51dcf3ae89e0f71d56d1a3ffb22b203b628dc9b3c3ba00e6d94af",
     "CORE_ARCHITECTURE.md": "d85a1fa9493b1007fe5b2a0b7f7661163d9da6c0e48757ce06d83cb184176d30",
     "DEPLOY.md": "1131f6010a1a168157a7417563c1ea2d0e2564aa3af34d19de59123b090ace9f",
@@ -104,6 +105,6 @@
     "spec/REDIS_TASK_MVP_SPEC.md": "911cdbea18fde4e904c10e41d59efee70eb7ceca97d499a254f9cee1dfe1e7c3",
     "step_watcher_evidence_baseline.md": "608b25923d5bb2652a380057ea1b5bee916a9c65b25bc2fa05b255900a85787f"
   },
-  "generated_at": "2026-10-19T06:03:06Z",
+  "generated_at": "2026-10-19T14:45:00Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
