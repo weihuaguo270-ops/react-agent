@@ -2,12 +2,36 @@
 
 Canonical schema file: schemas/harness_trajectory.schema.json
 Consumers: react-agent recorder, trace-debugger, and llm-eval-engine.
+
+DEPRECATED: This module is retained for compatibility during the P5 migration period.
+New code should import from react_agent.harness.contracts instead:
+
+    from react_agent.harness.contracts import (
+        validate_trajectory,
+        normalize_trajectory,
+        parse_trajectory,
+        SCHEMA_VERSION,
+    )
+
+See docs/spec/P5_MIGRATION_INVENTORY.md for the migration guide.
 """
 from __future__ import annotations
+
+import warnings
 
 import json
 import os
 from typing import Any, Optional
+
+# Issue deprecation warning on first import
+warnings.warn(
+    "react_agent.harness.schema is deprecated and will be removed after the "
+    "P5 compatibility period. Use 'from react_agent.harness.contracts import "
+    "validate_trajectory, normalize_trajectory, parse_trajectory, SCHEMA_VERSION' instead. "
+    "See docs/spec/P5_MIGRATION_INVENTORY.md for details.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 SCHEMA_FILENAME = "harness_trajectory.schema.json"
 

@@ -8,14 +8,14 @@ import pytest
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from react_agent.harness.schema import (
+from react_agent.harness.contracts import (
     SCHEMA_VERSION,
     TrajectorySchemaError,
     assert_valid,
     normalize_trajectory,
-    schema_major,
     validate_trajectory,
 )
+from react_agent.harness.schema import schema_major  # Legacy util function
 
 FIXTURE = os.path.join(ROOT, "fixtures", "harness_closed_loop.json")
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 def test_http_runner_trajectory_is_formal_format_b(monkeypatch):
     from react_agent.eval import http_execution
-    from react_agent.harness.schema import validate_trajectory
+    from react_agent.harness.contracts import validate_trajectory
 
     monkeypatch.setattr(
         http_execution,
@@ -80,7 +80,7 @@ def test_http_runner_preserves_server_execution_trajectory(monkeypatch):
 
 def test_http_runner_records_server_error_with_stop_reason(monkeypatch):
     from react_agent.eval import http_execution
-    from react_agent.harness.schema import validate_trajectory
+    from react_agent.harness.contracts import validate_trajectory
 
     monkeypatch.setattr(
         http_execution,
