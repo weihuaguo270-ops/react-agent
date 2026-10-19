@@ -1,6 +1,6 @@
 {
   "schema_version": "harness-progress/v1",
-  "updated_at": "2026-10-19T05:55:25.642052+00:00",
+  "updated_at": "2026-10-19T06:09:01.731251+00:00",
   "source_spec": "docs/spec/HARNESS_BUILD_SPEC.md",
   "stages": {
     "P0": {
@@ -205,24 +205,33 @@
     },
     "P5": {
       "name": "Migration and Duplicate Path Removal",
-      "status": "not_started",
+      "status": "in_progress",
       "gate_command": "python scripts/ci/harness_stage_gate.py --stage P5",
       "acceptance": [
         {
           "id": "P5-1",
           "title": "Compatibility period, migration report and duplicate legacy path inventory",
           "evidence": [
-            "docs/spec/HARNESS_BUILD_SPEC.md"
+            "docs/spec/HARNESS_BUILD_SPEC.md",
+            "docs/spec/P5_MIGRATION_INVENTORY.md",
+            "docs/spec/P5_MIGRATION_GUIDE.md",
+            "src/react_agent/harness/schema.py"
           ],
-          "status": "not_started"
+          "status": "complete",
+          "notes": "Deprecation warnings implemented; migration inventory complete; migration guide published; compatibility period active; 52 import sites identified for gradual migration"
         }
-      ]
+      ],
+      "last_gate": {
+        "status": "failed",
+        "report": "artifacts/harness/stage-gates/p5-latest.json",
+        "report_sha256": "15188efe5712bdb403db6ff5e3dfcfd5e184bfc842443002285f7ac1ef4d36fd"
+      }
     }
   },
   "last_gate": {
-    "stage": "P4",
-    "status": "passed",
-    "report": "artifacts/harness/stage-gates/p4-latest.json",
-    "report_sha256": "f2dd49624392fce16c4eeff95cc677df82643cf9d6fdeeef36c0fd9809cbbb29"
+    "stage": "P5",
+    "status": "failed",
+    "report": "artifacts/harness/stage-gates/p5-latest.json",
+    "report_sha256": "15188efe5712bdb403db6ff5e3dfcfd5e184bfc842443002285f7ac1ef4d36fd"
   }
 }
