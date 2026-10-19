@@ -1,6 +1,6 @@
 {
   "schema_version": "harness-progress/v1",
-  "updated_at": "2026-10-19T03:21:49.267205+00:00",
+  "updated_at": "2026-10-19T05:55:25.642052+00:00",
   "source_spec": "docs/spec/HARNESS_BUILD_SPEC.md",
   "stages": {
     "P0": {
@@ -167,7 +167,7 @@
     },
     "P4": {
       "name": "Replay and Regression Gates",
-      "status": "in_progress",
+      "status": "complete",
       "gate_command": "python scripts/ci/harness_stage_gate.py --stage P4",
       "acceptance": [
         {
@@ -175,15 +175,32 @@
           "title": "Baseline compare and repair/reverify closure evidence",
           "evidence": [
             "docs/spec/HARNESS_BUILD_SPEC.md",
-            "artifacts/harness"
+            "artifacts/harness/baseline-compare-latest.json",
+            "artifacts/harness/p4-acceptance-report.json",
+            "artifacts/software-delivery/repair_then_pass/acceptance.json"
           ],
-          "status": "in_progress"
+          "artifacts": [
+            {
+              "path": "artifacts/harness/baseline-compare-latest.json",
+              "sha256": "d32741d91348f6738d8caacf023c1908bc554148260fce83595b88e8127df568"
+            },
+            {
+              "path": "artifacts/harness/p4-acceptance-report.json",
+              "sha256": "f7e3fc8b7c0f8c4e0ab02bfa1bd5ea8d7be8bde39a6dbe7e5f22f8f4d3d9c8a1"
+            },
+            {
+              "path": "artifacts/software-delivery/repair_then_pass/acceptance.json",
+              "sha256": "dd534720a28f84ca6290480c1b3334c5549fd8d6f23c8bd8e5c67b6e13b9c9d8"
+            }
+          ],
+          "status": "complete",
+          "notes": "Baseline compare report generated, repair→reverify closure verified with reverified=true. All P4-1 requirements met."
         }
       ],
       "last_gate": {
-        "status": "failed",
+        "status": "passed",
         "report": "artifacts/harness/stage-gates/p4-latest.json",
-        "report_sha256": "18e97f8024148e2a0d9ff2acc28759faf2b3e9388e57a9e2605ec61460c2a1d4"
+        "report_sha256": "f2dd49624392fce16c4eeff95cc677df82643cf9d6fdeeef36c0fd9809cbbb29"
       }
     },
     "P5": {
@@ -204,8 +221,8 @@
   },
   "last_gate": {
     "stage": "P4",
-    "status": "failed",
+    "status": "passed",
     "report": "artifacts/harness/stage-gates/p4-latest.json",
-    "report_sha256": "18e97f8024148e2a0d9ff2acc28759faf2b3e9388e57a9e2605ec61460c2a1d4"
+    "report_sha256": "f2dd49624392fce16c4eeff95cc677df82643cf9d6fdeeef36c0fd9809cbbb29"
   }
 }
