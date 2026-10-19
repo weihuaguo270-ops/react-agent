@@ -129,6 +129,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pr", type=int, help="GitHub PR number to inspect")
     parser.add_argument("--repo", help="GitHub owner/name; required with --pr")
     parser.add_argument("--ci", action="store_true", help="fail on a dirty worktree and stale base")
+    parser.add_argument("--allow-revert", action="store_true", help="allow revert commits")
     args = parser.parse_args(argv)
 
     failures: list[str] = []
@@ -151,7 +152,10 @@ def main(argv: list[str] | None = None) -> int:
         print("PASS: git diff --cached --check")
 
     head_message = git("log", "-1", "--pretty=%s")
-    if not CONVENTIONAL_COMMIT.match(head_message):
+    # Allow revert commits if flag is set
+    if args.allow_revert and head_message.startswith("Revert "):
+        print(f"PASS: revert commit allowed ({head_message})")
+    elif not CONVENTIONAL_COMMIT.match(head_message):
         fail(f"HEAD commit is not conventional: {head_message!r}", failures)
     else:
         print(f"PASS: conventional HEAD commit ({head_message})")
