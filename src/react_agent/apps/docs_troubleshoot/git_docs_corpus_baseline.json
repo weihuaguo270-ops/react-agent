@@ -135,6 +135,6 @@
     "spec/registry.yaml": "663cca24b792e4b94c8810a8b56ccbe8171257bc391e54de0c618626276b84ab",
     "step_watcher_evidence_baseline.md": "608b25923d5bb2652a380057ea1b5bee916a9c65b25bc2fa05b255900a85787f"
   },
-  "generated_at": "2026-10-19T05:18:14Z",
+  "generated_at": "2026-10-19T05:27:35Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
