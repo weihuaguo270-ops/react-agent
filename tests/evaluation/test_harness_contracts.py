@@ -258,7 +258,7 @@ def test_episode_hash_is_stable_and_split_is_checked():
 
 def test_shared_trajectory_serializer_validates_format_b():
     from react_agent.harness import serialize_trajectory
-    from react_agent.harness.schema import validate_trajectory
+    from react_agent.harness.contracts import validate_trajectory
 
     trajectory = serialize_trajectory(
         session_id="run-1",
@@ -541,7 +541,7 @@ def test_software_task_fixture_bundle_uses_manifest_version_and_name():
 
 def test_recorder_uses_shared_trajectory_serializer():
     from react_agent.harness.recorder import Trajectory
-    from react_agent.harness.schema import assert_valid
+    from react_agent.harness.contracts import assert_valid
 
     trajectory = Trajectory("q", model="mock")
     trajectory.add_step(1, observation="ok")

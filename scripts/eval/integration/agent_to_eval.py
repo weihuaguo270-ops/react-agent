@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from react_agent.harness import start_trajectory, finish_trajectory
-from react_agent.harness.schema import assert_valid, normalize_trajectory
+from react_agent.harness.contracts import assert_valid, normalize_trajectory
 
 
 def run_mock_agent(query: str) -> dict:

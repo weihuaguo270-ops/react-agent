@@ -14,7 +14,7 @@ from react_agent.eval.scorer import (  # noqa: E402
     EVAL_ENGINE_API_CONTRACT,
     score_with_eval_engine,
 )
-from react_agent.harness.schema import (  # noqa: E402
+from react_agent.harness.contracts import (  # noqa: E402
     SCHEMA_VERSION,
     assert_valid,
     normalize_trajectory,
