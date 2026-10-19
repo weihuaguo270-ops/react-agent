@@ -107,7 +107,8 @@ class EvalRunner:
             self.cases, provider=provider, progress_callback=_progress
         )
         self.report = generate_report(
-            self.raw_results, self.cases, provider=self.provider
+            self.raw_results, self.cases, provider=self.provider,
+            dataset_path=self.dataset_path  # P3: pass dataset path for fixture manifest
         )
 
     def summary(self) -> dict:

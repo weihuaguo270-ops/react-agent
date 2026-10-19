@@ -6,25 +6,57 @@
   3. 按 tag / capability 分组统计
   4. 失败案例列表（含回放路径）
   5. 保存到 eval/reports/ 目录
+
+P3: 现在生成 EvaluationEpisode 实例以统一 Harness 契约。
 """
 
+import hashlib
 import json
 import os
 import time
+from datetime import datetime, timezone
 from typing import Optional
 
 from .scorer import score_result
 from .capability_scorer import score_capability
 from react_agent.paths import runtime_dir
+from react_agent.harness.contracts import ArtifactRef, serialize_trajectory
+from react_agent.harness.evaluation import build_fixture_manifest_from_value, episode_from_case
 
 REPORT_DIR = str(runtime_dir("reports", env_var="REACT_AGENT_REPORT_DIR"))
 
 
 def generate_report(raw_results: list, cases: list,
-                    provider: Optional[str] = None) -> dict:
-    """为批量执行结果生成完整评测报告"""
+                    provider: Optional[str] = None,
+                    dataset_path: Optional[str] = None) -> dict:
+    """为批量执行结果生成完整评测报告
+
+    P3: 现在生成 EvaluationEpisode 实例以统一 Harness 契约。
+    """
     scored = []
     passed_count = 0
+
+    # P3: Build fixture manifest and batch ID
+    report_id = time.strftime("eval_%Y%m%d_%H%M%S")
+    batch_id = f"eval-batch-{report_id}"
+
+    # Create fixture manifest from cases
+    cases_data = [
+        {
+            "id": getattr(c, "id", "unknown"),
+            "question": getattr(c, "question", ""),
+            "tag": getattr(c, "tag", None),
+            "capability": getattr(c, "capability", None),
+        }
+        for c in cases
+    ]
+    fixture_manifest = build_fixture_manifest_from_value(
+        cases_data,
+        fixture_id=f"eval:{report_id}",
+        version="v1",
+        source_name=f"eval-cases-{report_id}.json",
+        dependencies={"loader": "react_agent.eval", "format": "eval-case/v1", "provider": provider or "default"},
+    )
 
     for raw, case in zip(raw_results, cases):
         stdout = raw.get("stdout", "")
@@ -58,6 +90,59 @@ def generate_report(raw_results: list, cases: list,
             "score": score,
             "metrics": score.get("metrics", {}),
         }
+
+        # P3: Generate EvaluationEpisode for this case
+        if trajectory:
+            case_dict = {
+                "id": case.id or f"case_{len(scored)+1}",
+                "question": case.question,
+                "acceptance_criteria": _extract_acceptance_criteria(case),
+            }
+
+            # Normalize trajectory to Format B if needed
+            if not trajectory.get("schema_version"):
+                trajectory = serialize_trajectory(
+                    session_id=trajectory.get("session_id", f"eval:{case_dict['id']}"),
+                    query=case.question,
+                    steps=trajectory.get("steps", []),
+                    final_answer=trajectory.get("final_answer", ""),
+                    model=trajectory.get("model", ""),
+                    metadata={
+                        **trajectory.get("metadata", {}),
+                        "transport": "eval",
+                        "provider": provider or "default",
+                        "passed": bool(score.get("passed")),
+                    },
+                )
+
+            trajectory_encoded = json.dumps(
+                trajectory, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+
+            episode = episode_from_case(
+                case_dict,
+                fixture_manifest=fixture_manifest,
+                runner=f"eval:{getattr(case, 'capability', 'default')}",
+                batch_id=batch_id,
+                trajectory=trajectory,
+                score=score,
+                environment={
+                    "provider": provider or "default",
+                    "exit_code": str(raw.get("exit_code", 0)),
+                    "duration_seconds": str(raw.get("duration_seconds", 0)),
+                    "timed_out": str(raw.get("timed_out", False)),
+                },
+                artifacts=(ArtifactRef(
+                    id=f"trajectory:{trajectory['session_id']}",
+                    media_type="document",
+                    uri=f"trajectory://{trajectory['session_id']}",
+                    mime_type="application/json",
+                    sha256=hashlib.sha256(trajectory_encoded).hexdigest(),
+                    metadata={"format": "harness-trajectory/v1", "case_id": case_dict["id"]},
+                ),),
+            )
+            entry["evaluation_episode"] = episode.to_dict()
+
         if score.get("passed"):
             passed_count += 1
         scored.append(entry)
@@ -70,10 +155,20 @@ def generate_report(raw_results: list, cases: list,
     by_capability = _group_capability_stats(scored)
     capability_summary = _capability_summary(scored)
 
+    # P3: Collect EvaluationEpisode instances
+    episodes = []
+    for s in scored:
+        ep = s.get("evaluation_episode")
+        if ep:
+            episodes.append(ep)
+
     report = {
-        "report_id": time.strftime("eval_%Y%m%d_%H%M%S"),
+        "report_id": report_id,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "provider": provider or "default",
+        "batch_id": batch_id,
+        "fixture_manifest": fixture_manifest.to_dict(),
+        "evaluation_episodes": episodes,  # P3: unified Episode evidence
         "summary": {
             "total": total,
             "passed": passed_count,
@@ -384,3 +479,38 @@ def report_to_markdown(
             lines.append(f"- {n}")
         lines.append("")
     return "\n".join(lines)
+
+
+def _extract_acceptance_criteria(case) -> list[str]:
+    """Extract acceptance criteria from a test case for EvaluationEpisode.
+
+    P3: Converts case expectations into explicit acceptance criteria.
+    """
+    criteria = []
+
+    # Check for explicit acceptance_criteria field
+    if hasattr(case, 'acceptance_criteria') and case.acceptance_criteria:
+        return list(case.acceptance_criteria)
+
+    # Extract from expected_answer
+    if hasattr(case, 'expected_answer') and case.expected_answer:
+        criteria.append(f"expected answer: {case.expected_answer}")
+
+    # Extract from must_contain
+    if hasattr(case, 'must_contain') and case.must_contain:
+        if isinstance(case.must_contain, (list, tuple)):
+            for item in case.must_contain:
+                criteria.append(f"must contain: {item}")
+        else:
+            criteria.append(f"must contain: {case.must_contain}")
+
+    # Extract from capability if present
+    if hasattr(case, 'capability') and case.capability:
+        criteria.append(f"capability: {case.capability}")
+
+    # Fallback: generic pass criteria
+    if not criteria:
+        criteria.append("task completes successfully")
+
+    return criteria
+

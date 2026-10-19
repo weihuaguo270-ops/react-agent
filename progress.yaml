@@ -1,6 +1,6 @@
 {
   "schema_version": "harness-progress/v1",
-  "updated_at": "2026-10-17T16:28:50.942439+00:00",
+  "updated_at": "2026-10-19T03:21:49.267205+00:00",
   "source_spec": "docs/spec/HARNESS_BUILD_SPEC.md",
   "stages": {
     "P0": {
@@ -116,11 +116,11 @@
       "last_gate": {
         "status": "passed",
         "report": "artifacts/harness/stage-gates/p2-latest.json",
-        "report_sha256": "a57a476b4fe4badb70e4c13d47ab0a98822066acb103c93884f1f00efaeaee6b"
+        "report_sha256": "e8ab10ad6825a137b107ee24517d147c8e2a27da60b2116f170e5fe83c024603"
       },
       "final_report": {
         "path": "artifacts/harness/p2-final-acceptance.json",
-        "report_sha256": "a3ecb2a3fa0cbae1611b93b84687c11361c51c147f4abf6f1823953efc055f0d"
+        "report_sha256": "d3faf8fa288cb807edbc594ce0525cd4cf5d417bbb41f30cece384f09e2de5a4"
       }
     },
     "P3": {
@@ -135,13 +135,34 @@
             "src/react_agent/harness/evaluation",
             "tests/evaluation/test_harness_contracts.py"
           ],
-          "status": "complete"
+          "status": "complete",
+          "notes": "Contracts defined and proven: 2 major runners (execution_scorer, EvalRunner) successfully integrated with EvaluationEpisode"
+        },
+        {
+          "id": "P3-2",
+          "title": "Runner integration - execution_scorer returns EvaluationEpisode",
+          "evidence": [
+            "src/react_agent/eval/execution_scorer.py",
+            "tests/evaluation/test_execution_episode_integration.py"
+          ],
+          "status": "complete",
+          "notes": "execution_scorer integration complete with tests"
+        },
+        {
+          "id": "P3-3",
+          "title": "Runner integration - EvalRunner returns EvaluationEpisode",
+          "evidence": [
+            "src/react_agent/eval/__init__.py",
+            "tests/evaluation/test_eval_runner_episode_integration.py"
+          ],
+          "status": "complete",
+          "notes": "EvalRunner integration complete: report.py generates Episodes, 4 tests passing"
         }
       ],
       "last_gate": {
         "status": "passed",
         "report": "artifacts/harness/stage-gates/p3-latest.json",
-        "report_sha256": "f2ac4a7163cf7fbb31b8cde8c47b5a6c4403486ad11eaadad9a747d71c58bd9f"
+        "report_sha256": "7282917ed725d7852cc147934d5fa9efc0f50b5174ee19ec928720c3040cc399"
       }
     },
     "P4": {
@@ -158,7 +179,12 @@
           ],
           "status": "in_progress"
         }
-      ]
+      ],
+      "last_gate": {
+        "status": "failed",
+        "report": "artifacts/harness/stage-gates/p4-latest.json",
+        "report_sha256": "18e97f8024148e2a0d9ff2acc28759faf2b3e9388e57a9e2605ec61460c2a1d4"
+      }
     },
     "P5": {
       "name": "Migration and Duplicate Path Removal",
@@ -177,9 +203,9 @@
     }
   },
   "last_gate": {
-    "stage": "P2",
-    "status": "passed",
-    "report": "artifacts/harness/stage-gates/p2-latest.json",
-    "report_sha256": "a57a476b4fe4badb70e4c13d47ab0a98822066acb103c93884f1f00efaeaee6b"
+    "stage": "P4",
+    "status": "failed",
+    "report": "artifacts/harness/stage-gates/p4-latest.json",
+    "report_sha256": "18e97f8024148e2a0d9ff2acc28759faf2b3e9388e57a9e2605ec61460c2a1d4"
   }
 }

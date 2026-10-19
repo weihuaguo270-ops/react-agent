@@ -584,6 +584,13 @@ def run_execution_suite(
             for k, v in sorted(d.items())
         }
 
+    # P3: Collect EvaluationEpisode instances for unified harness contracts
+    episodes = []
+    for r in scored:
+        ep = r.get("evaluation_episode")
+        if ep:
+            episodes.append(ep)
+
     report = {
         "report_id": f"execution_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -591,6 +598,7 @@ def run_execution_suite(
         "fixture_manifest": manifest.to_dict(),
         "batch_id": batch_id,
         "modes": sorted(wanted),
+        "evaluation_episodes": episodes,  # P3: unified Episode evidence
         "summary": {
             "total": total,
             "passed": passed,
