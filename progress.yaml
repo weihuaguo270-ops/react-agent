@@ -1,0 +1,211 @@
+{
+  "schema_version": "harness-progress/v1",
+  "updated_at": "2026-10-19T03:21:49.267205+00:00",
+  "source_spec": "docs/spec/HARNESS_BUILD_SPEC.md",
+  "stages": {
+    "P0": {
+      "name": "Baseline",
+      "status": "complete",
+      "gate_command": "python scripts/ci/harness_stage_gate.py --stage P0",
+      "acceptance": [
+        {
+          "id": "P0-1",
+          "title": "Frozen baseline report exists",
+          "evidence": [
+            "docs/evaluation/HARNESS_BASELINE_20261014.md"
+          ],
+          "status": "complete"
+        }
+      ]
+    },
+    "P1": {
+      "name": "Shared Contracts",
+      "status": "complete",
+      "gate_command": "python scripts/ci/harness_stage_gate.py --stage P1",
+      "acceptance": [
+        {
+          "id": "P1-1",
+          "title": "Versioned contracts, schemas, parser and compatibility tests",
+          "evidence": [
+            "src/react_agent/harness/contracts/__init__.py",
+            "schemas/harness_trajectory.schema.json",
+            "tests/evaluation/test_harness_contracts.py"
+          ],
+          "status": "complete"
+        }
+      ]
+    },
+    "P2": {
+      "name": "Runtime Convergence",
+      "status": "complete",
+      "gate_command": "python scripts/ci/harness_stage_gate.py --stage P2",
+      "acceptance": [
+        {
+          "id": "R1",
+          "title": "Shared ToolCall and error envelope across ReAct, Workflow, MCP mock, real MCP server and Evaluation Runner",
+          "evidence": [
+            "tests/evaluation/test_harness_contracts.py",
+            "tests/test_mcp_mock.py",
+            "tests/test_mcp_stdio_contract.py",
+            "artifacts/harness/p2-r1-cross-path.json"
+          ],
+          "status": "complete"
+        },
+        {
+          "id": "R2",
+          "title": "Retry and shared PostgreSQL/Redis idempotency including concurrency and recovery",
+          "evidence": [
+            "tests/test_shared_idempotency.py",
+            "artifacts/harness/real-idempotency-evidence.json"
+          ],
+          "status": "complete"
+        },
+        {
+          "id": "R3",
+          "title": "ReAct and Workflow RuntimeEpisode plus HTTP adapter contract coverage",
+          "evidence": [
+            "tests/test_harness_r3.py",
+            "tests/evaluation/test_http_trajectory_contract.py"
+          ],
+          "status": "complete"
+        },
+        {
+          "id": "R4",
+          "title": "Structured output parse, validation and failure classification",
+          "evidence": [
+            "tests/test_structured_output_contract.py",
+            "tests/evaluation/test_harness_contracts.py"
+          ],
+          "status": "complete"
+        },
+        {
+          "id": "R5",
+          "title": "Deterministic replay in isolated Docker with stable scoring input",
+          "evidence": [
+            ".evidence_tmp/docker-replay-evidence-r5.json"
+          ],
+          "status": "complete"
+        },
+        {
+          "id": "R6",
+          "title": "Runtime observability artifact and Redis Streams integration evidence",
+          "evidence": [
+            "tests/test_runtime_observability.py",
+            "artifacts/harness/p2-r6-redis-exporter.json",
+            "docs/spec/HARNESS_R6_REDIS_DEPLOYMENT.md"
+          ],
+          "status": "complete"
+        }
+      ],
+      "required_evidence": [
+        {
+          "id": "R1-live-mcp",
+          "path": "artifacts/harness/p2-r1-cross-path.json",
+          "json_assertion": {
+            "passed": true
+          }
+        },
+        {
+          "id": "R6-redis-exporter",
+          "path": "artifacts/harness/p2-r6-redis-exporter.json",
+          "json_assertion": {
+            "passed": true
+          }
+        }
+      ],
+      "last_gate": {
+        "status": "passed",
+        "report": "artifacts/harness/stage-gates/p2-latest.json",
+        "report_sha256": "e8ab10ad6825a137b107ee24517d147c8e2a27da60b2116f170e5fe83c024603"
+      },
+      "final_report": {
+        "path": "artifacts/harness/p2-final-acceptance.json",
+        "report_sha256": "d3faf8fa288cb807edbc594ce0525cd4cf5d417bbb41f30cece384f09e2de5a4"
+      }
+    },
+    "P3": {
+      "name": "Evaluation Convergence",
+      "status": "complete",
+      "gate_command": "python scripts/ci/harness_stage_gate.py --stage P3",
+      "acceptance": [
+        {
+          "id": "P3-1",
+          "title": "EvaluationEpisode, FixtureManifest and runner adapters",
+          "evidence": [
+            "src/react_agent/harness/evaluation",
+            "tests/evaluation/test_harness_contracts.py"
+          ],
+          "status": "complete",
+          "notes": "Contracts defined and proven: 2 major runners (execution_scorer, EvalRunner) successfully integrated with EvaluationEpisode"
+        },
+        {
+          "id": "P3-2",
+          "title": "Runner integration - execution_scorer returns EvaluationEpisode",
+          "evidence": [
+            "src/react_agent/eval/execution_scorer.py",
+            "tests/evaluation/test_execution_episode_integration.py"
+          ],
+          "status": "complete",
+          "notes": "execution_scorer integration complete with tests"
+        },
+        {
+          "id": "P3-3",
+          "title": "Runner integration - EvalRunner returns EvaluationEpisode",
+          "evidence": [
+            "src/react_agent/eval/__init__.py",
+            "tests/evaluation/test_eval_runner_episode_integration.py"
+          ],
+          "status": "complete",
+          "notes": "EvalRunner integration complete: report.py generates Episodes, 4 tests passing"
+        }
+      ],
+      "last_gate": {
+        "status": "passed",
+        "report": "artifacts/harness/stage-gates/p3-latest.json",
+        "report_sha256": "7282917ed725d7852cc147934d5fa9efc0f50b5174ee19ec928720c3040cc399"
+      }
+    },
+    "P4": {
+      "name": "Replay and Regression Gates",
+      "status": "in_progress",
+      "gate_command": "python scripts/ci/harness_stage_gate.py --stage P4",
+      "acceptance": [
+        {
+          "id": "P4-1",
+          "title": "Baseline compare and repair/reverify closure evidence",
+          "evidence": [
+            "docs/spec/HARNESS_BUILD_SPEC.md",
+            "artifacts/harness"
+          ],
+          "status": "in_progress"
+        }
+      ],
+      "last_gate": {
+        "status": "failed",
+        "report": "artifacts/harness/stage-gates/p4-latest.json",
+        "report_sha256": "18e97f8024148e2a0d9ff2acc28759faf2b3e9388e57a9e2605ec61460c2a1d4"
+      }
+    },
+    "P5": {
+      "name": "Migration and Duplicate Path Removal",
+      "status": "not_started",
+      "gate_command": "python scripts/ci/harness_stage_gate.py --stage P5",
+      "acceptance": [
+        {
+          "id": "P5-1",
+          "title": "Compatibility period, migration report and duplicate legacy path inventory",
+          "evidence": [
+            "docs/spec/HARNESS_BUILD_SPEC.md"
+          ],
+          "status": "not_started"
+        }
+      ]
+    }
+  },
+  "last_gate": {
+    "stage": "P4",
+    "status": "failed",
+    "report": "artifacts/harness/stage-gates/p4-latest.json",
+    "report_sha256": "18e97f8024148e2a0d9ff2acc28759faf2b3e9388e57a9e2605ec61460c2a1d4"
+  }
+}

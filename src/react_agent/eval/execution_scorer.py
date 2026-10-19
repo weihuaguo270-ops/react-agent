@@ -99,7 +99,7 @@ def _check_expectation(result: str, step: dict) -> tuple[bool, str]:
 def execute_tool_step(tool: str, arguments: dict) -> str:
     try:
         return str(
-            execute_registered_tool(tool, arguments or {}, TOOL_REGISTRY)
+            execute_registered_tool(tool, arguments or {}, TOOL_REGISTRY, source="evaluation")
         )
     except Exception as e:
         # 闸门的结构化拦截（尤其 approval_required）必须原样透传：外层再包一层
@@ -584,6 +584,13 @@ def run_execution_suite(
             for k, v in sorted(d.items())
         }
 
+    # P3: Collect EvaluationEpisode instances for unified harness contracts
+    episodes = []
+    for r in scored:
+        ep = r.get("evaluation_episode")
+        if ep:
+            episodes.append(ep)
+
     report = {
         "report_id": f"execution_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -591,6 +598,7 @@ def run_execution_suite(
         "fixture_manifest": manifest.to_dict(),
         "batch_id": batch_id,
         "modes": sorted(wanted),
+        "evaluation_episodes": episodes,  # P3: unified Episode evidence
         "summary": {
             "total": total,
             "passed": passed,
