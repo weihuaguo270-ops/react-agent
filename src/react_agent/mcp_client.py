@@ -196,6 +196,14 @@ class MCPClient:
             spec = ToolSpec.from_definition(tool_definition)
         if spec is None:
             spec = ToolSpec(call.name)
+        canonical_arguments: dict[str, Any] = json.loads(call.arguments) or {}
+        if tool_definition:
+            try:
+                validate_tool_arguments(canonical_arguments, spec.parameters)
+            except Exception as exc:
+                raise ToolCallError(
+                    ToolError.from_exception(exc, tool_name=call.name, source="mcp")
+                ) from exc
         policy = self.idempotency_policy
         if spec.idempotency_level != "none":
             policy = type(policy)(
@@ -214,20 +222,10 @@ class MCPClient:
         if replayed:
             return cached
 
-        if tool_definition:
-            try:
-                validate_tool_arguments(
-                    json.loads(call.arguments), spec.parameters
-                )
-            except Exception as exc:
-                raise ToolCallError(
-                    ToolError.from_exception(exc, tool_name=call.name, source="mcp")
-                ) from exc
-
         def operation() -> str:
             resp = self._rpc("tools/call", {
                 "name": call.name,
-                "arguments": json.loads(call.arguments),
+                "arguments": canonical_arguments,
             })
             texts = [c["text"] for c in resp.get("content", []) if c.get("type") == "text"]
             return "\n".join(texts)
@@ -433,6 +431,14 @@ class MockMCPClient:
             spec = ToolSpec.from_definition(tool_definition)
         if spec is None:
             spec = ToolSpec(call.name)
+        canonical_arguments: dict[str, Any] = json.loads(call.arguments) or {}
+        if tool_definition:
+            try:
+                validate_tool_arguments(canonical_arguments, spec.parameters)
+            except Exception as exc:
+                raise ToolCallError(
+                    ToolError.from_exception(exc, tool_name=call.name, source="mcp")
+                ) from exc
         policy = self.idempotency_policy
         if spec.idempotency_level != "none":
             policy = type(policy)(
@@ -450,17 +456,6 @@ class MockMCPClient:
         )
         if replayed:
             return cached
-
-        canonical_arguments: dict[str, Any] = json.loads(call.arguments) or {}
-        if tool_definition:
-            try:
-                validate_tool_arguments(
-                    canonical_arguments, spec.parameters
-                )
-            except Exception as exc:
-                raise ToolCallError(
-                    ToolError.from_exception(exc, tool_name=call.name, source="mcp")
-                ) from exc
 
         def operation() -> str:
             if call.name == "get_current_time":

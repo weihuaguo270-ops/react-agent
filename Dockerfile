@@ -12,7 +12,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     REACT_AGENT_DISABLE_MCP=1 \
     REACT_AGENT_DATA_DIR=/app/data
 
-COPY pyproject.toml README.md LICENSE ./
+COPY pyproject.toml README.md LICENSE llm_config.example.json ./
 COPY src ./src
 COPY schemas ./schemas
 COPY fixtures/expense ./fixtures/expense

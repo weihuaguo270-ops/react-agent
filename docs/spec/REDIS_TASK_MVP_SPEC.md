@@ -111,7 +111,9 @@ Redis 不作为已完成任务历史记录的权威来源。
 
 #### 当前实现状态（2026-10-09）
 
-现已使用当前 Compose 文件新建项目 Redis 容器 `react-agent-redis-1`。由于宿主机 `6379` 已被旧的 `learn-redis` 占用，项目 Redis 对外映射为 `127.0.0.1:6380`，项目网络内仍使用 `redis:6379`。旧 `learn-redis` 仍是独立实例，当前只有 RDB；它不属于本项目新建的 Redis 服务。
+当前 Compose 项目包含 PostgreSQL 服务 `postgres` 和 Redis 服务 `redis`。默认项目名下容器分别为 `react-agent-postgres-1`、`react-agent-redis-1`；API 和 Worker 在 Compose 网络内连接 `postgres:5432`、`redis:6379`。PostgreSQL 仅在 Compose 网络内提供服务，没有发布宿主机端口。由于宿主机 `6379` 被独立的 `learn-redis` 占用，项目 Redis 发布到 `127.0.0.1:6380`。独立的 `learn-postgres`、`learn-redis` 都不是此 Compose 项目的服务，不能用它们的配置或状态代表本项目配置。
+
+容器名取决于 Compose 项目名，若设置了 `COMPOSE_PROJECT_NAME` 则前缀会改变；服务名和 Compose 网络内地址保持不变。容器当前是否运行是易变状态，应通过 `docker compose ps postgres redis` 核验，不以本文记录的容器身份推断运行状态。
 
 2026-10-09 已核验项目 Redis：`appendonly=yes`、`appendfsync=everysec`、`aof-use-rdb-preamble=yes`、保留 RDB `save` 规则、AOF 自动重写阈值为 `100%/64mb`，`INFO persistence` 显示 `aof_enabled:1`。重启恢复测试中写入的 key 和 Stream 数据均成功恢复；测试数据随后已清理。
 
