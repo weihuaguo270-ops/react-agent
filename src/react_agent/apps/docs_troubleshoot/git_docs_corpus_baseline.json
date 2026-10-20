@@ -2,8 +2,8 @@
   "files": {
     "AGENT_WORKFLOW.md": "eea1433a9068f0c45b43f28633c343dcec464b837153c13020713613b53499ca",
     "APPLICATION_DIRECTION.md": "bd68187bfa230c4649acfe387fc9ff9b5c8a33016b93c3676c495bd2a8e614d7",
-    "CI_IMPROVEMENTS.md": "3cbca4402ac48cad67866230b8b499e1d83fd0cd6765d71821c7e3abe0b60e7c",
     "ARTIFACT_RETENTION.md": "475c094c40a51dcf3ae89e0f71d56d1a3ffb22b203b628dc9b3c3ba00e6d94af",
+    "CI_IMPROVEMENTS.md": "3cbca4402ac48cad67866230b8b499e1d83fd0cd6765d71821c7e3abe0b60e7c",
     "CORE_ARCHITECTURE.md": "d85a1fa9493b1007fe5b2a0b7f7661163d9da6c0e48757ce06d83cb184176d30",
     "DEPLOY.md": "1131f6010a1a168157a7417563c1ea2d0e2564aa3af34d19de59123b090ace9f",
     "DOCS_TROUBLESHOOT_EVAL.md": "9322e6eb7c2f468be80fabde17ea2b4ecf35f9439dc0bf81f4199da58939b44d",
@@ -35,7 +35,7 @@
     "capability_newcases_20260713.md": "45ab3373f77f4c01863c03103ae7df1e36e394f5f556e2004a2a67624eb39418",
     "capability_snapshot_20260713.md": "3cbc82cfb04116f1345cf412970eee9b3f3548d3f7615c5d24c65a7d43604f95",
     "daily_smoke/README.md": "ed250027416ee625f014f5934a5b13ed4229617a714753cab12149944623c0d7",
-    "daily_smoke/VARIANCE.md": "83cf73c55b62068df240da7cbdb769ecf35da9ca2a06cac09a02f4d9690d71f3",
+    "daily_smoke/VARIANCE.md": "fa8ad5f00f459314dc16f8ba5fc9d02f220175811ebcafc664c24964ad372845",
     "eval_report_20260713.md": "fda031497f9d028693cf281f66d7cc55a7af3845c04e50bec597e4f4e9c63dbd",
     "evaluation/HARNESS_BASELINE_20261014.md": "0e00b795f07b24f5af74b2b880f70c6791a7634c862c423273d71c80e89eda79",
     "evaluation/HARNESS_HEALTH.md": "6f908c12ab0104489a77f0c80aaa6b210d64f0fb70e0f14995db34b664fa0b94",
@@ -105,6 +105,6 @@
     "spec/REDIS_TASK_MVP_SPEC.md": "911cdbea18fde4e904c10e41d59efee70eb7ceca97d499a254f9cee1dfe1e7c3",
     "step_watcher_evidence_baseline.md": "608b25923d5bb2652a380057ea1b5bee916a9c65b25bc2fa05b255900a85787f"
   },
-  "generated_at": "2026-10-19T14:45:00Z",
+  "generated_at": "2026-10-20T05:43:52Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
