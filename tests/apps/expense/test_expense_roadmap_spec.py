@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-ROADMAP = ROOT / "docs" / "spec" / "EXPENSE_IMPLEMENTATION_ROADMAP_SPEC.md"
+ROADMAP = ROOT / "docs" / "specs" / "expense" / "roadmap-spec.md"
 
 
 def test_expense_roadmap_defines_all_cross_spec_stages_and_sources():
