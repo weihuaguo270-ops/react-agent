@@ -1,13 +1,15 @@
 """
 tools/ — 工具模块统一入口
 
-默认只注册 Core 工具。实验工具（RAG / ToT / Dashboard）需：
-  REACT_AGENT_EXPERIMENTAL_TOOLS=1
+默认只注册 Core 工具。插件工具（RAG / ToT / Dashboard）需：
+  REACT_AGENT_PLUGINS=1
+  或 REACT_AGENT_EXPERIMENTAL_TOOLS=1 (已弃用)
 """
 
 from __future__ import annotations
 
 import os
+import warnings
 from contextvars import ContextVar
 from typing import Any
 
@@ -80,14 +82,35 @@ TOOL_DEFINITIONS = [
 ]
 
 
+def _is_plugins_enabled() -> bool:
+    """检查插件是否启用（支持新旧环境变量）。
+
+    Returns:
+        True if plugins are enabled
+    """
+    # 新变量优先 (推荐)
+    plugins = os.environ.get("REACT_AGENT_PLUGINS", "").strip().lower()
+    if plugins in ("1", "true", "yes", "on"):
+        return True
+
+    # 向后兼容旧变量 (已弃用)
+    legacy = os.environ.get("REACT_AGENT_EXPERIMENTAL_TOOLS", "").strip().lower()
+    if legacy in ("1", "true", "yes", "on"):
+        warnings.warn(
+            "REACT_AGENT_EXPERIMENTAL_TOOLS is deprecated. "
+            "Use REACT_AGENT_PLUGINS instead. "
+            "See docs/PLUGINS.md for details.",
+            DeprecationWarning,
+            stacklevel=3
+        )
+        return True
+
+    return False
+
+
 def _enable_experimental_tools() -> None:
-    """按需挂载 RAG / ToT / Dashboard（默认关闭，避免叙事与默认面混杂）。"""
-    if os.environ.get("REACT_AGENT_EXPERIMENTAL_TOOLS", "").strip().lower() not in (
-        "1",
-        "true",
-        "yes",
-        "on",
-    ):
+    """按需挂载插件工具（RAG / ToT / Dashboard，默认关闭）。"""
+    if not _is_plugins_enabled():
         return
     from .dashboard import start_dashboard as _tool_start_dashboard
     from .dashboard import TOOL_DEFINITION as _DEF_DASHBOARD
