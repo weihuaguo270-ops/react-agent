@@ -2,8 +2,14 @@
 import hashlib
 import json
 from pathlib import Path
+import sys
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
+sys.path.insert(0, str(ROOT / "src"))
+
+from react_agent.harness.evaluation import build_repair_evidence
+
+
 def write_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -61,11 +67,24 @@ def collect(root=ROOT):
         "trajectory_format": "raw SoftwareTaskRunner result, not Format B",
         "legacy_root_files": "Superseded; use before/ and after/ only",
     })
+    shared = build_repair_evidence(
+        task_id="repair_then_pass",
+        task={"id": "repair_then_pass", "split": "held_out"},
+        records=records,
+        source_files={
+            stage: source / f"runs/fastapi-15974-{suffix}.json"
+            for stage, suffix in (("before", "baseline"), ("after", "agent"))
+        },
+        phase="historical_collection",
+        reverified=False,
+        patch_file=patch,
+        run_id="historical-fastapi-15974",
+    )
     write_json(current, {
         "status": "historical_evidence_collected", "decision": "review",
         "pre_repair": {"test_status": "failed", "exit_code": 1, "log": "before/test-result.json"},
         "post_repair": {"test_status": "passed", "exit_code": 0, "log": "after/test-result.json"},
-        "reverified": False, "provenance": provenance,
+        **shared, "reverified": False, "provenance": provenance,
         "remaining": "Fresh baseline and patched execution required; Docker daemon unavailable at collection time",
     })
     print(f"Collected historical before/repair/after evidence: {output}")

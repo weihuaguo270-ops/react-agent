@@ -10,6 +10,7 @@ import os
 import time
 import json
 import glob
+import hashlib
 from typing import Optional
 
 from react_agent.paths import runtime_dir
@@ -100,13 +101,35 @@ def _list_traj_files() -> set:
     return set(glob.glob(os.path.join(TRAJECTORY_DIR, "traj_*.json")))
 
 
-def run_batch(cases: list, provider: Optional[str] = None,
-              progress_callback=None) -> list:
+def run_batch(
+    cases: list,
+    provider: Optional[str] = None,
+    progress_callback=None,
+    *,
+    fixture_manifest=None,
+    batch_id: str | None = None,
+) -> list:
     """批量运行测试用例
 
     对 consistency_runs > 1 的用例会重复执行，结果写入
     result["run_results"]，供 capability_scorer 计算一致率。
     """
+    from react_agent.harness.contracts import ArtifactRef, serialize_trajectory
+    from react_agent.harness.evaluation import (
+        build_fixture_manifest_from_value,
+        episode_from_case,
+    )
+
+    case_values = [
+        case.to_dict() if hasattr(case, "to_dict") else dict(case)
+        for case in cases
+    ]
+    fixture_manifest = fixture_manifest or build_fixture_manifest_from_value(
+        case_values,
+        fixture_id="eval:batch",
+        source_name="eval-batch-cases.json",
+    )
+    batch_id = batch_id or f"eval-batch-{time.time_ns()}"
     results = []
     total = len(cases)
 
@@ -162,6 +185,63 @@ def run_batch(cases: list, provider: Optional[str] = None,
         }
         if runs > 1:
             result["run_results"] = run_results
+
+        result["batch_id"] = batch_id
+        result["fixture_manifest"] = fixture_manifest.to_dict()
+        trajectory = result.get("trajectory")
+        if trajectory:
+            try:
+                case_value = case.to_dict() if hasattr(case, "to_dict") else dict(case)
+                if not trajectory.get("schema_version"):
+                    steps = list(trajectory.get("steps", []))
+                    if not steps:
+                        steps = [{
+                            "step": 1,
+                            "thought": "Record evaluation result.",
+                            "action": {"name": "evaluation_record", "arguments": "{}"},
+                            "observation": trajectory.get("final_answer", ""),
+                        }]
+                    trajectory = serialize_trajectory(
+                        session_id=trajectory.get("session_id", f"eval:{case_id}"),
+                        query=case.question,
+                        steps=steps,
+                        final_answer=trajectory.get("final_answer", ""),
+                        model=trajectory.get("model", ""),
+                        metadata={"transport": "eval", "provider": provider or "default"},
+                    )
+                encoded = json.dumps(
+                    trajectory, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                ).encode("utf-8")
+                episode = episode_from_case(
+                    {**case_value, "id": f"{case_id}#{trajectory['session_id']}"},
+                    fixture_manifest=fixture_manifest,
+                    runner="eval",
+                    batch_id=batch_id,
+                    trajectory=trajectory,
+                    artifacts=(ArtifactRef(
+                        id=f"trajectory:{trajectory['session_id']}",
+                        media_type="document",
+                        uri=f"trajectory://{trajectory['session_id']}",
+                        mime_type="application/json",
+                        sha256=hashlib.sha256(encoded).hexdigest(),
+                        metadata={"format": "harness-trajectory/v1", "case_id": case_id},
+                    ),),
+                )
+                result["trajectory"] = trajectory
+                result["evaluation_episode"] = episode.to_dict()
+            except (TypeError, ValueError) as exc:
+                result["evaluation_episode_error"] = str(exc)
+        else:
+            criteria = []
+            if hasattr(case, "must_contain"):
+                criteria.extend(str(item) for item in (case.must_contain or []))
+            if hasattr(case, "must_contain_any"):
+                criteria.extend(str(item) for item in (case.must_contain_any or []))
+            result["evaluation_episode_error"] = (
+                "evaluation episode missing required runner fields: acceptance_criteria"
+                if not criteria
+                else "evaluation episode not emitted because trajectory is missing"
+            )
 
         if progress_callback:
             if timed_out:

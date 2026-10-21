@@ -13,6 +13,7 @@ Requires (CI installs these):
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -28,6 +29,11 @@ from react_agent.harness.contracts import (  # noqa: E402
     validate_trajectory,
 )
 from react_agent.harness import start_trajectory, finish_trajectory  # noqa: E402
+from react_agent.harness.contracts import ArtifactRef  # noqa: E402
+from react_agent.harness.evaluation import (  # noqa: E402
+    build_fixture_manifest_from_value,
+    episode_from_case,
+)
 
 configure_stdio()
 
@@ -168,12 +174,47 @@ def run(traj: dict, report_out: str | None = None) -> int:
     evaluation = _score_eval(traj)
 
     print("Step 3: Summary")
+    encoded = json.dumps(
+        traj, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    batch_id = f"closed-loop-{traj.get('session_id') or 'recorded'}"
+    fixture = build_fixture_manifest_from_value(
+        traj,
+        fixture_id=f"closed-loop:{traj.get('session_id') or 'recorded'}",
+        source_name="harness-closed-loop-trajectory.json",
+        environment={"dataset_status": "recorded_evidence"},
+    )
+    episode = episode_from_case(
+        {
+            "id": str(traj.get("session_id") or "closed-loop-recorded"),
+            "question": str(traj.get("query") or "Recorded Harness trajectory"),
+            "acceptance_criteria": ["trajectory schema validates"],
+            "split": "dev",
+        },
+        fixture_manifest=fixture,
+        runner="harness-closed-loop",
+        batch_id=batch_id,
+        trajectory=traj,
+        score={"decision": release_decision(tdebug, evaluation)},
+        environment={"evidence_only": True, "dataset_status": "recorded_evidence"},
+        artifacts=(ArtifactRef(
+            id=f"trajectory:{traj.get('session_id') or 'recorded'}",
+            media_type="document",
+            uri=f"trajectory://{traj.get('session_id') or 'recorded'}",
+            mime_type="application/json",
+            sha256=hashlib.sha256(encoded).hexdigest(),
+            metadata={"format": "harness-trajectory/v1"},
+        ),),
+    )
     out = {
         "session_id": traj.get("session_id"),
         "query": traj.get("query"),
         "schema_ok": True,
         "tdebug": tdebug,
         "eval": evaluation,
+        "fixture_manifest": fixture.to_dict(),
+        "batch_id": batch_id,
+        "evaluation_episodes": [episode.to_dict()],
     }
     out["decision"] = release_decision(tdebug, evaluation)
     if report_out:

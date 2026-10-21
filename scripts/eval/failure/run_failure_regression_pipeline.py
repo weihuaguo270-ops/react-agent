@@ -14,6 +14,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import shutil
 import sys
@@ -111,7 +112,10 @@ def _episode_from_trajectory(
     episode_id: str,
     split: str,
     task_ok: bool,
+    fixture_manifest: Any,
+    batch_id: str,
 ) -> dict[str, Any]:
+    from react_agent.harness.contracts import ArtifactRef
     from eval_engine.integrations.episode import import_episode, verify_episode_state
 
     state = {
@@ -138,6 +142,19 @@ def _episode_from_trajectory(
     episode = import_episode(envelope)
     payload = episode.to_dict()
     payload["state_verification"] = verify_episode_state(episode).to_dict()
+    encoded = json.dumps(
+        traj, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    payload["fixture_manifest"] = fixture_manifest.to_dict()
+    payload["batch_id"] = batch_id
+    payload["artifacts"] = [ArtifactRef(
+        id=f"trajectory:{traj.get('session_id') or episode_id}",
+        media_type="document",
+        uri=f"trajectory://{traj.get('session_id') or episode_id}",
+        mime_type="application/json",
+        sha256=hashlib.sha256(encoded).hexdigest(),
+        metadata={"format": "harness-trajectory/v1", "episode_id": episode_id},
+    ).to_dict()]
     return payload
 
 
@@ -206,6 +223,17 @@ def run_pipeline(
     current = _scan_trajectories(current_paths, label="current")
     _write_json(out_dir / "current_scan.json", current)
 
+    from react_agent.harness.evaluation import build_fixture_manifest_from_value
+
+    current_trajectories = [_load_json(path) for path in current_paths]
+    fixture_manifest = build_fixture_manifest_from_value(
+        current_trajectories,
+        fixture_id=f"failure-regression:{out_dir.name}",
+        source_name="failure-regression-trajectories.json",
+        environment={"dataset_status": "fixture_evidence"},
+    )
+    batch_id = f"failure-regression-{out_dir.name}"
+
     failure_gate = _build_failure_gate(current, baseline)
     _write_json(out_dir / "failures.json", failure_gate)
 
@@ -215,14 +243,15 @@ def run_pipeline(
     _write_json(out_dir / "findings.json", findings)
 
     episodes: list[dict[str, Any]] = []
-    for idx, path in enumerate(current_paths):
-        traj = _load_json(path)
+    for idx, (path, traj) in enumerate(zip(current_paths, current_trajectories)):
         split = "held_out" if idx == 0 else "dev"
         ep = _episode_from_trajectory(
             traj,
             episode_id=f"{mode}-{traj.get('session_id', path.stem)}",
             split=split,
             task_ok=task_ok if path.name == "trajectory_bad.json" else True,
+            fixture_manifest=fixture_manifest,
+            batch_id=batch_id,
         )
         episodes.append(ep)
         _write_json(ep_dir / f"{ep['episode_id']}.json", ep)
@@ -268,6 +297,9 @@ def run_pipeline(
 
     release = _release(episodes, failure_gate, process_quality=process_quality)
     _write_json(out_dir / "release.json", release)
+    artifact_sha256 = {
+        "release": hashlib.sha256((out_dir / "release.json").read_bytes()).hexdigest(),
+    }
 
     repair_feedback = build_repair_feedback(
         release_decision=str(release.get("decision") or ""),
@@ -290,7 +322,10 @@ def run_pipeline(
         "failure_gate_decision": failure_gate.get("decision"),
         "release_decision": release.get("decision"),
         "baseline_source": "provided" if baseline_scan is not None else "fixture_ok",
+        "fixture_manifest": fixture_manifest.to_dict(),
+        "batch_id": batch_id,
         "artifacts": artifacts,
+        "artifact_sha256": artifact_sha256,
         "repair_feedback": repair_feedback,
         "process_quality": process_quality,
         "reverify": None,
