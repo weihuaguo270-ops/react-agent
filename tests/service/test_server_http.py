@@ -1,0 +1,111 @@
+"""Smoke-test thin HTTP server (offline /v1/chat)."""
+from __future__ import annotations
+
+import json
+import os
+import threading
+import time
+import urllib.error
+import urllib.request
+
+os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
+os.environ.setdefault("REACT_AGENT_DEFAULT_APP", "docs_troubleshoot")
+os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
+os.environ.setdefault("REACT_AGENT_DISABLE_MCP", "1")
+
+
+def test_health_and_chat_offline():
+    from http.server import ThreadingHTTPServer
+
+    from react_agent.server.app import AgentHandler
+    from react_agent.apps.docs_troubleshoot.index import reset_index
+    from react_agent.tools import enable_app_tools
+
+    enable_app_tools()
+    reset_index()
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), AgentHandler)
+    port = httpd.server_address[1]
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    time.sleep(0.15)
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=5) as resp:
+            assert resp.status == 200
+            html = resp.read().decode("utf-8")
+        assert "证据化文档排障" in html
+
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/info", timeout=5) as resp:
+            info = json.loads(resp.read().decode("utf-8"))
+        assert info.get("product") == "react-agent"
+        apps = [a["id"] for a in (info.get("applications") or [])]
+        assert "docs_troubleshoot" in apps
+        assert "expense" in apps
+        assert "default" in apps
+
+        # pillars 必须与实际应用注册表一致（此前硬编码三支柱，含未绑定的 rag_research）
+        derived = []
+        for app in info.get("applications") or []:
+            pillar = app.get("pillar")
+            if pillar and pillar not in derived:
+                derived.append(pillar)
+        assert info.get("pillars") == derived
+        assert "rag_research" not in (info.get("pillars") or [])
+        # 宣称定位单独暴露，不与“已实现”混用
+        assert "rag_research" in (info.get("declared_pillars") or [])
+
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=5) as resp:
+            health = json.loads(resp.read().decode("utf-8"))
+        assert health["status"] == "ok"
+        assert "version" in health
+
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/ready", timeout=5) as resp:
+            ready = json.loads(resp.read().decode("utf-8"))
+        assert resp.status == 200
+        assert ready["status"] == "ready"
+        assert ready.get("chunks", 0) > 0
+        assert ready["sandbox"]["backend"] in ("process", "container")
+
+        req = urllib.request.Request(
+            f"http://127.0.0.1:{port}/v1/chat",
+            data=json.dumps({"message": "缺少 Authorization 返回什么?"}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+        assert body.get("request_id")
+        assert "401" in body.get("answer", "") or "unauthorized" in body.get("answer", "").lower()
+        assert body.get("mode") == "offline"
+
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/workflows", timeout=5) as resp:
+            wfs = json.loads(resp.read().decode("utf-8"))
+        assert any(w["name"] == "docs_troubleshoot" for w in wfs.get("workflows", []))
+
+        req2 = urllib.request.Request(
+            f"http://127.0.0.1:{port}/v1/workflows/run",
+            data=json.dumps(
+                {"name": "docs_troubleshoot", "query": "缺少 Authorization 返回什么?"}
+            ).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req2, timeout=10) as resp:
+            wf_body = json.loads(resp.read().decode("utf-8"))
+        assert wf_body.get("ok") is True
+        assert "401" in wf_body.get("answer", "") or "unauthorized" in wf_body.get(
+            "answer", ""
+        ).lower()
+
+        # invalid path
+        try:
+            urllib.request.urlopen(f"http://127.0.0.1:{port}/nope", timeout=5)
+            assert False, "expected 404"
+        except urllib.error.HTTPError as e:
+            assert e.code == 404
+            err = json.loads(e.read().decode("utf-8"))
+            assert err["error"]["code"] == "not_found"
+            assert err["error"]["request_id"]
+    finally:
+        httpd.shutdown()
+

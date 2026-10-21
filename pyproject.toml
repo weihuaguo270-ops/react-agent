@@ -72,6 +72,9 @@ markers = [
 ]
 # 所有可再生缓存集中到 .cache/，根目录不再出现 .pytest_cache/。
 cache_dir = ".cache/pytest"
+# 集中管理临时目录到 .cache/tmp，避免污染根目录
+tmp_path_retention_count = 1
+tmp_path_retention_policy = "failed"
 
 # mypy 默认写根目录 .mypy_cache/；同样收进 .cache/。
 [tool.mypy]

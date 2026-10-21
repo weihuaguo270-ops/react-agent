@@ -17,7 +17,7 @@ EVIDENCE = {
     "r1_cross_path": "artifacts/harness/p2-r1-cross-path.json",
     "r6_redis_exporter": "artifacts/harness/p2-r6-redis-exporter.json",
     "r2_real_idempotency": "artifacts/harness/real-idempotency-evidence.json",
-    "r5_docker_replay": ".evidence_tmp/docker-replay-evidence-r5.json",
+    "r5_docker_replay": ".cache/tmp/evidence/docker-replay-evidence-r5.json",
 }
 WORKING_TREE_PATHS = (
     "docs/spec/HARNESS_BUILD_SPEC.md",
