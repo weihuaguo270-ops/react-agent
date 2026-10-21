@@ -81,7 +81,8 @@ def select_hits(ranked: list[dict[str, Any]], query: str) -> list[dict[str, Any]
     ql = query or ""
     if re.search(r"Core|自建|core\s*实现|运行时默认", ql, re.I):
         for r in ranked:
-            if "core_architecture" in str(r.get("source") or "").lower():
+            source = str(r.get("source") or "").lower()
+            if "core_architecture" in source or "core-architecture" in source:
                 return [r]
         return ranked[:1]
     if "不要猜" in ql or ("不要" in ql and "别的" in ql):
@@ -134,8 +135,19 @@ def build_draft_from_hits(
         rag = get_index()
         expand_q = query
         if re.search(r"Core|自建|core\s*实现|运行时默认", query, re.I):
-            expand_q = "自建 Core CORE_ARCHITECTURE react_loop"
-        for h in rag.query(expand_q, top_k=4):
+            expand_q = "运行时默认 自建 Core react_loop"
+        retrieved = rag.query(expand_q, top_k=8)
+        if re.search(r"Core|自建|core\s*实现|运行时默认", query, re.I):
+            from react_agent.apps.docs_troubleshoot.ranking import rank_results
+
+            retrieved = rank_results(retrieved, query)
+            preferred = [
+                hit for hit in retrieved
+                if "core-architecture.md" in str(hit.get("source") or "").lower()
+                and "自建 core" in str(hit.get("content") or "").lower()
+            ]
+            retrieved = preferred + [hit for hit in retrieved if hit not in preferred]
+        for h in retrieved[:4]:
             r = {
                 "source": h.get("source", ""),
                 "score": h.get("score"),

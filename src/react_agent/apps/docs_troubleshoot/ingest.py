@@ -275,6 +275,7 @@ def rebuild_index(
     for op in openapi_paths:
         if op.is_file():
             ingest_openapi(rag, op)
+    rag._save()
     return build_manifest(
         corpus_dir=corpus_dir,
         extra_dirs=extra_dirs,
