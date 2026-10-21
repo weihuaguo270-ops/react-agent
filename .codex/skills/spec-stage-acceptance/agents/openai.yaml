@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spec Stage Acceptance"
+  short_description: "Run phase gates and track evidence"
+  default_prompt: "Use $spec-stage-acceptance to check the current Spec phase from the repository progress file."
+policy:
+  allow_implicit_invocation: true
