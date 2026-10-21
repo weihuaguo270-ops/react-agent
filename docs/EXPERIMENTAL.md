@@ -1,8 +1,20 @@
-# 实验模块
+# 实验模块（已更新为"插件"）
+
+> **⚠️ 术语更新**: 本文档中的"实验功能"已重命名为"插件"以更准确地反映其性质。
+> 
+> **请参阅最新文档**: [`PLUGINS.md`](PLUGINS.md)
+> 
+> 本页面保留用于向后兼容，内容可能不是最新的。
+
+---
 
 以下模块可运行、可测试，**默认不注册进 Core 工具表**，与主场景 Workflow 路径隔离。启用方式：
 
 ```bash
+# 推荐使用新变量
+set REACT_AGENT_PLUGINS=1
+
+# 旧变量（仍然有效）
 set REACT_AGENT_EXPERIMENTAL_TOOLS=1
 ```
 
@@ -13,6 +25,8 @@ set REACT_AGENT_EXPERIMENTAL_TOOLS=1
 | Multi-agent | `orchestrator.py` / `planner.py` / `tool_scope.py` / `write_sets.py` | 见下方专节；`multi_agent_chain` 懒导入，不随 `import react_loop` 拉起 |
 | ToT | `tot.py` | 教学推理工具 |
 | Dashboard | `dashboard/` | 本地可视化 |
+
+**完整说明请参见**: [`PLUGINS.md`](PLUGINS.md)
 
 工作流总览：[`AGENT_WORKFLOW.md`](AGENT_WORKFLOW.md)。
 

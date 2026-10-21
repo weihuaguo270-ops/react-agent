@@ -29,7 +29,7 @@ def test_baseline_exists_and_covers_corpus():
     baseline = eg.load_corpus_baseline()
     assert hashes, "docs/ 语料不应为空"
     assert baseline, "应存在语料基线（缺失时测试会提示需刷新）"
-    assert any("CORE_ARCHITECTURE" in k for k in baseline)
+    assert any("core-architecture" in k for k in baseline)
 
 
 def test_drift_clean_when_matching_baseline():
@@ -41,13 +41,13 @@ def test_drift_clean_when_matching_baseline():
 def test_drift_detects_modified_file_and_maps_cases(monkeypatch):
     """改动被断言引用的文件时，应指出受影响用例。"""
     tampered = eg.load_corpus_baseline()
-    key = next(k for k in tampered if "CORE_ARCHITECTURE" in k)
+    key = next(k for k in tampered if "core-architecture" in k)
     tampered[key] = "0" * 64
     monkeypatch.setattr(eg, "load_corpus_baseline", lambda: tampered)
 
     drift = eg.corpus_drift()
     assert drift["status"] == "changed"
-    assert "CORE_ARCHITECTURE.md" in drift["changed_files"]
+    assert "architecture/core-architecture.md" in drift["changed_files"]
     # git03 的 prefer_sources 指向 CORE_ARCHITECTURE.md
     assert "git03" in drift["affected_cases"]
     assert drift["hint"]

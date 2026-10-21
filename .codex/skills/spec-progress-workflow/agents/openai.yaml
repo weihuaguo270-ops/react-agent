@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spec Progress Workflow"
+  short_description: "Register Specs and track one progress source per direction"
+  default_prompt: "Use $spec-progress-workflow to register, validate, query, or gate a repository Spec direction."
+policy:
+  allow_implicit_invocation: true

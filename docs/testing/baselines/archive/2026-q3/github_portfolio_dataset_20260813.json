@@ -1,0 +1,1403 @@
+{
+  "schema_version": "github-business-dataset/v2",
+  "generated_at": "2026-08-13T04:38:26.857621+00:00",
+  "system": "github-rest-api",
+  "api_version": "2022-11-28",
+  "agent_version": "deterministic-github-agent-v2",
+  "read_only": true,
+  "dataset": {
+    "repositories": [
+      "langchain-ai/langgraph",
+      "openai/openai-agents-python",
+      "modelcontextprotocol/python-sdk",
+      "huggingface/transformers",
+      "pytest-dev/pytest",
+      "pallets/flask",
+      "fastapi/fastapi",
+      "psf/requests",
+      "pydantic/pydantic",
+      "encode/httpx"
+    ],
+    "task_families": [
+      "identity",
+      "activity",
+      "popularity",
+      "technology",
+      "governance"
+    ],
+    "split_policy": "repository-cluster isolation",
+    "split_counts": {
+      "dev": 15,
+      "golden": 20,
+      "held_out": 15
+    },
+    "task_count": 50,
+    "fingerprint_sha256": "f4fa7aaeafc3e97b0454c6e59375e0835cdcd5c00ee02ac2d2856fb2f258ee2e",
+    "source_license_boundary": "GitHub metadata; repository content keeps its source license."
+  },
+  "metrics": {
+    "passed": 50,
+    "total": 50,
+    "task_success_rate": 1.0,
+    "human_handoff_rate": 0.0
+  },
+  "failure_slices": {
+    "failed_cases": [],
+    "repository_errors": []
+  },
+  "human_review_queue": [],
+  "cases": [
+    {
+      "case_id": "github::langchain-ai/langgraph::identity",
+      "repository": "langchain-ai/langgraph",
+      "task_family": "identity",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "latency_ms": 1670.08,
+      "request_id": "A8A8:1A378F:AFE0D5:B97C35:6A7D4A38",
+      "answer": {
+        "full_name": "langchain-ai/langgraph"
+      }
+    },
+    {
+      "case_id": "github::langchain-ai/langgraph::activity",
+      "repository": "langchain-ai/langgraph",
+      "task_family": "activity",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "latency_ms": 1670.08,
+      "request_id": "A8A8:1A378F:AFE0D5:B97C35:6A7D4A38",
+      "answer": {
+        "open_issues": 684,
+        "updated_at": "2026-08-13T04:11:03Z"
+      }
+    },
+    {
+      "case_id": "github::langchain-ai/langgraph::popularity",
+      "repository": "langchain-ai/langgraph",
+      "task_family": "popularity",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "latency_ms": 1670.08,
+      "request_id": "A8A8:1A378F:AFE0D5:B97C35:6A7D4A38",
+      "answer": {
+        "stars": 39569,
+        "forks": 6639
+      }
+    },
+    {
+      "case_id": "github::langchain-ai/langgraph::technology",
+      "repository": "langchain-ai/langgraph",
+      "task_family": "technology",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "latency_ms": 1670.08,
+      "request_id": "A8A8:1A378F:AFE0D5:B97C35:6A7D4A38",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "agents",
+          "ai",
+          "ai-agents",
+          "chatgpt",
+          "deepagents",
+          "enterprise",
+          "framework",
+          "gemini",
+          "generative-ai",
+          "langchain",
+          "langgraph",
+          "llm",
+          "multiagent",
+          "open-source",
+          "openai",
+          "pydantic",
+          "python",
+          "rag"
+        ]
+      }
+    },
+    {
+      "case_id": "github::langchain-ai/langgraph::governance",
+      "repository": "langchain-ai/langgraph",
+      "task_family": "governance",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/langchain-ai/langgraph",
+      "latency_ms": 1670.08,
+      "request_id": "A8A8:1A378F:AFE0D5:B97C35:6A7D4A38",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "MIT"
+      }
+    },
+    {
+      "case_id": "github::openai/openai-agents-python::identity",
+      "repository": "openai/openai-agents-python",
+      "task_family": "identity",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "latency_ms": 945.022,
+      "request_id": "A8B2:196D57:A28F68:AC2EB1:6A7D4A39",
+      "answer": {
+        "full_name": "openai/openai-agents-python"
+      }
+    },
+    {
+      "case_id": "github::openai/openai-agents-python::activity",
+      "repository": "openai/openai-agents-python",
+      "task_family": "activity",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "latency_ms": 945.022,
+      "request_id": "A8B2:196D57:A28F68:AC2EB1:6A7D4A39",
+      "answer": {
+        "open_issues": 13,
+        "updated_at": "2026-08-13T04:26:16Z"
+      }
+    },
+    {
+      "case_id": "github::openai/openai-agents-python::popularity",
+      "repository": "openai/openai-agents-python",
+      "task_family": "popularity",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "latency_ms": 945.022,
+      "request_id": "A8B2:196D57:A28F68:AC2EB1:6A7D4A39",
+      "answer": {
+        "stars": 28593,
+        "forks": 4483
+      }
+    },
+    {
+      "case_id": "github::openai/openai-agents-python::technology",
+      "repository": "openai/openai-agents-python",
+      "task_family": "technology",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "latency_ms": 945.022,
+      "request_id": "A8B2:196D57:A28F68:AC2EB1:6A7D4A39",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "agents",
+          "ai",
+          "framework",
+          "harness",
+          "llm",
+          "openai",
+          "python"
+        ]
+      }
+    },
+    {
+      "case_id": "github::openai/openai-agents-python::governance",
+      "repository": "openai/openai-agents-python",
+      "task_family": "governance",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/openai/openai-agents-python",
+      "latency_ms": 945.022,
+      "request_id": "A8B2:196D57:A28F68:AC2EB1:6A7D4A39",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "MIT"
+      }
+    },
+    {
+      "case_id": "github::modelcontextprotocol/python-sdk::identity",
+      "repository": "modelcontextprotocol/python-sdk",
+      "task_family": "identity",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "latency_ms": 930.146,
+      "request_id": "A8BE:18D135:E9414E:F2D5B4:6A7D4A3A",
+      "answer": {
+        "full_name": "modelcontextprotocol/python-sdk"
+      }
+    },
+    {
+      "case_id": "github::modelcontextprotocol/python-sdk::activity",
+      "repository": "modelcontextprotocol/python-sdk",
+      "task_family": "activity",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "latency_ms": 930.146,
+      "request_id": "A8BE:18D135:E9414E:F2D5B4:6A7D4A3A",
+      "answer": {
+        "open_issues": 427,
+        "updated_at": "2026-08-13T02:56:27Z"
+      }
+    },
+    {
+      "case_id": "github::modelcontextprotocol/python-sdk::popularity",
+      "repository": "modelcontextprotocol/python-sdk",
+      "task_family": "popularity",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "latency_ms": 930.146,
+      "request_id": "A8BE:18D135:E9414E:F2D5B4:6A7D4A3A",
+      "answer": {
+        "stars": 23998,
+        "forks": 3777
+      }
+    },
+    {
+      "case_id": "github::modelcontextprotocol/python-sdk::technology",
+      "repository": "modelcontextprotocol/python-sdk",
+      "task_family": "technology",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "latency_ms": 930.146,
+      "request_id": "A8BE:18D135:E9414E:F2D5B4:6A7D4A3A",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "mcp",
+          "mcp-client",
+          "mcp-server",
+          "python"
+        ]
+      }
+    },
+    {
+      "case_id": "github::modelcontextprotocol/python-sdk::governance",
+      "repository": "modelcontextprotocol/python-sdk",
+      "task_family": "governance",
+      "split": "dev",
+      "passed": true,
+      "source_url": "https://github.com/modelcontextprotocol/python-sdk",
+      "latency_ms": 930.146,
+      "request_id": "A8BE:18D135:E9414E:F2D5B4:6A7D4A3A",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "MIT"
+      }
+    },
+    {
+      "case_id": "github::huggingface/transformers::identity",
+      "repository": "huggingface/transformers",
+      "task_family": "identity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/huggingface/transformers",
+      "latency_ms": 916.324,
+      "request_id": "A8CC:2F308F:A44571:ADE96A:6A7D4A3B",
+      "answer": {
+        "full_name": "huggingface/transformers"
+      }
+    },
+    {
+      "case_id": "github::huggingface/transformers::activity",
+      "repository": "huggingface/transformers",
+      "task_family": "activity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/huggingface/transformers",
+      "latency_ms": 916.324,
+      "request_id": "A8CC:2F308F:A44571:ADE96A:6A7D4A3B",
+      "answer": {
+        "open_issues": 2378,
+        "updated_at": "2026-08-13T04:19:47Z"
+      }
+    },
+    {
+      "case_id": "github::huggingface/transformers::popularity",
+      "repository": "huggingface/transformers",
+      "task_family": "popularity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/huggingface/transformers",
+      "latency_ms": 916.324,
+      "request_id": "A8CC:2F308F:A44571:ADE96A:6A7D4A3B",
+      "answer": {
+        "stars": 164028,
+        "forks": 34227
+      }
+    },
+    {
+      "case_id": "github::huggingface/transformers::technology",
+      "repository": "huggingface/transformers",
+      "task_family": "technology",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/huggingface/transformers",
+      "latency_ms": 916.324,
+      "request_id": "A8CC:2F308F:A44571:ADE96A:6A7D4A3B",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "audio",
+          "deep-learning",
+          "deepseek",
+          "gemma",
+          "glm",
+          "hacktoberfest",
+          "llm",
+          "machine-learning",
+          "model-hub",
+          "natural-language-processing",
+          "nlp",
+          "pretrained-models",
+          "python",
+          "pytorch",
+          "pytorch-transformers",
+          "qwen",
+          "speech-recognition",
+          "transformer",
+          "vlm"
+        ]
+      }
+    },
+    {
+      "case_id": "github::huggingface/transformers::governance",
+      "repository": "huggingface/transformers",
+      "task_family": "governance",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/huggingface/transformers",
+      "latency_ms": 916.324,
+      "request_id": "A8CC:2F308F:A44571:ADE96A:6A7D4A3B",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "case_id": "github::pytest-dev/pytest::identity",
+      "repository": "pytest-dev/pytest",
+      "task_family": "identity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "latency_ms": 908.269,
+      "request_id": "A6AE:1C4156:A3A766:AD4DD4:6A7D4A3C",
+      "answer": {
+        "full_name": "pytest-dev/pytest"
+      }
+    },
+    {
+      "case_id": "github::pytest-dev/pytest::activity",
+      "repository": "pytest-dev/pytest",
+      "task_family": "activity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "latency_ms": 908.269,
+      "request_id": "A6AE:1C4156:A3A766:AD4DD4:6A7D4A3C",
+      "answer": {
+        "open_issues": 811,
+        "updated_at": "2026-08-12T20:48:39Z"
+      }
+    },
+    {
+      "case_id": "github::pytest-dev/pytest::popularity",
+      "repository": "pytest-dev/pytest",
+      "task_family": "popularity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "latency_ms": 908.269,
+      "request_id": "A6AE:1C4156:A3A766:AD4DD4:6A7D4A3C",
+      "answer": {
+        "stars": 14410,
+        "forks": 3288
+      }
+    },
+    {
+      "case_id": "github::pytest-dev/pytest::technology",
+      "repository": "pytest-dev/pytest",
+      "task_family": "technology",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "latency_ms": 908.269,
+      "request_id": "A6AE:1C4156:A3A766:AD4DD4:6A7D4A3C",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "hacktoberfest",
+          "python",
+          "test",
+          "testing",
+          "unit-testing"
+        ]
+      }
+    },
+    {
+      "case_id": "github::pytest-dev/pytest::governance",
+      "repository": "pytest-dev/pytest",
+      "task_family": "governance",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pytest-dev/pytest",
+      "latency_ms": 908.269,
+      "request_id": "A6AE:1C4156:A3A766:AD4DD4:6A7D4A3C",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "MIT"
+      }
+    },
+    {
+      "case_id": "github::pallets/flask::identity",
+      "repository": "pallets/flask",
+      "task_family": "identity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pallets/flask",
+      "latency_ms": 910.912,
+      "request_id": "A6BC:1AF8B4:A7113D:B0AFF8:6A7D4A3D",
+      "answer": {
+        "full_name": "pallets/flask"
+      }
+    },
+    {
+      "case_id": "github::pallets/flask::activity",
+      "repository": "pallets/flask",
+      "task_family": "activity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pallets/flask",
+      "latency_ms": 910.912,
+      "request_id": "A6BC:1AF8B4:A7113D:B0AFF8:6A7D4A3D",
+      "answer": {
+        "open_issues": 3,
+        "updated_at": "2026-08-13T03:28:06Z"
+      }
+    },
+    {
+      "case_id": "github::pallets/flask::popularity",
+      "repository": "pallets/flask",
+      "task_family": "popularity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pallets/flask",
+      "latency_ms": 910.912,
+      "request_id": "A6BC:1AF8B4:A7113D:B0AFF8:6A7D4A3D",
+      "answer": {
+        "stars": 72188,
+        "forks": 16946
+      }
+    },
+    {
+      "case_id": "github::pallets/flask::technology",
+      "repository": "pallets/flask",
+      "task_family": "technology",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pallets/flask",
+      "latency_ms": 910.912,
+      "request_id": "A6BC:1AF8B4:A7113D:B0AFF8:6A7D4A3D",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "flask",
+          "jinja",
+          "pallets",
+          "python",
+          "web-framework",
+          "werkzeug",
+          "wsgi"
+        ]
+      }
+    },
+    {
+      "case_id": "github::pallets/flask::governance",
+      "repository": "pallets/flask",
+      "task_family": "governance",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/pallets/flask",
+      "latency_ms": 910.912,
+      "request_id": "A6BC:1AF8B4:A7113D:B0AFF8:6A7D4A3D",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "BSD-3-Clause"
+      }
+    },
+    {
+      "case_id": "github::fastapi/fastapi::identity",
+      "repository": "fastapi/fastapi",
+      "task_family": "identity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/fastapi/fastapi",
+      "latency_ms": 928.845,
+      "request_id": "A6C6:2AF7B:A33215:ACD3E3:6A7D4A3E",
+      "answer": {
+        "full_name": "fastapi/fastapi"
+      }
+    },
+    {
+      "case_id": "github::fastapi/fastapi::activity",
+      "repository": "fastapi/fastapi",
+      "task_family": "activity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/fastapi/fastapi",
+      "latency_ms": 928.845,
+      "request_id": "A6C6:2AF7B:A33215:ACD3E3:6A7D4A3E",
+      "answer": {
+        "open_issues": 74,
+        "updated_at": "2026-08-13T03:37:11Z"
+      }
+    },
+    {
+      "case_id": "github::fastapi/fastapi::popularity",
+      "repository": "fastapi/fastapi",
+      "task_family": "popularity",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/fastapi/fastapi",
+      "latency_ms": 928.845,
+      "request_id": "A6C6:2AF7B:A33215:ACD3E3:6A7D4A3E",
+      "answer": {
+        "stars": 101547,
+        "forks": 9775
+      }
+    },
+    {
+      "case_id": "github::fastapi/fastapi::technology",
+      "repository": "fastapi/fastapi",
+      "task_family": "technology",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/fastapi/fastapi",
+      "latency_ms": 928.845,
+      "request_id": "A6C6:2AF7B:A33215:ACD3E3:6A7D4A3E",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "api",
+          "async",
+          "asyncio",
+          "fastapi",
+          "framework",
+          "json",
+          "json-schema",
+          "openapi",
+          "openapi3",
+          "pydantic",
+          "python",
+          "python-types",
+          "python3",
+          "redoc",
+          "rest",
+          "starlette",
+          "swagger",
+          "swagger-ui",
+          "uvicorn",
+          "web"
+        ]
+      }
+    },
+    {
+      "case_id": "github::fastapi/fastapi::governance",
+      "repository": "fastapi/fastapi",
+      "task_family": "governance",
+      "split": "golden",
+      "passed": true,
+      "source_url": "https://github.com/fastapi/fastapi",
+      "latency_ms": 928.845,
+      "request_id": "A6C6:2AF7B:A33215:ACD3E3:6A7D4A3E",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "MIT"
+      }
+    },
+    {
+      "case_id": "github::psf/requests::identity",
+      "repository": "psf/requests",
+      "task_family": "identity",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/psf/requests",
+      "latency_ms": 966.27,
+      "request_id": "A6D2:2F1B03:DB3181:E4D057:6A7D4A3F",
+      "answer": {
+        "full_name": "psf/requests"
+      }
+    },
+    {
+      "case_id": "github::psf/requests::activity",
+      "repository": "psf/requests",
+      "task_family": "activity",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/psf/requests",
+      "latency_ms": 966.27,
+      "request_id": "A6D2:2F1B03:DB3181:E4D057:6A7D4A3F",
+      "answer": {
+        "open_issues": 233,
+        "updated_at": "2026-08-13T03:40:33Z"
+      }
+    },
+    {
+      "case_id": "github::psf/requests::popularity",
+      "repository": "psf/requests",
+      "task_family": "popularity",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/psf/requests",
+      "latency_ms": 966.27,
+      "request_id": "A6D2:2F1B03:DB3181:E4D057:6A7D4A3F",
+      "answer": {
+        "stars": 54253,
+        "forks": 10094
+      }
+    },
+    {
+      "case_id": "github::psf/requests::technology",
+      "repository": "psf/requests",
+      "task_family": "technology",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/psf/requests",
+      "latency_ms": 966.27,
+      "request_id": "A6D2:2F1B03:DB3181:E4D057:6A7D4A3F",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "client",
+          "cookies",
+          "forhumans",
+          "http",
+          "humans",
+          "python",
+          "python-requests",
+          "requests"
+        ]
+      }
+    },
+    {
+      "case_id": "github::psf/requests::governance",
+      "repository": "psf/requests",
+      "task_family": "governance",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/psf/requests",
+      "latency_ms": 966.27,
+      "request_id": "A6D2:2F1B03:DB3181:E4D057:6A7D4A3F",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "case_id": "github::pydantic/pydantic::identity",
+      "repository": "pydantic/pydantic",
+      "task_family": "identity",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/pydantic/pydantic",
+      "latency_ms": 914.041,
+      "request_id": "A6DE:2DBE62:A2489B:ABEE4F:6A7D4A40",
+      "answer": {
+        "full_name": "pydantic/pydantic"
+      }
+    },
+    {
+      "case_id": "github::pydantic/pydantic::activity",
+      "repository": "pydantic/pydantic",
+      "task_family": "activity",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/pydantic/pydantic",
+      "latency_ms": 914.041,
+      "request_id": "A6DE:2DBE62:A2489B:ABEE4F:6A7D4A40",
+      "answer": {
+        "open_issues": 586,
+        "updated_at": "2026-08-12T22:19:52Z"
+      }
+    },
+    {
+      "case_id": "github::pydantic/pydantic::popularity",
+      "repository": "pydantic/pydantic",
+      "task_family": "popularity",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/pydantic/pydantic",
+      "latency_ms": 914.041,
+      "request_id": "A6DE:2DBE62:A2489B:ABEE4F:6A7D4A40",
+      "answer": {
+        "stars": 28531,
+        "forks": 2866
+      }
+    },
+    {
+      "case_id": "github::pydantic/pydantic::technology",
+      "repository": "pydantic/pydantic",
+      "task_family": "technology",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/pydantic/pydantic",
+      "latency_ms": 914.041,
+      "request_id": "A6DE:2DBE62:A2489B:ABEE4F:6A7D4A40",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "hints",
+          "json-schema",
+          "parsing",
+          "pydantic",
+          "python",
+          "python310",
+          "python311",
+          "python312",
+          "python313",
+          "python39",
+          "validation"
+        ]
+      }
+    },
+    {
+      "case_id": "github::pydantic/pydantic::governance",
+      "repository": "pydantic/pydantic",
+      "task_family": "governance",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/pydantic/pydantic",
+      "latency_ms": 914.041,
+      "request_id": "A6DE:2DBE62:A2489B:ABEE4F:6A7D4A40",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "MIT"
+      }
+    },
+    {
+      "case_id": "github::encode/httpx::identity",
+      "repository": "encode/httpx",
+      "task_family": "identity",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/encode/httpx",
+      "latency_ms": 903.921,
+      "request_id": "A6E0:1A378F:AFF0E5:B98CC6:6A7D4A41",
+      "answer": {
+        "full_name": "encode/httpx"
+      }
+    },
+    {
+      "case_id": "github::encode/httpx::activity",
+      "repository": "encode/httpx",
+      "task_family": "activity",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/encode/httpx",
+      "latency_ms": 903.921,
+      "request_id": "A6E0:1A378F:AFF0E5:B98CC6:6A7D4A41",
+      "answer": {
+        "open_issues": 143,
+        "updated_at": "2026-08-13T02:27:47Z"
+      }
+    },
+    {
+      "case_id": "github::encode/httpx::popularity",
+      "repository": "encode/httpx",
+      "task_family": "popularity",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/encode/httpx",
+      "latency_ms": 903.921,
+      "request_id": "A6E0:1A378F:AFF0E5:B98CC6:6A7D4A41",
+      "answer": {
+        "stars": 15411,
+        "forks": 1242
+      }
+    },
+    {
+      "case_id": "github::encode/httpx::technology",
+      "repository": "encode/httpx",
+      "task_family": "technology",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/encode/httpx",
+      "latency_ms": 903.921,
+      "request_id": "A6E0:1A378F:AFF0E5:B98CC6:6A7D4A41",
+      "answer": {
+        "language": "Python",
+        "topics": [
+          "asyncio",
+          "http",
+          "python",
+          "trio"
+        ]
+      }
+    },
+    {
+      "case_id": "github::encode/httpx::governance",
+      "repository": "encode/httpx",
+      "task_family": "governance",
+      "split": "held_out",
+      "passed": true,
+      "source_url": "https://github.com/encode/httpx",
+      "latency_ms": 903.921,
+      "request_id": "A6E0:1A378F:AFF0E5:B98CC6:6A7D4A41",
+      "answer": {
+        "archived": false,
+        "disabled": false,
+        "license": "BSD-3-Clause"
+      }
+    }
+  ],
+  "trajectories": [
+    {
+      "session_id": "github-langchain-ai-langgraph",
+      "query": "Inspect the public repository langchain-ai/langgraph using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"langchain-ai/langgraph\"}"
+          },
+          "observation": "{\"full_name\": \"langchain-ai/langgraph\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"langchain-ai/langgraph\"}"
+          },
+          "observation": "{\"open_issues\": 684, \"updated_at\": \"2026-08-13T04:11:03Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"langchain-ai/langgraph\"}"
+          },
+          "observation": "{\"stars\": 39569, \"forks\": 6639}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"langchain-ai/langgraph\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"agents\", \"ai\", \"ai-agents\", \"chatgpt\", \"deepagents\", \"enterprise\", \"framework\", \"gemini\", \"generative-ai\", \"langchain\", \"langgraph\", \"llm\", \"multiagent\", \"open-source\", \"openai\", \"pydantic\", \"python\", \"rag\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"langchain-ai/langgraph\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"MIT\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for langchain-ai/langgraph."
+    },
+    {
+      "session_id": "github-openai-openai-agents-python",
+      "query": "Inspect the public repository openai/openai-agents-python using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"openai/openai-agents-python\"}"
+          },
+          "observation": "{\"full_name\": \"openai/openai-agents-python\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"openai/openai-agents-python\"}"
+          },
+          "observation": "{\"open_issues\": 13, \"updated_at\": \"2026-08-13T04:26:16Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"openai/openai-agents-python\"}"
+          },
+          "observation": "{\"stars\": 28593, \"forks\": 4483}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"openai/openai-agents-python\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"agents\", \"ai\", \"framework\", \"harness\", \"llm\", \"openai\", \"python\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"openai/openai-agents-python\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"MIT\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for openai/openai-agents-python."
+    },
+    {
+      "session_id": "github-modelcontextprotocol-python-sdk",
+      "query": "Inspect the public repository modelcontextprotocol/python-sdk using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"modelcontextprotocol/python-sdk\"}"
+          },
+          "observation": "{\"full_name\": \"modelcontextprotocol/python-sdk\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"modelcontextprotocol/python-sdk\"}"
+          },
+          "observation": "{\"open_issues\": 427, \"updated_at\": \"2026-08-13T02:56:27Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"modelcontextprotocol/python-sdk\"}"
+          },
+          "observation": "{\"stars\": 23998, \"forks\": 3777}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"modelcontextprotocol/python-sdk\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"mcp\", \"mcp-client\", \"mcp-server\", \"python\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"modelcontextprotocol/python-sdk\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"MIT\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for modelcontextprotocol/python-sdk."
+    },
+    {
+      "session_id": "github-huggingface-transformers",
+      "query": "Inspect the public repository huggingface/transformers using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"huggingface/transformers\"}"
+          },
+          "observation": "{\"full_name\": \"huggingface/transformers\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"huggingface/transformers\"}"
+          },
+          "observation": "{\"open_issues\": 2378, \"updated_at\": \"2026-08-13T04:19:47Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"huggingface/transformers\"}"
+          },
+          "observation": "{\"stars\": 164028, \"forks\": 34227}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"huggingface/transformers\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"audio\", \"deep-learning\", \"deepseek\", \"gemma\", \"glm\", \"hacktoberfest\", \"llm\", \"machine-learning\", \"model-hub\", \"natural-language-processing\", \"nlp\", \"pretrained-models\", \"python\", \"pytorch\", \"pytorch-transformers\", \"qwen\", \"speech-recognition\", \"transformer\", \"vlm\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"huggingface/transformers\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"Apache-2.0\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for huggingface/transformers."
+    },
+    {
+      "session_id": "github-pytest-dev-pytest",
+      "query": "Inspect the public repository pytest-dev/pytest using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"pytest-dev/pytest\"}"
+          },
+          "observation": "{\"full_name\": \"pytest-dev/pytest\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"pytest-dev/pytest\"}"
+          },
+          "observation": "{\"open_issues\": 811, \"updated_at\": \"2026-08-12T20:48:39Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"pytest-dev/pytest\"}"
+          },
+          "observation": "{\"stars\": 14410, \"forks\": 3288}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"pytest-dev/pytest\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"hacktoberfest\", \"python\", \"test\", \"testing\", \"unit-testing\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"pytest-dev/pytest\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"MIT\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for pytest-dev/pytest."
+    },
+    {
+      "session_id": "github-pallets-flask",
+      "query": "Inspect the public repository pallets/flask using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"pallets/flask\"}"
+          },
+          "observation": "{\"full_name\": \"pallets/flask\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"pallets/flask\"}"
+          },
+          "observation": "{\"open_issues\": 3, \"updated_at\": \"2026-08-13T03:28:06Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"pallets/flask\"}"
+          },
+          "observation": "{\"stars\": 72188, \"forks\": 16946}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"pallets/flask\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"flask\", \"jinja\", \"pallets\", \"python\", \"web-framework\", \"werkzeug\", \"wsgi\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"pallets/flask\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"BSD-3-Clause\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for pallets/flask."
+    },
+    {
+      "session_id": "github-fastapi-fastapi",
+      "query": "Inspect the public repository fastapi/fastapi using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"fastapi/fastapi\"}"
+          },
+          "observation": "{\"full_name\": \"fastapi/fastapi\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"fastapi/fastapi\"}"
+          },
+          "observation": "{\"open_issues\": 74, \"updated_at\": \"2026-08-13T03:37:11Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"fastapi/fastapi\"}"
+          },
+          "observation": "{\"stars\": 101547, \"forks\": 9775}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"fastapi/fastapi\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"api\", \"async\", \"asyncio\", \"fastapi\", \"framework\", \"json\", \"json-schema\", \"openapi\", \"openapi3\", \"pydantic\", \"python\", \"python-types\", \"python3\", \"redoc\", \"rest\", \"starlette\", \"swagger\", \"swagger-ui\", \"uvicorn\", \"web\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"fastapi/fastapi\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"MIT\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for fastapi/fastapi."
+    },
+    {
+      "session_id": "github-psf-requests",
+      "query": "Inspect the public repository psf/requests using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"psf/requests\"}"
+          },
+          "observation": "{\"full_name\": \"psf/requests\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"psf/requests\"}"
+          },
+          "observation": "{\"open_issues\": 233, \"updated_at\": \"2026-08-13T03:40:33Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"psf/requests\"}"
+          },
+          "observation": "{\"stars\": 54253, \"forks\": 10094}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"psf/requests\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"client\", \"cookies\", \"forhumans\", \"http\", \"humans\", \"python\", \"python-requests\", \"requests\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"psf/requests\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"Apache-2.0\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for psf/requests."
+    },
+    {
+      "session_id": "github-pydantic-pydantic",
+      "query": "Inspect the public repository pydantic/pydantic using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"pydantic/pydantic\"}"
+          },
+          "observation": "{\"full_name\": \"pydantic/pydantic\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"pydantic/pydantic\"}"
+          },
+          "observation": "{\"open_issues\": 586, \"updated_at\": \"2026-08-12T22:19:52Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"pydantic/pydantic\"}"
+          },
+          "observation": "{\"stars\": 28531, \"forks\": 2866}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"pydantic/pydantic\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"hints\", \"json-schema\", \"parsing\", \"pydantic\", \"python\", \"python310\", \"python311\", \"python312\", \"python313\", \"python39\", \"validation\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"pydantic/pydantic\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"MIT\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for pydantic/pydantic."
+    },
+    {
+      "session_id": "github-encode-httpx",
+      "query": "Inspect the public repository encode/httpx using read-only tools.",
+      "model": "deterministic-github-agent-v2",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Collect identity evidence.",
+          "action": {
+            "name": "github_identity",
+            "arguments": "{\"repository\": \"encode/httpx\"}"
+          },
+          "observation": "{\"full_name\": \"encode/httpx\"}"
+        },
+        {
+          "step": 2,
+          "thought": "Collect activity evidence.",
+          "action": {
+            "name": "github_activity",
+            "arguments": "{\"repository\": \"encode/httpx\"}"
+          },
+          "observation": "{\"open_issues\": 143, \"updated_at\": \"2026-08-13T02:27:47Z\"}"
+        },
+        {
+          "step": 3,
+          "thought": "Collect popularity evidence.",
+          "action": {
+            "name": "github_popularity",
+            "arguments": "{\"repository\": \"encode/httpx\"}"
+          },
+          "observation": "{\"stars\": 15411, \"forks\": 1242}"
+        },
+        {
+          "step": 4,
+          "thought": "Collect technology evidence.",
+          "action": {
+            "name": "github_technology",
+            "arguments": "{\"repository\": \"encode/httpx\"}"
+          },
+          "observation": "{\"language\": \"Python\", \"topics\": [\"asyncio\", \"http\", \"python\", \"trio\"]}"
+        },
+        {
+          "step": 5,
+          "thought": "Collect governance evidence.",
+          "action": {
+            "name": "github_governance",
+            "arguments": "{\"repository\": \"encode/httpx\"}"
+          },
+          "observation": "{\"archived\": false, \"disabled\": false, \"license\": \"BSD-3-Clause\"}"
+        }
+      ],
+      "final_answer": "Completed 5 read-only tasks for encode/httpx."
+    }
+  ],
+  "completion_gate": {
+    "minimum_tasks": 50,
+    "has_held_out": true,
+    "source_traceability": true,
+    "passed": true
+  },
+  "evidence_boundary": "Real public API data and deterministic task execution; no production traffic or writes."
+}

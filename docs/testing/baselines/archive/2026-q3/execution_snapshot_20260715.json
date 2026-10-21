@@ -1,0 +1,263 @@
+{
+  "report_id": "execution_snapshot_20260715",
+  "timestamp": "2026-07-15T08:00:00+00:00",
+  "dataset": "execution_dataset.json",
+  "mode": "offline_tools",
+  "summary": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0,
+    "pass_rate": 100.0,
+    "skipped": 0
+  },
+  "by_tag": {
+    "calculator": {
+      "total": 3,
+      "passed": 3,
+      "pass_rate": 100.0
+    },
+    "execute_python": {
+      "total": 3,
+      "passed": 3,
+      "pass_rate": 100.0
+    },
+    "execution": {
+      "total": 8,
+      "passed": 8,
+      "pass_rate": 100.0
+    },
+    "get_time": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 100.0
+    },
+    "mixed": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 100.0
+    },
+    "multi_step": {
+      "total": 2,
+      "passed": 2,
+      "pass_rate": 100.0
+    }
+  },
+  "results": [
+    {
+      "id": "exec_calc_mul",
+      "name": "calculator: 17*19",
+      "tags": [
+        "execution",
+        "calculator"
+      ],
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 0.0,
+      "steps": [
+        {
+          "index": 1,
+          "tool": "calculator",
+          "arguments": {
+            "expression": "17 * 19"
+          },
+          "result": "323",
+          "passed": true,
+          "reason": "equals"
+        }
+      ],
+      "reason": "all steps ok"
+    },
+    {
+      "id": "exec_calc_div",
+      "name": "calculator: 144/12",
+      "tags": [
+        "execution",
+        "calculator"
+      ],
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 0.0,
+      "steps": [
+        {
+          "index": 1,
+          "tool": "calculator",
+          "arguments": {
+            "expression": "144 / 12"
+          },
+          "result": "12.0",
+          "passed": true,
+          "reason": "equals"
+        }
+      ],
+      "reason": "all steps ok"
+    },
+    {
+      "id": "exec_calc_chain",
+      "name": "calculator two-step chain",
+      "tags": [
+        "execution",
+        "calculator",
+        "multi_step"
+      ],
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 0.0,
+      "steps": [
+        {
+          "index": 1,
+          "tool": "calculator",
+          "arguments": {
+            "expression": "25 + 17"
+          },
+          "result": "42",
+          "passed": true,
+          "reason": "equals"
+        },
+        {
+          "index": 2,
+          "tool": "calculator",
+          "arguments": {
+            "expression": "42 * 2"
+          },
+          "result": "84",
+          "passed": true,
+          "reason": "equals"
+        }
+      ],
+      "reason": "all steps ok"
+    },
+    {
+      "id": "exec_get_time_format",
+      "name": "get_time returns YYYY-MM-DD HH:MM:SS",
+      "tags": [
+        "execution",
+        "get_time"
+      ],
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 0.0,
+      "steps": [
+        {
+          "index": 1,
+          "tool": "get_time",
+          "arguments": {},
+          "result": "2026-07-15 15:53:24",
+          "passed": true,
+          "reason": "regex"
+        }
+      ],
+      "reason": "all steps ok"
+    },
+    {
+      "id": "exec_py_sum",
+      "name": "execute_python: print sum",
+      "tags": [
+        "execution",
+        "execute_python"
+      ],
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 0.058,
+      "steps": [
+        {
+          "index": 1,
+          "tool": "execute_python",
+          "arguments": {
+            "code": "print(sum(range(1, 11)))"
+          },
+          "result": "55\n\n[状态] 退出码 0，耗时 0.06s",
+          "passed": true,
+          "reason": "contains"
+        }
+      ],
+      "reason": "all steps ok"
+    },
+    {
+      "id": "exec_py_json_roundtrip",
+      "name": "execute_python: json roundtrip",
+      "tags": [
+        "execution",
+        "execute_python"
+      ],
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 0.031,
+      "steps": [
+        {
+          "index": 1,
+          "tool": "execute_python",
+          "arguments": {
+            "code": "import json\nprint(json.dumps({'ok': True, 'n': 3}))"
+          },
+          "result": "{\"ok\": true, \"n\": 3}\n\n[状态] 退出码 0，耗时 0.03s",
+          "passed": true,
+          "reason": "contains"
+        }
+      ],
+      "reason": "all steps ok"
+    },
+    {
+      "id": "exec_py_fib",
+      "name": "execute_python: fib(10)",
+      "tags": [
+        "execution",
+        "execute_python"
+      ],
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 0.029,
+      "steps": [
+        {
+          "index": 1,
+          "tool": "execute_python",
+          "arguments": {
+            "code": "a,b=0,1\nfor _ in range(10):\n    a,b=b,a+b\nprint(a)"
+          },
+          "result": "55\n\n[状态] 退出码 0，耗时 0.03s",
+          "passed": true,
+          "reason": "contains"
+        }
+      ],
+      "reason": "all steps ok"
+    },
+    {
+      "id": "exec_mixed_calc_then_py",
+      "name": "mixed: calc then python verify",
+      "tags": [
+        "execution",
+        "multi_step",
+        "mixed"
+      ],
+      "passed": true,
+      "skipped": false,
+      "duration_seconds": 0.042,
+      "steps": [
+        {
+          "index": 1,
+          "tool": "calculator",
+          "arguments": {
+            "expression": "8 * 7"
+          },
+          "result": "56",
+          "passed": true,
+          "reason": "equals"
+        },
+        {
+          "index": 2,
+          "tool": "execute_python",
+          "arguments": {
+            "code": "print(8 * 7)"
+          },
+          "result": "56\n\n[状态] 退出码 0，耗时 0.04s",
+          "passed": true,
+          "reason": "contains"
+        }
+      ],
+      "reason": "all steps ok"
+    }
+  ],
+  "meta": {
+    "git": "6f1b7c6",
+    "reproduce_cmd": "python examples/run_execution_suite.py --publish"
+  }
+}
