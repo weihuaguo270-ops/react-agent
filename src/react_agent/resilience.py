@@ -29,6 +29,14 @@ class ErrorCategory:
 
 def classify_error(error: Exception | str) -> str:
     """将异常分类"""
+    typed = getattr(error, "error", None)
+    typed_code = str(getattr(typed, "code", "") or "").lower()
+    if typed_code == "timeout":
+        return ErrorCategory.TIMEOUT
+    if typed_code in {"tool_not_found", "invalid_arguments", "policy_denied"}:
+        return ErrorCategory.VALIDATION
+    if typed_code in {"mcp_error", "tool_error"}:
+        return ErrorCategory.TOOL_ERROR
     if isinstance(error, TimeoutError):
         return ErrorCategory.TIMEOUT
     msg = str(error).lower()

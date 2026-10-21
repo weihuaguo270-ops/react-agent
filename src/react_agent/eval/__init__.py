@@ -47,6 +47,7 @@ class EvalRunner:
         self.report = {}
         self.provider = None
         self.dataset_path = None
+        self.fixture_manifest = None
 
     def load_dataset(
         self,
@@ -62,6 +63,13 @@ class EvalRunner:
         """
         self.dataset_path = resolve_dataset_path(path)
         cases = load_dataset(path)
+        from react_agent.harness.evaluation import build_fixture_manifest
+
+        self.fixture_manifest = build_fixture_manifest(
+            self.dataset_path,
+            fixture_id=f"eval-dataset:{os.path.basename(self.dataset_path)}",
+            dependencies={"loader": "react_agent.eval", "format": "eval-case/v1"},
+        )
         if capability:
             cases = filter_by_capability(cases, capability)
             print(
@@ -104,11 +112,21 @@ class EvalRunner:
         print(f"[Eval] {'=' * 50}")
 
         self.raw_results = run_batch(
-            self.cases, provider=provider, progress_callback=_progress
+            self.cases,
+            provider=provider,
+            progress_callback=_progress,
+            fixture_manifest=self.fixture_manifest,
+        )
+        batch_id = (
+            self.raw_results[0]["batch_id"]
+            if self.raw_results
+            else None
         )
         self.report = generate_report(
             self.raw_results, self.cases, provider=self.provider,
-            dataset_path=self.dataset_path  # P3: pass dataset path for fixture manifest
+            dataset_path=self.dataset_path,
+            fixture_manifest=self.fixture_manifest,
+            batch_id=batch_id,
         )
 
     def summary(self) -> dict:

@@ -232,7 +232,7 @@ class MCPClient:
 
         try:
             retry_policy = self.retry_policy
-            if spec.retryable is False or (policy.mode == "none" and retry_policy.max_attempts > 1):
+            if spec.retryable is False:
                 retry_policy = retry_policy.with_max_attempts(1)
             result = retry_policy.run(
                 lambda: invoke_with_timeout(
@@ -467,7 +467,7 @@ class MockMCPClient:
 
         try:
             retry_policy = self.retry_policy
-            if spec.retryable is False or (policy.mode == "none" and retry_policy.max_attempts > 1):
+            if spec.retryable is False:
                 retry_policy = retry_policy.with_max_attempts(1)
             result = retry_policy.run(
                 lambda: invoke_with_timeout(

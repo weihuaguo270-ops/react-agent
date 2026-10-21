@@ -35,7 +35,7 @@ def test_mock_unknown_tool_raises():
     except RuntimeError as e:
         assert "Unknown" in str(e) or "MCP" in str(e)
         assert getattr(e, "error", None) is not None
-        assert e.error.to_dict()["error_code"] == "mcp_error"
+        assert e.error.to_dict()["error_code"] == "tool_not_found"
 
 
 def test_mock_call_uses_tool_call_argument_normalization():

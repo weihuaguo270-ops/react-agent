@@ -28,7 +28,9 @@ REPORT_DIR = str(runtime_dir("reports", env_var="REACT_AGENT_REPORT_DIR"))
 
 def generate_report(raw_results: list, cases: list,
                     provider: Optional[str] = None,
-                    dataset_path: Optional[str] = None) -> dict:
+                    dataset_path: Optional[str] = None,
+                    fixture_manifest=None,
+                    batch_id: Optional[str] = None) -> dict:
     """为批量执行结果生成完整评测报告
 
     P3: 现在生成 EvaluationEpisode 实例以统一 Harness 契约。
@@ -38,7 +40,7 @@ def generate_report(raw_results: list, cases: list,
 
     # P3: Build fixture manifest and batch ID
     report_id = time.strftime("eval_%Y%m%d_%H%M%S")
-    batch_id = f"eval-batch-{report_id}"
+    batch_id = batch_id or f"eval-batch-{report_id}"
 
     # Create fixture manifest from cases
     cases_data = [
@@ -50,13 +52,23 @@ def generate_report(raw_results: list, cases: list,
         }
         for c in cases
     ]
-    fixture_manifest = build_fixture_manifest_from_value(
-        cases_data,
-        fixture_id=f"eval:{report_id}",
-        version="v1",
-        source_name=f"eval-cases-{report_id}.json",
-        dependencies={"loader": "react_agent.eval", "format": "eval-case/v1", "provider": provider or "default"},
-    )
+    if fixture_manifest is None:
+        if dataset_path:
+            from react_agent.harness.evaluation import build_fixture_manifest
+
+            fixture_manifest = build_fixture_manifest(
+                dataset_path,
+                fixture_id=f"eval:{report_id}",
+                dependencies={"loader": "react_agent.eval", "format": "eval-case/v1"},
+            )
+        else:
+            fixture_manifest = build_fixture_manifest_from_value(
+                cases_data,
+                fixture_id=f"eval:{report_id}",
+                version="v1",
+                source_name=f"eval-cases-{report_id}.json",
+                dependencies={"loader": "react_agent.eval", "format": "eval-case/v1", "provider": provider or "default"},
+            )
 
     for raw, case in zip(raw_results, cases):
         stdout = raw.get("stdout", "")
@@ -89,10 +101,20 @@ def generate_report(raw_results: list, cases: list,
             ),
             "score": score,
             "metrics": score.get("metrics", {}),
+            "batch_id": batch_id,
+            "fixture_manifest": fixture_manifest.to_dict(),
         }
+        if raw.get("evaluation_episode_error"):
+            entry["evaluation_episode_error"] = raw["evaluation_episode_error"]
 
         # P3: Generate EvaluationEpisode for this case
-        if trajectory:
+        if raw.get("evaluation_episode"):
+            episode_payload = dict(raw["evaluation_episode"])
+            episode_payload["score"] = score
+            episode_payload["fixture_manifest"] = fixture_manifest.to_dict()
+            episode_payload["batch_id"] = batch_id
+            entry["evaluation_episode"] = episode_payload
+        elif trajectory:
             case_dict = {
                 "id": case.id or f"case_{len(scored)+1}",
                 "question": case.question,
