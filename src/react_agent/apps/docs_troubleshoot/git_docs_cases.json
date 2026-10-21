@@ -6,7 +6,7 @@
     "expect": "answer",
     "must_any": ["证据化文档排障"],
     "must_cite": true,
-    "prefer_sources": ["EVIDENCE_DOCS_TROUBLESHOOT.md"]
+    "prefer_sources": ["features/evidence-docs-troubleshoot.md"]
   },
   {
     "id": "git02",
@@ -15,7 +15,7 @@
     "expect": "answer",
     "must_any": ["34"],
     "must_cite": true,
-    "prefer_sources": ["DOCS_TROUBLESHOOT_EVAL.md"]
+    "prefer_sources": ["testing/frameworks/docs-troubleshoot-eval.md"]
   },
   {
     "id": "git03",
@@ -24,7 +24,7 @@
     "expect": "answer",
     "must_any": ["自建 Core"],
     "must_cite": true,
-    "prefer_sources": ["CORE_ARCHITECTURE.md"]
+    "prefer_sources": ["architecture/core-architecture.md"]
   },
   {
     "id": "git04",
@@ -33,7 +33,7 @@
     "expect": "answer",
     "must_any": ["13"],
     "must_cite": true,
-    "prefer_sources": ["DOCS_TROUBLESHOOT_EVAL.md"]
+    "prefer_sources": ["testing/frameworks/docs-troubleshoot-eval.md"]
   },
   {
     "id": "git05",
@@ -42,6 +42,6 @@
     "expect": "answer",
     "must_any": ["不", "不向 draft"],
     "must_cite": true,
-    "prefer_sources": ["DOCS_TROUBLESHOOT_EVAL.md"]
+    "prefer_sources": ["testing/frameworks/docs-troubleshoot-eval.md"]
   }
 ]
