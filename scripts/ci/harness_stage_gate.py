@@ -113,6 +113,11 @@ def stage_status_after_gate(gate_passed: bool, spec_status: str | None) -> str:
     return "in_progress"
 
 
+def persist_report(report_path: Path, report_bytes: bytes) -> None:
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_bytes(report_bytes)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", required=True, choices=tuple(PHASE_TESTS))
@@ -182,7 +187,7 @@ def main() -> int:
     report["stage_status"] = stage["status"]
     report_path = REPORT_DIR / f"{args.stage.lower()}-latest.json"
     report_bytes = (json.dumps(report, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-    report_path.write_bytes(report_bytes)
+    persist_report(report_path, report_bytes)
     stage["last_gate"] = {
         "status": "passed" if passed else "failed",
         "report": report_path.relative_to(ROOT).as_posix(),

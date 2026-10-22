@@ -45,3 +45,12 @@ def test_harness_acceptance_checks_recorded_artifact_hashes(tmp_path, monkeypatc
 def test_passed_gate_preserves_partial_spec_phase():
     assert harness_stage_gate.stage_status_after_gate(True, "partial") == "in_progress"
     assert harness_stage_gate.stage_status_after_gate(True, "complete") == "complete"
+
+
+def test_stage_gate_report_creates_missing_parent(tmp_path):
+    report_path = tmp_path / "artifacts" / "harness" / "stage-gates" / "p4-latest.json"
+    payload = b'{"passed": true}\n'
+
+    harness_stage_gate.persist_report(report_path, payload)
+
+    assert report_path.read_bytes() == payload
