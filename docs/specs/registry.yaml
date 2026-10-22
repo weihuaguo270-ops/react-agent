@@ -1,0 +1,43 @@
+{
+  "schema_version": "spec-registry/v1",
+  "directions": {
+    "harness": {
+      "display_name": "Harness convergence",
+      "goal": "docs/specs/goals/harness.md",
+      "progress_source": "progress.yaml",
+      "source_spec": "docs/specs/harness/spec.md",
+      "specs": [
+        "docs/specs/harness/spec.md",
+        "docs/specs/harness/r6-observability.md"
+      ],
+      "gate": {
+        "command_template": "python scripts/ci/harness_stage_gate.py --stage {stage}",
+        "artifact_dir": "artifacts/harness/stage-gates",
+        "tests": {
+          "P0": ["tests/test_harness_schema.py", "tests/test_harness_reliability.py"],
+          "P1": ["tests/evaluation/test_harness_contracts.py", "tests/evaluation/test_harness_schema.py"],
+          "P2": [
+            "tests/evaluation/test_harness_contracts.py",
+            "tests/test_harness_r2.py",
+            "tests/test_harness_r3.py",
+            "tests/test_mcp_mock.py",
+            "tests/test_mcp_stdio_contract.py",
+            "tests/test_structured_output_contract.py",
+            "tests/test_deterministic_replay.py",
+            "tests/test_runtime_observability.py",
+            "tests/evaluation/test_http_trajectory_contract.py",
+            "tests/test_shared_idempotency.py"
+          ],
+          "P3": ["tests/evaluation/test_harness_contracts.py", "tests/evaluation/test_harness_schema.py"],
+          "P4": [
+            "tests/harness/test_deterministic_replay.py",
+            "tests/test_harness_closed_loop_decision.py",
+            "tests/test_failure_regression_gate.py",
+            "tests/test_run_step_watcher_evidence.py"
+          ],
+          "P5": ["tests/evaluation/test_harness_contracts.py", "tests/evaluation/test_harness_schema.py"]
+        }
+      }
+    }
+  }
+}

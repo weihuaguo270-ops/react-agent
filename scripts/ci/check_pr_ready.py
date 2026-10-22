@@ -30,6 +30,8 @@ def run(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
         cwd=ROOT,
         text=True,
         capture_output=True,
+        encoding="utf-8",
+        errors="replace",
         check=check,
     )
 
@@ -45,12 +47,43 @@ def fail(message: str, failures: list[str]) -> None:
 
 
 def changed_files(base: str | None) -> list[str]:
-    if not base:
-        return []
-    result = run("git", "diff", "--name-only", f"{base}...HEAD", check=False)
-    if result.returncode:
-        return []
-    return [line for line in result.stdout.splitlines() if line]
+    """Return files in the base diff and the current working tree candidate."""
+    files: set[str] = set()
+    commands = []
+    if base:
+        commands.append(("git", "diff", "--name-only", f"{base}...HEAD"))
+    commands.extend(
+        [
+            ("git", "diff", "--name-only", "HEAD"),
+            ("git", "ls-files", "--others", "--exclude-standard"),
+        ]
+    )
+    for command in commands:
+        result = run(*command, check=False)
+        if result.returncode:
+            raise RuntimeError(
+                f"unable to enumerate changed files ({' '.join(command)}): "
+                f"{result.stderr.strip()}"
+            )
+        files.update(line for line in result.stdout.splitlines() if line)
+    return sorted(files)
+
+
+def resolve_base_refs(requested_base: str | None, *, ci: bool) -> list[str]:
+    """Resolve the comparison bases, failing closed when none is available."""
+    base_refs = [requested_base] if requested_base else []
+    remote_main = git("rev-parse", "--verify", "refs/remotes/origin/main", check=False)
+    if ci and remote_main:
+        base_refs.insert(0, remote_main)
+    elif not ci and not base_refs and remote_main:
+        base_refs.append(remote_main)
+        print(f"Using inferred local base {remote_main}")
+    if not base_refs:
+        raise RuntimeError(
+            "no base ref available; pass --base <ref> (or --base-sha in CI) "
+            "or fetch origin/main before running the readiness check"
+        )
+    return base_refs
 
 
 def check_corpus(failures: list[str], *, strict: bool) -> None:
@@ -141,13 +174,13 @@ def main(argv: list[str] | None = None) -> int:
     diff_check = run("git", "diff", "--check", check=False)
     if diff_check.returncode:
         fail("git diff --check found whitespace errors", failures)
-        print(diff_check.stdout + diff_check.stderr, file=sys.stderr)
+        print((diff_check.stdout or "") + (diff_check.stderr or ""), file=sys.stderr)
     else:
         print("PASS: git diff --check")
     staged_check = run("git", "diff", "--cached", "--check", check=False)
     if staged_check.returncode:
         fail("git diff --cached --check found whitespace errors", failures)
-        print(staged_check.stdout + staged_check.stderr, file=sys.stderr)
+        print((staged_check.stdout or "") + (staged_check.stderr or ""), file=sys.stderr)
     else:
         print("PASS: git diff --cached --check")
 
@@ -161,16 +194,21 @@ def main(argv: list[str] | None = None) -> int:
         print(f"PASS: conventional HEAD commit ({head_message})")
 
     requested_base = args.base_sha or args.base
-    base_refs = [requested_base] if requested_base else []
-    if args.ci:
-        remote_main = git("rev-parse", "--verify", "refs/remotes/origin/main", check=False)
-        if remote_main:
-            base_refs.insert(0, remote_main)
+    try:
+        base_refs = resolve_base_refs(requested_base, ci=args.ci)
+    except RuntimeError as exc:
+        fail(str(exc), failures)
+        base_refs = []
 
     base = base_refs[0] if base_refs else None
-    files = changed_files(base)
+    try:
+        files = changed_files(base)
+    except RuntimeError as exc:
+        fail(str(exc), failures)
+        files = []
     if files:
-        print(f"Changed files against {base}: {len(files)}")
+        scope = f"base {base} and working tree" if base else "working tree"
+        print(f"Changed files in {scope}: {len(files)}")
         forbidden = sorted({Path(name).name for name in files} & FORBIDDEN_PATHS)
         if forbidden:
             fail(f"forbidden credential/config files changed: {', '.join(forbidden)}", failures)
@@ -184,9 +222,7 @@ def main(argv: list[str] | None = None) -> int:
         docs_changed = any(name == "docs" or name.startswith("docs/") for name in files)
         baseline_changed = any(name.endswith("git_docs_corpus_baseline.json") for name in files)
         if docs_changed or baseline_changed:
-            check_corpus(failures, strict=args.ci)
-    elif base:
-        print(f"WARN: unable to enumerate changes against {base}")
+            check_corpus(failures, strict=args.ci or bool(files))
     else:
         check_corpus(failures, strict=args.ci)
 

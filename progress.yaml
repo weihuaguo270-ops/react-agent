@@ -1,7 +1,7 @@
 {
   "schema_version": "harness-progress/v1",
-  "updated_at": "2026-10-19T06:09:01.731251+00:00",
-  "source_spec": "docs/spec/HARNESS_BUILD_SPEC.md",
+  "updated_at": "2026-10-22T12:41:05.373858+00:00",
+  "source_spec": "docs/specs/harness/spec.md",
   "stages": {
     "P0": {
       "name": "Baseline",
@@ -12,7 +12,7 @@
           "id": "P0-1",
           "title": "Frozen baseline report exists",
           "evidence": [
-            "docs/evaluation/HARNESS_BASELINE_20261014.md"
+            "docs/specs/harness/evidence/phase0-baseline.md"
           ],
           "status": "complete"
         }
@@ -92,7 +92,7 @@
           "evidence": [
             "tests/test_runtime_observability.py",
             "artifacts/harness/p2-r6-redis-exporter.json",
-            "docs/spec/HARNESS_R6_REDIS_DEPLOYMENT.md"
+            "docs/specs/harness/r6-observability.md"
           ],
           "status": "complete"
         }
@@ -174,7 +174,7 @@
           "id": "P4-1",
           "title": "Baseline compare and repair/reverify closure evidence",
           "evidence": [
-            "docs/spec/HARNESS_BUILD_SPEC.md",
+            "docs/specs/harness/spec.md",
             "artifacts/harness/baseline-compare-latest.json",
             "artifacts/harness/p4-acceptance-report.json",
             "artifacts/software-delivery/repair_then_pass/acceptance.json"
@@ -186,7 +186,7 @@
             },
             {
               "path": "artifacts/harness/p4-acceptance-report.json",
-              "sha256": "f7e3fc8b7c0f8c4e0ab02bfa1bd5ea8d7be8bde39a6dbe7e5f22f8f4d3d9c8a1"
+              "sha256": "ba7f38efbe727c9f80e36a7ce0950ef573f4a9fa368b3a5bade45b79ba4bb9b5"
             },
             {
               "path": "artifacts/software-delivery/repair_then_pass/acceptance.json",
@@ -195,12 +195,23 @@
           ],
           "status": "complete",
           "notes": "Baseline compare report generated, repair→reverify closure verified with reverified=true. All P4-1 requirements met."
+        },
+        {
+          "id": "P4-2",
+          "title": "Cross-repository golden suite is a fail-closed P4 gate",
+          "evidence": [
+            "scripts/eval/failure/run_step_watcher_evidence.py",
+            "scripts/eval/failure/pytest_permissive_tmp.py",
+            "tests/test_run_step_watcher_evidence.py"
+          ],
+          "status": "complete",
+          "notes": "P4 gate runs the trace-debugger golden pytest suite with a caller-scoped writable TEMP and Windows tmp_path ACL compatibility; missing or failing sibling evidence fails the gate."
         }
       ],
       "last_gate": {
         "status": "passed",
         "report": "artifacts/harness/stage-gates/p4-latest.json",
-        "report_sha256": "f2dd49624392fce16c4eeff95cc677df82643cf9d6fdeeef36c0fd9809cbbb29"
+        "report_sha256": "6d69755cd9527ba87605013a01cc7086c551f42dd1361351d6522ed65574a4ab"
       }
     },
     "P5": {
@@ -212,9 +223,9 @@
           "id": "P5-1",
           "title": "Compatibility period, migration report and duplicate legacy path inventory",
           "evidence": [
-            "docs/spec/HARNESS_BUILD_SPEC.md",
-            "docs/spec/P5_MIGRATION_INVENTORY.md",
-            "docs/spec/P5_MIGRATION_GUIDE.md",
+            "docs/specs/harness/spec.md",
+            "docs/specs/harness/evidence/phase5-migration/inventory.md",
+            "docs/specs/harness/evidence/phase5-migration/guide.md",
             "src/react_agent/harness/schema.py"
           ],
           "status": "complete",
@@ -222,16 +233,16 @@
         }
       ],
       "last_gate": {
-        "status": "failed",
+        "status": "passed",
         "report": "artifacts/harness/stage-gates/p5-latest.json",
-        "report_sha256": "15188efe5712bdb403db6ff5e3dfcfd5e184bfc842443002285f7ac1ef4d36fd"
+        "report_sha256": "96ad174f20279ae8e35e8ca9147d8c7f4878c501316a084cb4bd7f4c2ee90309"
       }
     }
   },
   "last_gate": {
-    "stage": "P5",
-    "status": "failed",
-    "report": "artifacts/harness/stage-gates/p5-latest.json",
-    "report_sha256": "15188efe5712bdb403db6ff5e3dfcfd5e184bfc842443002285f7ac1ef4d36fd"
+    "stage": "P4",
+    "status": "passed",
+    "report": "artifacts/harness/stage-gates/p4-latest.json",
+    "report_sha256": "6d69755cd9527ba87605013a01cc7086c551f42dd1361351d6522ed65574a4ab"
   }
 }

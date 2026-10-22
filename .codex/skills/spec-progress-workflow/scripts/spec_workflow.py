@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -15,7 +16,7 @@ from typing import Any
 
 SCRIPT = Path(__file__).resolve()
 ROOT = SCRIPT.parents[4]
-REGISTRY_PATH = ROOT / "docs/spec/registry.yaml"
+REGISTRY_PATH = ROOT / "docs/specs/registry.yaml"
 
 
 def repo_path(value: str) -> Path:
@@ -200,11 +201,187 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
                         errors.append(f"{direction}/{stage_name}: missing registry gate tests")
             except (OSError, ValueError, KeyError) as exc:
                 errors.append(f"{direction}: invalid progress source: {exc}")
-    for candidate in (ROOT / "docs/spec").glob("*_SPEC.md"):
+    for candidate in (ROOT / "docs/specs").glob("*_SPEC.md"):
         normalized = relative_path(candidate)
         if normalized not in registered_specs:
             errors.append(f"unregistered detailed Spec {normalized}")
     return errors
+
+
+def _finding(code: str, severity: str, message: str, **context: Any) -> dict[str, Any]:
+    return {
+        "code": code,
+        "severity": severity,
+        "message": message,
+        **context,
+    }
+
+
+def phase_statuses(text: str) -> dict[str, str]:
+    """Read explicit Phase status rows from a markdown table."""
+    statuses: dict[str, str] = {}
+    for line in text.splitlines():
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        phase_match = re.match(r"(?i)^Phase\s*(\d+)\b", cells[0])
+        status_match = re.match(
+            r"(?i)^(Complete|Completed|Partial|In Progress|Proposed|Not Started)\b",
+            cells[1],
+        )
+        if phase_match and status_match:
+            statuses[f"P{phase_match.group(1)}"] = status_match.group(1).lower()
+    return statuses
+
+
+def analyze_direction(registry: dict[str, Any], direction: str) -> dict[str, Any]:
+    """Check consistency across a direction's Spec, goal, registry and progress.
+
+    This is deliberately read-only. It catches cross-file contradictions before a
+    stage gate runs; it does not infer completion from prose or execute tests.
+    """
+    entry = direction_entry(registry, direction)
+    findings: list[dict[str, Any]] = []
+    registry_errors = validate_registry(registry)
+    findings.extend(
+        _finding("registry-invalid", "error", error)
+        for error in registry_errors
+        if error.startswith(f"{direction}:") or error.startswith(f"{direction}/")
+    )
+
+    progress_path, progress = load_progress(entry)
+    source_spec = repo_path(str(entry["source_spec"]))
+    goal = repo_path(str(entry["goal"]))
+    spec_statuses: dict[str, dict[str, str]] = {}
+    for spec_value in entry.get("specs", []):
+        spec_path = repo_path(str(spec_value))
+        if spec_path.exists():
+            spec_statuses[relative_path(spec_path)] = phase_statuses(
+                spec_path.read_text(encoding="utf-8")
+            )
+    source_text = source_spec.read_text(encoding="utf-8") if source_spec.exists() else ""
+    spec_phase_status = spec_statuses.get(relative_path(source_spec), {})
+
+    per_phase: dict[str, list[tuple[str, str]]] = {}
+    for spec_path, statuses in spec_statuses.items():
+        for stage_name, declared_status in statuses.items():
+            per_phase.setdefault(stage_name, []).append((spec_path, declared_status))
+    for stage_name, declarations in per_phase.items():
+        distinct = {status for _, status in declarations}
+        if len(distinct) > 1:
+            findings.append(_finding(
+                "cross-spec-phase-status-conflict",
+                "error",
+                f"{stage_name} has conflicting statuses across registered Specs",
+                stage=stage_name,
+                declarations=[{"spec": path, "status": status} for path, status in declarations],
+            ))
+
+    stages = progress.get("stages", {})
+    if not isinstance(stages, dict) or not stages:
+        findings.append(_finding("progress-no-stages", "error", "progress source has no stages"))
+        stages = {}
+
+    for stage_name, stage in stages.items():
+        if not isinstance(stage, dict):
+            findings.append(_finding("stage-invalid", "error", f"{stage_name} is not an object", stage=stage_name))
+            continue
+        stage_status = stage.get("status")
+        if stage_status == "complete":
+            acceptance = stage.get("acceptance", [])
+            for item in acceptance:
+                if not isinstance(item, dict):
+                    findings.append(_finding("acceptance-invalid", "error", f"{stage_name} has a non-object acceptance item", stage=stage_name))
+                    continue
+                if item.get("status") != "complete":
+                    findings.append(_finding(
+                        "complete-stage-pending-acceptance",
+                        "error",
+                        f"{stage_name} is complete but acceptance {item.get('id', '<unknown>')} is {item.get('status')!r}",
+                        stage=stage_name,
+                        acceptance=item.get("id"),
+                    ))
+                for evidence in item.get("evidence", []):
+                    if not repo_path(str(evidence)).exists():
+                        findings.append(_finding(
+                            "missing-acceptance-evidence",
+                            "review",
+                            f"{stage_name}/{item.get('id', '<unknown>')} references missing evidence {evidence}",
+                            stage=stage_name,
+                            acceptance=item.get("id"),
+                            path=evidence,
+                        ))
+            last_gate = stage.get("last_gate")
+            if not isinstance(last_gate, dict) or last_gate.get("status") != "passed":
+                findings.append(_finding(
+                    "complete-stage-without-passed-gate",
+                    "review",
+                    f"{stage_name} is marked complete without a recorded passed last_gate",
+                    stage=stage_name,
+                ))
+            elif last_gate.get("report") and not repo_path(str(last_gate["report"])).exists():
+                findings.append(_finding(
+                    "missing-stage-gate-report",
+                    "review",
+                    f"{stage_name} last_gate report is missing: {last_gate['report']}",
+                    stage=stage_name,
+                    path=last_gate["report"],
+                ))
+        elif stage_status == "not_started" and any(
+            isinstance(item, dict) and item.get("status") == "complete"
+            for item in stage.get("acceptance", [])
+        ):
+            findings.append(_finding(
+                "stage-acceptance-status-conflict",
+                "error",
+                f"{stage_name} is not_started but contains complete acceptance items",
+                stage=stage_name,
+            ))
+
+        stage_number = re.fullmatch(r"P(\d+)", str(stage_name))
+        if stage_number:
+            declarations = per_phase.get(stage_name, [])
+            if not declarations:
+                findings.append(_finding(
+                    "stage-not-described-by-spec",
+                    "review",
+                    f"{stage_name} is present in progress but no registered Spec has a status row for it",
+                    stage=stage_name,
+                ))
+            for spec_path, declared_status in declarations:
+                if stage_status == "complete" and declared_status in {"partial", "in progress", "proposed", "not started"}:
+                    findings.append(_finding(
+                        "spec-progress-status-conflict",
+                        "error",
+                        f"{stage_name} is complete in progress but {declared_status!r} in {spec_path}",
+                        stage=stage_name,
+                        spec=spec_path,
+                        spec_status=declared_status,
+                        progress_status=stage_status,
+                    ))
+                elif stage_status != "complete" and declared_status in {"complete", "completed"}:
+                    findings.append(_finding(
+                        "spec-progress-status-conflict",
+                        "error",
+                        f"{stage_name} is {stage_status!r} in progress but complete in {spec_path}",
+                        stage=stage_name,
+                        spec=spec_path,
+                        spec_status=declared_status,
+                        progress_status=stage_status,
+                    ))
+
+    errors = [item for item in findings if item["severity"] == "error"]
+    return {
+        "direction": direction,
+        "source_spec": relative_path(source_spec),
+        "goal": relative_path(goal),
+        "progress_source": relative_path(progress_path),
+        "spec_phase_status": spec_phase_status,
+        "registered_spec_phase_status": spec_statuses,
+        "stages": {name: stage.get("status") for name, stage in stages.items() if isinstance(stage, dict)},
+        "status": "fail" if errors else "pass",
+        "findings": findings,
+    }
 
 
 def insert_goal_link(goal: Path, spec: Path) -> bool:
@@ -417,6 +594,11 @@ def main() -> int:
     parser.add_argument("--root", help="repository root (reserved for external callers)")
     sub = parser.add_subparsers(dest="mode", required=True)
     sub.add_parser("validate")
+    analyze = sub.add_parser(
+        "analyze",
+        help="Check cross-file consistency before running a Spec stage gate",
+    )
+    analyze.add_argument("--direction", required=True)
     sub.add_parser("sync")
     status = sub.add_parser("status")
     status.add_argument("--direction", required=True)
@@ -450,12 +632,16 @@ def main() -> int:
     if args.root:
         global ROOT, REGISTRY_PATH
         ROOT = Path(args.root).resolve()
-        REGISTRY_PATH = ROOT / "docs/spec/registry.yaml"
+        REGISTRY_PATH = ROOT / "docs/specs/registry.yaml"
     try:
         if args.mode == "validate":
             errors = validate_registry(load_registry())
             print(json.dumps({"valid": not errors, "errors": errors}, ensure_ascii=False, indent=2))
             return 0 if not errors else 1
+        if args.mode == "analyze":
+            result = analyze_direction(load_registry(), args.direction)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0 if result["status"] == "pass" else 1
         if args.mode == "sync":
             result = sync_routes()
             print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/weihuaguo270-ops/react-agent/blob/main/docs/specs/ci/registry-v2.schema.json",
+  "title": "React Agent Spec Registry v2",
+  "description": "Structural contract for the planned v2 registry. Cross-record uniqueness, repository path existence, exception expiry, and gate safety require semantic validator checks in Phase 1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "directions"],
+  "properties": {
+    "schema_version": { "const": "spec-registry/v2" },
+    "directions": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_-]*$" },
+      "additionalProperties": { "$ref": "#/$defs/direction" }
+    }
+  },
+  "$defs": {
+    "role": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._@/-]*$"
+    },
+    "repositoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))[A-Za-z0-9._*?,{}!/-]+$"
+    },
+    "pathGlobs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repositoryPath" }
+    },
+    "direction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "display_name",
+        "owner",
+        "goal",
+        "progress_source",
+        "source_spec",
+        "rules",
+        "unmapped",
+        "exceptions"
+      ],
+      "properties": {
+        "display_name": { "type": "string", "minLength": 1 },
+        "owner": { "$ref": "#/$defs/role" },
+        "goal": { "$ref": "#/$defs/repositoryPath" },
+        "progress_source": { "$ref": "#/$defs/repositoryPath" },
+        "source_spec": { "$ref": "#/$defs/repositoryPath" },
+        "specs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/repositoryPath" }
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/rule" }
+        },
+        "unmapped": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/unmapped" }
+        },
+        "exceptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/exception" }
+        }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path_globs",
+        "exclude_globs",
+        "priority",
+        "execution",
+        "local",
+        "evidence",
+        "applicability",
+        "maintainer"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "path_globs": { "$ref": "#/$defs/pathGlobs" },
+        "exclude_globs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/repositoryPath" }
+        },
+        "gate": { "$ref": "#/$defs/gate" },
+        "priority": { "enum": ["P0", "P1", "P2"] },
+        "execution": { "enum": ["automated", "manual"] },
+        "local": { "enum": ["subset", "none"] },
+        "evidence": { "$ref": "#/$defs/repositoryPath" },
+        "applicability": {
+          "enum": ["always", "changed", "stage-claim", "nightly", "release"]
+        },
+        "maintainer": { "$ref": "#/$defs/role" },
+        "reviewer_role": { "$ref": "#/$defs/role" },
+        "approver_role": { "$ref": "#/$defs/role" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "execution": { "const": "automated" } }, "required": ["execution"] },
+          "then": { "required": ["gate"] }
+        },
+        {
+          "if": { "properties": { "execution": { "const": "manual" } }, "required": ["execution"] },
+          "then": { "required": ["reviewer_role", "approver_role"] }
+        }
+      ]
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "argv",
+        "working_directory",
+        "timeout_minutes",
+        "network",
+        "allowed_domains",
+        "secret_refs",
+        "write_paths"
+      ],
+      "properties": {
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "working_directory": { "$ref": "#/$defs/repositoryPath" },
+        "timeout_minutes": { "type": "integer", "minimum": 1, "maximum": 1440 },
+        "network": { "enum": ["none", "allowlist"] },
+        "allowed_domains": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "format": "hostname" }
+        },
+        "secret_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/role" }
+        },
+        "write_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/repositoryPath" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "network": { "const": "none" } }, "required": ["network"] },
+          "then": { "properties": { "allowed_domains": { "maxItems": 0 } } }
+        },
+        {
+          "if": { "properties": { "network": { "const": "allowlist" } }, "required": ["network"] },
+          "then": { "properties": { "allowed_domains": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "unmapped": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path_globs", "reason", "safety_gate_rule_id", "owner", "expires_at"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^unmapped-[a-z0-9_-]+$" },
+        "path_globs": { "$ref": "#/$defs/pathGlobs" },
+        "reason": { "type": "string", "minLength": 1 },
+        "safety_gate_rule_id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+        "owner": { "$ref": "#/$defs/role" },
+        "expires_at": { "type": "string", "format": "date" }
+      }
+    },
+    "exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "rule_id", "reason", "approved_by_role", "approved_at", "expires_at", "evidence"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^exception-[a-z0-9_-]+$" },
+        "rule_id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+        "reason": { "type": "string", "minLength": 1 },
+        "approved_by_role": { "$ref": "#/$defs/role" },
+        "approved_at": { "type": "string", "format": "date-time" },
+        "expires_at": { "type": "string", "format": "date" },
+        "evidence": { "$ref": "#/$defs/repositoryPath" }
+      }
+    }
+  }
+}

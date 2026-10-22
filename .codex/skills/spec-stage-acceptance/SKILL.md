@@ -24,8 +24,12 @@ acceptance criteria.
 
 ## Phase gate workflow
 
-1. Identify the requested phase and its `gate_command` in the progress file.
-2. Run that exact command from the repository root. A phase is complete only
+1. Identify the requested direction and phase from the registry and progress
+   file. Run `spec_workflow.py analyze --direction <id>` before changing phase
+   work; resolve every error before running a gate.
+2. Run the exact `gate_command` from the progress file from the repository
+   root. The gate script repeats the consistency preflight so direct invocations
+   cannot bypass it. A phase is complete only
    when the command exits 0, all listed acceptance items are `complete`, and
    every required artifact path and assertion passes.
 3. Treat missing evidence, skipped tests, environment blockers, and unknown

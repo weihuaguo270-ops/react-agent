@@ -5,12 +5,19 @@ This tool provides interactive checklists and guidance for common tasks,
 helping developers follow the correct workflow without memorizing all steps.
 """
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
 
 # Simple ASCII symbols for Windows compatibility
+RED = ""
+GREEN = ""
+YELLOW = ""
+BLUE = ""
+BOLD = ""
+RESET = ""
 SYMBOLS = {
     "success": "[+]",
     "fail": "[-]",
@@ -43,13 +50,16 @@ def run_command(cmd: list[str], description: str, check: bool = True) -> tuple[b
             encoding="utf-8",
             errors="replace",
         )
-        if check and result.returncode != 0:
+        output = result.stdout
+        if result.stderr:
+            output = f"{output}\n{result.stderr}" if output else result.stderr
+        if result.returncode != 0:
             print(f"[-] Failed: {description}")
             if result.stderr:
                 print(f"{result.stderr[:500]}")
-            return False, result.stderr
+            return False, output
         print(f"[+] Success: {description}")
-        return True, result.stdout
+        return True, output
     except Exception as e:
         print(f"[-] Error: {e}")
         return False, str(e)
@@ -74,15 +84,17 @@ def workflow_spec_update(direction: str):
         "Query current progress",
         check=False
     )
-    if success:
-        print(f"{output[:1000]}")
+    if not success:
+        print("[-] Cannot continue because the Spec status lookup failed.")
+        return False
+    print(f"{output[:1000]}")
 
     # Step 2: Files to read
     print_step(2, "Read required Spec files")
-    print(f"  -> docs/spec/constraints.md (required for all tasks)")
-    print(f"  -> docs/spec/goals/{direction}.md (direction-specific goals)")
-    print(f"  -> progress.yaml or docs/spec/progress/{direction}.yaml (progress source)")
-    print(f"\n  [!]  Make your code changes and update progress.yaml manually")
+    print("  -> docs/specs/ORGANIZATION_RULES.md (required for all Spec work)")
+    print(f"  -> docs/specs/goals/{direction}.md (direction-specific goals)")
+    print("  -> Read the progress source declared in docs/specs/registry.yaml")
+    print("\n  Make code changes, then update progress with spec_workflow.py")
 
     input(f"\nPress Enter when you've made your changes...")
 
@@ -96,8 +108,21 @@ def workflow_spec_update(direction: str):
         print(f"[-] Validation failed. Fix errors before continuing.")
         return False
 
-    # Step 4: Run stage gate (optional)
-    print_step(4, "Run stage gate (optional)")
+    # Step 4: Analyze cross-file Spec consistency before executing tests.
+    print_step(4, "Analyze Spec and progress consistency")
+    success, output = run_command(
+        [sys.executable, ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py",
+         "analyze", "--direction", direction],
+        "Analyze Spec consistency",
+        check=False,
+    )
+    if not success:
+        print("[-] Resolve Spec consistency errors before running the stage gate.")
+        return False
+    print(output[:2500])
+
+    # Step 5: Run stage gate (optional)
+    print_step(5, "Run stage gate (optional)")
     stage = input(f"Enter stage to test (or press Enter to skip): ").strip()
     if stage:
         if direction == "harness":
@@ -105,15 +130,21 @@ def workflow_spec_update(direction: str):
         else:
             cmd = [sys.executable, "scripts/ci/spec_stage_gate.py",
                    "--spec", direction, "--stage", stage]
-        run_command(cmd, f"Run {stage} gate", check=False)
+        success, _ = run_command(cmd, f"Run {stage} gate", check=False)
+        if not success:
+            return False
 
-    # Step 5: Check PR readiness
-    print_step(5, "Check PR readiness")
+    # Step 6: Check PR readiness
+    print_step(6, "Check PR readiness")
     success, output = run_command(
         [sys.executable, "scripts/ci/check_pr_ready.py"],
         "Verify PR is ready",
         check=False
     )
+
+    if not success:
+        print("[-] PR readiness check failed. Fix the reported blockers before submitting.")
+        return False
 
     if "docs corpus baseline is changed" in output:
         print(f"\n[!] Docs baseline needs refresh")
@@ -146,12 +177,10 @@ def workflow_check_status(direction: Optional[str] = None):
     else:
         # Show all directions
         print(f"{BOLD}Available directions:{RESET}")
-        print("  - harness")
-        print("  - expense")
-        print("  - redis-task-mvp")
+        print("  - harness (registered in docs/specs/registry.yaml)")
         direction = input(f"\n{BOLD}Enter direction (or 'all' for summary):{RESET} ").strip()
         if direction == "all":
-            for d in ["harness", "expense", "redis-task-mvp"]:
+            for d in ["harness"]:
                 print(f"\n{BOLD}=== {d} ==={RESET}")
                 run_command(
                     [sys.executable, ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py",
@@ -175,8 +204,23 @@ def workflow_pr_ready():
         ("Git diff check", ["git", "diff", "--check"]),
         ("Git cached diff check", ["git", "diff", "--cached", "--check"]),
         ("Spec validation", [sys.executable, ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py", "validate"]),
-        ("PR ready check", [sys.executable, "scripts/ci/check_pr_ready.py"]),
     ]
+    registry_path = Path("docs/specs/registry.yaml")
+    try:
+        directions = json.loads(registry_path.read_text(encoding="utf-8"))["directions"]
+        for direction in directions:
+            checklist.append((
+                f"Spec consistency ({direction})",
+                [sys.executable, ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py",
+                 "analyze", "--direction", direction],
+            ))
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        checklist.append((
+            "Spec registry readable",
+            [sys.executable, ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py", "validate"],
+        ))
+        print(f"[-] Cannot enumerate registered Specs: {exc}")
+    checklist.append(("PR ready check", [sys.executable, "scripts/ci/check_pr_ready.py"]))
 
     results = []
     for description, cmd in checklist:
@@ -235,7 +279,7 @@ def main():
     )
     parser.add_argument(
         "--direction",
-        help="Spec direction (harness, expense, redis-task-mvp)",
+        help="Spec direction registered in docs/specs/registry.yaml",
     )
 
     args = parser.parse_args()

@@ -2,9 +2,14 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
+import os
+import shutil
 import subprocess
 import sys
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -115,17 +120,7 @@ def run_all_scenarios() -> dict:
         if row["pass"]:
             passed += 1
 
-    golden_pass_rate = None
-    golden_note = "trace-debugger sibling not found"
-    if TDEBUG.is_dir():
-        cmd = [
-            sys.executable, "-m", "pytest",
-            str(TDEBUG / "tests" / "test_failure_golden.py"),
-            "-q", "--tb=no",
-        ]
-        proc = subprocess.run(cmd, cwd=str(TDEBUG), capture_output=True, text=True)
-        golden_pass_rate = 1.0 if proc.returncode == 0 else 0.0
-        golden_note = proc.stdout.strip()[-80:] if proc.stdout else proc.stderr[-80:]
+    golden_pass_rate, golden_exit_code, golden_note = run_trace_debugger_golden_suite()
 
     total = len(rows)
     return {
@@ -136,9 +131,51 @@ def run_all_scenarios() -> dict:
         "pass_rate": round(passed / total, 4) if total else 0.0,
         "scenarios": rows,
         "golden_suite_pass_rate": golden_pass_rate,
+        "golden_suite_exit_code": golden_exit_code,
         "golden_suite_note": golden_note,
         "meta": {"git": _git_sha(), "react_agent": str(ROOT), "trace_debugger": str(TDEBUG)},
     }
+
+
+def run_trace_debugger_golden_suite() -> tuple[float | None, int | None, str]:
+    if not TDEBUG.is_dir():
+        return None, None, f"trace-debugger source checkout not found: {TDEBUG}"
+
+    test_file = TDEBUG / "tests" / "test_failure_golden.py"
+    if not test_file.is_file():
+        return None, None, f"trace-debugger golden tests not found: {test_file}"
+
+    temp_root = ROOT / ".evidence_tmp" / "trace-debugger-pytest"
+    temp_root.mkdir(parents=True, exist_ok=True)
+    basetemp = temp_root / f"pytest-{uuid.uuid4().hex}"
+    basetemp.mkdir()
+
+    env = dict(os.environ)
+    env["TEMP"] = str(temp_root)
+    env["TMP"] = str(temp_root)
+    env["TMPDIR"] = str(temp_root)
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    plugin_dir = str(Path(__file__).resolve().parent)
+    existing_pythonpath = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = os.pathsep.join(
+        value for value in (plugin_dir, existing_pythonpath) if value
+    )
+    command = [
+        sys.executable, "-m", "pytest",
+        "-p", "no:cacheprovider",
+        "-p", "pytest_permissive_tmp",
+        str(test_file), "-q", "--tb=short", "--basetemp", str(basetemp),
+    ]
+    try:
+        proc = subprocess.run(
+            command, cwd=str(TDEBUG), env=env, capture_output=True, text=True, check=False,
+        )
+        note = (proc.stdout + proc.stderr).strip()[-2000:]
+        return (1.0 if proc.returncode == 0 else 0.0), proc.returncode, note
+    except OSError as exc:
+        return 0.0, 127, f"could not start trace-debugger golden suite: {exc}"
+    finally:
+        shutil.rmtree(basetemp, ignore_errors=True)
 
 
 def to_markdown(report: dict) -> str:
@@ -190,10 +227,13 @@ def main() -> int:
     parser.add_argument("--stem", default="step_watcher_evidence_baseline")
     args = parser.parse_args()
 
-    report = run_all_scenarios()
+    with contextlib.redirect_stdout(io.StringIO()):
+        report = run_all_scenarios()
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
     if report["n_passed"] != report["n_scenarios"]:
+        return 1
+    if report["golden_suite_pass_rate"] != 1.0 or report["golden_suite_exit_code"] != 0:
         return 1
 
     if args.publish:
