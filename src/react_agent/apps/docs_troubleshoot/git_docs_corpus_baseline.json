@@ -31,7 +31,7 @@
     "archive/2026-q4/reorganization-complete-report.md": "8ead4feae6ab5785830da4d3e7e472f75c1af1a19c3fda0abeb741f24573a33d",
     "archive/2026-q4/reorganization-execution-plan.md": "a85add78e137a475f8d79fc8f07b0042b716953cf7f92de7be91beb71b72cb21",
     "daily_smoke/README.md": "ed250027416ee625f014f5934a5b13ed4229617a714753cab12149944623c0d7",
-    "daily_smoke/VARIANCE.md": "e737c1b8d164b4d7a70c9f79fbb2de0ebf0a297d6c3e92d258a9e5dcd823f33d",
+    "daily_smoke/VARIANCE.md": "53da8d991b37daa2579b7f0c02665589c633096a575d6b38737a7a0797c91de7",
     "features/application-direction.md": "bd68187bfa230c4649acfe387fc9ff9b5c8a33016b93c3676c495bd2a8e614d7",
     "features/deploy.md": "1131f6010a1a168157a7417563c1ea2d0e2564aa3af34d19de59123b090ace9f",
     "features/evidence-docs-troubleshoot.md": "70804b272ef2e6a4ab6918a937634a8338b887524a8fd280d75e9797a27bfd90",
@@ -90,8 +90,8 @@
     "specs/harness/evidence/phase0-baseline.md": "0e00b795f07b24f5af74b2b880f70c6791a7634c862c423273d71c80e89eda79",
     "specs/harness/evidence/phase3-completion.md": "79996b36c62fba4a27deaa584968c3947c95edad2ad96bd86893b057a8f49746",
     "specs/harness/evidence/phase4-completion-backup.md": "ba9c71e6bab16d59c3df3af4b19bba818b738a5a56c72e539136727597c4469e",
-    "specs/harness/evidence/phase4-completion.md": "40482512535bb6b22abdf990ff4d0f39439344c083011f4d13c38f0e3e3e2071",
-    "specs/harness/evidence/phase4-plan.md": "88754096fa95bf1bb97980722cbbcc59e5e0287061e485c9860d28177ebf0dac",
+    "specs/harness/evidence/phase4-completion.md": "03c50ee6103c7cccf8c99ecaa5664b8ffb2719c5d0c39615a7bf0e441a9717fa",
+    "specs/harness/evidence/phase4-plan.md": "f0086f2b4d76a11953165d19deaa5ac82681fa51b0ef08a2047a6f85c2a0312d",
     "specs/harness/evidence/phase5-migration/batch1-report.md": "b1fed674e69fc6023ddb008cd02452bb4e06df19295923916c4adce40609490e",
     "specs/harness/evidence/phase5-migration/guide.md": "1abb5756bf9d8acfb25e37ad798022e925854d748f91ad86879ab24885513b44",
     "specs/harness/evidence/phase5-migration/inventory.md": "d27a5060077831754751366ba0b97351b4ac6ed80373e3cdf908c0ae2be4a176",
@@ -131,6 +131,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-10-22T14:19:26Z",
+  "generated_at": "2026-10-22T15:22:22Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }

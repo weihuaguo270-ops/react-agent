@@ -1,4 +1,6 @@
-# P4 实施计划 - Replay and Regression Gates
+# P4 实施计划（历史规划，已完成）
+
+> 本文保留 P4 实施前的方案记录。P4 已按 [验收证据](phase4-completion.md) 完成；当前状态和门禁结果以该报告及 `progress.yaml` 为准，本文中的待办、决策点和预计工时不代表当前剩余工作。
 
 ## 执行日期
 2026-10-19
@@ -6,7 +8,7 @@
 ## 任务概述
 
 **P4: Replay and Regression Gates**
-- 状态：IN PROGRESS (0/1 complete)
+- 状态：COMPLETE（历史计划记录，验收见 `phase4-completion.md`）
 - 目标：建立 baseline compare、repair/reverify 闭环和回归门禁
 
 ---

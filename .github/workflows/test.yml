@@ -155,6 +155,9 @@ jobs:
       run: |
         python tests/ci_verify_integration.py
         pytest tests/test_eval_engine_contract.py tests/test_tdebug_eval_contract.py -q
+    - name: Harness P4 stage gate
+      if: matrix.python-version == '3.11'
+      run: python scripts/ci/harness_stage_gate.py --stage P4
 
   # Windows: default console often GBK — catch emoji/encoding regressions early
   test-windows:

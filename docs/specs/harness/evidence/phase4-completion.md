@@ -49,7 +49,7 @@ P4-1 baseline comparison and repair/reverify evidence passes integrity checks. P
 **Latest P4 Gate Run:**
 - Status: ✅ Passed
 - Report: `artifacts/harness/stage-gates/p4-latest.json`
-- SHA256: 6d69755cd9527ba87605013a01cc7086c551f42dd1361351d6522ed65574a4ab
+- SHA256: 6f9ff79abe738b960c2b9006874fd6f83f1d59b44a7ab99f08ccb8ee685b3707
 - Test Exit Code: 0
 - Focused P4 tests: 29 passed
 - Cross-repository golden pytest: 48 passed

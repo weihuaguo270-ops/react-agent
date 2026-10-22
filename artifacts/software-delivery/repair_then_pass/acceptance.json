@@ -1,0 +1,17 @@
+{
+  "status": "verified",
+  "decision": "pass",
+  "pre_repair": {
+    "test_status": "failed",
+    "exit_code": 1,
+    "log": "before/test-result.json"
+  },
+  "post_repair": {
+    "test_status": "passed",
+    "exit_code": 0,
+    "log": "after/test-result.json"
+  },
+  "reverified": true,
+  "mode": "existing_agent_patch_replay",
+  "run_directory": "artifacts\\software-delivery\\repair_then_pass\\runs\\c3f38283d1484b24b551179d0ac54486"
+}

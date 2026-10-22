@@ -1,0 +1,50 @@
+{
+  "schema_version": "p4-acceptance/v1",
+  "timestamp": "2026-10-19T05:51:55.782585+00:00",
+  "baseline_compare": {
+    "exists": true,
+    "path": "D:\\agent_learning_projects\\react-agent\\artifacts\\harness\\baseline-compare-latest.json",
+    "sha256": "d32741d91348f6738d8caacf023c1908bc554148260fce83595b88e8127df568",
+    "status": "improvement"
+  },
+  "repair_reverify_closure": {
+    "traceable": true,
+    "evidence_path": "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass",
+    "acceptance": "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass\\acceptance.json",
+    "sha256": "dd534720a28f84ca6290480c1b3334c5549fd8d6f23c8bd8e5c67b6e13b9c9d8",
+    "reverified": true,
+    "status": "passed"
+  },
+  "evidence_classification": {
+    "historical_evidence": [],
+    "fixture_evidence": [
+      "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass\\before",
+      "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass\\after",
+      "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass\\repair"
+    ],
+    "executed": [
+      "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass\\task.json",
+      "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass\\acceptance.json"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "artifacts\\software-delivery\\repair_then_pass\\acceptance.json",
+      "sha256": "dd534720a28f84ca6290480c1b3334c5549fd8d6f23c8bd8e5c67b6e13b9c9d8"
+    },
+    {
+      "path": "artifacts\\software-delivery\\repair_then_pass\\task.json",
+      "sha256": "a50486e8d2de282068066e176e0006b2839fbe567f2e975183961cc5897f0df5"
+    },
+    {
+      "path": "artifacts\\harness\\baseline-compare-latest.json",
+      "sha256": "d32741d91348f6738d8caacf023c1908bc554148260fce83595b88e8127df568"
+    }
+  ],
+  "summary": {
+    "all_requirements_met": true,
+    "baseline_compare_exists": true,
+    "repair_reverify_traceable": true,
+    "artifacts_validated": true
+  }
+}
