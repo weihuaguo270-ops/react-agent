@@ -6,6 +6,11 @@ import re
 from typing import Any
 
 
+def source_matches(source: str, stem: str) -> bool:
+    """Match legacy underscore names and the current hyphenated doc paths."""
+    return stem in source.replace("-", "_")
+
+
 def query_tokens(query: str) -> list[str]:
     """提取规则排序使用的规范化查询词。"""
     parts = re.findall(r"[A-Za-z0-9_./=\-]{2,}|[\u4e00-\u9fff]{2,}", query or "")
@@ -68,10 +73,12 @@ def rank_results(results: list[dict[str, Any]], query: str) -> list[dict[str, An
         if "git/docs/" in src or src.startswith("git/docs"):
             hit += 3.0
         if os.environ.get("REACT_AGENT_DOCS_GIT_ROOT") and "git/" in src:
-            if "core_architecture" in src and ("core" in ql or "自建" in query or "运行时" in query):
+            if source_matches(src, "core_architecture") and (
+                "core" in ql or "自建" in query or "运行时" in query
+            ):
                 if "docs_troubleshoot_eval" not in ql and "难度分层" not in query:
                     hit += 10.0
-            if "docs_troubleshoot_eval" in src and (
+            if source_matches(src, "docs_troubleshoot_eval") and (
                 "34" in query
                 or "held_out" in ql
                 or "6" in query
@@ -81,13 +88,13 @@ def rank_results(results: list[dict[str, Any]], query: str) -> list[dict[str, An
                 or "单文档标准问答" in query
             ):
                 hit += 8.0
-            if "evidence_docs_troubleshoot" in src and (
+            if source_matches(src, "evidence_docs_troubleshoot") and (
                 "证据化" in query or "对外名称" in query or "名称" in query
             ):
                 hit += 8.0
-            if "evidence_docs_troubleshoot" in src and "证据化" in query:
+            if source_matches(src, "evidence_docs_troubleshoot") and "证据化" in query:
                 hit += 6.0
-        if "evidence_docs_troubleshoot" in src and "证据化" in query and not os.environ.get(
+        if source_matches(src, "evidence_docs_troubleshoot") and "证据化" in query and not os.environ.get(
             "REACT_AGENT_DOCS_GIT_ROOT"
         ):
             hit += 5.0

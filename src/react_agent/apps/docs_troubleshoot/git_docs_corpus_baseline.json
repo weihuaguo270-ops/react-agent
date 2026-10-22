@@ -31,7 +31,7 @@
     "archive/2026-q4/reorganization-complete-report.md": "8ead4feae6ab5785830da4d3e7e472f75c1af1a19c3fda0abeb741f24573a33d",
     "archive/2026-q4/reorganization-execution-plan.md": "a85add78e137a475f8d79fc8f07b0042b716953cf7f92de7be91beb71b72cb21",
     "daily_smoke/README.md": "ed250027416ee625f014f5934a5b13ed4229617a714753cab12149944623c0d7",
-    "daily_smoke/VARIANCE.md": "e737c1b8d164b4d7a70c9f79fbb2de0ebf0a297d6c3e92d258a9e5dcd823f33d",
+    "daily_smoke/VARIANCE.md": "53da8d991b37daa2579b7f0c02665589c633096a575d6b38737a7a0797c91de7",
     "features/application-direction.md": "bd68187bfa230c4649acfe387fc9ff9b5c8a33016b93c3676c495bd2a8e614d7",
     "features/deploy.md": "1131f6010a1a168157a7417563c1ea2d0e2564aa3af34d19de59123b090ace9f",
     "features/evidence-docs-troubleshoot.md": "70804b272ef2e6a4ab6918a937634a8338b887524a8fd280d75e9797a27bfd90",
@@ -73,9 +73,9 @@
     "specs/ORGANIZATION_RULES.md": "e8bab8222d3ba799786d0f5cd885779c15bce37d6be3b25f05a687154f3114b2",
     "specs/README.md": "42e2749333b81713f57068019e56b59517284dfed5b1bf469c6291f60bfc34f8",
     "specs/SPEC_WRITING_STANDARD.md": "a75a485b5103a7f5b9569889e667d24438c17ba65aa135d925a6210eb4998a17",
-    "specs/ci/phase0-baseline.json": "33b51a20f2877d7be253de3d6b483d643c50cf77dfcb9aaf1cc8699d40cc7a9f",
-    "specs/ci/phase0-baseline.md": "8e0a7bc783d73aba233f874f7f73e5335a73e6b3b216801a09eea76f74ef04c5",
-    "specs/ci/phase0-sample-index.md": "49cc41644b98c9e5358e56dad9607849d6ae08f4cfb0ea5163c3bf1a07235498",
+    "specs/ci/evidence/phase0-baseline.json": "33b51a20f2877d7be253de3d6b483d643c50cf77dfcb9aaf1cc8699d40cc7a9f",
+    "specs/ci/evidence/phase0-baseline.md": "8e0a7bc783d73aba233f874f7f73e5335a73e6b3b216801a09eea76f74ef04c5",
+    "specs/ci/evidence/phase0-sample-index.md": "49cc41644b98c9e5358e56dad9607849d6ae08f4cfb0ea5163c3bf1a07235498",
     "specs/ci/redesign-plan.md": "bd93ef512ee7f4eadab195c4e46bace49b5c13b19882e314bf368dbf3af65be5",
     "specs/ci/registry-v2.schema.json": "973058812ef1ed6d1115467ea7ed41c6642159207e428d61e5106244c8d0f062",
     "specs/ci/spec.md": "fa2438b002b1363c5c2ad2c1e71e90daa57521d3287f34b17abad82458016fbc",
@@ -131,6 +131,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-10-22T13:12:05Z",
+  "generated_at": "2026-10-22T12:42:52Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
