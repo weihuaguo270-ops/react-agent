@@ -135,7 +135,7 @@ def build_draft_from_hits(
         expand_q = query
         if re.search(r"Core|自建|core\s*实现|运行时默认", query, re.I):
             expand_q = "自建 Core CORE_ARCHITECTURE react_loop"
-        for h in rag.query(expand_q, top_k=4):
+        for h in rag.query(expand_q, top_k=10):
             r = {
                 "source": h.get("source", ""),
                 "score": h.get("score"),
