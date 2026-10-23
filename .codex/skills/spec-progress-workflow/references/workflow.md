@@ -10,9 +10,10 @@ reading links, while the direction's registry-declared progress source remains
 unchanged unless the stage or acceptance contract changed.
 
 `status` reads only the registry entry, selected progress file, and the report
-named by `last_gate`. `gate` obtains the exact command from the selected stage,
-runs the direction consistency analyzer before executing it, and reads the
-progress source again. Direct stage-gate commands run the same preflight.
+named by `last_gate`. `gate` runs the direction consistency analyzer, obtains
+the exact command from the selected stage, executes it, and reads the progress
+source again. Direct domain-gate commands run only their declared tests and
+evidence checks.
 `register` is idempotent and never
 invents acceptance items or marks a stage complete. `sync` repairs missing goal
 links from the registry and then validates without touching progress files.

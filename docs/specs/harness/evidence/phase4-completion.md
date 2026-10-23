@@ -1,19 +1,19 @@
 # P4 Acceptance Evidence
 
-**Phase:** P4 - Replay and Regression Gates  
+**Phase:** P4 - Replay and Regression Gates
 **Status:** Complete
-**Verified Date:** 2026-10-22
+**Verified Date:** 2026-10-23
 **Spec Reference:** [Harness 主规格](../spec.md) Phase 4
 
 ## Summary
 
-P4-1 baseline comparison and repair/reverify evidence passes integrity checks. P4-2 adds the trace-debugger golden pytest suite to the P4 gate and makes missing or failing cross-repository evidence fail closed. The Windows `tmp_path` ACL issue is handled at the react-agent caller with an isolated writable TEMP and an explicit pytest compatibility plugin; the sibling checkout is unchanged.
+P4 is complete as one acceptance scope: baseline comparison, repair/reverify evidence, focused Harness tests, local StepWatcher scenarios, and the trace-debugger golden pytest suite all pass. The gate fails closed when required cross-repository evidence is missing or fails. The Windows `tmp_path` ACL issue is handled at the react-agent caller with an isolated writable TEMP and an explicit pytest compatibility plugin; the sibling checkout is unchanged.
 
 ## Acceptance Criteria Status
 
-### P4-1: Baseline compare and repair/reverify closure evidence ✅
+### P4 acceptance ✅
 
-**Status:** Complete  
+**Status:** Complete
 **Evidence Artifacts:**
 - ✅ `artifacts/harness/baseline-compare-latest.json` (SHA256: d32741d91348f6738d8caacf023c1908bc554148260fce83595b88e8127df568)
 - ✅ `artifacts/harness/p4-acceptance-report.json` (SHA256: ba7f38efbe727c9f80e36a7ce0950ef573f4a9fa368b3a5bade45b79ba4bb9b5)
@@ -36,8 +36,6 @@ P4-1 baseline comparison and repair/reverify evidence passes integrity checks. P
    - Repair recommendation generation
    - Failure regression contracts
 
-### P4-2: Cross-repository golden suite gate ✅
-
 - The P4 gate runs the StepWatcher evidence runner after its focused pytest suite.
 - The runner checks six react-agent scenarios and runs `trace-debugger/tests/test_failure_golden.py`.
 - Windows pytest temporary directories use the caller's isolated TEMP and the ACL compatibility plugin; pytest cache and bytecode writes in the sibling checkout are disabled.
@@ -49,11 +47,11 @@ P4-1 baseline comparison and repair/reverify evidence passes integrity checks. P
 **Latest P4 Gate Run:**
 - Status: ✅ Passed
 - Report: `artifacts/harness/stage-gates/p4-latest.json`
-- SHA256: 6f9ff79abe738b960c2b9006874fd6f83f1d59b44a7ab99f08ccb8ee685b3707
+- SHA256: 53469c4dd97dedf7fce8a10ca241e31040fe4705e2d2a5d01654c6c326c74d8e
 - Test Exit Code: 0
 - Focused P4 tests: 29 passed
 - Cross-repository golden pytest: 48 passed
-- Progress and governing Spec phase status: `complete`
+- Progress status: `complete`
 
 ## Key Deliverables
 
@@ -104,5 +102,5 @@ These are offline fixture and local Windows environment results. They verify the
 
 ---
 
-**Gate Scope:** P4-1 and P4-2 acceptance; phase status Complete
+**Gate Scope:** P4 acceptance; phase status Complete
 **Verification Command:** `python scripts/ci/harness_stage_gate.py --stage P4`

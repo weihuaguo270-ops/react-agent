@@ -15,7 +15,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PROGRESS = ROOT / "progress.yaml"
 REPORT_DIR = ROOT / "artifacts" / "harness" / "stage-gates"
-SPEC_ANALYZER = ROOT / ".codex" / "skills" / "spec-progress-workflow" / "scripts" / "spec_workflow.py"
 PHASE_TESTS = {
     "P0": ["tests/test_harness_schema.py", "tests/test_harness_reliability.py"],
     "P1": ["tests/evaluation/test_harness_contracts.py", "tests/evaluation/test_harness_schema.py"],
@@ -89,30 +88,6 @@ def check_acceptance_evidence(items: list[dict]) -> list[dict]:
     return results
 
 
-def check_spec_consistency() -> dict | None:
-    command = [sys.executable, str(SPEC_ANALYZER), "analyze", "--direction", "harness"]
-    result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
-    if result.stdout:
-        print(result.stdout, end="")
-    if result.stderr:
-        print(result.stderr, file=sys.stderr, end="")
-    if result.returncode != 0:
-        return None
-    try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        print(f"Invalid Spec consistency report: {exc}", file=sys.stderr)
-        return None
-
-
-def stage_status_after_gate(gate_passed: bool, spec_status: str | None) -> str:
-    if gate_passed and spec_status not in {
-        "partial", "in progress", "proposed", "not started",
-    }:
-        return "complete"
-    return "in_progress"
-
-
 def persist_report(report_path: Path, report_bytes: bytes) -> None:
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_bytes(report_bytes)
@@ -122,11 +97,6 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", required=True, choices=tuple(PHASE_TESTS))
     args = parser.parse_args()
-    consistency = check_spec_consistency()
-    if not consistency:
-        print("Spec consistency check failed; stage gate was not run and progress was not updated.", file=sys.stderr)
-        return 2
-    spec_status = consistency.get("spec_phase_status", {}).get(args.stage)
     progress = load_progress()
     stage = progress["stages"][args.stage]
     command = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *PHASE_TESTS[args.stage]]
@@ -172,7 +142,6 @@ def main() -> int:
     report = {
         "schema_version": "harness-stage-gate/v1", "stage": args.stage,
         "timestamp": datetime.now(timezone.utc).isoformat(), "head": head,
-        "spec_status": spec_status,
         "command": command, "test_exit_code": test.returncode,
         "test_stdout": test.stdout[-12000:], "test_stderr": test.stderr[-4000:],
         "cross_repo_command": cross_repo_command,
@@ -183,7 +152,7 @@ def main() -> int:
         "required_evidence": evidence, "acceptance_evidence": acceptance_evidence,
         "acceptance_pending": pending, "passed": passed,
     }
-    stage["status"] = stage_status_after_gate(passed, spec_status)
+    stage["status"] = "complete" if passed else "in_progress"
     report["stage_status"] = stage["status"]
     report_path = REPORT_DIR / f"{args.stage.lower()}-latest.json"
     report_bytes = (json.dumps(report, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
