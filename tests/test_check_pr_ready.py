@@ -5,6 +5,7 @@ import subprocess
 import pytest
 
 from scripts.ci import check_pr_ready
+from react_agent.apps.docs_troubleshoot import eval_git_docs
 
 
 def test_changed_files_includes_worktree_and_untracked_files(monkeypatch):
@@ -81,3 +82,29 @@ def test_main_fails_when_no_base_is_available(monkeypatch, capsys):
     output = capsys.readouterr()
     assert "no base ref available" in output.err
     assert "PR READY: FAIL" in output.err
+
+
+def test_docs_baseline_must_be_in_same_change(monkeypatch):
+    failures = []
+    monkeypatch.setattr(
+        eval_git_docs,
+        "is_git_docs_corpus_path",
+        lambda path: path == "docs/architecture/guide.md",
+    )
+
+    check_pr_ready.check_docs_baseline_in_change(
+        ["docs/architecture/guide.md"], failures
+    )
+
+    assert failures and "without the corpus baseline" in failures[0]
+
+
+def test_excluded_docs_do_not_require_baseline(monkeypatch):
+    failures = []
+    monkeypatch.setattr(eval_git_docs, "is_git_docs_corpus_path", lambda _: False)
+
+    check_pr_ready.check_docs_baseline_in_change(
+        ["docs/specs/ci/spec.md"], failures
+    )
+
+    assert failures == []

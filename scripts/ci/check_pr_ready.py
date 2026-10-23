@@ -107,6 +107,24 @@ def check_corpus(failures: list[str], *, strict: bool) -> None:
         print("PASS: docs corpus baseline is clean")
 
 
+def check_docs_baseline_in_change(files: list[str], failures: list[str]) -> None:
+    """Require corpus document edits and their reviewed baseline to travel together."""
+    try:
+        from react_agent.apps.docs_troubleshoot.eval_git_docs import is_git_docs_corpus_path
+
+        corpus_docs = [name for name in files if is_git_docs_corpus_path(name)]
+    except Exception as exc:  # pragma: no cover - environment/import diagnostic
+        fail(f"unable to classify docs corpus changes: {exc}", failures)
+        return
+    baseline = "src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json"
+    if corpus_docs and baseline not in files:
+        fail(
+            "docs corpus files changed without the corpus baseline in this change; "
+            "review affected git_docs_cases.json assertions and refresh the baseline",
+            failures,
+        )
+
+
 def check_remote_pr(number: int, repo: str, failures: list[str]) -> None:
     result = run(
         "gh",
@@ -222,6 +240,7 @@ def main(argv: list[str] | None = None) -> int:
         docs_changed = any(name == "docs" or name.startswith("docs/") for name in files)
         baseline_changed = any(name.endswith("git_docs_corpus_baseline.json") for name in files)
         if docs_changed or baseline_changed:
+            check_docs_baseline_in_change(files, failures)
             check_corpus(failures, strict=args.ci or bool(files))
     else:
         check_corpus(failures, strict=args.ci)

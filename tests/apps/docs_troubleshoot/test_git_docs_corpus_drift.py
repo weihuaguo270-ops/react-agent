@@ -32,6 +32,20 @@ def test_baseline_exists_and_covers_corpus():
     assert any("core-architecture" in k for k in baseline)
 
 
+def test_excluded_docs_are_not_part_of_corpus_hashes(monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_DOCS_GIT_EXCLUDE", "docs/specs")
+    hashes = eg.current_corpus_hashes()
+    assert hashes
+    assert not any(path.startswith("specs/") for path in hashes)
+
+
+def test_corpus_path_classifier_respects_exclusions(monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_DOCS_GIT_EXCLUDE", "docs/specs")
+    assert eg.is_git_docs_corpus_path("docs/architecture/core-architecture.md")
+    assert eg.is_git_docs_corpus_path("docs/CONTRIBUTING_DOCS.md")
+    assert not eg.is_git_docs_corpus_path("docs/specs/ci/spec.md")
+
+
 def test_drift_clean_when_matching_baseline():
     drift = eg.corpus_drift()
     assert drift["status"] == "clean", drift
