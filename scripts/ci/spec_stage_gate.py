@@ -12,7 +12,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 REGISTRY = ROOT / "docs/specs/registry.yaml"
-SPEC_ANALYZER = ROOT / ".codex" / "skills" / "spec-progress-workflow" / "scripts" / "spec_workflow.py"
 
 
 def load_config(spec: str) -> dict:
@@ -44,24 +43,11 @@ def check_evidence(items: list[dict]) -> list[dict]:
     return results
 
 
-def check_spec_consistency(spec: str) -> bool:
-    command = [sys.executable, str(SPEC_ANALYZER), "analyze", "--direction", spec]
-    result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
-    if result.stdout:
-        print(result.stdout, end="")
-    if result.stderr:
-        print(result.stderr, file=sys.stderr, end="")
-    return result.returncode == 0
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spec", required=True)
     parser.add_argument("--stage", required=True)
     args = parser.parse_args()
-    if not check_spec_consistency(args.spec):
-        print("Spec consistency check failed; stage gate was not run and progress was not updated.", file=sys.stderr)
-        return 2
     config = load_config(args.spec)
     progress_path = config["progress"]
     progress = json.loads(progress_path.read_text(encoding="utf-8"))

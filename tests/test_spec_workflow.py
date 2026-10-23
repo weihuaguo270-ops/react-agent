@@ -95,3 +95,23 @@ def test_analyze_reports_missing_historical_evidence_for_review(tmp_path, monkey
 
     assert result["status"] == "pass"
     assert any(item["code"] == "missing-acceptance-evidence" for item in result["findings"])
+
+
+def test_gate_blocks_before_invoking_domain_gate_when_consistency_fails(monkeypatch, capsys):
+    monkeypatch.setattr(spec_workflow, "load_registry", lambda: {"directions": {"work": {}}})
+    monkeypatch.setattr(spec_workflow, "direction_entry", lambda _registry, _direction: {})
+    monkeypatch.setattr(
+        spec_workflow,
+        "analyze_direction",
+        lambda _registry, _direction: {"status": "fail", "findings": [{"code": "conflict"}]},
+    )
+    monkeypatch.setattr(
+        spec_workflow.subprocess,
+        "run",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("domain gate invoked")),
+    )
+
+    result = spec_workflow.run_gate(type("Args", (), {"direction": "work", "stage": "P0"})())
+
+    assert result == 2
+    assert "Spec consistency check failed" in capsys.readouterr().err

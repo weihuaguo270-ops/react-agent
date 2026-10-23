@@ -31,10 +31,11 @@ Modes:
   stage status, acceptance items, gate reports, and evidence paths. Resolve every
   error before executing a stage gate; review findings are historical or
   unverifiable evidence and must not be promoted to a pass.
-- `gate --direction <id> --stage <stage>` reads that stage's exact
-  `gate_command` from the progress source, runs it, and reports the resulting
-  progress and artifact hash. Do not infer completion from tests outside the
-  declared gate. The gate command performs the consistency preflight first.
+- `gate --direction <id> --stage <stage>` runs the Spec consistency preflight,
+  then invokes that stage's exact `gate_command` from the progress source and
+  reports the resulting progress and artifact hash. The domain gate remains
+  independent of Spec analysis. Do not infer completion from tests outside the
+  declared gate.
 - `register --direction <id> --spec <path>` adds a detailed Spec to an existing
   direction and updates its registry and goal reading route. It does not create
   a progress file or copy status. For a new direction, provide `--new-direction`,

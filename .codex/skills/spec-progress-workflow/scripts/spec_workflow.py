@@ -550,6 +550,11 @@ def update_progress(args: argparse.Namespace) -> dict[str, Any]:
 def run_gate(args: argparse.Namespace) -> int:
     registry = load_registry()
     entry = direction_entry(registry, args.direction)
+    consistency = analyze_direction(registry, args.direction)
+    print(json.dumps(consistency, ensure_ascii=False, indent=2))
+    if consistency["status"] != "pass":
+        print("Spec consistency check failed; stage gate was not run.", file=sys.stderr)
+        return 2
     progress_path, progress = load_progress(entry)
     stage = progress.get("stages", {}).get(args.stage)
     if not isinstance(stage, dict):

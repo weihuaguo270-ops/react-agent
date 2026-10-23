@@ -155,6 +155,9 @@ jobs:
       run: |
         python tests/ci_verify_integration.py
         pytest tests/test_eval_engine_contract.py tests/test_tdebug_eval_contract.py -q
+    - name: Check Harness Spec consistency
+      if: matrix.python-version == '3.11'
+      run: python .codex/skills/spec-progress-workflow/scripts/spec_workflow.py analyze --direction harness
     - name: Harness P4 stage gate
       if: matrix.python-version == '3.11'
       run: python scripts/ci/harness_stage_gate.py --stage P4

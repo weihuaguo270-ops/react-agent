@@ -1,6 +1,6 @@
 {
   "schema_version": "harness-progress/v1",
-  "updated_at": "2026-10-22T15:43:58.158475+00:00",
+  "updated_at": "2026-10-23T10:39:58.778707+00:00",
   "source_spec": "docs/specs/harness/spec.md",
   "stages": {
     "P0": {
@@ -171,13 +171,16 @@
       "gate_command": "python scripts/ci/harness_stage_gate.py --stage P4",
       "acceptance": [
         {
-          "id": "P4-1",
-          "title": "Baseline compare and repair/reverify closure evidence",
+          "id": "P4",
+          "title": "Replay and regression acceptance",
           "evidence": [
             "docs/specs/harness/spec.md",
             "artifacts/harness/baseline-compare-latest.json",
             "artifacts/harness/p4-acceptance-report.json",
-            "artifacts/software-delivery/repair_then_pass/acceptance.json"
+            "artifacts/software-delivery/repair_then_pass/acceptance.json",
+            "scripts/eval/failure/run_step_watcher_evidence.py",
+            "scripts/eval/failure/pytest_permissive_tmp.py",
+            "tests/test_run_step_watcher_evidence.py"
           ],
           "artifacts": [
             {
@@ -194,24 +197,13 @@
             }
           ],
           "status": "complete",
-          "notes": "Baseline compare report generated, repair→reverify closure verified with reverified=true. All P4-1 requirements met."
-        },
-        {
-          "id": "P4-2",
-          "title": "Cross-repository golden suite is a fail-closed P4 gate",
-          "evidence": [
-            "scripts/eval/failure/run_step_watcher_evidence.py",
-            "scripts/eval/failure/pytest_permissive_tmp.py",
-            "tests/test_run_step_watcher_evidence.py"
-          ],
-          "status": "complete",
-          "notes": "P4 gate runs the trace-debugger golden pytest suite with a caller-scoped writable TEMP and Windows tmp_path ACL compatibility; missing or failing sibling evidence fails the gate."
+          "notes": "The unified P4 gate verifies baseline comparison, repair/reverify evidence, focused Harness tests, local StepWatcher scenarios, and the trace-debugger golden suite. Missing or failing evidence fails the gate."
         }
       ],
       "last_gate": {
         "status": "passed",
         "report": "artifacts/harness/stage-gates/p4-latest.json",
-        "report_sha256": "3f55292977534e26107cec56127fdbf433648e02728fcc4534739e0d84e934a2"
+        "report_sha256": "53469c4dd97dedf7fce8a10ca241e31040fe4705e2d2a5d01654c6c326c74d8e"
       }
     },
     "P5": {
@@ -243,6 +235,6 @@
     "stage": "P4",
     "status": "passed",
     "report": "artifacts/harness/stage-gates/p4-latest.json",
-    "report_sha256": "3f55292977534e26107cec56127fdbf433648e02728fcc4534739e0d84e934a2"
+    "report_sha256": "53469c4dd97dedf7fce8a10ca241e31040fe4705e2d2a5d01654c6c326c74d8e"
   }
 }
