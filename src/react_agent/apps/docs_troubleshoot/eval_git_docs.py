@@ -9,13 +9,21 @@ from pathlib import Path
 from typing import Any
 
 from react_agent.apps.docs_troubleshoot.eval_golden import score_workflow_case
-from react_agent.apps.docs_troubleshoot.index import reset_index
+from react_agent.apps.docs_troubleshoot.index import get_index, reset_index
 
 _APP = Path(__file__).resolve().parent
 _REPO = _APP.resolve().parents[3]
 _CASES = _APP / "git_docs_cases.json"
 # 语料基线：记录断言编写时 docs/ 的逐文件 sha256
 _BASELINE = _APP / "git_docs_corpus_baseline.json"
+_GIT_INGEST_ENV_KEYS = (
+    "REACT_AGENT_DOCS_GIT_ROOT",
+    "REACT_AGENT_DOCS_GIT_PREFIX",
+    "REACT_AGENT_DOCS_GIT_EXCLUDE",
+    "REACT_AGENT_DOCS_INGEST_DIRS",
+    "REACT_AGENT_APP",
+    "REACT_AGENT_RAG_MODE",
+)
 
 
 def repo_root() -> Path:
@@ -116,6 +124,7 @@ def corpus_drift() -> dict[str, Any]:
 def _configure_git_ingest() -> None:
     os.environ["REACT_AGENT_DOCS_GIT_ROOT"] = str(_REPO)
     os.environ["REACT_AGENT_DOCS_GIT_PREFIX"] = "docs"
+    os.environ["REACT_AGENT_DOCS_GIT_EXCLUDE"] = "docs/specs"
     os.environ.setdefault("REACT_AGENT_APP", "docs_troubleshoot")
     os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
     os.environ.pop("REACT_AGENT_DOCS_INGEST_DIRS", None)
@@ -124,7 +133,25 @@ def _configure_git_ingest() -> None:
 def run_git_docs_eval(
     *, include_held_out: bool = True, strict_corpus: bool = False
 ) -> dict[str, Any]:
+    previous_env = {key: os.environ.get(key) for key in _GIT_INGEST_ENV_KEYS}
     _configure_git_ingest()
+    try:
+        return _run_git_docs_eval_configured(
+            include_held_out=include_held_out,
+            strict_corpus=strict_corpus,
+        )
+    finally:
+        for key, value in previous_env.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+        get_index.cache_clear()
+
+
+def _run_git_docs_eval_configured(
+    *, include_held_out: bool, strict_corpus: bool
+) -> dict[str, Any]:
 
     from react_agent.tools import enable_app_tools
     from react_agent.workflow import run_workflow

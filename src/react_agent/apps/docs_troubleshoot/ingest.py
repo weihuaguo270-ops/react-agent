@@ -11,7 +11,7 @@ from typing import Any
 
 from react_agent.rag import RAG
 
-_MANIFEST_VERSION = 2
+_MANIFEST_VERSION = 3
 _DOC_SUFFIXES = {".md", ".txt", ".yaml", ".yml", ".json"}
 
 
@@ -115,8 +115,19 @@ def ingest_git_tracked(
     repo: Path,
     *,
     path_prefix: str = "",
+    excluded_prefixes: list[str] | None = None,
 ) -> int:
     """Ingest git-tracked doc files from a repository (ls-files)."""
+    excluded = (
+        excluded_prefixes
+        if excluded_prefixes is not None
+        else git_exclude_prefixes_from_env()
+    )
+    excluded = [
+        prefix.strip("/").replace("\\", "/")
+        for prefix in excluded
+        if prefix.strip("/\\")
+    ]
     if not (repo / ".git").exists() and not (repo / ".git").is_file():
         try:
             subprocess.run(
@@ -140,6 +151,8 @@ def ingest_git_tracked(
     for line in proc.stdout.splitlines():
         rel = line.strip().replace("\\", "/")
         if not rel:
+            continue
+        if any(rel == prefix or rel.startswith(f"{prefix}/") for prefix in excluded):
             continue
         fp = repo / rel
         if not fp.is_file() or fp.suffix.lower() not in _DOC_SUFFIXES:
@@ -221,6 +234,16 @@ def git_ingest_from_env() -> tuple[Path | None, str]:
     return Path(raw), prefix
 
 
+def git_exclude_prefixes_from_env() -> list[str]:
+    """Return repo-relative path prefixes omitted from the troubleshoot index."""
+    raw = os.environ.get("REACT_AGENT_DOCS_GIT_EXCLUDE", "docs/specs")
+    return [
+        value.strip().replace("\\", "/").strip("/")
+        for value in raw.split(",")
+        if value.strip("/\\")
+    ]
+
+
 def build_manifest(
     *,
     corpus_dir: Path,
@@ -228,12 +251,22 @@ def build_manifest(
     openapi_paths: list[Path],
     git_root: Path | None = None,
     git_prefix: str = "",
+    git_excluded_prefixes: list[str] | None = None,
 ) -> dict[str, Any]:
     """生成绑定语料文件、哈希和 Git revision 的可复现清单。"""
     files = _collect_doc_files(corpus_dir, *extra_dirs)
     git_meta: dict[str, Any] = {}
     if git_root and git_root.is_dir():
-        git_meta = {"root": str(git_root), "prefix": git_prefix}
+        excluded = (
+            git_excluded_prefixes
+            if git_excluded_prefixes is not None
+            else git_exclude_prefixes_from_env()
+        )
+        git_meta = {
+            "root": str(git_root),
+            "prefix": git_prefix,
+            "excluded_prefixes": excluded,
+        }
     openapi_meta: dict[str, Any] = {}
     for p in openapi_paths:
         if p.is_file():
@@ -266,12 +299,18 @@ def rebuild_index(
     """清空并重建文档索引，返回可审计的摄取清单。"""
     extra_dirs = extra_dirs or []
     openapi_paths = openapi_paths or []
+    git_excluded_prefixes = git_exclude_prefixes_from_env()
     rag.clear()
     ingest_tree(rag, corpus_dir, label_prefix=corpus_dir.name)
     for root in extra_dirs:
         ingest_tree(rag, root, label_prefix=root.name)
     if git_root:
-        ingest_git_tracked(rag, git_root, path_prefix=git_prefix)
+        ingest_git_tracked(
+            rag,
+            git_root,
+            path_prefix=git_prefix,
+            excluded_prefixes=git_excluded_prefixes,
+        )
     for op in openapi_paths:
         if op.is_file():
             ingest_openapi(rag, op)
@@ -282,6 +321,7 @@ def rebuild_index(
         openapi_paths=openapi_paths,
         git_root=git_root,
         git_prefix=git_prefix,
+        git_excluded_prefixes=git_excluded_prefixes,
     )
 
 

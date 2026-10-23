@@ -170,8 +170,8 @@ find src tests scripts -name "*.py" -exec sed -i \
 
 ## Support
 
-- **Migration Inventory:** [P5_MIGRATION_INVENTORY.md](P5_MIGRATION_INVENTORY.md)
-- **Spec Reference:** [HARNESS_BUILD_SPEC.md](HARNESS_BUILD_SPEC.md) Phase 5
+- **Migration Inventory:** [Migration Inventory](inventory.md)
+- **Spec Reference:** [Harness 主规格](../../spec.md) Phase 5
 - **Questions:** Open an issue with label `migration/p5`
 
 ## Migration Checklist

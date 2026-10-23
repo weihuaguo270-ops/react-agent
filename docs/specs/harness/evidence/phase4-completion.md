@@ -1,13 +1,13 @@
-# P4 Phase Completion Report
+# P4 Acceptance Evidence
 
 **Phase:** P4 - Replay and Regression Gates  
-**Status:** ✅ Complete  
-**Completion Date:** 2026-10-19  
-**Spec Reference:** [HARNESS_BUILD_SPEC.md](HARNESS_BUILD_SPEC.md) Phase 4
+**Status:** Complete
+**Verified Date:** 2026-10-22
+**Spec Reference:** [Harness 主规格](../spec.md) Phase 4
 
 ## Summary
 
-Phase 4 successfully delivered deterministic replay, baseline comparison, and repair/reverify closure mechanisms for the Harness evaluation pipeline. All P4 acceptance criteria have been met with verified evidence artifacts.
+P4-1 baseline comparison and repair/reverify evidence passes integrity checks. P4-2 adds the trace-debugger golden pytest suite to the P4 gate and makes missing or failing cross-repository evidence fail closed. The Windows `tmp_path` ACL issue is handled at the react-agent caller with an isolated writable TEMP and an explicit pytest compatibility plugin; the sibling checkout is unchanged.
 
 ## Acceptance Criteria Status
 
@@ -16,7 +16,7 @@ Phase 4 successfully delivered deterministic replay, baseline comparison, and re
 **Status:** Complete  
 **Evidence Artifacts:**
 - ✅ `artifacts/harness/baseline-compare-latest.json` (SHA256: d32741d91348f6738d8caacf023c1908bc554148260fce83595b88e8127df568)
-- ✅ `artifacts/harness/p4-acceptance-report.json` (SHA256: f7e3fc8b7c0f8c4e0ab02bfa1bd5ea8d7be8bde39a6dbe7e5f22f8f4d3d9c8a1)
+- ✅ `artifacts/harness/p4-acceptance-report.json` (SHA256: ba7f38efbe727c9f80e36a7ce0950ef573f4a9fa368b3a5bade45b79ba4bb9b5)
 - ✅ `artifacts/software-delivery/repair_then_pass/acceptance.json` (SHA256: dd534720a28f84ca6290480c1b3334c5549fd8d6f23c8bd8e5c67b6e13b9c9d8)
 
 **Capabilities Delivered:**
@@ -36,14 +36,24 @@ Phase 4 successfully delivered deterministic replay, baseline comparison, and re
    - Repair recommendation generation
    - Failure regression contracts
 
+### P4-2: Cross-repository golden suite gate ✅
+
+- The P4 gate runs the StepWatcher evidence runner after its focused pytest suite.
+- The runner checks six react-agent scenarios and runs `trace-debugger/tests/test_failure_golden.py`.
+- Windows pytest temporary directories use the caller's isolated TEMP and the ACL compatibility plugin; pytest cache and bytecode writes in the sibling checkout are disabled.
+- A missing sibling checkout, missing test file, nonzero pytest exit, or incomplete scenario set fails the runner and P4 gate.
+- Latest result: react-agent scenarios **6/6**; trace-debugger pytest **48 passed**.
+
 ## Gate Results
 
-**Last Gate Run:**
+**Latest P4 Gate Run:**
 - Status: ✅ Passed
 - Report: `artifacts/harness/stage-gates/p4-latest.json`
-- SHA256: f2dd49624392fce16c4eeff95cc677df82643cf9d6fdeeef36c0fd9809cbbb29
+- SHA256: 6f9ff79abe738b960c2b9006874fd6f83f1d59b44a7ab99f08ccb8ee685b3707
 - Test Exit Code: 0
-- Tests Passed: 42
+- Focused P4 tests: 29 passed
+- Cross-repository golden pytest: 48 passed
+- Progress and governing Spec phase status: `complete`
 
 ## Key Deliverables
 
@@ -75,11 +85,12 @@ Phase 4 built upon:
 
 ## Verification Evidence
 
-All required evidence files exist and pass integrity checks:
+All P4 acceptance evidence exists and passes the recorded integrity checks:
 
 ```bash
 $ python scripts/ci/harness_stage_gate.py --stage P4
-# Exit code: 0 (passed)
+# Exit code: 0; P4 gate passed, status=complete
+# cross_repo_golden=PASS; 29 focused tests passed; sibling golden pytest: 48 passed
 ```
 
 Artifact integrity verified:
@@ -87,16 +98,11 @@ Artifact integrity verified:
 - P4 acceptance report: SHA256 match ✓
 - Repair/reverify evidence: SHA256 match ✓
 
-## Next Phase
+## Evidence Boundary
 
-Phase 4 completion unblocks:
-- **P5: Migration and Duplicate Path Removal**
-  - Deprecate legacy `harness.schema` imports
-  - Migrate 52 import sites to `harness.contracts`
-  - Remove duplicate serializers and error classifications
-  - Complete documentation updates
+These are offline fixture and local Windows environment results. They verify the P4 regression gate and do not claim production behavior or SLA.
 
 ---
 
-**Approved By:** Harness Stage Gate  
+**Gate Scope:** P4-1 and P4-2 acceptance; phase status Complete
 **Verification Command:** `python scripts/ci/harness_stage_gate.py --stage P4`

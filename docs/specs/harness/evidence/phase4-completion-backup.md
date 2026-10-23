@@ -108,7 +108,7 @@ P4:
 
 ## 验收标准检查
 
-根据 `docs/spec/goals/harness.md` P4-1 要求：
+根据 `docs/specs/goals/harness.md` P4-1 要求：
 
 ### ✅ 阶段门禁成功
 ```bash
@@ -288,7 +288,7 @@ python scripts/ci/harness_stage_gate.py --stage P4
 
 ### P5: Migration and Duplicate Path Removal
 
-参考 `docs/spec/goals/harness.md`:
+参考 `docs/specs/goals/harness.md`:
 - 状态: not_started (0/1)
 - 目标: 兼容期、迁移报告和重复路径清单
 

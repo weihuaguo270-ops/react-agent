@@ -3,7 +3,7 @@
 **Status:** In Progress  
 **Phase:** P5 - Migration and Duplicate Path Removal  
 **Created:** 2026-10-19  
-**Spec Reference:** [HARNESS_BUILD_SPEC.md](HARNESS_BUILD_SPEC.md) Phase 5
+**Spec Reference:** [Harness 主规格](../../spec.md) Phase 5
 
 ## Executive Summary
 

@@ -1,5 +1,10 @@
 # 工作流改进 - 快速参考
 
+核心流程说明：
+- [Spec 提交与阶段验收](../specs/README.md)（注册、进度、阶段门禁；唯一进度源见 registry）
+- [提交前检查与 CI 集成](../operations/ci-improvements.md)（本地 readiness 和 PR CI 审计）
+- [工作流引导器说明](../operations/workflow-improvements.md)
+
 ## 新增工具
 
 ### 1. workflow_helper.py - 工作流引导工具
@@ -56,8 +61,8 @@ python scripts/workflow_helper.py --workflow spec-update --direction harness
 python .codex/skills/spec-progress-workflow/scripts/spec_workflow.py status --direction harness
 
 # 2. 阅读必需文档
-# - docs/spec/constraints.md
-# - docs/spec/goals/harness.md
+# - docs/specs/ORGANIZATION_RULES.md
+# - docs/specs/goals/harness.md
 # - progress.yaml
 
 # 3. 做你的代码修改

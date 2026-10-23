@@ -136,7 +136,7 @@ docs/specs/harness/evidence/phase4-completion.md
   - ✅ Phase 1: Complete (contracts/ 已实现)
   - ✅ Phase 2: Complete (runtime/ 已实现)
   - ✅ Phase 3: Complete (evaluation/ 已实现)
-  - ⚠️ Phase 4: Partial (Baseline/repair/reverify，Windows 环境问题待解决)
+  - ✅ Phase 4: Complete (Baseline/repair/reverify 与跨仓 golden gate；本仓场景 6/6、trace-debugger pytest 48/48)
   - 🔄 Phase 5: In Progress (兼容期迁移，22个导入站点待迁移)
 - **验收证据**: [`harness/evidence/`](harness/evidence/)
 

@@ -1,4 +1,6 @@
-# P4 实施计划 - Replay and Regression Gates
+# P4 实施计划（历史规划，已完成）
+
+> 本文保留 P4 实施前的方案记录。P4 已按 [验收证据](phase4-completion.md) 完成；当前状态和门禁结果以该报告及 `progress.yaml` 为准，本文中的待办、决策点和预计工时不代表当前剩余工作。
 
 ## 执行日期
 2026-10-19
@@ -6,7 +8,7 @@
 ## 任务概述
 
 **P4: Replay and Regression Gates**
-- 状态：IN PROGRESS (0/1 complete)
+- 状态：COMPLETE（历史计划记录，验收见 `phase4-completion.md`）
 - 目标：建立 baseline compare、repair/reverify 闭环和回归门禁
 
 ---
@@ -15,7 +17,7 @@
 
 ### P4-1 验收标准
 
-根据 `docs/spec/goals/harness.md`:
+根据 `docs/specs/goals/harness.md`:
 
 > `P4-1` 只有在阶段门禁成功、baseline compare 报告存在、repair→reverify 真实重跑链路可追溯，且 `progress.yaml` 中的 artifact 路径和 SHA256 均有效时才能标记完成。历史、fixture 和当前执行证据必须分栏；没有真实复验的修复不能转为 pass。
 
@@ -189,7 +191,7 @@ P4:
     - id: P4-1
       status: complete
       evidence:
-        - docs/spec/HARNESS_BUILD_SPEC.md
+        - docs/specs/harness/spec.md
         - artifacts/harness/p4-acceptance-report.json
       artifacts:
         - path: artifacts/harness/baseline-compare-latest.json
@@ -308,9 +310,9 @@ P4-1 完成的标志：
 - Repair evidence: `artifacts/software-delivery/repair_then_pass/`
 
 ### Spec 文档
-- `docs/spec/HARNESS_BUILD_SPEC.md` - Phase 4 定义
-- `docs/spec/goals/harness.md` - P4-1 验收标准
-- `docs/spec/HARNESS_PROGRESS.md` - 进度格式
+- `docs/specs/harness/spec.md` - Phase 4 定义
+- `docs/specs/goals/harness.md` - P4-1 验收标准
+- `progress.yaml` - 阶段进度与门禁结果
 
 ### 相关脚本
 - `scripts/eval/failure/collect_repair_evidence.py`

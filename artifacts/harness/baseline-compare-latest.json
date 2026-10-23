@@ -1,0 +1,28 @@
+{
+  "schema_version": "baseline-compare/v1",
+  "timestamp": "2026-10-19T05:49:54.498592+00:00",
+  "baseline": {
+    "path": "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass\\before\\test-result.json",
+    "status": "failed",
+    "exit_code": 1
+  },
+  "current": {
+    "path": "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass\\after\\test-result.json",
+    "status": "succeeded",
+    "exit_code": 0
+  },
+  "diff": {
+    "test_status_changed": true,
+    "exit_code_changed": true
+  },
+  "summary": {
+    "regression_detected": false,
+    "improvement_detected": true,
+    "status": "improvement"
+  },
+  "repair_context": {
+    "evidence_dir": "D:\\agent_learning_projects\\react-agent\\artifacts\\software-delivery\\repair_then_pass",
+    "before_path": "before\\test-result.json",
+    "after_path": "after\\test-result.json"
+  }
+}

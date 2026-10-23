@@ -1,5 +1,9 @@
 # 工作流改进实施总结
 
+当前 Spec 工作流权威入口为 `docs/specs/registry.yaml` 和
+`.codex/skills/spec-progress-workflow/SKILL.md`；提交前检查的执行说明见
+[`ci-improvements.md`](ci-improvements.md)，本文件记录引导工具的演进历史。
+
 ## 执行日期
 2026-10-19
 
@@ -38,12 +42,12 @@ python scripts/workflow_helper.py --workflow pr-ready
 ```
 
 **工作流步骤**:
-1. ✓ Read docs/spec/constraints.md
-2. ✓ Read docs/spec/goals/{direction}.md  
+1. ✓ Read docs/specs/ORGANIZATION_RULES.md
+2. ✓ Read docs/specs/goals/{direction}.md
 3. → Run: spec_workflow.py status --direction {name}
 4. → Make your changes
 5. → Run: spec_workflow.py validate
-6. → Run: harness_stage_gate.py --stage {stage}
+6. → Run: the registered stage gate for {direction}/{stage}
 7. → Run: check_pr_ready.py
 
 **效果**:

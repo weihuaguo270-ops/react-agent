@@ -11,7 +11,7 @@ import re
 from typing import Any
 
 from react_agent.apps.docs_troubleshoot.policy import should_refuse_query
-from react_agent.apps.docs_troubleshoot.ranking import rank_with_evidence
+from react_agent.apps.docs_troubleshoot.ranking import rank_with_evidence, source_matches
 from react_agent.apps.docs_troubleshoot.synthesize import (
     summarize_field_evidence,
     synthesize_draft,
@@ -81,8 +81,7 @@ def select_hits(ranked: list[dict[str, Any]], query: str) -> list[dict[str, Any]
     ql = query or ""
     if re.search(r"Core|自建|core\s*实现|运行时默认", ql, re.I):
         for r in ranked:
-            source = str(r.get("source") or "").lower()
-            if "core_architecture" in source or "core-architecture" in source:
+            if source_matches(str(r.get("source") or "").lower(), "core_architecture"):
                 return [r]
         return ranked[:1]
     if "不要猜" in ql or ("不要" in ql and "别的" in ql):
@@ -125,9 +124,9 @@ def build_draft_from_hits(
         uniq.append(r)
 
     if _ARCH_META.search(query) and not any(
-        "core_architecture" in str(r.get("source") or "").lower()
-        or "evidence_docs_troubleshoot" in str(r.get("source") or "").lower()
-        or "docs_troubleshoot_eval" in str(r.get("source") or "").lower()
+        source_matches(str(r.get("source") or "").lower(), "core_architecture")
+        or source_matches(str(r.get("source") or "").lower(), "evidence_docs_troubleshoot")
+        or source_matches(str(r.get("source") or "").lower(), "docs_troubleshoot_eval")
         for r in uniq
     ):
         from react_agent.apps.docs_troubleshoot.index import get_index
@@ -135,19 +134,8 @@ def build_draft_from_hits(
         rag = get_index()
         expand_q = query
         if re.search(r"Core|自建|core\s*实现|运行时默认", query, re.I):
-            expand_q = "运行时默认 自建 Core react_loop"
-        retrieved = rag.query(expand_q, top_k=8)
-        if re.search(r"Core|自建|core\s*实现|运行时默认", query, re.I):
-            from react_agent.apps.docs_troubleshoot.ranking import rank_results
-
-            retrieved = rank_results(retrieved, query)
-            preferred = [
-                hit for hit in retrieved
-                if "core-architecture.md" in str(hit.get("source") or "").lower()
-                and "自建 core" in str(hit.get("content") or "").lower()
-            ]
-            retrieved = preferred + [hit for hit in retrieved if hit not in preferred]
-        for h in retrieved[:4]:
+            expand_q = "自建 Core CORE_ARCHITECTURE react_loop"
+        for h in rag.query(expand_q, top_k=10):
             r = {
                 "source": h.get("source", ""),
                 "score": h.get("score"),

@@ -293,22 +293,22 @@ Phase 0-3 在早期完成，验收证据散落在：
 ### 1. ❌ 在根目录放零散的 Phase 报告
 ```bash
 # ❌ 错误
-docs/spec/P4_COMPLETION_REPORT.md
-docs/spec/P5_SUMMARY.md
+docs/specs/harness/evidence/phase4-completion.md
+docs/specs/harness/evidence/phase5-migration/summary.md
 
 # ✅ 正确
-docs/spec/harness/evidence/phase4-completion.md
-docs/spec/harness/evidence/phase5-migration/summary.md
+docs/specs/harness/evidence/phase4-completion.md
+docs/specs/harness/evidence/phase5-migration/summary.md
 ```
 
 ### 2. ❌ 创建没有主规格的子规格
 ```bash
 # ❌ 错误：只有 R6，没有主规格
-docs/spec/harness/r6-observability.md
+docs/specs/harness/r6-observability.md
 
 # ✅ 正确：先有主规格
-docs/spec/harness/spec.md        # 引用 R6
-docs/spec/harness/r6-observability.md
+docs/specs/harness/spec.md        # 引用 R6
+docs/specs/harness/r6-observability.md
 ```
 
 ### 3. ❌ Phase 完成但没有任何记录

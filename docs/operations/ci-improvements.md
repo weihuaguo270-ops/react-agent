@@ -44,9 +44,9 @@ python scripts/ci/refresh_docs_baseline.py
 python scripts/ci/check_imports.py
 ```
 
-## 建议的 CI 工作流更新
+## 当前 CI 集成
 
-### 选项 A: 在 PR ready audit 中使用 --allow-revert
+PR `pull_request` 事件已运行 PR readiness 审计，检查工作区与基线、提交格式、敏感配置路径和文档语料基线。Revert 提交使用 `--allow-revert` 放行：
 
 ```yaml
 - name: Check PR readiness
@@ -55,7 +55,11 @@ python scripts/ci/check_imports.py
   run: python scripts/ci/check_pr_ready.py --ci --base-sha "$PR_BASE_SHA" --allow-revert
 ```
 
-### 选项 B: 添加文档基线自动更新（可选）
+本地提交前运行 `python scripts/ci/check_pr_ready.py`；更完整的清单可运行
+`python scripts/workflow_helper.py --workflow pr-ready`。CI 任务定义见
+`.github/workflows/test.yml` 的 `PR ready audit`。
+
+### 可选增强：自动刷新文档基线
 
 在 CI 中添加一个步骤，自动刷新基线：
 
@@ -64,7 +68,7 @@ python scripts/ci/check_imports.py
   run: python scripts/ci/refresh_docs_baseline.py
 ```
 
-### 选项 C: 添加导入检查（可选）
+### 可选增强：导入检查
 
 ```yaml
 - name: Check imports

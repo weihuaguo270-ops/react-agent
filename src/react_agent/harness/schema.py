@@ -13,7 +13,7 @@ New code should import from react_agent.harness.contracts instead:
         SCHEMA_VERSION,
     )
 
-See docs/spec/P5_MIGRATION_INVENTORY.md for the migration guide.
+See docs/specs/harness/evidence/phase5-migration/inventory.md for the migration guide.
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ warnings.warn(
     "react_agent.harness.schema is deprecated and will be removed after the "
     "P5 compatibility period. Use 'from react_agent.harness.contracts import "
     "validate_trajectory, normalize_trajectory, parse_trajectory, SCHEMA_VERSION' instead. "
-    "See docs/spec/P5_MIGRATION_INVENTORY.md for details.",
+    "See docs/specs/harness/evidence/phase5-migration/inventory.md for details.",
     DeprecationWarning,
     stacklevel=2,
 )

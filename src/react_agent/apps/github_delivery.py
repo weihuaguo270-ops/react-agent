@@ -242,7 +242,15 @@ class GitHubDeliveryWorkflow:
 
         try:
             # 先完成克隆、修改和验收测试，再允许创建分支或写入远端。
-            self._git("clone", "--no-hardlinks", task.repository, str(workspace))
+            bundle_path = run_dir / "repository.bundle"
+            try:
+                self._git(
+                    "bundle", "create", str(bundle_path), "--all", "HEAD",
+                    cwd=Path(task.repository),
+                )
+                self._git("clone", "--no-hardlinks", str(bundle_path), str(workspace))
+            finally:
+                bundle_path.unlink(missing_ok=True)
             checkout_ref = task.base_commit or task.base_branch
             self._git("checkout", checkout_ref, cwd=workspace)
             base_commit = self._git("rev-parse", "HEAD", cwd=workspace).stdout.strip()
