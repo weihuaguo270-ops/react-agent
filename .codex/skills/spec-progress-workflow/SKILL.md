@@ -54,6 +54,11 @@ direction, stop with a reviewable error. Preserve existing worktree changes and
 run the repository's required documentation and readiness checks after changing
 `docs/`.
 
+Treat `docs/` changes as Git Docs corpus changes unless the path is excluded from
+ingestion. Keep large documentation moves in a dedicated `chore(docs)` PR with
+feature work frozen. For corpus documents, review affected `git_docs_cases.json`
+assertions and include the refreshed corpus baseline in the same PR.
+
 For implementation work, keep the loop explicit: analyze the contracts and
 acceptance mapping, implement one bounded stage slice, run its declared gate,
 inspect the generated report, then update progress from the gate evidence. If a

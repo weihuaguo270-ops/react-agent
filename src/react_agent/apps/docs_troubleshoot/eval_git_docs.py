@@ -46,12 +46,43 @@ def corpus_dir() -> Path:
 
 def current_corpus_hashes() -> dict[str, str]:
     """当前 docs/ 语料的逐文件 sha256（与索引一致的文件集合）。"""
-    from react_agent.apps.docs_troubleshoot.ingest import _iter_doc_files, sha256_file
+    from react_agent.apps.docs_troubleshoot.ingest import (
+        _iter_doc_files,
+        git_exclude_prefixes_from_env,
+        sha256_file,
+    )
 
     root = corpus_dir()
     if not root.is_dir():
         return {}
-    return {fp.relative_to(root).as_posix(): sha256_file(fp) for fp in _iter_doc_files(root)}
+    excluded = _excluded_docs_prefixes(root, git_exclude_prefixes_from_env())
+    files: dict[str, str] = {}
+    for fp in _iter_doc_files(root):
+        relative = fp.relative_to(root).as_posix()
+        if any(relative == prefix or relative.startswith(f"{prefix}/") for prefix in excluded):
+            continue
+        files[relative] = sha256_file(fp)
+    return files
+
+
+def _excluded_docs_prefixes(root: Path, prefixes: list[str]) -> list[str]:
+    root_prefix = f"{root.name}/"
+    return [prefix[len(root_prefix):] for prefix in prefixes if prefix.startswith(root_prefix)]
+
+
+def is_git_docs_corpus_path(path: str) -> bool:
+    """Return whether a repository-relative docs path participates in this corpus."""
+    normalized = path.replace("\\", "/")
+    root_prefix = f"{corpus_dir().name}/"
+    if not normalized.startswith(root_prefix):
+        return False
+    relative = normalized[len(root_prefix):]
+    from react_agent.apps.docs_troubleshoot.ingest import git_exclude_prefixes_from_env
+
+    excluded = _excluded_docs_prefixes(corpus_dir(), git_exclude_prefixes_from_env())
+    return not any(
+        relative == prefix or relative.startswith(f"{prefix}/") for prefix in excluded
+    )
 
 
 def load_corpus_baseline() -> dict[str, str]:
