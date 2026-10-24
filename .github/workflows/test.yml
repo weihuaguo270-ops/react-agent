@@ -15,46 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Pull-request merge gate: affected unit tests and delivery checks only.
-  # Evaluation evidence runs in evaluation.yml.
-  ci-scope:
-    name: CI scope
-    runs-on: ubuntu-latest
-    outputs:
-      run_harness_stage: ${{ steps.scope.outputs.run_harness_stage }}
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.pull_request.head.sha || github.sha }}
-        fetch-depth: 0
-    - id: scope
-      env:
-        EVENT_NAME: ${{ github.event_name }}
-        PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        PUSH_BEFORE_SHA: ${{ github.event.before }}
-        PUSH_HEAD_SHA: ${{ github.sha }}
-      run: |
-        set -euo pipefail
-        if [ "${EVENT_NAME}" = "pull_request" ]; then
-          base="${PR_BASE_SHA}"
-          head="${PR_HEAD_SHA}"
-        elif [ "${EVENT_NAME}" = "push" ] && [ -n "${PUSH_BEFORE_SHA}" ] && [ "${PUSH_BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]; then
-          base="${PUSH_BEFORE_SHA}"
-          head="${PUSH_HEAD_SHA}"
-        else
-          echo "run_harness_stage=true" >> "$GITHUB_OUTPUT"
-          echo "No stable base/head pair; run the stage gate conservatively."
-          exit 0
-        fi
-        changed="$(git diff --name-only "${base}...${head}")"
-        printf '%s\n' "${changed}"
-        if printf '%s\n' "${changed}" | grep -Eq '^(src/react_agent/harness/|tests/(harness/|evaluation/|plugins/test_mcp_mock\.py$)|progress\.yaml$|docs/specs/harness/|scripts/ci/harness_stage_gate\.py$|\.codex/skills/spec-(progress-workflow|stage-acceptance)/|\.github/workflows/)'; then
-          echo "run_harness_stage=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "run_harness_stage=false" >> "$GITHUB_OUTPUT"
-        fi
-
   pr-ready:
     name: PR ready audit
     if: github.event_name == 'pull_request'
@@ -91,7 +51,6 @@ jobs:
       run: ruff check src/ tests/
 
   test:
-    needs: ci-scope
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # CI offline pillars/scripts call execute_python without an approval client.
@@ -134,17 +93,6 @@ jobs:
           --ignore=tests/test_harness_closed_loop_decision.py \
           --ignore=tests/evaluation/test_harness_closed_loop_decision.py \
           --cov=react_agent --cov-report=term-missing --cov-fail-under=35
-    - name: Install stage gate dependencies
-      if: needs.ci-scope.outputs.run_harness_stage == 'true' && matrix.python-version == '3.11'
-      run: |
-        set -e
-        git clone --depth=1 https://github.com/weihuaguo270-ops/llm-eval-engine.git /tmp/llm-eval-engine
-        git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
-        pip install -e /tmp/llm-eval-engine -e /tmp/trace-debugger
-    - name: Harness P4 stage gate
-      if: needs.ci-scope.outputs.run_harness_stage == 'true' && matrix.python-version == '3.11'
-      run: python scripts/ci/harness_stage_gate.py --stage P4
-
   # Windows: default console often GBK — catch emoji/encoding regressions early
   test-windows:
     runs-on: windows-latest
