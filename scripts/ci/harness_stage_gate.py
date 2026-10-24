@@ -19,10 +19,11 @@ PHASE_TESTS = {
     "P0": ["tests/test_harness_schema.py", "tests/test_harness_reliability.py"],
     "P1": ["tests/evaluation/test_harness_contracts.py", "tests/evaluation/test_harness_schema.py"],
     "P2": [
-        "tests/evaluation/test_harness_contracts.py", "tests/test_harness_r2.py",
-        "tests/test_harness_r3.py", "tests/test_mcp_mock.py", "tests/test_mcp_stdio_contract.py",
-        "tests/test_structured_output_contract.py", "tests/test_deterministic_replay.py",
-        "tests/test_runtime_observability.py", "tests/evaluation/test_http_trajectory_contract.py",
+        "tests/evaluation/test_harness_contracts.py", "tests/harness/test_harness_r2.py",
+        "tests/test_harness_r3.py", "tests/plugins/test_mcp_mock.py",
+        "tests/test_mcp_stdio_contract.py", "tests/test_structured_output_contract.py",
+        "tests/harness/test_deterministic_replay.py",
+        "tests/harness/test_runtime_observability.py", "tests/evaluation/test_http_trajectory_contract.py",
         "tests/test_shared_idempotency.py",
     ],
     "P3": ["tests/evaluation/test_harness_contracts.py", "tests/test_harness_schema.py"],
@@ -63,6 +64,10 @@ def check_evidence(requirements: list[dict]) -> list[dict]:
     return results
 
 
+def missing_phase_tests(stage: str, root: Path = ROOT) -> list[str]:
+    return [relative for relative in PHASE_TESTS[stage] if not (root / relative).is_file()]
+
+
 def check_acceptance_evidence(items: list[dict]) -> list[dict]:
     results = []
     for item in items:
@@ -97,6 +102,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", required=True, choices=tuple(PHASE_TESTS))
     args = parser.parse_args()
+    missing_tests = missing_phase_tests(args.stage)
+    if missing_tests:
+        print(
+            f"stage={args.stage} configuration error: missing test files: "
+            + ", ".join(missing_tests),
+            file=sys.stderr,
+        )
+        return 2
     progress = load_progress()
     stage = progress["stages"][args.stage]
     command = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *PHASE_TESTS[args.stage]]

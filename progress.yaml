@@ -1,6 +1,6 @@
 {
   "schema_version": "harness-progress/v1",
-  "updated_at": "2026-10-23T10:39:58.778707+00:00",
+  "updated_at": "2026-10-23T15:07:38.957389+00:00",
   "source_spec": "docs/specs/harness/spec.md",
   "stages": {
     "P0": {
@@ -45,7 +45,7 @@
           "title": "Shared ToolCall and error envelope across ReAct, Workflow, MCP mock, real MCP server and Evaluation Runner",
           "evidence": [
             "tests/evaluation/test_harness_contracts.py",
-            "tests/test_mcp_mock.py",
+            "tests/plugins/test_mcp_mock.py",
             "tests/test_mcp_stdio_contract.py",
             "artifacts/harness/p2-r1-cross-path.json"
           ],
@@ -90,7 +90,7 @@
           "id": "R6",
           "title": "Runtime observability artifact and Redis Streams integration evidence",
           "evidence": [
-            "tests/test_runtime_observability.py",
+            "tests/harness/test_runtime_observability.py",
             "artifacts/harness/p2-r6-redis-exporter.json",
             "docs/specs/harness/r6-observability.md"
           ],
@@ -116,11 +116,11 @@
       "last_gate": {
         "status": "passed",
         "report": "artifacts/harness/stage-gates/p2-latest.json",
-        "report_sha256": "e8ab10ad6825a137b107ee24517d147c8e2a27da60b2116f170e5fe83c024603"
+        "report_sha256": "ce21d814006ce1a2f841f84ebc5fd185e2a76dad16a54fe77442115079046645"
       },
       "final_report": {
         "path": "artifacts/harness/p2-final-acceptance.json",
-        "report_sha256": "d3faf8fa288cb807edbc594ce0525cd4cf5d417bbb41f30cece384f09e2de5a4"
+        "report_sha256": "8775cb745f1ab7ca91c3029232172e05c96a870e1b155669b31369fe17d9ddde"
       }
     },
     "P3": {
@@ -232,9 +232,9 @@
     }
   },
   "last_gate": {
-    "stage": "P4",
+    "stage": "P2",
     "status": "passed",
-    "report": "artifacts/harness/stage-gates/p4-latest.json",
-    "report_sha256": "53469c4dd97dedf7fce8a10ca241e31040fe4705e2d2a5d01654c6c326c74d8e"
+    "report": "artifacts/harness/stage-gates/p2-latest.json",
+    "report_sha256": "ce21d814006ce1a2f841f84ebc5fd185e2a76dad16a54fe77442115079046645"
   }
 }
