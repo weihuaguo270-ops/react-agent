@@ -17,18 +17,18 @@ EVIDENCE = {
     "r1_cross_path": "artifacts/harness/p2-r1-cross-path.json",
     "r6_redis_exporter": "artifacts/harness/p2-r6-redis-exporter.json",
     "r2_real_idempotency": "artifacts/harness/real-idempotency-evidence.json",
-    "r5_docker_replay": ".cache/tmp/evidence/docker-replay-evidence-r5.json",
+    "r5_docker_replay": ".evidence_tmp/docker-replay-evidence-r5.json",
 }
 WORKING_TREE_PATHS = (
-    "docs/spec/HARNESS_BUILD_SPEC.md",
-    "docs/spec/HARNESS_R6_REDIS_DEPLOYMENT.md",
+    "docs/specs/harness/spec.md",
+    "docs/specs/harness/r6-observability.md",
     "progress.yaml",
     "scripts/ci/harness_stage_gate.py",
     "scripts/eval/smoke/run_p2_r1_cross_path_evidence.py",
     "scripts/eval/smoke/run_p2_r6_redis_exporter_evidence.py",
     "scripts/eval/smoke/run_real_idempotency_evidence.py",
-    "docs/spec/HARNESS_PROGRESS.md",
-    "docs/spec/REDIS_TASK_MVP_SPEC.md",
+    "docs/specs/harness/progress.md",
+    "docs/specs/redis-task/mvp-spec.md",
     "src/react_agent/eval/execution_scorer.py",
     "src/react_agent/eval/http_execution.py",
     "src/react_agent/mcp_client.py",
@@ -44,8 +44,10 @@ WORKING_TREE_PATHS = (
     "src/react_agent/react_loop.py",
     "src/react_agent/server/chat_router.py",
     "tests/evaluation/test_harness_contracts.py",
+    "tests/test_harness_stage_gate.py",
     "tests/test_harness_r3.py",
-    "tests/test_runtime_observability.py",
+    "tests/plugins/test_mcp_mock.py",
+    "tests/harness/test_runtime_observability.py",
 )
 
 
