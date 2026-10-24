@@ -69,7 +69,7 @@ jobs:
       with:
         python-version: "3.11"
     - name: Install project dependencies
-      run: pip install -e "[test]"
+      run: pip install -e ".[test]"
     - name: Report scope
       run: echo "run_harness_stage=${{ needs.scope.outputs.run_harness_stage }}"
     - name: Install cross-repository gate dependencies
