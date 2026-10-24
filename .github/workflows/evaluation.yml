@@ -1,0 +1,176 @@
+name: Evaluation evidence
+
+on:
+  push:
+    branches:
+      - main
+    tags-ignore:
+      - "**"
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Real LLM suite to run when API secret is configured"
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - full
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evaluation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-evaluation:
+    name: Offline evaluation (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+    env:
+      REACT_AGENT_APPROVAL_MODE: auto_allow
+      REACT_AGENT_SKIP_RAG: "1"
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies and sibling evaluation packages
+      run: |
+        set -e
+        pip install -e ".[test]"
+        git clone --depth=1 https://github.com/weihuaguo270-ops/llm-eval-engine.git /tmp/llm-eval-engine
+        git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
+        pip install -e /tmp/llm-eval-engine -e /tmp/trace-debugger
+    - name: Execution evaluation
+      run: python scripts/eval/execution/run_execution_suite.py
+    - name: Reliability harness evaluation
+      run: python scripts/eval/reliability/run_reliability_harness.py
+    - name: Reliability mock evaluation
+      run: python scripts/eval/reliability/run_reliability_live.py --mock
+    - name: Failure flywheel evidence
+      run: python scripts/eval/failure/run_failure_flywheel.py --fixture --publish
+    - name: StepWatcher evidence
+      run: |
+        pytest tests/test_step_watcher_golden_e2e.py -q
+        python scripts/eval/failure/run_step_watcher_evidence.py --publish
+    - name: Failure regression pipeline evidence
+      run: |
+        set -e
+        python scripts/eval/failure/run_failure_regression_pipeline.py --mode pass --expect-decision pass --out artifacts/failure-regression/ci-pass
+        python scripts/eval/failure/run_failure_regression_pipeline.py --mode hold --expect-decision hold --out artifacts/failure-regression/ci-hold
+        python scripts/eval/failure/run_failure_regression_pipeline.py --mode pass --expect-decision pass --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-green
+        python scripts/eval/failure/run_failure_regression_pipeline.py --mode hold --expect-decision hold --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-red
+        pytest tests/test_failure_regression_pipeline.py -q
+    - name: Failure regression gate evidence
+      run: |
+        pytest tests/test_failure_regression_gate.py -q
+        pytest tests/test_failure_regression_contracts.py -q
+    - name: SoftwareTask failure regression evidence
+      run: |
+        python scripts/eval/failure/run_software_task_failure_regression.py --out artifacts/failure-regression/ci-software-tasks --expect-all-pass-good
+        pytest tests/test_software_task_failure_regression.py -q
+    - name: Public RAG benchmark evidence
+      run: |
+        python scripts/eval/rag/run_public_rag_benchmark.py --modes offline,rag
+        pytest tests/test_public_rag_benchmark.py -q
+    - name: Docs evaluation evidence
+      run: |
+        python scripts/eval/docs/run_docs_troubleshoot_eval.py
+        python scripts/eval/docs/run_fault_eval.py
+        python scripts/eval/docs/run_production_eval.py
+        python scripts/eval/docs/run_git_docs_eval.py
+    - name: Harness closed-loop evidence
+      run: python scripts/eval/acceptance/harness_closed_loop.py --fixture
+    - name: Cross-repository scoring evidence
+      run: |
+        python tests/ci_verify_integration.py
+        pytest tests/test_eval_engine_contract.py tests/test_tdebug_eval_contract.py -q
+
+  # Probe the Secret only for evidence runs. It is not part of pull_request CI.
+  real-llm-gate:
+    name: Real LLM gate (evidence)
+    runs-on: ubuntu-latest
+    outputs:
+      has_key: ${{ steps.probe.outputs.has_key }}
+    steps:
+    - id: probe
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      run: |
+        if [ -n "$DEEPSEEK_API_KEY" ]; then
+          echo "has_key=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has_key=false" >> "$GITHUB_OUTPUT"
+        fi
+
+  real-llm-smoke:
+    name: Real LLM smoke (evidence)
+    needs: real-llm-gate
+    if: >-
+      ${{ needs.real-llm-gate.outputs.has_key == 'true' &&
+          (github.event_name == 'push' || github.event.inputs.suite == 'smoke') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install
+      run: pip install -e ".[test]"
+    - name: Smoke tests (live DeepSeek)
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        LLM_PROVIDER: deepseek
+        LLM_MODEL: deepseek-v4-flash
+        LLM_THINKING: disabled
+        REACT_AGENT_SANDBOX_PREWARM: "0"
+        REACT_AGENT_SKIP_RAG: "1"
+      run: pytest tests/test_real_llm.py -v -m real_llm_smoke --tb=short --junitxml=real-llm-smoke-junit.xml
+    - name: Upload smoke junit
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: real-llm-smoke-junit
+        path: real-llm-smoke-junit.xml
+        if-no-files-found: ignore
+
+  real-llm-full:
+    name: Real LLM full (evidence)
+    needs: real-llm-gate
+    if: >-
+      ${{ needs.real-llm-gate.outputs.has_key == 'true' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.event.inputs.suite == 'full' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install
+      run: pip install -e ".[test]"
+    - name: Full tests (live DeepSeek)
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        LLM_PROVIDER: deepseek
+        LLM_MODEL: deepseek-v4-flash
+        LLM_THINKING: disabled
+        REACT_AGENT_SANDBOX_PREWARM: "0"
+        REACT_AGENT_SKIP_RAG: "1"
+      run: pytest tests/test_real_llm.py -v -m real_llm --tb=short --junitxml=real-llm-full-junit.xml
+    - name: Upload full junit
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: real-llm-full-junit
+        path: real-llm-full-junit.xml
+        if-no-files-found: ignore

@@ -7,15 +7,6 @@ on:
       - "**"
   pull_request:
   workflow_dispatch:
-    inputs:
-      suite:
-        description: "Real LLM suite to run when API secret is configured"
-        required: true
-        default: smoke
-        type: choice
-        options:
-          - smoke
-          - full
 
 concurrency:
   # 事件名参与分组：workflow_dispatch 运行与 pull_request 运行曾因同 ref 互相 cancel，
@@ -67,6 +58,7 @@ jobs:
     env:
       REACT_AGENT_APPROVAL_MODE: auto_allow
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11"]
     steps:
@@ -78,16 +70,14 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -e ".[test]"
-    - name: Clone & install sibling gate repos
-      run: |
-        set -e
-        git clone --depth=1 https://github.com/weihuaguo270-ops/llm-eval-engine.git /tmp/llm-eval-engine
-        git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
-        pip install -e /tmp/llm-eval-engine -e /tmp/trace-debugger
     - name: Script tests
       run: python test_all.py
     - name: Pytest (offline)
-      run: pytest tests/ -q --ignore=tests/test_real_llm.py
+      run: >-
+        pytest tests/ -q
+        --ignore=tests/test_real_llm.py
+        --ignore=tests/test_harness_closed_loop_decision.py
+        --ignore=tests/evaluation/test_harness_closed_loop_decision.py
     - name: Portable user-data directories
       env:
         REACT_AGENT_DATA_DIR: /tmp/react-agent-data
@@ -98,70 +88,11 @@ jobs:
       if: matrix.python-version == '3.11'
       run: |
         pip install pytest-cov
-        pytest tests/ -q --ignore=tests/test_real_llm.py --cov=react_agent --cov-report=term-missing --cov-fail-under=35
-    - name: "Pillar ① Execution (offline tools)"
-      run: |
-        set -e
-        export REACT_AGENT_SKIP_RAG=1
-        python scripts/eval/execution/run_execution_suite.py
-    - name: Reliability harness (injected)
-      run: |
-        export REACT_AGENT_SKIP_RAG=1
-        python scripts/eval/reliability/run_reliability_harness.py
-    - name: Reliability live (mock)
-      run: |
-        export REACT_AGENT_SKIP_RAG=1
-        python scripts/eval/reliability/run_reliability_live.py --mock
-    - name: Failure flywheel (fixture)
-      run: python scripts/eval/failure/run_failure_flywheel.py --fixture --publish
-    - name: StepWatcher evidence (trace-debugger)
-      run: |
-        pytest tests/test_step_watcher_golden_e2e.py -q
-        python scripts/eval/failure/run_step_watcher_evidence.py --publish
-    - name: Failure regression pipeline P0 (pass + hold)
-      run: |
-        set -e
-        python scripts/eval/failure/run_failure_regression_pipeline.py --mode pass --expect-decision pass --out artifacts/failure-regression/ci-pass
-        python scripts/eval/failure/run_failure_regression_pipeline.py --mode hold --expect-decision hold --out artifacts/failure-regression/ci-hold
-        python scripts/eval/failure/run_failure_regression_pipeline.py --mode pass --expect-decision pass --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-green
-        python scripts/eval/failure/run_failure_regression_pipeline.py --mode hold --expect-decision hold --baseline-scan artifacts/failure-regression/ci-pass/baseline_scan.json --out artifacts/failure-regression/ci-compare-red
-        pytest tests/test_failure_regression_pipeline.py -q
-    - name: Failure regression gate P1 (Delivery + SoftwareTask)
-      run: pytest tests/test_failure_regression_gate.py -q
-    - name: Failure regression contracts (Episode / gate / process_quality)
-      run: pytest tests/test_failure_regression_contracts.py -q
-    - name: SoftwareTask failure regression acceptance (3 FastAPI tasks)
-      run: |
-        set -e
-        python scripts/eval/failure/run_software_task_failure_regression.py --out artifacts/failure-regression/ci-software-tasks --expect-all-pass-good
-        pytest tests/test_software_task_failure_regression.py -q
-    - name: "Pillar ③ Public RAG benchmark (offline)"
-      run: |
-        python scripts/eval/rag/run_public_rag_benchmark.py --modes offline,rag
-        pytest tests/test_public_rag_benchmark.py -q
-    - name: "Pillar ② Docs troubleshoot golden (offline)"
-      run: python scripts/eval/docs/run_docs_troubleshoot_eval.py
-    - name: "Pillar ② Docs fault sim (offline)"
-      run: python scripts/eval/docs/run_fault_eval.py
-    - name: Docs troubleshoot production blind (offline)
-      run: python scripts/eval/docs/run_production_eval.py
-    - name: Docs troubleshoot git docs held-out (offline)
-      run: python scripts/eval/docs/run_git_docs_eval.py
-    - name: Run Agent to Eval integration
-      run: python scripts/eval/integration/agent_to_eval.py
-    - name: Run Harness closed-loop demo
-      run: python scripts/eval/acceptance/harness_closed_loop.py --fixture
-    - name: Verify cross-repository scoring contracts
-      run: |
-        python tests/ci_verify_integration.py
-        pytest tests/test_eval_engine_contract.py tests/test_tdebug_eval_contract.py -q
-    - name: Check Harness Spec consistency
-      if: matrix.python-version == '3.11'
-      run: python .codex/skills/spec-progress-workflow/scripts/spec_workflow.py analyze --direction harness
-    - name: Harness P4 stage gate
-      if: matrix.python-version == '3.11'
-      run: python scripts/ci/harness_stage_gate.py --stage P4
-
+        pytest tests/ -q \
+          --ignore=tests/test_real_llm.py \
+          --ignore=tests/test_harness_closed_loop_decision.py \
+          --ignore=tests/evaluation/test_harness_closed_loop_decision.py \
+          --cov=react_agent --cov-report=term-missing --cov-fail-under=35
   # Windows: default console often GBK — catch emoji/encoding regressions early
   test-windows:
     runs-on: windows-latest
@@ -264,101 +195,4 @@ jobs:
     - name: Stop container
       if: always()
       run: docker rm -f react-agent-ci || true
-
-  # Probe secret without exposing it in job-level `if` (secrets context is invalid there).
-  real-llm-gate:
-    name: Real LLM gate
-    runs-on: ubuntu-latest
-    outputs:
-      has_key: ${{ steps.probe.outputs.has_key }}
-    steps:
-    - id: probe
-      env:
-        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-      run: |
-        if [ -n "$DEEPSEEK_API_KEY" ]; then
-          echo "has_key=true" >> "$GITHUB_OUTPUT"
-          echo "DEEPSEEK_API_KEY is configured — real LLM jobs may run"
-        else
-          echo "has_key=false" >> "$GITHUB_OUTPUT"
-          echo "No DEEPSEEK_API_KEY secret — real LLM jobs will be skipped"
-        fi
-
-  # Smoke is required evidence when the key exists: failures fail this job.
-  real-llm-smoke:
-    name: Real LLM (smoke)
-    needs: real-llm-gate
-    if: >-
-      ${{ needs.real-llm-gate.outputs.has_key == 'true' &&
-          (github.event_name != 'workflow_dispatch' ||
-           github.event.inputs.suite == 'smoke') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-    - name: Install
-      run: |
-        pip install -e ".[test]"
-        pip install pytest
-    - name: Smoke tests (live DeepSeek)
-      env:
-        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        LLM_PROVIDER: deepseek
-        LLM_MODEL: deepseek-v4-flash
-        LLM_THINKING: disabled
-        REACT_AGENT_SANDBOX_PREWARM: "0"
-        REACT_AGENT_SKIP_RAG: "1"
-      run: |
-        pytest tests/test_real_llm.py -v -m real_llm_smoke --tb=short \
-          --junitxml=real-llm-smoke-junit.xml
-    - name: Upload smoke junit
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: real-llm-smoke-junit
-        path: real-llm-smoke-junit.xml
-        if-no-files-found: ignore
-
-  # Full live suite: manual dispatch only (cost/time).
-  real-llm-full:
-    name: Real LLM (full)
-    needs: real-llm-gate
-    if: >-
-      ${{ needs.real-llm-gate.outputs.has_key == 'true' &&
-          github.event_name == 'workflow_dispatch' &&
-          github.event.inputs.suite == 'full' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-    - name: Install
-      run: |
-        pip install -e ".[test]"
-        pip install pytest
-    - name: Full real LLM suite
-      env:
-        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        LLM_PROVIDER: deepseek
-        LLM_MODEL: deepseek-v4-flash
-        LLM_THINKING: disabled
-        REACT_AGENT_SANDBOX_PREWARM: "0"
-        REACT_AGENT_SKIP_RAG: "1"
-      run: |
-        pytest tests/test_real_llm.py -v -m real_llm --tb=short \
-          --junitxml=real-llm-full-junit.xml
-    - name: Upload full junit
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: real-llm-full-junit
-        path: real-llm-full-junit.xml
-        if-no-files-found: ignore
 

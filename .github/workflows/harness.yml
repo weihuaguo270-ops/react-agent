@@ -1,0 +1,87 @@
+name: Harness stage gate
+
+on:
+  push:
+    branches:
+      - main
+    tags-ignore:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harness-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scope:
+    name: Harness scope
+    runs-on: ubuntu-latest
+    outputs:
+      run_harness_stage: ${{ steps.scope.outputs.run_harness_stage }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        fetch-depth: 0
+    - id: scope
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        PUSH_BEFORE_SHA: ${{ github.event.before }}
+        PUSH_HEAD_SHA: ${{ github.sha }}
+      run: |
+        set -euo pipefail
+        if [ "${EVENT_NAME}" = "pull_request" ]; then
+          base="${PR_BASE_SHA}"
+          head="${PR_HEAD_SHA}"
+        elif [ "${EVENT_NAME}" = "push" ] && [ -n "${PUSH_BEFORE_SHA}" ] && [ "${PUSH_BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]; then
+          base="${PUSH_BEFORE_SHA}"
+          head="${PUSH_HEAD_SHA}"
+        else
+          echo "run_harness_stage=true" >> "$GITHUB_OUTPUT"
+          echo "No stable base/head pair; run the stage gate conservatively."
+          exit 0
+        fi
+        changed="$(git diff --name-only "${base}...${head}")"
+        printf '%s\n' "${changed}"
+        if printf '%s\n' "${changed}" | grep -Eq '^(src/react_agent/harness/|tests/harness/|tests/(evaluation/)?test_harness|tests/(evaluation/)?test_http_trajectory_contract\.py$|tests/(evaluation/)?test_failure_regression_gate\.py$|tests/(evaluation/)?test_run_step_watcher_evidence\.py$|tests/plugins/test_mcp_mock\.py$|tests/test_mcp_stdio_contract\.py$|tests/test_structured_output_contract\.py$|tests/test_shared_idempotency\.py$|progress\.yaml$|docs/specs/harness/|scripts/ci/harness_stage_gate\.py$|scripts/eval/(acceptance/harness_closed_loop|failure/run_step_watcher_evidence)\.py$|\.codex/skills/spec-(progress-workflow|stage-acceptance)/|\.github/workflows/harness\.yml$)'; then
+          echo "run_harness_stage=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "run_harness_stage=false" >> "$GITHUB_OUTPUT"
+        fi
+
+  stage-gate:
+    name: Harness P4 stage gate
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        fetch-depth: 0
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install project dependencies
+      run: pip install -e ".[test]"
+    - name: Report scope
+      run: echo "run_harness_stage=${{ needs.scope.outputs.run_harness_stage }}"
+    - name: Install cross-repository gate dependencies
+      if: needs.scope.outputs.run_harness_stage == 'true'
+      run: |
+        set -e
+        git clone --depth=1 https://github.com/weihuaguo270-ops/llm-eval-engine.git /tmp/llm-eval-engine
+        git clone --depth=1 https://github.com/weihuaguo270-ops/trace-debugger.git /tmp/trace-debugger
+        pip install -e /tmp/llm-eval-engine -e /tmp/trace-debugger
+    - name: Run P4 stage gate
+      if: needs.scope.outputs.run_harness_stage == 'true'
+      run: python scripts/ci/harness_stage_gate.py --stage P4
+    - name: Skip unchanged Harness stage
+      if: needs.scope.outputs.run_harness_stage != 'true'
+      run: echo "No Harness or Spec paths changed; stage gate is not applicable."
