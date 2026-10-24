@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
     # Release tags point at commits already validated on their branch.
     tags-ignore:
       - "**"
