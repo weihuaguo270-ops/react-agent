@@ -1,0 +1,1459 @@
+{
+  "schema_version": "ci-failure-log-review/v1",
+  "reviewed_at": "2026-10-28",
+  "repository": "weihuaguo270-ops/react-agent",
+  "sample": {
+    "baseline_collected_at": "2026-10-22",
+    "baseline_sha": "97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e",
+    "workflows": {
+      "test.yml": {
+        "failure_jobs": 63
+      },
+      "daily-smoke.yml": {
+        "failure_jobs": 7
+      }
+    },
+    "total_failure_jobs": 70
+  },
+  "retrieval": {
+    "method": "GitHub Actions jobs log API",
+    "command_template": "gh api --allow-escape-sequences repos/weihuaguo270-ops/react-agent/actions/jobs/{job_id}/logs",
+    "logs_available": 70,
+    "logs_unavailable": 0,
+    "raw_logs_retained_outside_repository": true,
+    "secrets_policy": "Only redacted markers and hashes are committed; raw logs and API-key fragments are not committed."
+  },
+  "summary": {
+    "failure_jobs": 70,
+    "confirmed_root_causes": 62,
+    "partial_root_causes": 8,
+    "unavailable_logs": 0,
+    "confirmed_ratio": 0.8857,
+    "partial_ratio": 0.1143,
+    "conclusion": "62/70 failure jobs have actionable root-cause evidence in their logs; 8/70 are partial because the job exposes only aggregate results or a wrapper failure."
+  },
+  "entries": [
+    {
+      "workflow": "test.yml",
+      "run_id": 39552208733,
+      "job_id": 119063722025,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "ba4834545debd56cf16704633f2141e9a325c3bd",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "dae9c7f67b5be68571475f2983b72a58f4e5ab29fcef33689f7887df49b9db1f",
+      "log_bytes": 36246,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39552208733/job/119063722025",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/119063722025/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39588383542,
+      "job_id": 119182881878,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "875c00b7f49d13adb5451e76feac253e6da4c75b",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "evaluation evidence schema is missing required fixture/episode fields; MCP mock unknown-tool error code does not match the expected contract",
+      "evidence_markers": [
+        "KeyError: 'fixture_manifest' or evaluation episode field",
+        "'tool_not_found' == 'mcp_error'"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "a4a91bcef80a2e644e175f15e7d99aa47007865ae841cf240b47b1cc5fff3f77",
+      "log_bytes": 74588,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39588383542/job/119182881878",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/119182881878/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39582035222,
+      "job_id": 119161706077,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "e8b23d186a63c9fdc1cf7553f834498bc107241d",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "evaluation evidence schema is missing required fixture/episode fields; MCP mock unknown-tool error code does not match the expected contract",
+      "evidence_markers": [
+        "KeyError: 'fixture_manifest' or evaluation episode field",
+        "'tool_not_found' == 'mcp_error'"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "e065d8e0ba14073d4f1bc06b4fc7bf1adaf71dabb20d233ff09acb2210c1c5f4",
+      "log_bytes": 79775,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39582035222/job/119161706077",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/119161706077/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39551534740,
+      "job_id": 119061617883,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "ad1d3cd8176385408cd14a7f9f146c613370a875",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift; evaluation evidence schema is missing required fixture/episode fields; MCP mock unknown-tool error code does not match the expected contract",
+      "evidence_markers": [
+        "docs corpus baseline is changed",
+        "KeyError: 'fixture_manifest' or evaluation episode field",
+        "'tool_not_found' == 'mcp_error'"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "7e0c7ce23e15216eeaf80b543da11330931cd120b6e300ea1819546f345f6619",
+      "log_bytes": 87841,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39551534740/job/119061617883",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/119061617883/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39581128752,
+      "job_id": 119158717308,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "68b037e08ef6955f94dbad7d135c845ee9e14df0",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "evaluation evidence schema is missing required fixture/episode fields; MCP mock unknown-tool error code does not match the expected contract",
+      "evidence_markers": [
+        "KeyError: 'fixture_manifest' or evaluation episode field",
+        "'tool_not_found' == 'mcp_error'"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "f2f9c5ed8b9df854395a268d5b375d282c68e0725e5876c37e27dbf7a494845a",
+      "log_bytes": 84452,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39581128752/job/119158717308",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/119158717308/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39588383263,
+      "job_id": 119182881638,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "28e1248e151588659d982c7dc95c375b6ebb7d6d",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "pytest log contains a concrete failing test or assertion",
+      "evidence_markers": [
+        "pytest failure summary"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "9af41281421aece726c18ca00eee2b6de02aaee6730acfb196d49b599b1ba66b",
+      "log_bytes": 48226,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39588383263/job/119182881638",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/119182881638/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39580433261,
+      "job_id": 119156401706,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "abae4d44a35d7527d60afdcb55b651f0a9db3d7b",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "evaluation evidence schema is missing required fixture/episode fields; MCP mock unknown-tool error code does not match the expected contract",
+      "evidence_markers": [
+        "KeyError: 'fixture_manifest' or evaluation episode field",
+        "'tool_not_found' == 'mcp_error'"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "58903fda3032b8a8d3866c700e3d3e001edddbff283e8f627de341881ba4d458",
+      "log_bytes": 84914,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39580433261/job/119156401706",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/119156401706/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39552208733,
+      "job_id": 119063721624,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "ba4834545debd56cf16704633f2141e9a325c3bd",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift; evaluation evidence schema is missing required fixture/episode fields; MCP mock unknown-tool error code does not match the expected contract",
+      "evidence_markers": [
+        "docs corpus baseline is changed",
+        "KeyError: 'fixture_manifest' or evaluation episode field",
+        "'tool_not_found' == 'mcp_error'"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "590db8d8c0e397024aa29c6f19123e6e5a4331bcdf8b5c184c6e51c11a0483d5",
+      "log_bytes": 83947,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39552208733/job/119063721624",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/119063721624/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39270933205,
+      "job_id": 118122715454,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "d02fba11b51a0fcd002ac7c0a3985316fbeaf4bc",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "49453819f4bdf76695e24d1eb581a23cb7381fddc8df6da67e8926e9bcb6521d",
+      "log_bytes": 29169,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39270933205/job/118122715454",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/118122715454/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39270933205,
+      "job_id": 118122715729,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "d02fba11b51a0fcd002ac7c0a3985316fbeaf4bc",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "f245ce9f34846a3265f6bc4bdc8947c0cfd7f02196f7b5174dff94f9be61d011",
+      "log_bytes": 45276,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39270933205/job/118122715729",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/118122715729/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39229492516,
+      "job_id": 117983731150,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "fb6812c79b771e8613054f1c5ceb314dd4fbd4f2",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "8f2c1839f149774368bcbab5fd70b6cf51c5bf633de010a819eccf6209211863",
+      "log_bytes": 45277,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39229492516/job/117983731150",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117983731150/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39225905785,
+      "job_id": 117972006331,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "78b74d386337a9d74d0398fe886a4295a22c1e3f",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "00b787b00625752dca6819a81ae53b85b804f61c505aac60edbc14da56c7c840",
+      "log_bytes": 44044,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39225905785/job/117972006331",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117972006331/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39229492516,
+      "job_id": 117983730854,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "fb6812c79b771e8613054f1c5ceb314dd4fbd4f2",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "bc3bf9efcecfac62c86be3b6ad2d27afc8d334a928a6ed7dbb69ba75ccb3cd4c",
+      "log_bytes": 29140,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39229492516/job/117983730854",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117983730854/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39225905785,
+      "job_id": 117972006427,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "78b74d386337a9d74d0398fe886a4295a22c1e3f",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift; HEAD commit does not satisfy conventional commit policy",
+      "evidence_markers": [
+        "docs corpus baseline is changed",
+        "HEAD commit is not conventional"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "c9039f430689f2b835fb8cfdb718cd1a9a731f66638520d4e3e251b1bcc9260f",
+      "log_bytes": 29258,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39225905785/job/117972006427",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117972006427/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39225323517,
+      "job_id": 117970079611,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "0e4d424cea853583fda73e3c514b33bf850c196f",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "f1d34cd4913d0931b2b8f3171b993ab843564b74dac9ac8cb155009001891589",
+      "log_bytes": 29178,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39225323517/job/117970079611",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117970079611/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39225323517,
+      "job_id": 117970079718,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "0e4d424cea853583fda73e3c514b33bf850c196f",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift; evaluation evidence schema is missing required fixture/episode fields",
+      "evidence_markers": [
+        "docs corpus baseline is changed",
+        "KeyError: 'fixture_manifest' or evaluation episode field"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "d989fc535b3260f078a21482d680a5156a84ec02398564f59f299b38505a5676",
+      "log_bytes": 58237,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39225323517/job/117970079718",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117970079718/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39223114834,
+      "job_id": 117962869416,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "f840b086e7365c9f66ea33128dc70d0bc61b1267",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "pytest log contains a concrete failing test or assertion",
+      "evidence_markers": [
+        "pytest failure summary"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "98b8f4c54ed37a66369668b37c8cf5d23bbc028548241c71870c32d2dd05169c",
+      "log_bytes": 43591,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39223114834/job/117962869416",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117962869416/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39223114834,
+      "job_id": 117962869420,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "f840b086e7365c9f66ea33128dc70d0bc61b1267",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift; HEAD commit does not satisfy conventional commit policy",
+      "evidence_markers": [
+        "docs corpus baseline is changed",
+        "HEAD commit is not conventional"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "81a10734d7431a749f9255a43362c35a6215ddb14a15eb99bd20e12206faada8",
+      "log_bytes": 29252,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39223114834/job/117962869420",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117962869420/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39207246801,
+      "job_id": 117912661632,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "aa1021631ef34dca299a8b9476ac1f5b8210e068",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "012a3780117aa155214e7a4403393e8e36125f6e10d93f5ce03f85a395fe1104",
+      "log_bytes": 43197,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39207246801/job/117912661632",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117912661632/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39204692861,
+      "job_id": 117904873347,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "a907aab5f08d78a0d5651f1687fe7b0a7dbc6d1b",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "09577cc4c56c37b1e5c51b12980f8d4d470b12152d6f1d61d9aa0256d6986c8e",
+      "log_bytes": 43449,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39204692861/job/117904873347",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117904873347/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39207246801,
+      "job_id": 117912661438,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "aa1021631ef34dca299a8b9476ac1f5b8210e068",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift; PR head does not contain the recorded base SHA",
+      "evidence_markers": [
+        "docs corpus baseline is changed",
+        "HEAD does not contain base"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "919217829337b894be74dddf07b7897bb695eb899e1e39ed0efecfe69c674b86",
+      "log_bytes": 29060,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39207246801/job/117912661438",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117912661438/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39204692861,
+      "job_id": 117904873363,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "a907aab5f08d78a0d5651f1687fe7b0a7dbc6d1b",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "2557d46312b9a5b3be67d65cf5c324a9b87545f6abd6311df805ef233b79081c",
+      "log_bytes": 30004,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39204692861/job/117904873363",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117904873363/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39204212034,
+      "job_id": 117903401502,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "3eb7ec5e71bb6816d2ddfe9b1209d38b0a9dfcc9",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "18548c7509d91928f75983d76f88749fb50f14aee11aa5793ca379aaf79bb820",
+      "log_bytes": 44953,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39204212034/job/117903401502",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117903401502/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39204212034,
+      "job_id": 117903401568,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "3eb7ec5e71bb6816d2ddfe9b1209d38b0a9dfcc9",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "dcdd86ac08e7944b69d65a019d01e110613c7ac54bd0dfc74b5103d718583f99",
+      "log_bytes": 30093,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39204212034/job/117903401568",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117903401568/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39203898820,
+      "job_id": 117902459635,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "12b4c406a37005cf872d352fb25d971cddbea861",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "464fae54b3c6b5bf4c8424e15845b5a682c778a804b805856ced9cc91fbceca4",
+      "log_bytes": 30083,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39203898820/job/117902459635",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117902459635/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39203898820,
+      "job_id": 117902459814,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "12b4c406a37005cf872d352fb25d971cddbea861",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "ff508ab972563a8563cb1509b1c3889f253d9829b4c65da34e369a9814fe76f8",
+      "log_bytes": 43450,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39203898820/job/117902459814",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117902459814/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39048533475,
+      "job_id": 117442088110,
+      "job_name": "docker-smoke",
+      "step_name": "Run container",
+      "job_conclusion": "failure",
+      "head_sha": "2186e2d8616d5913157518b8c6d0e987f86e8d14",
+      "status": "confirmed",
+      "root_cause_category": "container_or_deploy",
+      "root_cause_summary": "Docker smoke image is missing sqlalchemy",
+      "evidence_markers": [
+        "No module named 'sqlalchemy'"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "d15b27ed43d1139cd6d4c838a8143419f4687a5cdec19676fccae03099a3f352",
+      "log_bytes": 34931,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39048533475/job/117442088110",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117442088110/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 39203461199,
+      "job_id": 117901144324,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "f0a09656233650d9c3e435306e6d5fd9d1628cef",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "HEAD commit does not satisfy conventional commit policy",
+      "evidence_markers": [
+        "HEAD commit is not conventional"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "28fec5a7b37bcc83252043a7083c77a5c92fa0058345442bf40a2f5ff605523e",
+      "log_bytes": 28791,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39203461199/job/117901144324",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/117901144324/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38896011487,
+      "job_id": 116956527555,
+      "job_name": "typecheck",
+      "step_name": "Run mypy src/react_agent --ignore-missing-imports --allow-untyped-defs --allow-incomplete-defs --exclude '(tot|planner|orchestrator|rag|mcp_client|dashboard|intent)/?' --disable-error-code=arg-type --disable-error-code=assignment --disable-error-code=attr-defined --disable-error-code=return-value --disable-error-code=union-attr --disable-error-code=var-annotated --disable-error-code=misc --disable-error-code=operator --disable-error-code=call-overload --disable-error-code=name-defined --disable-error-code=index --disable-error-code=has-type --disable-error-code=valid-type --disable-error-code=call-arg",
+      "job_conclusion": "failure",
+      "head_sha": "2723930228e50dd8778744d5edc07d7973e92d8d",
+      "status": "confirmed",
+      "root_cause_category": "typecheck",
+      "root_cause_summary": "mypy reported type-checking errors",
+      "evidence_markers": [
+        "mypy"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "169af0a0937e44fb5dbebc0c7eecf55373761b514b9f51e17643be05f30a49c8",
+      "log_bytes": 28981,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38896011487/job/116956527555",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116956527555/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38887763956,
+      "job_id": 116929577289,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "e04f70989ee42a1c4619cee5025fd45786df9ca8",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "PR head does not contain the recorded base SHA",
+      "evidence_markers": [
+        "HEAD does not contain base"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "3edd8e1f7306be62efabe886a25d372cfa97829358c306229a90b1d88d766dba",
+      "log_bytes": 28431,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38887763956/job/116929577289",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116929577289/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38880553171,
+      "job_id": 116905974655,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "7d6da7301be7920d90bdabe233f39f5aa08a25d8",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "PR head does not contain the recorded base SHA",
+      "evidence_markers": [
+        "HEAD does not contain base"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "845e61826ddfb76238918a8ee576393a39efe1622dddf77f1e73e75524ca76ae",
+      "log_bytes": 28319,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38880553171/job/116905974655",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116905974655/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38846548919,
+      "job_id": 116798280629,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "98c4ab54a884f60da777340572f4f4f83a032f04",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "5dc3c16bb1d4cfd3b0e0ff797b257283715331536b633dd3cd62b1613939ac53",
+      "log_bytes": 28512,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38846548919/job/116798280629",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116798280629/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38846548919,
+      "job_id": 116798280632,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "98c4ab54a884f60da777340572f4f4f83a032f04",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "03742953c9ff443877f1ae47bca8efe754e7f7438ae42aa5da3e34a1ba05e435",
+      "log_bytes": 69138,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38846548919/job/116798280632",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116798280632/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38843648461,
+      "job_id": 116789146795,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "00688245ac0f3ec1d9719514e79eb1addb3f2147",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "d85cdd0ec7cfea338c486b098ae8b0bf433eb162c27b14601aa831b84b527965",
+      "log_bytes": 44731,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38843648461/job/116789146795",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116789146795/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38843648461,
+      "job_id": 116789146825,
+      "job_name": "PR ready audit",
+      "step_name": "Check PR readiness",
+      "job_conclusion": "failure",
+      "head_sha": "00688245ac0f3ec1d9719514e79eb1addb3f2147",
+      "status": "confirmed",
+      "root_cause_category": "pr_readiness",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "af48682f7c87c55629b142a3a1a399fae3e086e9a498a9300a4eb9297eb21153",
+      "log_bytes": 28462,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38843648461/job/116789146825",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116789146825/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38574628623,
+      "job_id": 115888366078,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "872787ac751a7280bb59d31c4a39717cc06f40b9",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "fc6f2d93a78c9366e15a3e2dfefdee1db2b167cbf83683a57374cd42155be462",
+      "log_bytes": 43101,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38574628623/job/115888366078",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/115888366078/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38720245973,
+      "job_id": 116372741496,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "e06cf1d15160a396c7cd9e749cce10c89f443c82",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "45e77e7468140b1700109a14ea93088fe6fe6a7027392b0da47f8dfb57169bab",
+      "log_bytes": 44477,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38720245973/job/116372741496",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116372741496/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38717240394,
+      "job_id": 116362796203,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "67515bbe93dffc4817f017612a61f0c04c9db787",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "2f865444b17c56a7a1844b4c47882d2bd081a9c50a783a91262fa7b8498b8ab3",
+      "log_bytes": 43101,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38717240394/job/116362796203",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116362796203/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38575756441,
+      "job_id": 115892281867,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "e2b732bc6afebc47159a16cde279cc9ba45f8d91",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "71bc35e14dbf78c32227d8d2ceee5a37a226334c986e5960211440cdcdd3c861",
+      "log_bytes": 44629,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38575756441/job/115892281867",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/115892281867/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38256030385,
+      "job_id": 114834227516,
+      "job_name": "typecheck",
+      "step_name": "Run mypy src/react_agent --ignore-missing-imports --allow-untyped-defs --allow-incomplete-defs --exclude '(tot|planner|orchestrator|rag|mcp_client|dashboard|intent)/?' --disable-error-code=arg-type --disable-error-code=assignment --disable-error-code=attr-defined --disable-error-code=return-value --disable-error-code=union-attr --disable-error-code=var-annotated --disable-error-code=misc --disable-error-code=operator --disable-error-code=call-overload --disable-error-code=name-defined --disable-error-code=index --disable-error-code=has-type --disable-error-code=valid-type --disable-error-code=call-arg",
+      "job_conclusion": "failure",
+      "head_sha": "9d0c3a3bf53b52a6cff7d69941a85c9342ecb853",
+      "status": "confirmed",
+      "root_cause_category": "typecheck",
+      "root_cause_summary": "mypy reported type-checking errors",
+      "evidence_markers": [
+        "mypy"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "653a1f9ad71fcdfe054637f1db3de3a202242e7463bc2462942c142a15670d47",
+      "log_bytes": 28961,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38256030385/job/114834227516",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114834227516/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38231554170,
+      "job_id": 114751997635,
+      "job_name": "docker-smoke",
+      "step_name": "Run container",
+      "job_conclusion": "failure",
+      "head_sha": "bb4e28901d3e326e3473ecb967900aec88a2b314",
+      "status": "confirmed",
+      "root_cause_category": "container_or_deploy",
+      "root_cause_summary": "deployment smoke expense chat endpoint returned HTTP 400",
+      "evidence_markers": [
+        "HTTP 400",
+        "expense chat"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "ae3daae914feeddae8bdd655369afd52de932261ac3e6ed0bedccbbdaeaad748",
+      "log_bytes": 34316,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38231554170/job/114751997635",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114751997635/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38231554170,
+      "job_id": 114751997696,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "bb4e28901d3e326e3473ecb967900aec88a2b314",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "Python 3.10 compatibility failure: enum.StrEnum is unavailable",
+      "evidence_markers": [
+        "cannot import name 'StrEnum'"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "3decb759e7ad649d0aed709df33162a8522e682e11507ab54a694771d98fc635",
+      "log_bytes": 48764,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38231554170/job/114751997696",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114751997696/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38256030385,
+      "job_id": 114834227551,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "9d0c3a3bf53b52a6cff7d69941a85c9342ecb853",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "expense domain contract or validation message does not match the test expectation",
+      "evidence_markers": [
+        "ApprovalDecision.APPROVE / Regex pattern did not match"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "5f3aa957e83cb69f572e5322f7c3ac1a7b31e66b67fb1636fd4ee9e369040960",
+      "log_bytes": 62904,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38256030385/job/114834227551",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114834227551/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38104688292,
+      "job_id": 114367565661,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "580d25eb2c28d5f745f80b9e84b875f310688b98",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "a2e4d2162515586eb2b51e9a9cb2bf0cfffb6d29a1bf403dcfcbb67fec265065",
+      "log_bytes": 43006,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38104688292/job/114367565661",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114367565661/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37946547784,
+      "job_id": 113874177415,
+      "job_name": "typecheck",
+      "step_name": "Run pip install -e \".[test]\" mypy",
+      "job_conclusion": "failure",
+      "head_sha": "fbee4e8db17494c995f77d8608687d4510157dcd",
+      "status": "confirmed",
+      "root_cause_category": "typecheck",
+      "root_cause_summary": "mypy reported type-checking errors",
+      "evidence_markers": [
+        "mypy"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "5717324e88ad2dd0d453c0f71aea70a146d581e9aa28650564eb27ada069d782",
+      "log_bytes": 18921,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37946547784/job/113874177415",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113874177415/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38043142675,
+      "job_id": 114187236426,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "a97d627c3c7b432195afc27c6fb3929d71b5198c",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift; docs/troubleshoot execution case g14 failed",
+      "evidence_markers": [
+        "docs corpus baseline is changed",
+        "g14"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "1133ea8dfc2e4f1ff9c97cd4bba82ce8512e1d2529b0eddec44185e6594a899f",
+      "log_bytes": 111719,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38043142675/job/114187236426",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114187236426/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38048883052,
+      "job_id": 114203830886,
+      "job_name": "test (3.10)",
+      "step_name": "Pillar ① Execution (offline tools)",
+      "job_conclusion": "failure",
+      "head_sha": "559e1e4f871fb09cc43d65454a5ad9901a84dc87",
+      "status": "partial",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "Pillar/Execution Suite exposed only an aggregate failure list (7/12  pass_rate=58.3%); no per-sample root cause",
+      "evidence_markers": [
+        "Execution Suite",
+        "7/12  pass_rate=58.3%"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "a3ac229391e075e5aa1114f685d1c3ecf94dfd9c34abaf46ddf0ba409189dfea",
+      "log_bytes": 46711,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38048883052/job/114203830886",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114203830886/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 38041265299,
+      "job_id": 114181818022,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "551365e79b598e124471e584cc1b2b37a250f1cd",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "645ae06d0c509fcd5dae5e49240cfe619730b0006466ac60cf504932d2557155",
+      "log_bytes": 44146,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38041265299/job/114181818022",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114181818022/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37946547784,
+      "job_id": 113874177565,
+      "job_name": "test (3.10)",
+      "step_name": "Install dependencies",
+      "job_conclusion": "failure",
+      "head_sha": "fbee4e8db17494c995f77d8608687d4510157dcd",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "pyproject.toml declares [tool.ruff] more than once",
+      "evidence_markers": [
+        "Cannot declare ('tool', 'ruff') twice"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "6ad91e3c5ca2a3609fa9e52e89f97ccf6df63ed82bb7a1d322bb4554bc388837",
+      "log_bytes": 17893,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37946547784/job/113874177565",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113874177565/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37946547784,
+      "job_id": 113874177684,
+      "job_name": "security",
+      "step_name": "pip-audit in clean venv",
+      "job_conclusion": "failure",
+      "head_sha": "fbee4e8db17494c995f77d8608687d4510157dcd",
+      "status": "confirmed",
+      "root_cause_category": "dependency_security",
+      "root_cause_summary": "pyproject.toml declares [tool.ruff] more than once, blocking installation or linting",
+      "evidence_markers": [
+        "Cannot declare ('tool', 'ruff') twice"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "7792a9a865e4df7d77fa2126b0b6cee235cb06e4e147647bf0d434bea45797ef",
+      "log_bytes": 21079,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37946547784/job/113874177684",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113874177684/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37946547784,
+      "job_id": 113874177848,
+      "job_name": "test-windows (3.11)",
+      "step_name": "Install dependencies",
+      "job_conclusion": "failure",
+      "head_sha": "fbee4e8db17494c995f77d8608687d4510157dcd",
+      "status": "confirmed",
+      "root_cause_category": "platform_dependency",
+      "root_cause_summary": "pyproject.toml declares [tool.ruff] more than once, blocking installation or linting",
+      "evidence_markers": [
+        "Cannot declare ('tool', 'ruff') twice"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "68f411e60e490c9fc718acd60998dd18f4eff281177bcd15e42cc4c71a2a792c",
+      "log_bytes": 18539,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37946547784/job/113874177848",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113874177848/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37946547784,
+      "job_id": 113874178987,
+      "job_name": "lint",
+      "step_name": "Lint",
+      "job_conclusion": "failure",
+      "head_sha": "fbee4e8db17494c995f77d8608687d4510157dcd",
+      "status": "confirmed",
+      "root_cause_category": "lint",
+      "root_cause_summary": "job log contains a concrete dependency or static-check failure",
+      "evidence_markers": [
+        "lint"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "7a723015d05a0f95e0e20fe9dc61a1caccabe1fdd1ad6a2a3fba57fd50e6a54a",
+      "log_bytes": 14654,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37946547784/job/113874178987",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113874178987/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37946547784,
+      "job_id": 113874216346,
+      "job_name": "Real LLM (smoke)",
+      "step_name": "Install",
+      "job_conclusion": "failure",
+      "head_sha": "fbee4e8db17494c995f77d8608687d4510157dcd",
+      "status": "confirmed",
+      "root_cause_category": "live_provider",
+      "root_cause_summary": "installation was blocked by duplicate [tool.ruff] declarations in pyproject.toml",
+      "evidence_markers": [
+        "Cannot declare ('tool', 'ruff') twice"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "556ef121ef6bd242398186f3110ebf61a8d2017fcbd510eb85cdebc0bc901223",
+      "log_bytes": 19564,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37946547784/job/113874216346",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113874216346/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37946547784,
+      "job_id": 113874177913,
+      "job_name": "docker-smoke",
+      "step_name": "Run container",
+      "job_conclusion": "failure",
+      "head_sha": "fbee4e8db17494c995f77d8608687d4510157dcd",
+      "status": "confirmed",
+      "root_cause_category": "container_or_deploy",
+      "root_cause_summary": "Docker image entrypoint executable react-agent-api is missing",
+      "evidence_markers": [
+        "react-agent-api",
+        "executable file not found in $PATH"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "076708c3dcaaf49975734f1cdfd8b65a0810f3a7da3b9bdaef106c8f02cb4cb5",
+      "log_bytes": 26384,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37946547784/job/113874177913",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113874177913/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37942832214,
+      "job_id": 113863863580,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "91c6840b73221f8ceb6c6d9d1cf06c7aeaf31a77",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "test environment is missing sqlalchemy",
+      "evidence_markers": [
+        "ModuleNotFoundError: No module named 'sqlalchemy'"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "aad7cc8fef085121173404ac3651438719df3b8f08488563602ed06df98d06c5",
+      "log_bytes": 40465,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37942832214/job/113863863580",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113863863580/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37936339882,
+      "job_id": 113839268647,
+      "job_name": "Real LLM (smoke)",
+      "step_name": "Smoke tests (live DeepSeek)",
+      "job_conclusion": "failure",
+      "head_sha": "b3fb98b29f43fa25df127a2dfbfdaffb8366e9a3",
+      "status": "confirmed",
+      "root_cause_category": "live_provider",
+      "root_cause_summary": "live provider rejected the configured API key with HTTP 401 Unauthorized",
+      "evidence_markers": [
+        "HTTP Error 401: Unauthorized",
+        "authentication_error"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "e1aadb7df5a72c2c13006052edc99e41066cb9e457e6a564cc488b7e780ff1b9",
+      "log_bytes": 43601,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37936339882/job/113839268647",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113839268647/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37934881258,
+      "job_id": 113834370105,
+      "job_name": "Real LLM (smoke)",
+      "step_name": "Smoke tests (live DeepSeek)",
+      "job_conclusion": "failure",
+      "head_sha": "6ee62c5150737f33a003019f5e103a8df481ab58",
+      "status": "confirmed",
+      "root_cause_category": "live_provider",
+      "root_cause_summary": "live provider rejected the configured API key with HTTP 401 Unauthorized",
+      "evidence_markers": [
+        "HTTP Error 401: Unauthorized",
+        "authentication_error"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "55e0947a8ea1a7870bd9f3fcb7c891db8712c6976c8dd1c9b6960e79b7527dc3",
+      "log_bytes": 41867,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37934881258/job/113834370105",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113834370105/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37933879537,
+      "job_id": 113830986490,
+      "job_name": "test (3.11)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "e84e81ab36940d89c2a3e3050fd4b3c22009c4bc",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "1fbde410cddd46b6e38ad9df11c2dc7230beb9ce82e8b16b9e3433668db2cd1e",
+      "log_bytes": 41561,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37933879537/job/113830986490",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113830986490/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37933879537,
+      "job_id": 113831023230,
+      "job_name": "Real LLM (smoke)",
+      "step_name": "Smoke tests (live DeepSeek)",
+      "job_conclusion": "failure",
+      "head_sha": "e84e81ab36940d89c2a3e3050fd4b3c22009c4bc",
+      "status": "confirmed",
+      "root_cause_category": "live_provider",
+      "root_cause_summary": "live provider rejected the configured API key with HTTP 401 Unauthorized",
+      "evidence_markers": [
+        "HTTP Error 401: Unauthorized",
+        "authentication_error"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "99ae6c020412ad198e1de8284a6e0d670cabcede302260cb3ba6e2331a5aae00",
+      "log_bytes": 43596,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37933879537/job/113831023230",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113831023230/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37930687535,
+      "job_id": 113820353573,
+      "job_name": "test (3.10)",
+      "step_name": "Pytest (offline)",
+      "job_conclusion": "failure",
+      "head_sha": "b797fa20efafd7f67d5d09cf8869013cfd6fa74d",
+      "status": "confirmed",
+      "root_cause_category": "offline_test",
+      "root_cause_summary": "docs corpus baseline drift",
+      "evidence_markers": [
+        "docs corpus baseline is changed"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "14d56f5e0a703c77f9122724946538f90a3291623bba6adcc41e14138012662d",
+      "log_bytes": 44015,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37930687535/job/113820353573",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113820353573/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37897653724,
+      "job_id": 113712650259,
+      "job_name": "Real LLM (smoke)",
+      "step_name": "Smoke tests (live DeepSeek)",
+      "job_conclusion": "failure",
+      "head_sha": "515e3bdbe544449447afccf0de310a43c6629643",
+      "status": "confirmed",
+      "root_cause_category": "live_provider",
+      "root_cause_summary": "live provider rejected the configured API key with HTTP 401 Unauthorized",
+      "evidence_markers": [
+        "HTTP Error 401: Unauthorized",
+        "authentication_error"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "647ffb1eee042727ced346dbf624be2584b7939c386ef0c5b2b13223815e0e97",
+      "log_bytes": 42567,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37897653724/job/113712650259",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113712650259/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37930687535,
+      "job_id": 113820388256,
+      "job_name": "Real LLM (smoke)",
+      "step_name": "Smoke tests (live DeepSeek)",
+      "job_conclusion": "failure",
+      "head_sha": "b797fa20efafd7f67d5d09cf8869013cfd6fa74d",
+      "status": "confirmed",
+      "root_cause_category": "live_provider",
+      "root_cause_summary": "live provider rejected the configured API key with HTTP 401 Unauthorized",
+      "evidence_markers": [
+        "HTTP Error 401: Unauthorized",
+        "authentication_error"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "62e062d61812e9bc000103b83a22292d4e26336a29212c84989645b4498424f1",
+      "log_bytes": 44539,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37930687535/job/113820388256",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113820388256/logs"
+    },
+    {
+      "workflow": "daily-smoke.yml",
+      "run_id": 38687871939,
+      "job_id": 116266783354,
+      "job_name": "daily-smoke",
+      "step_name": "Run daily smoke (offline / mock)",
+      "job_conclusion": "failure",
+      "head_sha": "db1298e106ddc9e093960f2086b3ef7e73e140c1",
+      "status": "partial",
+      "root_cause_category": "daily_smoke_aggregate",
+      "root_cause_summary": "daily smoke reported aggregate smoke result; per-sample failure details are absent from the job log",
+      "evidence_markers": [
+        "aggregate smoke result"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "6aa7895910d1cdffe5c14a6a7b9c7254ecb4d5b7216c174181d40a225616b842",
+      "log_bytes": 24993,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38687871939/job/116266783354",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/116266783354/logs"
+    },
+    {
+      "workflow": "test.yml",
+      "run_id": 37741295855,
+      "job_id": 113192445516,
+      "job_name": "Real LLM (smoke)",
+      "step_name": "Smoke tests (live DeepSeek)",
+      "job_conclusion": "failure",
+      "head_sha": "39b944357e5d0690946ec9622630881694f144ae",
+      "status": "confirmed",
+      "root_cause_category": "live_provider",
+      "root_cause_summary": "live provider rejected the configured API key with HTTP 401 Unauthorized",
+      "evidence_markers": [
+        "HTTP Error 401: Unauthorized",
+        "authentication_error"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "e9f569fcc609349d3c0b96aff972c8b66a6830e13feb4d700f76f104897a42ad",
+      "log_bytes": 42531,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37741295855/job/113192445516",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113192445516/logs"
+    },
+    {
+      "workflow": "daily-smoke.yml",
+      "run_id": 38362712813,
+      "job_id": 115180473160,
+      "job_name": "daily-smoke",
+      "step_name": "Run daily smoke (offline / mock)",
+      "job_conclusion": "failure",
+      "head_sha": "db1298e106ddc9e093960f2086b3ef7e73e140c1",
+      "status": "partial",
+      "root_cause_category": "daily_smoke_aggregate",
+      "root_cause_summary": "daily smoke reported aggregate smoke result; per-sample failure details are absent from the job log",
+      "evidence_markers": [
+        "aggregate smoke result"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "bbefa2105a26e697c51feaadf439e55f54ae2b6bc036417581ecbe112fdf52c2",
+      "log_bytes": 24995,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38362712813/job/115180473160",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/115180473160/logs"
+    },
+    {
+      "workflow": "daily-smoke.yml",
+      "run_id": 38519151793,
+      "job_id": 115704616277,
+      "job_name": "daily-smoke",
+      "step_name": "Run daily smoke (offline / mock)",
+      "job_conclusion": "failure",
+      "head_sha": "db1298e106ddc9e093960f2086b3ef7e73e140c1",
+      "status": "partial",
+      "root_cause_category": "daily_smoke_aggregate",
+      "root_cause_summary": "daily smoke reported aggregate smoke result; per-sample failure details are absent from the job log",
+      "evidence_markers": [
+        "aggregate smoke result"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "fee777fe0bc5946b0a4c478607478aec2ad5e0e1f4f388e971adf7d81e455e6c",
+      "log_bytes": 24992,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38519151793/job/115704616277",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/115704616277/logs"
+    },
+    {
+      "workflow": "daily-smoke.yml",
+      "run_id": 38215583776,
+      "job_id": 114699415900,
+      "job_name": "daily-smoke",
+      "step_name": "Run daily smoke (offline / mock)",
+      "job_conclusion": "failure",
+      "head_sha": "6774f417431968bb96615ea6bd0c9f782ae1f5cb",
+      "status": "partial",
+      "root_cause_category": "daily_smoke_aggregate",
+      "root_cause_summary": "daily smoke reported aggregate smoke result; per-sample failure details are absent from the job log",
+      "evidence_markers": [
+        "aggregate smoke result"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "83105b916edbd3498402993f5305e5dc1f54d06edb215e33f411fe41fe21aec1",
+      "log_bytes": 24994,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38215583776/job/114699415900",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114699415900/logs"
+    },
+    {
+      "workflow": "daily-smoke.yml",
+      "run_id": 38119537335,
+      "job_id": 114411222767,
+      "job_name": "daily-smoke",
+      "step_name": "Run daily smoke (offline / mock)",
+      "job_conclusion": "failure",
+      "head_sha": "6774f417431968bb96615ea6bd0c9f782ae1f5cb",
+      "status": "partial",
+      "root_cause_category": "daily_smoke_aggregate",
+      "root_cause_summary": "daily smoke reported aggregate smoke result; per-sample failure details are absent from the job log",
+      "evidence_markers": [
+        "aggregate smoke result"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "cab54691d44bd1cb2fa855b5b491496f87746f4afe029521bb6260607966e6b4",
+      "log_bytes": 24996,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38119537335/job/114411222767",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/114411222767/logs"
+    },
+    {
+      "workflow": "daily-smoke.yml",
+      "run_id": 37897615318,
+      "job_id": 113712465930,
+      "job_name": "daily-smoke",
+      "step_name": "Commit variance log, open PR and drive it to merge",
+      "job_conclusion": "failure",
+      "head_sha": "55646539180fc71fb6781125435547432de29227",
+      "status": "partial",
+      "root_cause_category": "daily_smoke_aggregate",
+      "root_cause_summary": "daily smoke reported aggregate smoke result; per-sample failure details are absent from the job log",
+      "evidence_markers": [
+        "aggregate smoke result"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "ecc8638000102dadccbccf363b3348bc38f50a0669c83ce740f521dee387f895",
+      "log_bytes": 392902,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37897615318/job/113712465930",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113712465930/logs"
+    },
+    {
+      "workflow": "daily-smoke.yml",
+      "run_id": 37741255878,
+      "job_id": 113192249967,
+      "job_name": "daily-smoke",
+      "step_name": "Commit variance log, open PR and drive it to merge",
+      "job_conclusion": "failure",
+      "head_sha": "904724db4870908dfcaba15261039a6a015ce62d",
+      "status": "partial",
+      "root_cause_category": "daily_smoke_aggregate",
+      "root_cause_summary": "daily smoke reported aggregate smoke result; per-sample failure details are absent from the job log",
+      "evidence_markers": [
+        "aggregate smoke result"
+      ],
+      "classification_basis": "directly observed in the downloaded job log; original phase0 job/step classification remains authoritative for historical categorization",
+      "log_sha256": "815b40c22e14116139aa7afbb979f60bef0f9dc3634bdff24b469bcd3d272498",
+      "log_bytes": 347204,
+      "log_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/37741255878/job/113192249967",
+      "retrieval_endpoint": "repos/weihuaguo270-ops/react-agent/actions/jobs/113192249967/logs"
+    }
+  ]
+}
