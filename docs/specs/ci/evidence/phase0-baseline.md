@@ -2,11 +2,14 @@
 
 ## 状态
 
-**阶段状态：** Partial（基线和逐样本索引已采集；Spec/迁移计划需独立复审后才能进入 Phase 1）  
-**采集日期：** 2026-10-22  
+**阶段状态：** Partial（历史样本已采集；当前主干 fresh 证据已复核，逐样本基线仍需重新生成，正式独立复审待完成）
+**历史采集日期：** 2026-10-22
 **仓库：** weihuaguo270-ops/react-agent  
-**默认分支 SHA：** 97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e  
+**历史默认分支 SHA：** 97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e
+**当前默认分支 SHA：** b78e18d24d7b92ddbeb2076810dc625af1da5673
 **来源：** GitHub Actions、Pull Request、Branch Protection 只读 API 快照；对应逐样本结构化记录见 [phase0-baseline.json](phase0-baseline.json)，可读索引见 [phase0-sample-index.md](phase0-sample-index.md)。
+
+当前主干的补充证据核验见 [phase0-fresh-evidence-review-2026-10-28.md](phase0-fresh-evidence-review-2026-10-28.md)。该记录不是正式独立复审；历史 JSON 尚未重新生成，不能把历史样本误读为当前主干的完整 fresh baseline。
 
 Registry v2 的机器可读结构定义见 [registry-v2.schema.json](../registry-v2.schema.json)；当前 `docs/specs/registry.yaml` 仍为 v1，结构契约不代表 v2 校验器或迁移已落地。
 
@@ -64,9 +67,9 @@ daily-smoke.yml 的 50 次样本：schedule failure N=7，P50 0.37、P95 2.97、
 
 因此 15 分钟目标暂未显示为当前 PR run 总时长的主要瓶颈，但这组数字含排队时间、重试和工作流整体跨度，不能替代 Phase 1/2 中实际 PR gate job 的运行时长。仍按 Spec 将 15 分钟保留为待校准假设。
 
-## 当前 Required Checks
+## 当前 Required Checks（2026-10-28 只读复核）
 
-main 当前 Branch Protection 为 strict，并启用管理员保护与线性历史。9 个 required contexts 是：
+main 当前 Branch Protection 为 strict，并启用管理员保护与线性历史。当前 9 个 required contexts 是：
 
 - lint
 - test (3.10)
@@ -76,25 +79,27 @@ main 当前 Branch Protection 为 strict，并启用管理员保护与线性历�
 - typecheck
 - security
 - docker-smoke
-- Real LLM gate
+- Harness P4 stage gate
 
-目前没有稳定聚合器作为 required check。Real LLM gate 是检查 API key 是否配置的探测 job；真正的 Real LLM (smoke) 是另一个条件 job。故 required Real LLM gate 通过本身不能证明 live LLM smoke 执行或通过。矩阵、不同平台和下游长链同时设为 required，任一硬失败会阻止合并；test job 在 pytest 失败后会跳过其余依赖步骤，降低同一轮 CI 的诊断完整性。
+目前没有稳定聚合器作为 required check。`Evaluation evidence` 和真实 LLM 仍是 evidence-only；`Harness P4 stage gate` 是当前唯一纳入保护规则的阶段检查。矩阵、不同平台和下游检查仍直接作为 required contexts，尚未迁移到 Spec 目标中的 `CI / PR gate` 聚合器。
 
 ## 当前工作流映射
 
 | 工作流 | 触发与职责 | Phase 0 观察 |
 |---|---|---|
-| .github/workflows/test.yml | push、pull_request、workflow_dispatch；含 readiness、lint、Python 3.10/3.11 完整离线 pytest/评估、Windows 子集、typecheck、security、Docker smoke 和条件 live LLM | 混合快速检查、矩阵、离线评估、外部依赖和实时服务；单个 test job 内 pytest 失败会跳过后续步骤，默认 matrix fail-fast 还可能取消兄弟 matrix job |
-| .github/workflows/daily-smoke.yml | 定时与 workflow_dispatch；offline/mock smoke 后可提交变更、创建 PR 并自动推动合并 | 兼有观察性 smoke 和具写权限的交付/合并自动化，权限及失败责任应在后续阶段单独拆清 |
+| .github/workflows/test.yml | `main` push、pull_request、workflow_dispatch；包含 PR readiness、lint、Python/Windows 测试、typecheck、security 和 Docker smoke | PR #173 合并后的 main push run `40104979097` 成功；当前仍是多个独立 job，尚未形成稳定 `CI / PR gate` |
+| .github/workflows/harness.yml | `main` push、pull_request、workflow_dispatch；按 scope 调度 Harness P4 stage gate | 合并后 run `40104979076` 成功；阶段语义仍由 Harness Spec 拥有 |
+| .github/workflows/evaluation.yml | `main` push、workflow_dispatch；离线评测和真实 LLM evidence | 合并后 run `40104979077` 成功；不属于普通 PR required check |
+| .github/workflows/daily-smoke.yml | 定时与 workflow_dispatch；offline/mock smoke 后可提交变更、创建 PR 并自动推动合并 | 最新 run `40458769216` 成功；写权限自动化仍需 R9 审计 |
 
 ## Phase 0 判定
 
-已完成：100 PR 样本、两条 workflow 的运行样本、主要失败 job 归类、端到端时长快照、required-check 清单和初始迁移映射。
+已完成：历史 100 PR、100 个 test.yml run、50 个 daily-smoke run 的样本采集；以及当前 main push、required checks 和拆分后 workflow 的 fresh 复核。
 
-待完成：由不共享本次审查上下文的独立模型复核逐样本证据、Registry v2 契约、聚合器迁移语义、Phase 1 验收矩阵和 R9 安全交付物。CI 维护者、Registry 维护者、各业务方向 owner、progress owner 和 Branch Protection 操作者均记录为仓库维护者角色，不填写个人姓名。Phase 1 尚未启动。
+待完成：重新生成当前主干逐样本 JSON/索引；由未参与本次整理的审查者独立复核基线证据、迁移设计和 Phase 1 验收契约。Registry v2 实例与语义校验、selector backtest、聚合器 shadow 和 R9 执行验收属于后续阶段，不作为 Phase 0 的实现任务。证据核验记录见 [phase0-fresh-evidence-review-2026-10-28.md](phase0-fresh-evidence-review-2026-10-28.md)。Phase 1 尚未启动。
 
 ## 后续动作
 
-1. 先完成独立复审；只有 Phase 0 全面通过后，才按 Phase 1 定义并校验 Registry v2，逐项映射当前 test.yml 与 daily-smoke.yml 并保留无法映射命令的 unmapped 项。
+1. 先刷新逐样本基线并完成独立复审；Phase 0 通过后，再进入 Phase 1 定义并校验 Registry v2，逐项映射当前 CI 工作流并保留无法映射命令的 unmapped 项。
 2. 将 Python/Windows/离线评估、Real LLM、Docker 和写权限自动化按职责拆成规则，避免把 smoke 探测误读为 live 验证。
 3. 进入 shadow 前以同一 PR head SHA 比较旧 workflow 与新选择器；本阶段不改 Branch Protection。
