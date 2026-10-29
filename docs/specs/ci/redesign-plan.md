@@ -1,28 +1,26 @@
-# CI 合并门禁收敛计划
+# AI 审核总流程下的 CI 子系统迁移计划
 
 ## 1. 目的
 
-当前 CI 文档同时描述合并门禁、Spec 阶段、Evaluation Harness、完整评测矩阵和长期 evidence，造成职责重复和执行成本失控。本计划把 CI 收敛为一个交付控制平面：判断当前变更能否合入 `main`；把评测执行、评分、Replay、长期趋势和生产质量结论留在 Harness 或日跑/发布系统。
+AI 审核是代码变更保障的顶层编排；CI 是其中负责确定性执行和合并门禁输入的子系统。本计划只迁移 CI 的执行契约，不把 AI findings、风险审批、发布观察或 Harness/Evaluation 评分复制进 CI。
 
-目标架构：
+目标边界：
 
-| 平面 | 负责内容 | 输出 |
+| 子系统 | 负责内容 | 输出 |
 |---|---|---|
-| CI | diff 选择、lint、受影响单测、PR ready、stage gate 调度、required checks、安全 | 当前 head 的 `pass/fail/blocked` |
-| 方向 Spec | 阶段目标、阶段命令、唯一 progress source、阶段 evidence | 方向阶段 gate 结果 |
-| Evaluation Harness | Fixture、Runner、评分、Replay、Episode、Trajectory、评测 artifact | 可复核评测 evidence |
-| 日跑/发布 | 完整矩阵、长时方差、真实 LLM、跨环境质量 | evidence-only artifact 或独立发布结论 |
-| 风险与审批 | CI/AI/安全发现聚合、风险等级、required reviewers | 风险证据和人工审批要求 |
+| AI Review | 生命周期、diff 审核、findings、风险和审批编排 | `pass/review_required/fail/blocked` |
+| CI | diff 选择、lint、受影响测试、PR readiness、stage gate、required checks、安全确定性检查 | `pass/fail/blocked` 与结构化证据 |
+| Security | Secret、依赖、权限、workflow 和不可信代码边界 | 安全结论和 findings |
+| Harness/Evaluation | Fixture、Runner、评分、Replay、Episode、Trajectory 和长期 evidence | evidence-only artifact |
+| Release/Deployment | 发布、观察、回滚和渠道管理 | 发布观察与回滚证据 |
 
-CI 可以调用后两层的入口，但不复制它们的内部语义。
+AI Review 的权威定义见 [AI 审核与变更保障 Spec](../ai-review/spec.md)。
 
-风险与审批层消费机器检查的结构化结果，但不改变 CI 的 `pass/fail/blocked` 语义。风险、AI 审核和人工审批要求分别见 [risk-policy.md](risk-policy.md)、[ai-review-policy.md](ai-review-policy.md) 与 [approval-policy.md](approval-policy.md)。
-
-## 2. 收敛后的稳定契约
+## 2. CI 稳定契约
 
 ### 2.1 PR 门禁
 
-PR 事件产生 `CI / PR readiness` 和 `CI / PR gate` 两个稳定 job。readiness 检查当前基线、changed files、Registry 映射、`check_pr_ready.py` 和阶段声明；gate 聚合 readiness、lint、受影响 subset、stage gate、安全和 required checks。只有 `CI / PR gate` 进入 Branch Protection required checks。
+PR 事件产生 `CI / PR readiness` 和 `CI / PR gate` 两个稳定 job。readiness 检查当前基线、changed files、Registry 映射、`check_pr_ready.py` 和阶段声明；gate 聚合 readiness、lint、受影响 subset、stage gate、安全和 required checks。最终只有 `CI / PR gate` 进入 Branch Protection。
 
 ### 2.2 选择规则
 
@@ -30,31 +28,29 @@ Registry 只维护路径到规则和 gate 入口的映射。映射明确时运�
 
 ### 2.3 阶段 gate
 
-代码、配置或阶段完成声明变化时，CI 调用对应方向的 gate。方向 Spec 负责阶段语义和 evidence；CI 只负责触发、绑定当前 head SHA、读取退出码和聚合状态。`progress.yaml` 不再被定义为所有 Spec 的通用进度源。
+代码、配置或阶段完成声明变化时，CI 调用对应方向的 gate。方向 Spec 负责阶段语义和 evidence；CI 只负责触发、绑定当前 head SHA、读取退出码和聚合状态。`progress.yaml` 不是所有 Spec 的通用进度源。
 
 ### 2.4 外部评测
 
-完整矩阵、真实 LLM、日跑、Harness acceptance 和长期趋势默认 evidence-only。它们失败时生成可定位的 artifact 或 issue；日跑默认使用只读权限，不提交仓库文件、不创建 PR、不自动合并。只有独立发布 gate 明确提升后才阻断发布，不改变普通 PR 的职责。
+完整矩阵、真实 LLM、日跑、Harness acceptance 和长期趋势默认 evidence-only。它们失败时生成可定位 artifact 或 issue；只有独立发布 gate 明确提升后才阻断发布，不改变普通 PR 的 CI 结论。Harness/Evaluation 不把评分或 Replay 语义交给 AI Review 或 CI 重新定义。
 
-## 3. 迁移阶段
+## 3. CI 子系统迁移阶段
 
 ### Phase 0：基线冻结
 
-记录当前 workflow、required checks、事件、权限、失败分类和近期运行样本。基线只说明当前合并风险，不把现有评测矩阵当作新 CI 架构。该阶段完成证据见 `evidence/phase0-baseline.*`。
-
-<a id="phase-1-registry-and-stage-signals"></a>
+记录当前 workflow、required checks、事件、权限、失败分类和近期运行样本。基线只说明当前 CI 合并风险，不把现有评测矩阵当作新架构。
 
 ### Phase 1：Registry 与选择器
 
 - 定义并校验 `path_globs -> rule_id -> gate` 的机器可读结构；
-- 为 lint、单测、PR ready、stage gate 和安全检查建立最小规则；
+- 为 lint、单测、PR readiness、stage gate 和安全检查建立最小规则；
 - 增加重复 ID、失效路径、无约束命令、过期例外和 unmapped 的负例；
 - 用冻结 PR 样本回放选择器，报告误选、漏选和未映射路径；
 - 不把 Harness 场景、评分或 `PHASE_TESTS` 复制到 Registry。
 
 ### Phase 2：Shadow
 
-新选择器和聚合器先 report-only，与现有 workflow 在相同 PR head SHA 上比较。比较项只包括选择结果、状态语义、失败归因和时长；完整评测内容仍归 Harness/日跑。观察窗口内不得改变旧 required checks。
+新选择器和聚合器先 report-only，与现有 workflow 在相同 PR head SHA 上比较选择结果、状态语义、失败归因和时长。观察窗口内不改变旧 required checks。
 
 ### Phase 3：PR 快门禁
 
@@ -66,29 +62,39 @@ Registry 只维护路径到规则和 gate 入口的映射。映射明确时运�
 
 ### Phase 5：稳定化
 
-按真实 PR 失败数据复盘规则覆盖、时长和未映射率；成熟的完整矩阵按独立发布策略逐项提升。任何提升都必须有 owner、时长目标、回滚方法和安全审查，不能把 CI Spec 重新扩展成 Harness Spec。
+按真实 PR 失败数据复盘规则覆盖、时长和未映射率；成熟的完整矩阵按独立发布策略逐项提升。任何提升都必须有 owner、时长目标、回滚方法和安全审查。
 
-## 4. 失败与回滚
+## 4. AI Review 独立实施阶段
 
-代码/配置错误、受影响检查失败、PR ready 失败、stage gate 失败、安全检查失败、聚合输入缺失和未处理的 mapping-incomplete 都阻止合并。完整评测或真实 LLM 的失败默认只生成 evidence。
+AI Review 不隶属于 CI 的 Phase 0–5，另行按其顶层 Spec 实施：
+
+- **A0：架构与契约**：冻结生命周期、角色边界、artifact schema 和状态语义；
+- **A1：离线审核**：使用固定 diff、Spec 和测试上下文生成结构化报告；
+- **A2：PR report-only**：在当前 head SHA 上运行，不改变合并门禁；
+- **A3：风险与审批编排**：接入 Security、CI 和人工审批要求；
+- **A4：合并与合并后观察**：接入合并队列、发布观察、回滚和审计证据。
+
+## 5. 失败与回滚
+
+代码/配置错误、受影响检查失败、PR readiness 失败、stage gate 失败、安全检查失败、聚合输入缺失和未处理的 mapping-incomplete 阻止 CI 合并输入。完整评测或真实 LLM 的失败默认只生成 evidence。
 
 发现聚合器误报、漏报、无法创建或显著超时后，暂停提升 required checks，恢复上一版 Branch Protection 名称，保留 artifact 和失败样本，修复选择器/聚合器后从 Shadow 重新观察。回滚不删除历史 evidence，也不修改方向 Spec 的阶段完成记录。
 
-## 5. 验收清单
+## 6. 验收清单
 
 - 当前 diff 能追溯到选择的规则、命令和 head SHA；
 - lint、受影响单测、`check_pr_ready.py`、适用 stage gate 和安全检查均可单独定位；
 - 缺失输入和未映射路径 fail closed；
 - `CI / PR gate` 稳定创建且是唯一合并聚合器；
-- 风险结果和审批要求绑定当前 PR head SHA，且高风险变更能路由到对应 owner/安全审核者；
-- AI 审核报告包含当前 head、问题定位、证据、置信度和作者处理状态；
+- CI 结果可被 AI Review 消费，但 CI 不依赖 AI Review 才能产生自身确定性结论；
+- AI findings、风险和审批由 AI Review Spec 管理；
 - Harness 评测结果与 CI 合并结论分层展示；
 - docs 变更执行 git-docs evaluation，并在断言仍有效时刷新 baseline。
 
-## 6. 相关文档
+## 7. 相关文档
 
-- [CI 合并门禁 Spec](spec.md)
+- [CI 执行子系统 Spec](spec.md)
+- [AI 审核与变更保障 Spec](../ai-review/spec.md)
 - [Harness 构建与统一契约 Spec](../harness/spec.md)
 - [Phase 0 基线](evidence/phase0-baseline.md)
-- [当前进度源](../../../progress.yaml)
 - [PR 就绪审计脚本](../../../scripts/ci/check_pr_ready.py)

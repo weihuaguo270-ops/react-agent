@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-review/v1",
+  "type": "object",
+  "required": ["schema_version", "base_sha", "head_sha", "pr_number", "status", "findings", "risk_level", "ci", "security", "required_approvals", "evidence"],
+  "properties": {
+    "schema_version": {"const": "ai-review/v1"},
+    "base_sha": {"type": "string", "minLength": 1},
+    "head_sha": {"type": "string", "minLength": 1},
+    "pr_number": {"type": "integer", "minimum": 1},
+    "status": {"enum": ["pass", "review_required", "fail", "blocked"]},
+    "risk_level": {"enum": ["low", "medium", "high", "critical"]},
+    "findings": {"type": "array"},
+    "ci": {"$ref": "#/$defs/check"},
+    "security": {"$ref": "#/$defs/check"},
+    "required_approvals": {"type": "array"},
+    "evidence": {"type": "array"}
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "required": ["status", "head_sha"],
+      "properties": {
+        "status": {"enum": ["pass", "fail", "blocked"]},
+        "head_sha": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
