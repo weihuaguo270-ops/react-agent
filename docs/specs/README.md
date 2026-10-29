@@ -124,6 +124,13 @@ docs/specs/harness/evidence/phase4-completion.md
 
 ## 📁 现有模块
 
+### AI Review - AI 审核与变更保障
+- **主规格**: [`ai-review/spec.md`](ai-review/spec.md)
+- **范围**: PR 前、PR 中、合并前和合并后的代码变更保障编排
+- **子系统**: CI、Security、Harness/Evaluation、人工审批和 Release/Deployment
+- **阶段**: A0-A4（架构契约、离线审核、PR report-only、风险审批、合并后观察）
+- **执行骨架**: `scripts/ai_review/validate_artifact.py`
+
 ### Harness - Harness 构建与统一契约
 - **规格**: [`harness/spec.md`](harness/spec.md)
 - **状态**: Proposed (实施中)

@@ -1,6 +1,16 @@
 {
   "schema_version": "spec-registry/v1",
   "directions": {
+    "ai-review": {
+      "display_name": "AI review and change assurance",
+      "source_spec": "docs/specs/ai-review/spec.md",
+      "specs": [
+        "docs/specs/ai-review/spec.md",
+        "docs/specs/ai-review/ai-review-policy.md",
+        "docs/specs/ai-review/risk-policy.md",
+        "docs/specs/ai-review/approval-policy.md"
+      ]
+    },
     "harness": {
       "display_name": "Harness convergence",
       "goal": "docs/specs/goals/harness.md",
