@@ -7,6 +7,16 @@
     "name": "main",
     "sha": "97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e"
   },
+  "failure_log_review": {
+    "path": "phase0-failure-log-review-2026-10-28.json",
+    "sample_sha": "97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e",
+    "failure_jobs": 70,
+    "confirmed_root_causes": 62,
+    "partial_root_causes": 8,
+    "unavailable_logs": 0,
+    "confirmed_ratio": 0.8857,
+    "status_note": "Supplemental direct-log review; it does not replace the historical job/step classification or refresh the baseline SHA."
+  },
   "sample_definition": {
     "pull_requests": "latest 100 returned by GitHub REST pulls endpoint sorted by created desc",
     "test_workflow_runs": "latest 100 returned by workflow runs endpoint",

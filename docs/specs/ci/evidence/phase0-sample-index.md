@@ -2,6 +2,8 @@
 
 本文件由 phase0-baseline.json 的同一份样本数组生成，方便逐条浏览。JSON 是字段完整的机器可读记录；汇总统计应由 JSON 的数组重新计算。
 
+失败 job 的原始日志根因复核见 [phase0-failure-log-review-2026-10-28.json](phase0-failure-log-review-2026-10-28.json)：70/70 条日志可获取，62 条为 `confirmed`，8 条为 `partial`。该文件是对历史样本的补充证据，不改变本索引中的 job/step 分类，也不替代按当前 `main` 重新生成 fresh baseline。
+
 关联策略依次使用 Actions API 的 PR 关联、run 标题中的明确 PR 编号、完全相等的 PR head SHA；唯一分支名仅作为最后的显式回退。每条 run 都记录 association_basis 和与样本 PR head 的关系。无关联项保持未匹配，不猜测。
 
 ## 最近 100 个 PR

@@ -11,6 +11,8 @@
 
 当前主干的补充证据核验见 [phase0-fresh-evidence-review-2026-10-28.md](phase0-fresh-evidence-review-2026-10-28.md)。该记录不是正式独立复审；历史 JSON 尚未重新生成，不能把历史样本误读为当前主干的完整 fresh baseline。
 
+历史失败 job 的原始 Actions 日志复核见 [phase0-failure-log-review-2026-10-28.json](phase0-failure-log-review-2026-10-28.json)。70 个失败 job 的日志均可获取；其中 62 个（88.57%）包含可操作的根因证据，8 个（11.43%）只有聚合失败结果或包装 job 失败，因此标为 `partial`。这份复核只补充日志证据，不替换原有 `classification_basis`，也不把 2026-10-22 的历史样本提升为当前主干验证。
+
 Registry v2 的机器可读结构定义见 [registry-v2.schema.json](../registry-v2.schema.json)；当前 `docs/specs/registry.yaml` 仍为 v1，结构契约不代表 v2 校验器或迁移已落地。
 
 该报告冻结当时可见的远程基线。它不代表本地未提交工作树通过 CI，也不把历史 run 视为当前 head 的 fresh verification。
@@ -21,6 +23,7 @@ Registry v2 的机器可读结构定义见 [registry-v2.schema.json](../registry
 - test.yml：最近 100 个 workflow runs，覆盖 pull_request 与 workflow_dispatch；41 failure、59 success，其中 94 个 pull_request、6 个 workflow_dispatch。
 - daily-smoke.yml：最近 50 个 runs；7 failure、43 success，其中 46 schedule、4 workflow_dispatch。
 - 失败 job 逐个从 Actions jobs API 读取；按 job 名统计，多个失败 job 可以来自同一个 run，因此各 job 数量不求和为失败 run 数。
+- 失败 job 的日志根因复核单独记录在 `phase0-failure-log-review-2026-10-28.json`；其中 `confirmed` 表示日志给出了可操作根因，`partial` 表示日志只给出聚合结果或包装失败。
 - 时长按 workflow createdAt 到 updatedAt 计算，包含排队和运行；这是端到端墙钟近似值，不是 runner 执行时长。
 
 PR 和 run 样本已达到 Spec 建议的 100 个 PR / 100 个 test.yml run；另有 50 个 daily-smoke.yml run。JSON 中逐条保存 PR number、base/head SHA、run ID、事件、结论、时间、关联依据、失败/取消 job、失败 step、分类和分类依据。失败分类默认只表示 job/step 元数据能够支持的类别；没有逐条日志支持的地方不把类别写成确定根因。
