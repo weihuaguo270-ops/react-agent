@@ -11,9 +11,12 @@
 | CI | diff 选择、lint、受影响单测、PR ready、stage gate 调度、required checks、安全 | 当前 head 的 `pass/fail/blocked` |
 | 方向 Spec | 阶段目标、阶段命令、唯一 progress source、阶段 evidence | 方向阶段 gate 结果 |
 | Evaluation Harness | Fixture、Runner、评分、Replay、Episode、Trajectory、评测 artifact | 可复核评测 evidence |
-| 日跑/发布 | 完整矩阵、长时方差、真实 LLM、跨环境质量 | evidence-only 或独立发布结论 |
+| 日跑/发布 | 完整矩阵、长时方差、真实 LLM、跨环境质量 | evidence-only artifact 或独立发布结论 |
+| 风险与审批 | CI/AI/安全发现聚合、风险等级、required reviewers | 风险证据和人工审批要求 |
 
 CI 可以调用后两层的入口，但不复制它们的内部语义。
+
+风险与审批层消费机器检查的结构化结果，但不改变 CI 的 `pass/fail/blocked` 语义。风险、AI 审核和人工审批要求分别见 [risk-policy.md](risk-policy.md)、[ai-review-policy.md](ai-review-policy.md) 与 [approval-policy.md](approval-policy.md)。
 
 ## 2. 收敛后的稳定契约
 
@@ -31,7 +34,7 @@ Registry 只维护路径到规则和 gate 入口的映射。映射明确时运�
 
 ### 2.4 外部评测
 
-完整矩阵、真实 LLM、日跑、Harness acceptance 和长期趋势默认 evidence-only。它们失败时生成可定位的 artifact 或 issue；只有独立发布 gate 明确提升后才阻断发布，不改变普通 PR 的职责。
+完整矩阵、真实 LLM、日跑、Harness acceptance 和长期趋势默认 evidence-only。它们失败时生成可定位的 artifact 或 issue；日跑默认使用只读权限，不提交仓库文件、不创建 PR、不自动合并。只有独立发布 gate 明确提升后才阻断发布，不改变普通 PR 的职责。
 
 ## 3. 迁移阶段
 
@@ -77,6 +80,8 @@ Registry 只维护路径到规则和 gate 入口的映射。映射明确时运�
 - lint、受影响单测、`check_pr_ready.py`、适用 stage gate 和安全检查均可单独定位；
 - 缺失输入和未映射路径 fail closed；
 - `CI / PR gate` 稳定创建且是唯一合并聚合器；
+- 风险结果和审批要求绑定当前 PR head SHA，且高风险变更能路由到对应 owner/安全审核者；
+- AI 审核报告包含当前 head、问题定位、证据、置信度和作者处理状态；
 - Harness 评测结果与 CI 合并结论分层展示；
 - docs 变更执行 git-docs evaluation，并在断言仍有效时刷新 baseline。
 
