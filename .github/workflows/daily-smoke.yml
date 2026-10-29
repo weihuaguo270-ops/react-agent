@@ -1,7 +1,7 @@
 name: Daily smoke
 
-# Cross-day variance for P0 soft-tail: offline execution + reliability mock.
-# UTC 01:00 ≈ Asia/Shanghai 09:00.
+# Optional evidence-only cross-day smoke: offline execution + reliability mock.
+# UTC 01:00 is approximately Asia/Shanghai 09:00.
 
 on:
   schedule:
@@ -13,23 +13,16 @@ on:
         type: boolean
         default: false
 
+# Daily smoke observes the repository; it does not write branches, PRs, or main.
 permissions:
-  actions: write
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   daily-smoke:
     runs-on: ubuntu-latest
-    # 自闭环最多要跑 3 轮 CI，单轮约 5 分钟
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Needed so the job can push variance log commits.
-          # SMOKE_PAT（可选）：真人身份的令牌，能让 pull_request 触发的 CI 正常跑；
-          # 未配置时回落到 GITHUB_TOKEN，行为与旧版一致。
-          token: ${{ secrets.SMOKE_PAT || secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
@@ -55,142 +48,15 @@ jobs:
           fi
           python scripts/eval/smoke/run_daily_smoke.py $EXTRA
 
-      - name: Commit variance log, open PR and drive it to merge
-        env:
-          # 可选升级：配置 SMOKE_PAT（fine-grained PAT，需 contents / pull-requests / actions = write）
-          # 后，PR 由真人身份创建，pull_request 触发的 CI 不会被 first-time contributor 门禁拦下，
-          # 更新分支也会正常触发 CI；未配置时回落到 GITHUB_TOKEN，由本步骤显式批准被拦下的运行。
-          # 若 GITHUB_TOKEN 无权批准，会 ::error:: 明确要求配置 SMOKE_PAT，而不是留下残留 PR。
-          GH_TOKEN: ${{ secrets.SMOKE_PAT || secrets.GITHUB_TOKEN }}
-          SMOKE_PAT_SET: ${{ secrets.SMOKE_PAT != '' }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # docs/ 同时是 git-docs 评测的 RAG 语料：VARIANCE.md 一改，
-          # tests/test_git_docs_corpus_drift.py 就报 changed，必需检查 test 必红，
-          # 合并永远落不了地。所以提交前同步刷新语料基线并一起纳入本次提交。
-          python scripts/eval/docs/run_git_docs_eval.py --refresh-baseline
-          git add docs/daily_smoke/log.jsonl docs/daily_smoke/VARIANCE.md \
-                  src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json
-          if git diff --staged --quiet; then
-            echo "No variance log changes"
-            exit 0
-          fi
-
-          smoke_date="$(date -u +%Y-%m-%d)"
-          branch="automation/daily-smoke-${smoke_date}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          git commit -m "chore(daily-smoke): append ${smoke_date} variance row"
-          git push origin "HEAD:refs/heads/${branch}"
-
-          if [ "${SMOKE_PAT_SET}" = "true" ]; then
-            echo "token mode: SMOKE_PAT（真人身份，pull_request 运行会正常执行）"
-          else
-            echo "token mode: GITHUB_TOKEN（bot 身份，pull_request 运行会停在 action_required，需要批准）"
-          fi
-
-          pr_url="$(gh pr create --repo "${REPO}" \
-            --base main \
-            --head "${branch}" \
-            --title "chore(daily-smoke): append ${smoke_date} variance row" \
-            --body "Automated variance log update from Daily smoke run ${GITHUB_RUN_ID} (attempt ${GITHUB_RUN_ATTEMPT}).")"
-          pr_number="${pr_url##*/}"
-          echo "Created ${pr_url}"
-
-          # 兜底：真人身份下 auto-merge 能自己闭环；bot 身份下要等下面批准那次运行。
-          gh pr merge "${pr_number}" --repo "${REPO}" --squash --auto \
-            || echo "::warning::auto-merge 开启失败，改由本步骤显式合并：${pr_url}" >&2
-
-          # 合并成功后顺手删掉 automation 分支：旧版每天留一个，累计出过 8 个残留分支。
-          merged_done() {
-            echo "Merged ${pr_url}"
-            gh api -X DELETE "repos/${REPO}/git/refs/heads/${branch}" >/dev/null 2>&1 \
-              || echo "::warning::合并成功但删除远端分支失败：${branch}" >&2
-          }
-
-          is_merged() {
-            [ "$(gh pr view "${pr_number}" --repo "${REPO}" --json state --jq .state)" = "MERGED" ]
-          }
-
-          latest_pr_run() {
-            gh run list --repo "${REPO}" --branch "${branch}" --event pull_request --limit 1 \
-              --json databaseId --jq '.[0].databaseId // 0'
-          }
-
-          await_pr_run() {  # $1 = 已经见过的 run id
-            local run_id
-            for _ in $(seq 1 60); do
-              run_id="$(latest_pr_run)"
-              if [ "${run_id}" != "0" ] && [ "${run_id}" != "$1" ]; then
-                echo "${run_id}"
-                return 0
-              fi
-              sleep 5
-            done
-            return 1
-          }
-
-          # 必需检查只能由 pull_request 那次运行上报：workflow_dispatch 的检查虽然也挂在
-          # 同一个 SHA 上，但不会关联到 PR，分支保护看不见（实测 gh pr checks 只显示
-          # GitGuardian，mergeStateStatus 一直是 BLOCKED）。而 bot 建的 PR，那次运行会停在
-          # action_required（0 个 job），所以必须把它批准起来。
-          ensure_runnable() {  # $1 = run id
-            local concl status
-            concl="$(gh api "repos/${REPO}/actions/runs/$1" --jq '.conclusion // ""')"
-            if [ "${concl}" != "action_required" ]; then return 0; fi
-            echo "run $1 停在 action_required，尝试批准" >&2
-            gh api -X POST "repos/${REPO}/actions/runs/$1/approve" >/dev/null 2>&1 || true
-            sleep 10
-            status="$(gh api "repos/${REPO}/actions/runs/$1" --jq '.status')"
-            echo "run $1 status=${status}" >&2
-            [ "${status}" != "completed" ]
-          }
-
-          seen_run="0"
-          for attempt in 1 2 3; do
-            if is_merged; then merged_done; exit 0; fi
-
-            echo "--- CI round ${attempt}"
-            run_id="$(await_pr_run "${seen_run}")" || {
-              echo "::warning::未等到 pull_request 运行，需人工处理：${pr_url}" >&2; exit 0; }
-            seen_run="${run_id}"
-
-            if ! ensure_runnable "${run_id}"; then
-              echo "::error::GITHUB_TOKEN 无权批准被门禁拦下的 pull_request 运行（run ${run_id}），必需检查不会上报。请配置 SMOKE_PAT（contents/pull-requests/actions = write），或人工批准 ${pr_url}。"
-              gh pr comment "${pr_number}" --repo "${REPO}" \
-                --body "本 PR 的 pull_request 运行停在 \`action_required\`，而 GITHUB_TOKEN 无权批准它，因此 9 项必需检查只会一直处于 expected。请配置 \`SMOKE_PAT\`，或人工批准 run ${run_id}。" || true
-              exit 1
-            fi
-
-            if ! gh run watch "${run_id}" --repo "${REPO}" --exit-status; then
-              echo "::error::CI 未通过（run ${run_id}），PR 保留待人工处理：${pr_url}"
-              gh pr comment "${pr_number}" --repo "${REPO}" \
-                --body "CI 未通过：run ${run_id}（branch \`${branch}\`）。修复后重跑该分支的 pull_request CI 即可合并。" || true
-              exit 1
-            fi
-            if is_merged; then merged_done; exit 0; fi
-
-            state="$(gh pr view "${pr_number}" --repo "${REPO}" --json mergeStateStatus --jq .mergeStateStatus)"
-            echo "mergeStateStatus=${state}"
-            if [ "${state}" = "BEHIND" ]; then
-              # main 前进过：更新分支会产生新的 SHA 和一次新的 pull_request 运行，
-              # 所以回到循环开头重新批准 + 等待 + 合并。
-              if ! gh pr update-branch "${pr_number}" --repo "${REPO}"; then
-                echo "::warning::gh pr update-branch 失败（仓库 allow_update_branch=false？），尝试本地合并 main" >&2
-                git fetch origin main
-                git merge --no-edit origin/main
-                git push origin "HEAD:refs/heads/${branch}"
-              fi
-              continue
-            fi
-
-            if gh pr merge "${pr_number}" --repo "${REPO}" --squash; then
-              merged_done
-              exit 0
-            fi
-            echo "::warning::第 ${attempt} 轮合并未成功（mergeStateStatus=${state}），重试" >&2
-            sleep 20
-          done
-
-          echo "::warning::未能在本步骤合并，需人工处理：${pr_url}" >&2
+      # The generated files are evidence for this run only. Keeping them in an
+      # artifact avoids turning a low-frequency observation into a write-capable
+      # PR and merge automation path.
+      - name: Upload daily smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-smoke-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            docs/daily_smoke/log.jsonl
+            docs/daily_smoke/VARIANCE.md
