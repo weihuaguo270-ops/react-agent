@@ -3,13 +3,27 @@
   "directions": {
     "ai-review": {
       "display_name": "AI review and change assurance",
+      "owner": "repository-maintainers",
+      "goal": "docs/specs/goals/ai-review.md",
+      "progress_source": "docs/specs/ai-review/progress.yaml",
       "source_spec": "docs/specs/ai-review/spec.md",
       "specs": [
         "docs/specs/ai-review/spec.md",
         "docs/specs/ai-review/ai-review-policy.md",
         "docs/specs/ai-review/risk-policy.md",
         "docs/specs/ai-review/approval-policy.md"
-      ]
+      ],
+      "gate": {
+        "command_template": "python scripts/ai_review/stage_gate.py --stage {stage}",
+        "artifact_dir": "artifacts/ai-review/stage-gates",
+        "tests": {
+          "A0": ["tests/test_ai_review_artifact.py"],
+          "A1": [],
+          "A2": [],
+          "A3": [],
+          "A4": []
+        }
+      }
     },
     "harness": {
       "display_name": "Harness convergence",
