@@ -33,9 +33,11 @@
 - Evaluation Harness 的 Fixture、题集、Runner、评分、Replay、Episode、Trajectory 或 artifact 语义；
 - Runtime Harness 的 ToolCall、RuntimeEpisode 和运行时协议；
 - 业务方向的验收内容、业务进度或生产 SLA；
-- 日跑、完整评测矩阵、真实 LLM 质量结论和长期趋势。它们可以被 CI 触发或链接为 evidence-only，但不改变普通 PR 的合并结论。
+- 日跑、完整评测矩阵、真实 LLM 质量结论和长期趋势。它们可以被 CI 触发或链接为 evidence-only，但不改变普通 PR 的合并结论；日跑默认只读并输出 artifact，不提交仓库文件、创建 PR 或自动合并。
 
 CI 可以调用 Harness 或方向 Spec 暴露的 gate 命令，但只消费其退出码和结构化摘要，不复制其测试场景、评分逻辑或阶段进度。
+
+风险分级、AI 审核和人工审批分别由 [变更风险策略](risk-policy.md)、[AI 代码审核策略](ai-review-policy.md) 与 [人工审批策略](approval-policy.md) 定义。CI 提供当前 head 的确定性机器结论和风险证据，不把 AI 审核结果直接解释为通过，也不替代维护者审批。
 
 ## 3. 输入、选择与输出
 
@@ -83,13 +85,17 @@ CI 根据 Registry 和 changed files 选择最小安全检查集：
 
 普通 PR 使用最小 job 权限；fork PR 不读取写入 Secret，不执行 `pull_request_target` checkout 的不可信代码。执行不可信代码的 job 不得写仓库或修改 Branch Protection。Actions、镜像和外部依赖按仓库安全规则固定版本。安全检查失败直接阻断合并。
 
+### R6：风险与人工审批
+
+CI 必须为当前 `head_sha` 生成机器结论和风险证据。风险等级可以由 changed files、CI/AI/安全发现共同提升，但不能把风险等级当作测试通过状态。机器检查全部通过后，仍须按照 [人工审批策略](approval-policy.md) 满足对应风险等级的 owner 和安全审批；新 commit 会使旧机器结论和审批失效。
+
 ## 5. 本地、PR 与外部证据
 
 | 检查层 | 目的 | 结论 |
 |---|---|---|
 | 本地提交前 | 快速 lint、受影响单测、配置/Schema 校验 | 提交前反馈，不替代 CI |
 | PR CI | 当前 diff 的 readiness、subset、stage gate 和 required checks | 决定能否合入 `main` |
-| 日跑/发布/评测 | 完整矩阵、长时方差、真实 LLM、跨环境或 Harness 质量 | evidence-only，除非另有发布 gate |
+| 日跑/发布/评测 | 完整矩阵、长时方差、真实 LLM、跨环境或 Harness 质量 | evidence-only artifact，除非另有发布 gate |
 
 外部 evidence 必须保留自己的运行身份、版本、输入和 artifact provenance；历史、fixture/mock、held-out 和生产结果不得混为当前 PR 的 `pass`。
 
@@ -99,6 +105,8 @@ CI 根据 Registry 和 changed files 选择最小安全检查集：
 - 映射缺失、阶段 gate 失败或 required 输入缺失时，聚合器 fail closed；
 - `check_pr_ready.py`、lint、受影响单测和适用 stage gate 都能在当前 head SHA 上复核；
 - required check 名称稳定且始终创建，只有 `CI / PR gate` 作为合并聚合器；
+- 风险结果绑定当前 head SHA，并能追溯到 CI、AI 和安全证据；
+- 高风险变更需要对应 owner/安全审批，安全阻断不能由普通审批绕过；
 - CI 文档不重复定义 Harness 的评分、Fixture、Replay 或 Episode 语义；
 - docs 变更遵守 git-docs evaluation 和 baseline 规则。
 
@@ -109,3 +117,6 @@ CI 根据 Registry 和 changed files 选择最小安全检查集：
 - [Spec 注册表](../registry.yaml)
 - [PR 就绪审计](../../../scripts/ci/check_pr_ready.py)
 - [测试工作流](../../../.github/workflows/test.yml)
+- [变更风险策略](risk-policy.md)
+- [AI 代码审核策略](ai-review-policy.md)
+- [人工审批策略](approval-policy.md)
