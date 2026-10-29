@@ -1,6 +1,6 @@
 # Daily smoke log
 
-跨日 variance 原始行（JSONL）与汇总表。
+跨日 variance 原始行（JSONL）与汇总表。定时 GitHub Actions 将它们作为 evidence artifact 保存，不再自动提交仓库、创建 PR 或合并。
 
 | 文件 | 说明 |
 |------|------|
@@ -23,3 +23,4 @@ GitHub Actions：`.github/workflows/daily-smoke.yml`
 
 - 每天 **UTC 01:00**（约北京时间 **09:00**）
 - 也可在 Actions → **Daily smoke** → Run workflow 手动触发
+- 结果位于对应 run 的 `daily-smoke-<run_id>` artifact；本地运行会更新当前工作树中的两份文件。

@@ -30,7 +30,7 @@
     "archive/2026-q4/TEMP_DIR_MANAGEMENT.md": "e1abf0b872ccbda3ec34935ffe6f07316c140587ca7d1e08936f0c9d327d24f8",
     "archive/2026-q4/reorganization-complete-report.md": "8ead4feae6ab5785830da4d3e7e472f75c1af1a19c3fda0abeb741f24573a33d",
     "archive/2026-q4/reorganization-execution-plan.md": "a85add78e137a475f8d79fc8f07b0042b716953cf7f92de7be91beb71b72cb21",
-    "daily_smoke/README.md": "ed250027416ee625f014f5934a5b13ed4229617a714753cab12149944623c0d7",
+    "daily_smoke/README.md": "aa189023b4daed6b0e3e9321a502a455ea2776d06ce77ea92f1c4fdf79d0124b",
     "daily_smoke/VARIANCE.md": "9f9d32ff8ede65dd7d0d7a5d291f3c42aa7c5882a03b714ec4d598e5910be462",
     "features/application-direction.md": "bd68187bfa230c4649acfe387fc9ff9b5c8a33016b93c3676c495bd2a8e614d7",
     "features/deploy.md": "1131f6010a1a168157a7417563c1ea2d0e2564aa3af34d19de59123b090ace9f",
@@ -97,6 +97,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-10-28T04:20:44Z",
+  "generated_at": "2026-10-29T05:58:45Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
