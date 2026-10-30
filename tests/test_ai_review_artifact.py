@@ -33,6 +33,52 @@ def test_sha_mismatch_is_blocked():
         raise AssertionError("expected SHA mismatch to be blocked")
 
 
+def test_missing_artifact_is_rejected():
+    try:
+        validate_artifact(None)
+    except ArtifactError as exc:
+        assert "JSON object" in str(exc)
+    else:
+        raise AssertionError("expected missing artifact to be rejected")
+
+
+def test_blocked_ci_is_blocked():
+    artifact = _artifact(ci={"status": "blocked", "head_sha": "head"})
+    assert validate_artifact(artifact)["status"] == "blocked"
+
+
+def test_blocked_security_is_blocked():
+    artifact = _artifact(security={"status": "blocked", "head_sha": "head"})
+    assert validate_artifact(artifact)["status"] == "blocked"
+
+
+def test_open_blocker_fails():
+    finding = {
+        "id": "AI-003",
+        "severity": "blocker",
+        "confidence": "high",
+        "category": "security",
+        "file": "src/example.py",
+        "line": 1,
+        "trigger": "input",
+        "expected": "safe",
+        "actual": "unsafe",
+        "evidence": ["pytest tests/test_example.py"],
+        "recommendation": "fix",
+        "status": "open",
+    }
+    assert validate_artifact(_artifact(findings=[finding]))["status"] == "fail"
+
+
+def test_new_commit_invalidates_old_head():
+    try:
+        validate_artifact(_artifact(), head_sha="new-commit")
+    except ArtifactError as exc:
+        assert "head_sha" in str(exc)
+    else:
+        raise AssertionError("expected old artifact to be invalid after a new commit")
+
+
 def test_open_high_finding_fails():
     finding = {
         "id": "AI-001",
