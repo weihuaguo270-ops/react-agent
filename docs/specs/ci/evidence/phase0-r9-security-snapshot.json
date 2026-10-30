@@ -1,8 +1,8 @@
 {
   "schema_version": "ci-r9-security-snapshot/v1",
   "status": "attention_required",
-  "collected_at": "2026-10-29T15:38:50.791143+00:00",
-  "head_sha": "e641adc7c95907a1bf55f7185c90faaa87b78829",
+  "collected_at": "2026-10-30T12:58:46.166955+00:00",
+  "head_sha": "8805e5e9a875eb6584aa12d1ce79917ee7e73076",
   "scope": {
     "workflow_files": [
       ".github/workflows/daily-smoke.yml",
@@ -13,21 +13,6 @@
     "dockerfiles": [
       "Dockerfile",
       "Dockerfile.sandbox",
-      "_clean_pr/Dockerfile",
-      "_clean_pr/Dockerfile.sandbox",
-      "_clean_pr/eval/blind_pilot_v1/Dockerfile",
-      "_daily_smoke_fix/Dockerfile",
-      "_daily_smoke_fix/Dockerfile.sandbox",
-      "_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile",
-      "_phase0_branch/Dockerfile",
-      "_phase0_branch/Dockerfile.sandbox",
-      "_phase0_branch/eval/blind_pilot_v1/Dockerfile",
-      "_phase0_clean/Dockerfile",
-      "_phase0_clean/Dockerfile.sandbox",
-      "_phase0_clean/eval/blind_pilot_v1/Dockerfile",
-      "_risk_docs_rebase/Dockerfile",
-      "_risk_docs_rebase/Dockerfile.sandbox",
-      "_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile",
       "eval/blind_pilot_v1/Dockerfile"
     ],
     "read_only": true,
@@ -281,96 +266,6 @@
       "line": 1,
       "image": "react-agent-sandbox:0.7.0",
       "pinned_digest": false
-    },
-    {
-      "path": "_clean_pr/Dockerfile",
-      "line": 2,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_clean_pr/Dockerfile.sandbox",
-      "line": 1,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_clean_pr/eval/blind_pilot_v1/Dockerfile",
-      "line": 1,
-      "image": "react-agent-sandbox:0.7.0",
-      "pinned_digest": false
-    },
-    {
-      "path": "_daily_smoke_fix/Dockerfile",
-      "line": 2,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_daily_smoke_fix/Dockerfile.sandbox",
-      "line": 1,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile",
-      "line": 1,
-      "image": "react-agent-sandbox:0.7.0",
-      "pinned_digest": false
-    },
-    {
-      "path": "_phase0_branch/Dockerfile",
-      "line": 2,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_phase0_branch/Dockerfile.sandbox",
-      "line": 1,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_phase0_branch/eval/blind_pilot_v1/Dockerfile",
-      "line": 1,
-      "image": "react-agent-sandbox:0.7.0",
-      "pinned_digest": false
-    },
-    {
-      "path": "_phase0_clean/Dockerfile",
-      "line": 2,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_phase0_clean/Dockerfile.sandbox",
-      "line": 1,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_phase0_clean/eval/blind_pilot_v1/Dockerfile",
-      "line": 1,
-      "image": "react-agent-sandbox:0.7.0",
-      "pinned_digest": false
-    },
-    {
-      "path": "_risk_docs_rebase/Dockerfile",
-      "line": 2,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_risk_docs_rebase/Dockerfile.sandbox",
-      "line": 1,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
-    },
-    {
-      "path": "_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile",
-      "line": 1,
-      "image": "react-agent-sandbox:0.7.0",
-      "pinned_digest": false
     }
   ],
   "findings": [
@@ -458,111 +353,6 @@
       "id": "docker-base-image-not-digest-pinned",
       "severity": "medium",
       "path": "eval/blind_pilot_v1/Dockerfile",
-      "details": "react-agent-sandbox:0.7.0 (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_clean_pr/Dockerfile",
-      "details": "python:3.11-slim (line 2)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_clean_pr/Dockerfile.sandbox",
-      "details": "python:3.11-slim (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_clean_pr/eval/blind_pilot_v1/Dockerfile",
-      "details": "react-agent-sandbox:0.7.0 (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_daily_smoke_fix/Dockerfile",
-      "details": "python:3.11-slim (line 2)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_daily_smoke_fix/Dockerfile.sandbox",
-      "details": "python:3.11-slim (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile",
-      "details": "react-agent-sandbox:0.7.0 (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_phase0_branch/Dockerfile",
-      "details": "python:3.11-slim (line 2)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_phase0_branch/Dockerfile.sandbox",
-      "details": "python:3.11-slim (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_phase0_branch/eval/blind_pilot_v1/Dockerfile",
-      "details": "react-agent-sandbox:0.7.0 (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_phase0_clean/Dockerfile",
-      "details": "python:3.11-slim (line 2)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_phase0_clean/Dockerfile.sandbox",
-      "details": "python:3.11-slim (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_phase0_clean/eval/blind_pilot_v1/Dockerfile",
-      "details": "react-agent-sandbox:0.7.0 (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_risk_docs_rebase/Dockerfile",
-      "details": "python:3.11-slim (line 2)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_risk_docs_rebase/Dockerfile.sandbox",
-      "details": "python:3.11-slim (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile",
       "details": "react-agent-sandbox:0.7.0 (line 1)",
       "planned_phase": "Phase 1"
     }

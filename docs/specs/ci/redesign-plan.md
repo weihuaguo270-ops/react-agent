@@ -36,16 +36,17 @@ Registry 只维护路径到规则和 gate 入口的映射。映射明确时运�
 
 ## 3. CI 子系统迁移阶段
 
-### Phase 0：基线冻结
+### Phase 0：证据生命周期与当前 CI 风险基线
 
-记录当前 workflow、required checks、事件、权限、失败分类和近期运行样本。基线只说明当前 CI 合并风险，不把现有评测矩阵当作新架构。
+冻结快照、当前观测和阶段复审报告是三类独立证据。冻结快照绑定目标 SHA 和固定样本边界，创建后不可覆盖；当前观测可以更新，但不能修改历史快照或阶段报告。Phase 0 gate 验证固定快照身份、完整性和新 Spec 下的独立复审，不要求快照 SHA 等于运行时 HEAD。当前 PR 的 readiness 仍绑定当前 PR head SHA。docs corpus baseline 与 CI 历史样本独立维护。
 
 ### Phase 1：Registry 与选择器
 
 - 定义并校验 `path_globs -> rule_id -> gate` 的机器可读结构；
 - 为 lint、单测、PR readiness、stage gate 和安全检查建立最小规则；
 - 增加重复 ID、失效路径、无约束命令、过期例外和 unmapped 的负例；
-- 用冻结 PR 样本回放选择器，报告误选、漏选和未映射路径；
+- 使用带固定 ID、路径明细及来源 SHA 的 PR 样本回放选择器，报告映射与未映射路径；
+- 误选/漏选只有在存在独立标注的预期规则集时才计算，否则标记为未测量；
 - 不把 Harness 场景、评分或 `PHASE_TESTS` 复制到 Registry。
 
 ### Phase 2：Shadow
@@ -83,6 +84,7 @@ AI Review 不隶属于 CI 的 Phase 0–5，另行按其顶层 Spec 实施：
 ## 6. 验收清单
 
 - 当前 diff 能追溯到选择的规则、命令和 head SHA；
+- 阶段报告记录 Spec revision、验收 revision、输入 snapshot ID、命令、结果和 artifact hash；旧验收被替代时保留历史报告并记录 supersede 关系；
 - lint、受影响单测、`check_pr_ready.py`、适用 stage gate 和安全检查均可单独定位；
 - 缺失输入和未映射路径 fail closed；
 - `CI / PR gate` 稳定创建且是唯一合并聚合器；

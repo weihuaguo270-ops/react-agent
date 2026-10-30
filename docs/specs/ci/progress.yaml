@@ -1,0 +1,183 @@
+{
+  "schema_version": "spec-progress/v1",
+  "spec_id": "ci",
+  "source_spec": "docs/specs/ci/spec.md",
+  "spec_revision": "1.5",
+  "acceptance_revision": "ci-acceptance/2026-10-30-v2",
+  "updated_at": "2026-10-30T14:48:19.418901+00:00",
+  "superseded_acceptance": [
+    {
+      "id": "CI-P0-1",
+      "status": "superseded",
+      "reason": "The prior current-head baseline wording conflated a historical snapshot with current PR verification.",
+      "superseded_by": [
+        "CI-P0-1-v2",
+        "CI-P0-2-v2"
+      ],
+      "evidence": [
+        "docs/specs/ci/evidence/phase0-baseline.json",
+        "docs/specs/ci/evidence/phase0-sample-index.md"
+      ]
+    },
+    {
+      "id": "CI-P0-2",
+      "status": "superseded",
+      "reason": "The 2026-10-29 independent review covered the e641adc7 snapshot and did not review CI Spec v1.5 or the 8805e5e9 snapshot.",
+      "superseded_by": [
+        "CI-P0-4-v2"
+      ],
+      "evidence": [
+        "docs/specs/ci/evidence/archive/2026-10-29-e641adc7/phase0-fresh-evidence-review-2026-10-29.md"
+      ]
+    },
+    {
+      "id": "CI-P1-2",
+      "status": "superseded",
+      "reason": "The prior backtest queried a rolling PR window and did not preserve changed path inputs for deterministic replay.",
+      "superseded_by": [
+        "CI-P1-2-v2"
+      ],
+      "evidence": [
+        "docs/specs/ci/evidence/phase1-selector-backtest.json"
+      ]
+    },
+    {
+      "record_id": "phase0-independent-review-e641adc7",
+      "status": "superseded_for_current_acceptance",
+      "reason": "Historical conclusion remains valid only for its recorded SHA and prior acceptance revision; it is not approval under CI Spec v1.5."
+    }
+  ],
+  "phase0_snapshot_id": "main-8805e5e9-20261030",
+  "selector_sample_id": "main-8805e5e9-20261030",
+  "selector_backtest_report": "docs/specs/ci/evidence/phase1-selector-backtest-main-8805e5e9-20261030.json",
+  "stages": {
+    "Phase 0": {
+      "name": "Evidence lifecycle and CI risk baseline",
+      "status": "partial",
+      "gate_command": "python scripts/ci/ci_stage_gate.py --stage \"Phase 0\"",
+      "acceptance": [
+        {
+          "id": "CI-P0-1-v2",
+          "title": "Immutable snapshot has identity, provenance, sample boundaries, and verified file hashes",
+          "evidence": [
+            "docs/specs/ci/evidence/snapshots/main-8805e5e9-20261030/manifest.json",
+            "docs/specs/ci/evidence/snapshots/main-8805e5e9-20261030/phase0-baseline.json",
+            "docs/specs/ci/evidence/snapshots/main-8805e5e9-20261030/phase0-sample-index.md"
+          ],
+          "status": "in_progress"
+        },
+        {
+          "id": "CI-P0-2-v2",
+          "title": "Current observation and docs corpus baseline are separate from frozen CI snapshots",
+          "evidence": [
+            "scripts/ci/refresh_phase0_baseline.py",
+            "src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json"
+          ],
+          "status": "in_progress"
+        },
+        {
+          "id": "CI-P0-3-v2",
+          "title": "Snapshot gate checks provenance and integrity without requiring current HEAD equality",
+          "evidence": [
+            "scripts/ci/ci_stage_gate.py",
+            "tests/test_ci_stage_gate.py"
+          ],
+          "status": "in_progress"
+        },
+        {
+          "id": "CI-P0-4-v2",
+          "title": "Independent review under CI Spec v1.5 is recorded",
+          "evidence": [
+            "docs/specs/ci/evidence/reviews/phase0-review-main-8805e5e9-v1.5.md"
+          ],
+          "status": "partial"
+        }
+      ],
+      "last_gate": {
+        "status": "blocked",
+        "report": "artifacts/ci/stage-gates/phase-0-20261030T144815188988Z-8805e5e9.json",
+        "report_sha256": "bbfba42a279dea7405d4129aa4bfef6b2afe3d1b43ff3a8ead8c2f55aabd8259",
+        "spec_revision": "1.5",
+        "acceptance_revision": "ci-acceptance/2026-10-30-v2",
+        "snapshot_id": "main-8805e5e9-20261030"
+      }
+    },
+    "Phase 1": {
+      "name": "Registry and fixed-sample selector",
+      "status": "in_progress",
+      "gate_command": "python scripts/ci/ci_stage_gate.py --stage \"Phase 1\"",
+      "acceptance": [
+        {
+          "id": "CI-P1-1",
+          "title": "Registry v2 semantic validation passes",
+          "evidence": [
+            "docs/specs/ci/registry-v2.json",
+            "scripts/ci/registry_v2.py",
+            "tests/test_ci_registry_v2.py"
+          ],
+          "status": "complete"
+        },
+        {
+          "id": "CI-P1-2-v2",
+          "title": "Selector backtest replays fixed sample paths and records unmeasured labels honestly",
+          "evidence": [
+            "docs/specs/ci/evidence/selector-samples/main-8805e5e9-20261030.json",
+            "docs/specs/ci/evidence/phase1-selector-backtest-main-8805e5e9-20261030.json"
+          ],
+          "status": "in_progress",
+          "notes": "The old rolling-window report is superseded. False-positive and missed-rule metrics remain unmeasured until an independent expected-rule label set exists."
+        },
+        {
+          "id": "CI-P1-3",
+          "title": "R9 workflow and container security checks are executable",
+          "evidence": [
+            "docs/specs/ci/evidence/phase1-r9-acceptance.json"
+          ],
+          "status": "blocked",
+          "notes": "Static findings are recorded, but fork Secret isolation and effective GitHub Actions permissions require an isolated remote run."
+        }
+      ],
+      "last_gate": {
+        "status": "blocked",
+        "report": "artifacts/ci/stage-gates/phase-1-20261030T144819418901Z-8805e5e9.json",
+        "report_sha256": "0a5ef1a92567def2844d433dd2c20369061ab8184bec149d504a509e53d9f0b2",
+        "spec_revision": "1.5",
+        "acceptance_revision": "ci-acceptance/2026-10-30-v2",
+        "snapshot_id": "main-8805e5e9-20261030"
+      }
+    },
+    "Phase 2": {
+      "name": "Shadow",
+      "status": "not_started",
+      "gate_command": "python scripts/ci/ci_stage_gate.py --stage \"Phase 2\"",
+      "acceptance": []
+    },
+    "Phase 3": {
+      "name": "PR gate",
+      "status": "not_started",
+      "gate_command": "python scripts/ci/ci_stage_gate.py --stage \"Phase 3\"",
+      "acceptance": []
+    },
+    "Phase 4": {
+      "name": "Branch Protection migration",
+      "status": "not_started",
+      "gate_command": "python scripts/ci/ci_stage_gate.py --stage \"Phase 4\"",
+      "acceptance": []
+    },
+    "Phase 5": {
+      "name": "Stabilization",
+      "status": "not_started",
+      "gate_command": "python scripts/ci/ci_stage_gate.py --stage \"Phase 5\"",
+      "acceptance": []
+    }
+  },
+  "last_gate": {
+    "stage": "Phase 1",
+    "status": "blocked",
+    "report": "artifacts/ci/stage-gates/phase-1-20261030T144819418901Z-8805e5e9.json",
+    "report_sha256": "0a5ef1a92567def2844d433dd2c20369061ab8184bec149d504a509e53d9f0b2",
+    "spec_revision": "1.5",
+    "acceptance_revision": "ci-acceptance/2026-10-30-v2",
+    "snapshot_id": "main-8805e5e9-20261030"
+  }
+}
