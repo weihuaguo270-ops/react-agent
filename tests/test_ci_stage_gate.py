@@ -15,6 +15,7 @@ def test_snapshot_integrity_does_not_require_current_head(tmp_path, monkeypatch)
     }
     baseline_path = snapshot_dir / "phase0-baseline.json"
     baseline_path.write_text(json.dumps(baseline) + "\n", encoding="utf-8")
+    canonical = baseline_path.read_bytes().replace(b"\r\n", b"\n")
     manifest = {
         "evidence_kind": "frozen_snapshot",
         "snapshot_id": "sample",
@@ -23,11 +24,11 @@ def test_snapshot_integrity_does_not_require_current_head(tmp_path, monkeypatch)
         "repository": "owner/repository",
         "target": {"name": "main", "ref": "main", "sha": "a" * 40},
         "sample_definition": {"pull_requests": "fixed sample"},
-        "source_baseline_sha256": hashlib.sha256(baseline_path.read_bytes()).hexdigest(),
+        "source_baseline_sha256": hashlib.sha256(canonical).hexdigest(),
         "artifacts": {
             "phase0-baseline.json": {
-                "sha256": hashlib.sha256(baseline_path.read_bytes()).hexdigest(),
-                "bytes": baseline_path.stat().st_size,
+                "sha256": hashlib.sha256(canonical).hexdigest(),
+                "bytes": len(canonical),
             }
         },
     }
@@ -81,3 +82,29 @@ def test_snapshot_integrity_requires_provenance_metadata(tmp_path, monkeypatch):
 
     assert result["status"] == "failed"
     assert "provenance metadata" in result["reason"]
+
+
+def test_snapshot_integrity_normalizes_windows_newlines(tmp_path, monkeypatch):
+    snapshot_dir = tmp_path / "docs/specs/ci/evidence/snapshots/sample"
+    snapshot_dir.mkdir(parents=True)
+    baseline_path = snapshot_dir / "phase0-baseline.json"
+    baseline_path.write_bytes(b'{\r\n  "default_branch": {"sha": "' + b"a" * 40 + b'"}\r\n}\r\n')
+    canonical = baseline_path.read_bytes().replace(b"\r\n", b"\n")
+    manifest = {
+        "evidence_kind": "frozen_snapshot",
+        "snapshot_id": "sample",
+        "spec_revision": "1.5",
+        "created_at": "2026-10-30T00:00:00+00:00",
+        "repository": "owner/repository",
+        "target": {"name": "main", "sha": "a" * 40},
+        "sample_definition": {"pull_requests": "fixed sample"},
+        "source_baseline_sha256": hashlib.sha256(canonical).hexdigest(),
+        "artifacts": {"phase0-baseline.json": {
+            "sha256": hashlib.sha256(canonical).hexdigest(),
+            "bytes": len(canonical),
+        }},
+    }
+    (snapshot_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(ci_stage_gate, "ROOT", tmp_path)
+
+    assert ci_stage_gate.verify_snapshot("sample")["status"] == "passed"

@@ -16,27 +16,27 @@
     "failure_job_details": "all failure/cancelled/timed_out/action_required runs expanded through the jobs API"
   },
   "capture_mode": "promoted-existing-evidence-without-network-refresh",
-  "source_baseline_sha256": "ceb47bae6bea933b4e956b68441739505505ee4ab121494b625e7041d56980a2",
+  "source_baseline_sha256": "230ca0f85ca2d88d8d0166f4f6944b5a0195184f040f52af6537d26b9827973f",
   "artifacts": {
     "phase0-baseline.json": {
-      "sha256": "ceb47bae6bea933b4e956b68441739505505ee4ab121494b625e7041d56980a2",
-      "bytes": 293898
+      "sha256": "230ca0f85ca2d88d8d0166f4f6944b5a0195184f040f52af6537d26b9827973f",
+      "bytes": 286898
     },
     "phase0-baseline.md": {
-      "sha256": "a8b4b9b64aa4f570fe7a053e9924512961dc75a73c9c3fee97635332e5ac6fce",
-      "bytes": 4721
+      "sha256": "07e0728090b6dd31badd80f3be26a2a9836232e910e1b59d1d9f99ae6bc8c065",
+      "bytes": 4640
     },
     "phase0-sample-index.md": {
-      "sha256": "9a73d5b5f38b7aee559d86bd90bf16f216561377abfc47d0a9597f7f5e5d5180",
-      "bytes": 55006
+      "sha256": "bba0a6aab4f575691af69ed42eb07fb6695cc7aa11fdde8ed06adece8579a1c3",
+      "bytes": 54743
     },
     "phase0-r9-security-snapshot.json": {
-      "sha256": "b9b030eb4d3f13a4a3825f340085e454830e7162ec078db0ce714e3f2d6eb6f1",
-      "bytes": 10215
+      "sha256": "60052747b2fe67d56936b6d441799a40fe7b60f0133ef1d29f6f63c7a8ba0bc2",
+      "bytes": 9855
     },
     "phase0-r9-security-snapshot.md": {
-      "sha256": "7c82b071c1fe796e512099ca4a7efe24e61f9eb9c265aadca3c47f135e2acdb6",
-      "bytes": 2369
+      "sha256": "a81bdc9726d08f3644ebda06dba369396f95bd94e6c87e980b5ecb067d13e44b",
+      "bytes": 2345
     }
   }
 }
