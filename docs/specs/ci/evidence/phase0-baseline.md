@@ -3,16 +3,16 @@
 ## 状态
 
 **阶段状态：** Partial（基线快照和安全快照已刷新；独立复审、Registry v2 语义校验和 R9 验收仍未完成）<br>
-**采集时间：** 2026-10-29T15:38:48.297543+00:00<br>
+**采集时间：** 2026-10-30T12:58:44.069291+00:00<br>
 **仓库：** weihuaguo270-ops/react-agent
-**默认分支 SHA：** `e641adc7c95907a1bf55f7185c90faaa87b78829`<br>
+**默认分支 SHA：** `8805e5e9a875eb6584aa12d1ce79917ee7e73076`<br>
 **来源：** GitHub Actions、Pull Request、Branch Protection 只读 API 快照。
 
 本报告只冻结当前事实，不把 Registry v2、路径映射、聚合器或 Branch Protection 迁移解释为已完成。
 
 ## 样本与方法
 
-- PR 样本：100 条，范围 `2026-09-23T05:36:56Z` 至 `2026-10-29T14:01:55Z`。
+- PR 样本：100 条，范围 `2026-09-24T05:55:34Z` 至 `2026-10-30T10:38:47Z`。
 - `test.yml`：100 次，结论统计 `{"success": 60, "failure": 38, "cancelled": 2}`。
 - `daily-smoke.yml`：50 次，结论统计 `{"success": 43, "failure": 7}`。
 - 每个失败、取消、超时或 action-required run 都通过 Jobs API 展开到失败 job/step；分类仅作定位提示，不能替代日志根因。
@@ -65,7 +65,7 @@ Branch Protection：strict=True，管理员保护=True，线性历史=True，稳
 
 | Workflow | N | P50 | P95 | 最大 |
 |---|---:|---:|---:|---:|
-| `test.yml` | 100 | 3.1 | 4.97 | 1371.82 |
+| `test.yml` | 100 | 3.15 | 4.97 | 1371.82 |
 | `daily-smoke.yml` | 50 | 2.91 | 5.53 | 9.17 |
 
 这些是从创建到更新时间的墙钟近似值，包含排队，不能直接作为 PR gate 执行时长目标。

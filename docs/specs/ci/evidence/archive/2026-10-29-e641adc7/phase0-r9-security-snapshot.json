@@ -1,0 +1,570 @@
+{
+  "schema_version": "ci-r9-security-snapshot/v1",
+  "status": "attention_required",
+  "collected_at": "2026-10-29T15:38:50.791143+00:00",
+  "head_sha": "e641adc7c95907a1bf55f7185c90faaa87b78829",
+  "scope": {
+    "workflow_files": [
+      ".github/workflows/daily-smoke.yml",
+      ".github/workflows/evaluation.yml",
+      ".github/workflows/harness.yml",
+      ".github/workflows/test.yml"
+    ],
+    "dockerfiles": [
+      "Dockerfile",
+      "Dockerfile.sandbox",
+      "_clean_pr/Dockerfile",
+      "_clean_pr/Dockerfile.sandbox",
+      "_clean_pr/eval/blind_pilot_v1/Dockerfile",
+      "_daily_smoke_fix/Dockerfile",
+      "_daily_smoke_fix/Dockerfile.sandbox",
+      "_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile",
+      "_phase0_branch/Dockerfile",
+      "_phase0_branch/Dockerfile.sandbox",
+      "_phase0_branch/eval/blind_pilot_v1/Dockerfile",
+      "_phase0_clean/Dockerfile",
+      "_phase0_clean/Dockerfile.sandbox",
+      "_phase0_clean/eval/blind_pilot_v1/Dockerfile",
+      "_risk_docs_rebase/Dockerfile",
+      "_risk_docs_rebase/Dockerfile.sandbox",
+      "_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile",
+      "eval/blind_pilot_v1/Dockerfile"
+    ],
+    "read_only": true,
+    "acceptance_status": "Phase 1 R9 acceptance not claimed"
+  },
+  "workflows": [
+    {
+      "path": ".github/workflows/daily-smoke.yml",
+      "events": [
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "uses": [
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/upload-artifact@v4",
+          "action": "actions/upload-artifact",
+          "version": "v4",
+          "pinned_commit": false
+        }
+      ],
+      "secret_refs": [
+        "DEEPSEEK_API_KEY"
+      ],
+      "write_permissions": [],
+      "explicit_permissions": true,
+      "contains_pull_request_target": false,
+      "checkout_refs_pr_head": false,
+      "write_operations": []
+    },
+    {
+      "path": ".github/workflows/evaluation.yml",
+      "events": [
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses": [
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/upload-artifact@v4",
+          "action": "actions/upload-artifact",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/upload-artifact@v4",
+          "action": "actions/upload-artifact",
+          "version": "v4",
+          "pinned_commit": false
+        }
+      ],
+      "secret_refs": [
+        "DEEPSEEK_API_KEY"
+      ],
+      "write_permissions": [],
+      "explicit_permissions": true,
+      "contains_pull_request_target": false,
+      "checkout_refs_pr_head": false,
+      "write_operations": []
+    },
+    {
+      "path": ".github/workflows/harness.yml",
+      "events": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses": [
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        }
+      ],
+      "secret_refs": [],
+      "write_permissions": [],
+      "explicit_permissions": true,
+      "contains_pull_request_target": false,
+      "checkout_refs_pr_head": true,
+      "write_operations": []
+    },
+    {
+      "path": ".github/workflows/test.yml",
+      "events": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses": [
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/setup-python@v5",
+          "action": "actions/setup-python",
+          "version": "v5",
+          "pinned_commit": false
+        },
+        {
+          "reference": "actions/checkout@v4",
+          "action": "actions/checkout",
+          "version": "v4",
+          "pinned_commit": false
+        }
+      ],
+      "secret_refs": [],
+      "write_permissions": [],
+      "explicit_permissions": false,
+      "contains_pull_request_target": false,
+      "checkout_refs_pr_head": true,
+      "write_operations": []
+    }
+  ],
+  "docker_base_images": [
+    {
+      "path": "Dockerfile",
+      "line": 2,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "Dockerfile.sandbox",
+      "line": 1,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "eval/blind_pilot_v1/Dockerfile",
+      "line": 1,
+      "image": "react-agent-sandbox:0.7.0",
+      "pinned_digest": false
+    },
+    {
+      "path": "_clean_pr/Dockerfile",
+      "line": 2,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_clean_pr/Dockerfile.sandbox",
+      "line": 1,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_clean_pr/eval/blind_pilot_v1/Dockerfile",
+      "line": 1,
+      "image": "react-agent-sandbox:0.7.0",
+      "pinned_digest": false
+    },
+    {
+      "path": "_daily_smoke_fix/Dockerfile",
+      "line": 2,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_daily_smoke_fix/Dockerfile.sandbox",
+      "line": 1,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile",
+      "line": 1,
+      "image": "react-agent-sandbox:0.7.0",
+      "pinned_digest": false
+    },
+    {
+      "path": "_phase0_branch/Dockerfile",
+      "line": 2,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_phase0_branch/Dockerfile.sandbox",
+      "line": 1,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_phase0_branch/eval/blind_pilot_v1/Dockerfile",
+      "line": 1,
+      "image": "react-agent-sandbox:0.7.0",
+      "pinned_digest": false
+    },
+    {
+      "path": "_phase0_clean/Dockerfile",
+      "line": 2,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_phase0_clean/Dockerfile.sandbox",
+      "line": 1,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_phase0_clean/eval/blind_pilot_v1/Dockerfile",
+      "line": 1,
+      "image": "react-agent-sandbox:0.7.0",
+      "pinned_digest": false
+    },
+    {
+      "path": "_risk_docs_rebase/Dockerfile",
+      "line": 2,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_risk_docs_rebase/Dockerfile.sandbox",
+      "line": 1,
+      "image": "python:3.11-slim",
+      "pinned_digest": false
+    },
+    {
+      "path": "_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile",
+      "line": 1,
+      "image": "react-agent-sandbox:0.7.0",
+      "pinned_digest": false
+    }
+  ],
+  "findings": [
+    {
+      "id": "external-actions-not-commit-pinned",
+      "severity": "high",
+      "path": ".github/workflows/daily-smoke.yml",
+      "details": [
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/upload-artifact@v4"
+      ],
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "external-actions-not-commit-pinned",
+      "severity": "high",
+      "path": ".github/workflows/evaluation.yml",
+      "details": [
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/upload-artifact@v4",
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/upload-artifact@v4"
+      ],
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "external-actions-not-commit-pinned",
+      "severity": "high",
+      "path": ".github/workflows/harness.yml",
+      "details": [
+        "actions/checkout@v4",
+        "actions/checkout@v4",
+        "actions/setup-python@v5"
+      ],
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "external-actions-not-commit-pinned",
+      "severity": "high",
+      "path": ".github/workflows/test.yml",
+      "details": [
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/checkout@v4"
+      ],
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "workflow-permissions-not-explicit",
+      "severity": "medium",
+      "path": ".github/workflows/test.yml",
+      "details": "Effective GITHUB_TOKEN permissions depend on repository defaults.",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "Dockerfile",
+      "details": "python:3.11-slim (line 2)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "Dockerfile.sandbox",
+      "details": "python:3.11-slim (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "eval/blind_pilot_v1/Dockerfile",
+      "details": "react-agent-sandbox:0.7.0 (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_clean_pr/Dockerfile",
+      "details": "python:3.11-slim (line 2)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_clean_pr/Dockerfile.sandbox",
+      "details": "python:3.11-slim (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_clean_pr/eval/blind_pilot_v1/Dockerfile",
+      "details": "react-agent-sandbox:0.7.0 (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_daily_smoke_fix/Dockerfile",
+      "details": "python:3.11-slim (line 2)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_daily_smoke_fix/Dockerfile.sandbox",
+      "details": "python:3.11-slim (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile",
+      "details": "react-agent-sandbox:0.7.0 (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_phase0_branch/Dockerfile",
+      "details": "python:3.11-slim (line 2)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_phase0_branch/Dockerfile.sandbox",
+      "details": "python:3.11-slim (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_phase0_branch/eval/blind_pilot_v1/Dockerfile",
+      "details": "react-agent-sandbox:0.7.0 (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_phase0_clean/Dockerfile",
+      "details": "python:3.11-slim (line 2)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_phase0_clean/Dockerfile.sandbox",
+      "details": "python:3.11-slim (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_phase0_clean/eval/blind_pilot_v1/Dockerfile",
+      "details": "react-agent-sandbox:0.7.0 (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_risk_docs_rebase/Dockerfile",
+      "details": "python:3.11-slim (line 2)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_risk_docs_rebase/Dockerfile.sandbox",
+      "details": "python:3.11-slim (line 1)",
+      "planned_phase": "Phase 1"
+    },
+    {
+      "id": "docker-base-image-not-digest-pinned",
+      "severity": "medium",
+      "path": "_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile",
+      "details": "react-agent-sandbox:0.7.0 (line 1)",
+      "planned_phase": "Phase 1"
+    }
+  ]
+}

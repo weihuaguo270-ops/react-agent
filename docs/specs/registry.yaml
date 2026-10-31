@@ -62,6 +62,31 @@
           "P5": ["tests/evaluation/test_harness_contracts.py", "tests/evaluation/test_harness_schema.py"]
         }
       }
+    },
+    "ci": {
+      "display_name": "CI deterministic execution",
+      "owner": "repository-maintainers",
+      "goal": "docs/specs/goals/ci.md",
+      "progress_source": "docs/specs/ci/progress.yaml",
+      "source_spec": "docs/specs/ci/spec.md",
+      "specs": [
+        "docs/specs/ci/spec.md",
+        "docs/specs/ci/redesign-plan.md",
+        "docs/specs/ci/registry-v2.schema.json",
+        "docs/specs/ci/registry-v2.json"
+      ],
+      "gate": {
+        "command_template": "python scripts/ci/ci_stage_gate.py --stage \"{stage}\"",
+        "artifact_dir": "artifacts/ci/stage-gates",
+        "tests": {
+          "Phase 0": ["tests/test_ci_registry_v2.py", "tests/test_ci_stage_gate.py"],
+          "Phase 1": ["tests/test_ci_registry_v2.py", "tests/test_ci_stage_gate.py", "tests/test_selector_backtest.py"],
+          "Phase 2": [],
+          "Phase 3": [],
+          "Phase 4": [],
+          "Phase 5": []
+        }
+      }
     }
   }
 }

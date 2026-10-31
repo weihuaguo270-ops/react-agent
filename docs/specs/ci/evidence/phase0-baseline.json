@@ -1,11 +1,11 @@
 {
   "schema_version": "ci-baseline/v2",
   "status": "partial",
-  "collected_at": "2026-10-29T15:38:48.297543+00:00",
+  "collected_at": "2026-10-30T12:58:44.069291+00:00",
   "repository": "weihuaguo270-ops/react-agent",
   "default_branch": {
     "name": "main",
-    "sha": "e641adc7c95907a1bf55f7185c90faaa87b78829"
+    "sha": "8805e5e9a875eb6584aa12d1ce79917ee7e73076"
   },
   "sample_definition": {
     "pull_requests": "latest 100 returned by GitHub REST pulls endpoint sorted by created desc",
@@ -15,9 +15,27 @@
   },
   "pull_requests": {
     "sample_size": 100,
-    "from_created_at": "2026-09-23T05:36:56Z",
-    "to_created_at": "2026-10-29T14:01:55Z",
+    "from_created_at": "2026-09-24T05:55:34Z",
+    "to_created_at": "2026-10-30T10:38:47Z",
     "samples": [
+      {
+        "number": 183,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/183",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-10-30T10:38:47Z",
+        "updated_at": "2026-10-30T10:47:50Z",
+        "merged_at": "2026-10-30T10:47:48Z",
+        "merge_commit_sha": "8805e5e9a875eb6584aa12d1ce79917ee7e73076",
+        "base_sha": "e641adc7c95907a1bf55f7185c90faaa87b78829",
+        "head_sha": "1f4f47a90de6a4936a8041b95d4071f5cf2d5e34",
+        "head_ref": "codex/ai-review-a0-phase0-evidence",
+        "base_ref": "main",
+        "test_run_ids": [
+          41042270461
+        ],
+        "daily_run_ids": []
+      },
       {
         "number": 182,
         "url": "https://github.com/weihuaguo270-ops/react-agent/pull/182",
@@ -785,9 +803,7 @@
         "head_sha": "83c0c02f73dd8fd419c5f888e895325aa28734c4",
         "head_ref": "codex/pr-ready-audit",
         "base_ref": "main",
-        "test_run_ids": [
-          38752230481
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -853,9 +869,7 @@
         "head_sha": "c11418c633a886b0100d466ce913ef05c3eb1e40",
         "head_ref": "codex/expense-s3-workflow",
         "base_ref": "main",
-        "test_run_ids": [
-          38722355778
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -1689,22 +1703,6 @@
         "base_ref": "main",
         "test_run_ids": [],
         "daily_run_ids": []
-      },
-      {
-        "number": 83,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/83",
-        "state": "closed",
-        "merged": false,
-        "created_at": "2026-09-23T05:36:56Z",
-        "updated_at": "2026-09-30T16:30:40Z",
-        "merged_at": null,
-        "merge_commit_sha": "919bca8eb3b8a3ffa66f4df85567072f8b3496d4",
-        "base_sha": "41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b",
-        "head_sha": "d8bb610d4b1c505acaf9a31e1689dfbb8a4f1583",
-        "head_ref": "automation/daily-smoke-2026-09-23-35823121406-1",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
       }
     ]
   },
@@ -1717,11 +1715,55 @@
         "cancelled": 2
       },
       "wall_clock_minutes": {
-        "p50": 3.1,
+        "p50": 3.15,
         "p95": 4.97,
         "max": 1371.82
       },
       "runs": [
+        {
+          "run_id": 41043371066,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41043371066",
+          "workflow": "test.yml",
+          "run_number": 431,
+          "run_attempt": 1,
+          "display_title": "feat(ai-review): establish A0 progress and refresh CI Phase 0 evidence",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "8805e5e9a875eb6584aa12d1ce79917ee7e73076",
+          "created_at": "2026-10-30T10:47:50Z",
+          "updated_at": "2026-10-30T10:51:34Z",
+          "wall_clock_minutes": 3.73,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 41042270461,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41042270461",
+          "workflow": "test.yml",
+          "run_number": 430,
+          "run_attempt": 1,
+          "display_title": "feat(ai-review): establish A0 progress and refresh CI Phase 0 evidence",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ai-review-a0-phase0-evidence",
+          "head_sha": "1f4f47a90de6a4936a8041b95d4071f5cf2d5e34",
+          "created_at": "2026-10-30T10:38:50Z",
+          "updated_at": "2026-10-30T10:42:39Z",
+          "wall_clock_minutes": 3.82,
+          "pull_request_numbers": [
+            183
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
         {
           "run_id": 40888650027,
           "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/40888650027",
@@ -5098,54 +5140,6 @@
           ],
           "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
           "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 38752230481,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38752230481",
-          "workflow": "test.yml",
-          "run_number": 331,
-          "run_attempt": 1,
-          "display_title": "ci: add PR readiness audit",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "codex/pr-ready-audit",
-          "head_sha": "83c0c02f73dd8fd419c5f888e895325aa28734c4",
-          "created_at": "2026-10-15T14:31:54Z",
-          "updated_at": "2026-10-15T14:34:11Z",
-          "wall_clock_minutes": 2.28,
-          "pull_request_numbers": [
-            140
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 38722355778,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38722355778",
-          "workflow": "test.yml",
-          "run_number": 330,
-          "run_attempt": 1,
-          "display_title": "feat(expense): complete S3 decision workflow",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "codex/expense-s3-workflow",
-          "head_sha": "c11418c633a886b0100d466ce913ef05c3eb1e40",
-          "created_at": "2026-10-15T10:44:05Z",
-          "updated_at": "2026-10-15T10:46:24Z",
-          "wall_clock_minutes": 2.32,
-          "pull_request_numbers": [
-            136
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
         }
       ]
     },
@@ -5161,6 +5155,26 @@
         "max": 9.17
       },
       "runs": [
+        {
+          "run_id": 41016647999,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41016647999",
+          "workflow": "daily-smoke.yml",
+          "run_number": 113,
+          "run_attempt": 1,
+          "display_title": "Daily smoke",
+          "event": "schedule",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "e641adc7c95907a1bf55f7185c90faaa87b78829",
+          "created_at": "2026-10-30T06:52:30Z",
+          "updated_at": "2026-10-30T06:52:59Z",
+          "wall_clock_minutes": 0.48,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_mock_plus_optional_write_automation"
+        },
         {
           "run_id": 40831489593,
           "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/40831489593",
@@ -6242,26 +6256,6 @@
           "reviewed_jobs": [],
           "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
           "run_mode": "offline_mock_plus_optional_write_automation"
-        },
-        {
-          "run_id": 34811335842,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/34811335842",
-          "workflow": "daily-smoke.yml",
-          "run_number": 63,
-          "run_attempt": 1,
-          "display_title": "Daily smoke",
-          "event": "schedule",
-          "conclusion": "success",
-          "head_branch": "main",
-          "head_sha": "41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b",
-          "created_at": "2026-09-14T05:54:36Z",
-          "updated_at": "2026-09-14T05:54:57Z",
-          "wall_clock_minutes": 0.35,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_mock_plus_optional_write_automation"
         }
       ]
     }
@@ -6595,8 +6589,8 @@
   "r9_security_snapshot": {
     "schema_version": "ci-r9-security-snapshot/v1",
     "status": "attention_required",
-    "collected_at": "2026-10-29T15:38:50.791143+00:00",
-    "head_sha": "e641adc7c95907a1bf55f7185c90faaa87b78829",
+    "collected_at": "2026-10-30T12:58:46.166955+00:00",
+    "head_sha": "8805e5e9a875eb6584aa12d1ce79917ee7e73076",
     "scope": {
       "workflow_files": [
         ".github/workflows/daily-smoke.yml",
@@ -6607,21 +6601,6 @@
       "dockerfiles": [
         "Dockerfile",
         "Dockerfile.sandbox",
-        "_clean_pr/Dockerfile",
-        "_clean_pr/Dockerfile.sandbox",
-        "_clean_pr/eval/blind_pilot_v1/Dockerfile",
-        "_daily_smoke_fix/Dockerfile",
-        "_daily_smoke_fix/Dockerfile.sandbox",
-        "_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile",
-        "_phase0_branch/Dockerfile",
-        "_phase0_branch/Dockerfile.sandbox",
-        "_phase0_branch/eval/blind_pilot_v1/Dockerfile",
-        "_phase0_clean/Dockerfile",
-        "_phase0_clean/Dockerfile.sandbox",
-        "_phase0_clean/eval/blind_pilot_v1/Dockerfile",
-        "_risk_docs_rebase/Dockerfile",
-        "_risk_docs_rebase/Dockerfile.sandbox",
-        "_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile",
         "eval/blind_pilot_v1/Dockerfile"
       ],
       "read_only": true,
@@ -6875,96 +6854,6 @@
         "line": 1,
         "image": "react-agent-sandbox:0.7.0",
         "pinned_digest": false
-      },
-      {
-        "path": "_clean_pr/Dockerfile",
-        "line": 2,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_clean_pr/Dockerfile.sandbox",
-        "line": 1,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_clean_pr/eval/blind_pilot_v1/Dockerfile",
-        "line": 1,
-        "image": "react-agent-sandbox:0.7.0",
-        "pinned_digest": false
-      },
-      {
-        "path": "_daily_smoke_fix/Dockerfile",
-        "line": 2,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_daily_smoke_fix/Dockerfile.sandbox",
-        "line": 1,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile",
-        "line": 1,
-        "image": "react-agent-sandbox:0.7.0",
-        "pinned_digest": false
-      },
-      {
-        "path": "_phase0_branch/Dockerfile",
-        "line": 2,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_phase0_branch/Dockerfile.sandbox",
-        "line": 1,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_phase0_branch/eval/blind_pilot_v1/Dockerfile",
-        "line": 1,
-        "image": "react-agent-sandbox:0.7.0",
-        "pinned_digest": false
-      },
-      {
-        "path": "_phase0_clean/Dockerfile",
-        "line": 2,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_phase0_clean/Dockerfile.sandbox",
-        "line": 1,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_phase0_clean/eval/blind_pilot_v1/Dockerfile",
-        "line": 1,
-        "image": "react-agent-sandbox:0.7.0",
-        "pinned_digest": false
-      },
-      {
-        "path": "_risk_docs_rebase/Dockerfile",
-        "line": 2,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_risk_docs_rebase/Dockerfile.sandbox",
-        "line": 1,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
-      },
-      {
-        "path": "_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile",
-        "line": 1,
-        "image": "react-agent-sandbox:0.7.0",
-        "pinned_digest": false
       }
     ],
     "findings": [
@@ -7054,111 +6943,6 @@
         "path": "eval/blind_pilot_v1/Dockerfile",
         "details": "react-agent-sandbox:0.7.0 (line 1)",
         "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_clean_pr/Dockerfile",
-        "details": "python:3.11-slim (line 2)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_clean_pr/Dockerfile.sandbox",
-        "details": "python:3.11-slim (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_clean_pr/eval/blind_pilot_v1/Dockerfile",
-        "details": "react-agent-sandbox:0.7.0 (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_daily_smoke_fix/Dockerfile",
-        "details": "python:3.11-slim (line 2)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_daily_smoke_fix/Dockerfile.sandbox",
-        "details": "python:3.11-slim (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile",
-        "details": "react-agent-sandbox:0.7.0 (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_phase0_branch/Dockerfile",
-        "details": "python:3.11-slim (line 2)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_phase0_branch/Dockerfile.sandbox",
-        "details": "python:3.11-slim (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_phase0_branch/eval/blind_pilot_v1/Dockerfile",
-        "details": "react-agent-sandbox:0.7.0 (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_phase0_clean/Dockerfile",
-        "details": "python:3.11-slim (line 2)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_phase0_clean/Dockerfile.sandbox",
-        "details": "python:3.11-slim (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_phase0_clean/eval/blind_pilot_v1/Dockerfile",
-        "details": "react-agent-sandbox:0.7.0 (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_risk_docs_rebase/Dockerfile",
-        "details": "python:3.11-slim (line 2)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_risk_docs_rebase/Dockerfile.sandbox",
-        "details": "python:3.11-slim (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile",
-        "details": "react-agent-sandbox:0.7.0 (line 1)",
-        "planned_phase": "Phase 1"
       }
     ]
   },
@@ -7187,9 +6971,9 @@
   },
   "comparison_scope": {
     "baseline_ref": "main",
-    "baseline_sha": "e641adc7c95907a1bf55f7185c90faaa87b78829",
-    "current_worktree_ref": "main",
-    "current_worktree_sha": "e641adc7c95907a1bf55f7185c90faaa87b78829",
+    "baseline_sha": "8805e5e9a875eb6584aa12d1ce79917ee7e73076",
+    "current_worktree_ref": "codex/ci-phase1-spec-progress",
+    "current_worktree_sha": "8805e5e9a875eb6584aa12d1ce79917ee7e73076",
     "fresh_rerun_required_for_completion": true
   },
   "mapping_coverage_backtest": {

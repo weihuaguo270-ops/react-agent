@@ -1,0 +1,146 @@
+{
+  "schema_version": "spec-registry/v2",
+  "directions": {
+    "ci": {
+      "display_name": "CI deterministic execution",
+      "owner": "repository-maintainers",
+      "goal": "docs/specs/goals/ci.md",
+      "progress_source": "docs/specs/ci/progress.yaml",
+      "source_spec": "docs/specs/ci/spec.md",
+      "specs": ["docs/specs/ci/spec.md", "docs/specs/ci/redesign-plan.md"],
+      "rules": [
+        {
+          "id": "ci-pr-readiness",
+          "path_globs": ["scripts/ci/**", "docs/specs/ci/**", ".github/workflows/**", "pyproject.toml"],
+          "exclude_globs": ["docs/specs/ci/evidence/archive/**"],
+          "priority": "P0",
+          "execution": "automated",
+          "local": "subset",
+          "evidence": "artifacts/ci/pr-readiness.json",
+          "applicability": "changed",
+          "maintainer": "repository-maintainers",
+          "gate": {
+            "argv": ["python", "check_pr_ready.py"],
+            "working_directory": "scripts/ci",
+            "timeout_minutes": 15,
+            "network": "none",
+            "allowed_domains": [],
+            "secret_refs": [],
+            "write_paths": []
+          }
+        },
+        {
+          "id": "python-affected-tests",
+          "path_globs": ["src/**", "tests/**", "pyproject.toml"],
+          "exclude_globs": ["tests/test_real_llm.py"],
+          "priority": "P1",
+          "execution": "automated",
+          "local": "subset",
+          "evidence": "artifacts/ci/affected-tests.json",
+          "applicability": "changed",
+          "maintainer": "repository-maintainers",
+          "gate": {
+            "argv": ["python", "-m", "pytest", "-q"],
+            "working_directory": "tests",
+            "timeout_minutes": 30,
+            "network": "none",
+            "allowed_domains": [],
+            "secret_refs": [],
+            "write_paths": []
+          }
+        },
+        {
+          "id": "docs-corpus",
+          "path_globs": ["docs/**"],
+          "exclude_globs": ["docs/specs/ci/evidence/archive/**"],
+          "priority": "P1",
+          "execution": "automated",
+          "local": "subset",
+          "evidence": "artifacts/ci/git-docs-evaluation.json",
+          "applicability": "changed",
+          "maintainer": "repository-maintainers",
+          "gate": {
+            "argv": ["python", "run_git_docs_eval.py"],
+            "working_directory": "scripts/eval/docs",
+            "timeout_minutes": 15,
+            "network": "none",
+            "allowed_domains": [],
+            "secret_refs": [],
+            "write_paths": []
+          }
+        },
+        {
+          "id": "workflow-security",
+          "path_globs": [".github/workflows/**", "Dockerfile", "Dockerfile.*", "eval/**/Dockerfile*"],
+          "exclude_globs": [],
+          "priority": "P0",
+          "execution": "automated",
+          "local": "subset",
+          "evidence": "artifacts/ci/r9-security.json",
+          "applicability": "changed",
+          "maintainer": "repository-maintainers",
+          "gate": {
+            "argv": ["python", "audit_workflow_security.py"],
+            "working_directory": "scripts/ci",
+            "timeout_minutes": 15,
+            "network": "none",
+            "allowed_domains": [],
+            "secret_refs": [],
+            "write_paths": []
+          }
+        },
+        {
+          "id": "harness-stage-gate",
+          "path_globs": ["progress.yaml", "src/react_agent/harness/**", "tests/harness/**", "docs/specs/harness/**"],
+          "exclude_globs": [],
+          "priority": "P1",
+          "execution": "automated",
+          "local": "subset",
+          "evidence": "artifacts/harness/stage-gates/latest.json",
+          "applicability": "stage-claim",
+          "maintainer": "repository-maintainers",
+          "gate": {
+            "argv": ["python", "harness_stage_gate.py", "--stage", "P4"],
+            "working_directory": "scripts/ci",
+            "timeout_minutes": 30,
+            "network": "none",
+            "allowed_domains": [],
+            "secret_refs": [],
+            "write_paths": []
+          }
+        },
+        {
+          "id": "ai-review-artifacts",
+          "path_globs": ["docs/specs/ai-review/**", "scripts/ai_review/**", "tests/test_ai_review_artifact.py"],
+          "exclude_globs": [],
+          "priority": "P1",
+          "execution": "automated",
+          "local": "subset",
+          "evidence": "artifacts/ai-review/stage-gates/a0-latest.json",
+          "applicability": "stage-claim",
+          "maintainer": "repository-maintainers",
+          "gate": {
+            "argv": ["python", "-m", "pytest", "-q", "test_ai_review_artifact.py"],
+            "working_directory": "tests",
+            "timeout_minutes": 15,
+            "network": "none",
+            "allowed_domains": [],
+            "secret_refs": [],
+            "write_paths": []
+          }
+        }
+      ],
+      "unmapped": [
+        {
+          "id": "unmapped-default",
+          "path_globs": ["*"],
+          "reason": "Changed paths without a safe rule mapping must be blocked pending owner review.",
+          "safety_gate_rule_id": "ci-pr-readiness",
+          "owner": "repository-maintainers",
+          "expires_at": "2027-01-31"
+        }
+      ],
+      "exceptions": []
+    }
+  }
+}

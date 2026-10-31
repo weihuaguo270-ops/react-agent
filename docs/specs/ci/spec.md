@@ -2,9 +2,9 @@
 
 ## 1. 文档状态
 
-**状态：** Proposed
-**版本：** v1.4
-**最后更新：** 2026-10-29
+**状态：** Active
+**版本：** v1.5
+**最后更新：** 2026-10-30
 **负责人：** 仓库维护者
 
 本文档定义 CI 如何为 [AI 审核与变更保障 Spec](../ai-review/spec.md) 提供确定性执行结果。CI 是被总流程调用的执行子系统，不定义整个提交流程、AI findings、人工审批或发布观察。
@@ -48,6 +48,18 @@ Registry 只记录 `path_globs -> rule_id -> gate entrypoint` 及执行约束。
 
 当路径没有安全映射时，CI 必须运行固定的 unmapped-safety 子集并将总状态置为 `blocked`，直到补充映射或有带原因、审批角色和到期日的一次性例外。不得静默放行，也不得在普通 PR 中无界回退到全量评测。
 
+## 3.1 基线与阶段证据生命周期
+
+CI 证据分为三类，不能互相替代：
+
+- **冻结快照**：记录特定目标 SHA、采集时间、样本规则与边界、来源、采集器版本及内容校验值。快照以唯一 ID 存放，创建后不可覆盖；需要新基线时创建新 ID 并保留旧快照。
+- **当前观测**：可按维护需要刷新，用于描述采集时的 main、Branch Protection 和近期运行情况。它不是历史快照，也不能单独证明阶段完成。
+- **阶段复审/完成报告**：引用固定快照 ID 和 Spec revision，记录结论、未决项、命令和 artifact 校验值。重新复审须创建新报告，不覆盖旧报告。
+
+新 main commit 不会使冻结快照或已完成的历史复审失效。当前 PR 的 readiness 和 required checks 仍必须绑定并验证当前 PR `head_sha`。阶段 gate 校验其引用快照的身份、完整性和复审状态，不要求快照 SHA 等于 gate 运行时 `HEAD`。
+
+刷新当前观测不得修改冻结快照、历史失败日志、selector 固定样本或已发布阶段报告。快照 ID 冲突时必须失败，不得覆盖。`docs_troubleshoot` corpus baseline 是独立的文档评测数据；文档修改可按 docs 规则触发语料评估或刷新，但不因此重采 CI 历史基线或重开 Phase 0。
+
 ## 4. CI 门禁
 
 ### R1：PR readiness
@@ -62,7 +74,7 @@ CI 根据 Registry 和 changed files 选择最小安全检查集：格式、语�
 
 只有代码、配置或 `progress.yaml` 的阶段完成声明发生变更时，CI 才调用对应方向的 stage gate。阶段 gate 的命令、输入、状态字段和 evidence 由方向 Spec 与唯一 progress source 定义；CI 不重新解释阶段内容，也不把 Harness 阶段完成写成 CI 统一进度。
 
-阶段 gate 缺失、取消、超时、退出非零、head SHA 不匹配或 evidence 不可读取时，CI 结果为 `fail` 或 `blocked`。普通文档编辑没有阶段状态变化时，不触发阶段 gate，只执行适用的文档和语料检查。
+阶段 gate 缺失、取消、超时、退出非零、当前 PR head SHA 不匹配或 evidence 不可读取时，CI 结果为 `fail` 或 `blocked`。历史快照 SHA 与 gate 运行时 HEAD 不同不构成失败。普通文档编辑没有阶段状态变化时，不触发阶段 gate，只执行适用的文档和语料检查。
 
 ### R4：required checks 聚合
 
@@ -94,7 +106,27 @@ CI 根据 Registry 和 changed files 选择最小安全检查集：格式、语�
 - CI 文档不重复定义 Harness 的评分、Fixture、Replay 或 Episode 语义；
 - docs 变更遵守 git-docs evaluation 和 baseline 规则。
 
-## 7. 相关入口
+## 7. CI 迁移阶段验收
+
+CI 迁移阶段使用 `docs/specs/ci/progress.yaml` 中的唯一验收源。每项验收绑定 `acceptance_revision`；Spec 或验收语义改变时，旧验收只作为历史记录保留，并在进度源中记录 superseded 原因及替代项，不得沿用旧 gate 的通过结论。
+
+### Phase 0：证据生命周期与当前 CI 风险基线
+
+- 冻结快照、当前观测和阶段复审报告已分层，当前 Phase 0 快照具唯一 ID、目标 SHA、采集时间、采样边界、来源和可校验内容清单。
+- 快照不可覆盖；更新当前观测不会改动历史快照、失败日志或阶段报告。
+- gate 验证引用快照的身份、完整性和复审状态，不比较快照 SHA 与运行时 HEAD。
+- 文档 corpus baseline 与 CI 历史样本生命周期明确分离。
+- 新 Spec revision 下的独立复审已完成。没有新复审时 Phase 0 保持 `partial`。
+
+### Phase 1：Registry 与固定样本选择器
+
+- Registry v2 语义验证通过，负例覆盖重复规则、无效路径、过期例外及不安全 gate 配置。
+- Selector backtest 只消费带固定 ID 和来源 SHA 的样本输入；不得把每次查询最新 PR 的结果称为冻结回放。
+- 报告 mapped/unmapped 结果。缺少独立标注的误选/漏选指标必须保持未测量，不得推断通过。
+- R9 的 fork Secret 隔离及有效运行权限须有隔离远端执行证据；本地静态快照不能替代该证据。
+- Phase 1 只有所有新验收项通过后才能标记完成。
+
+## 8. 相关入口
 
 - [AI 审核与变更保障 Spec](../ai-review/spec.md)
 - [CI 子系统迁移计划](redesign-plan.md)

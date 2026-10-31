@@ -1,0 +1,18 @@
+{
+  "schema_version": "ci-r9-acceptance/v1",
+  "status": "blocked",
+  "head_sha": "8805e5e9a875eb6584aa12d1ce79917ee7e73076",
+  "scope": [
+    "workflow permissions",
+    "fork Secret isolation",
+    "external Action pinning",
+    "Docker base image digest pinning"
+  ],
+  "static_snapshot": "docs/specs/ci/evidence/phase0-r9-security-snapshot.json",
+  "findings_remain": true,
+  "runtime_acceptance": {
+    "status": "not_executed",
+    "reason": "This checkout cannot reproduce fork pull_request Secret isolation or GitHub Actions effective permissions; an isolated remote workflow run is required."
+  },
+  "conclusion": "Phase 1 R9 is not complete and must remain blocked until runtime evidence is attached."
+}
