@@ -1,0 +1,86 @@
+{
+  "schema_version": "ci-pr-check-registry/v1",
+  "mode": "report-only",
+  "deterministic_pr_checks": [
+    "pr-ready",
+    "lint",
+    "test",
+    "test-windows",
+    "typecheck",
+    "security",
+    "docker-smoke",
+    "docs-eval"
+  ],
+  "rules": [
+    {
+      "id": "context-module",
+      "paths": ["src/react_agent/context.py"],
+      "checks": ["lint", "test"],
+      "pytest_paths": ["tests/core/test_context_manage.py", "tests/test_context_manage.py"]
+    },
+    {
+      "id": "legacy-core-modules",
+      "paths": [
+        "src/react_agent/cot.py",
+        "src/react_agent/tot.py",
+        "src/react_agent/planner.py",
+        "src/react_agent/prompts.py",
+        "src/react_agent/orchestrator.py"
+      ],
+      "checks": ["lint", "test"],
+      "pytest_paths": ["tests/test_legacy_smoke.py", "tests/core/test_orchestrator_isolation.py"]
+    },
+    {
+      "id": "harness-runtime",
+      "paths": ["src/react_agent/harness/**", "tests/harness/**", "tests/evaluation/test_harness_*.py"],
+      "checks": ["lint", "test", "test-windows"],
+      "pytest_paths": ["tests/harness/", "tests/evaluation/test_harness_*.py", "tests/test_harness*.py", "tests/test_sandbox_security.py"]
+    },
+    {
+      "id": "docs-troubleshoot-app",
+      "paths": ["src/react_agent/apps/docs_troubleshoot/**", "tests/apps/docs_troubleshoot/**"],
+      "checks": ["lint", "test", "docs-eval"],
+      "pytest_paths": ["tests/apps/docs_troubleshoot/", "tests/test_docs_troubleshoot*.py"]
+    },
+    {
+      "id": "expense-app",
+      "paths": ["src/react_agent/apps/expense/**", "tests/apps/expense/**"],
+      "checks": ["lint", "test"],
+      "pytest_paths": ["tests/apps/expense/"]
+    },
+    {
+      "id": "github-app",
+      "paths": ["src/react_agent/apps/github/**", "tests/apps/github/**", "tests/test_github_delivery_workflow.py"],
+      "checks": ["lint", "test", "security"],
+      "pytest_paths": ["tests/apps/github/", "tests/test_github_delivery_workflow.py"]
+    },
+    {
+      "id": "workflow-config",
+      "paths": [".github/workflows/**"],
+      "checks": ["pr-ready", "lint", "test", "test-windows", "security", "docker-smoke"],
+      "pytest_paths": ["tests/test_pr_check_selector.py", "tests/test_harness_stage_scope.py"]
+    },
+    {
+      "id": "ci-contract",
+      "paths": ["scripts/ci/**", "docs/specs/ci/**", "docs/specs/registry.yaml", "progress.yaml"],
+      "checks": ["pr-ready", "lint", "test", "security"],
+      "pytest_paths": ["tests/test_ci_*.py", "tests/test_pr_check_selector.py", "tests/test_check_pr_ready.py"]
+    },
+    {
+      "id": "container-config",
+      "paths": ["Dockerfile", "Dockerfile.*", "docker-compose*.yml", "docker-compose*.yaml"],
+      "checks": ["security", "docker-smoke"]
+    },
+    {
+      "id": "project-config",
+      "paths": ["pyproject.toml", "setup.py", "setup.cfg", "requirements*.txt"],
+      "checks": ["lint", "test", "test-windows", "typecheck", "security"]
+    },
+    {
+      "id": "docs",
+      "paths": ["docs/**", "README.md", "CONTRIBUTING.md"],
+      "checks": ["pr-ready", "docs-eval"]
+    }
+  ],
+  "conditional_stage_gates": ["harness-stage"]
+}
