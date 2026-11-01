@@ -9,6 +9,7 @@ no required check was missed.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 from datetime import datetime, timezone
@@ -21,7 +22,8 @@ from select_pr_checks import load_registry, select_checks
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SAMPLE = ROOT / "docs/specs/ci/evidence/phase0-baseline.json"
-DEFAULT_OUTPUT = ROOT / "docs/specs/ci/evidence/selector-cost-backtest.json"
+DEFAULT_LABELS = ROOT / "docs/specs/ci/evidence/selector-expected-checks-100.json"
+DEFAULT_OUTPUT = ROOT / "docs/specs/ci/evidence/selector-cost-backtest-labelled.json"
 REPO = "weihuaguo270-ops/react-agent"
 
 JOB_TO_CHECK = {
@@ -70,18 +72,18 @@ def fetch_run(head_sha: str, workflow: str = "test.yml") -> dict[str, Any] | Non
     return runs[0] if runs else None
 
 
-def replay(sample: dict[str, Any], sample_size: int) -> dict[str, Any]:
+def replay(sample: dict[str, Any], labels: dict[str, Any], sample_size: int) -> dict[str, Any]:
     prs = sample.get("pull_requests", {}).get("samples", [])[:sample_size]
+    labels_by_pr = {row["pr"]: row for row in labels.get("rows", [])}
     registry = load_registry()
     rows: list[dict[str, Any]] = []
     for pr in prs:
         number = pr["number"]
-        files_payload = gh_json(
-            f"repos/{REPO}/pulls/{number}/files?per_page=100"
-        )
-        changed_files = sorted(
-            {item["filename"] for item in files_payload if item.get("filename")}
-        )
+        label = labels_by_pr.get(number)
+        if not label or label.get("head_sha") != pr.get("head_sha") or label.get("input_status") != "current_head_matches_sample":
+            rows.append({"pr": number, "head_sha": pr.get("head_sha"), "measurement": "blocked_stale_or_missing_label"})
+            continue
+        changed_files = label["changed_paths"]
         selection = select_checks(
             changed_files,
             registry,
@@ -90,6 +92,8 @@ def replay(sample: dict[str, Any], sample_size: int) -> dict[str, Any]:
             pr_number=number,
             event_name="pull_request",
         )
+        expected = {"checks": label["expected_checks"], "class": label["change_class"]}
+        missing_expected = sorted(set(expected["checks"]) - set(selection["selected_checks"]))
         run = fetch_run(pr["head_sha"])
         if not run:
             rows.append(
@@ -100,6 +104,9 @@ def replay(sample: dict[str, Any], sample_size: int) -> dict[str, Any]:
                     "status": selection["status"],
                     "unmapped_paths": selection["unmapped_paths"],
                     "selected_checks": selection["selected_checks"],
+                    "expected_checks": expected["checks"],
+                    "change_class": expected["class"],
+                    "missing_expected_checks": missing_expected,
                     "run_id": None,
                     "measurement": "unavailable",
                 }
@@ -120,7 +127,7 @@ def replay(sample: dict[str, Any], sample_size: int) -> dict[str, Any]:
             for job in jobs_payload.get("jobs", [])
         ]
         measured = [job for job in jobs if job["duration_seconds"] is not None]
-        full_wall = seconds(run["created_at"], run["updated_at"])
+        full_wall = seconds(run.get("run_started_at") or run["created_at"], run["updated_at"])
         selected = set(selection["selected_checks"])
         selected_jobs = [job for job in measured if job["check"] in selected]
         subset_wall = max((job["duration_seconds"] for job in selected_jobs), default=None)
@@ -145,6 +152,9 @@ def replay(sample: dict[str, Any], sample_size: int) -> dict[str, Any]:
                 "status": selection["status"],
                 "unmapped_paths": selection["unmapped_paths"],
                 "selected_checks": selection["selected_checks"],
+                "expected_checks": expected["checks"],
+                "change_class": expected["class"],
+                "missing_expected_checks": missing_expected,
                 "run_id": run["id"],
                 "run_conclusion": run.get("conclusion"),
                 "full_wall_seconds": round(full_wall, 2),
@@ -166,15 +176,26 @@ def replay(sample: dict[str, Any], sample_size: int) -> dict[str, Any]:
     failures_outside_selection = sorted(
         {item for row in rows for item in row.get("missed_historical_failures", [])}
     )
+    rows_with_missing_expected = [row for row in rows if row.get("missing_expected_checks")]
+    missing_expected_checks = sorted(
+        {item for row in rows for item in row.get("missing_expected_checks", [])}
+    )
     mapped_rows = [row for row in rows if row.get("status") == "mapped"]
     mapped_without_duration = [
         row for row in mapped_rows if row.get("estimated_improvement") is None
     ]
+    historical_thresholds_met = (
+        not rows_with_missing_expected and bool(improvements) and median(improvements) >= 0.2
+    )
     return {
-        "schema_version": "ci-selector-cost-backtest/v1",
+        "schema_version": "ci-selector-cost-backtest/v2",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "repository": REPO,
         "sample_source": "docs/specs/ci/evidence/phase0-baseline.json",
+        "expected_check_labels": "docs/specs/ci/evidence/selector-expected-checks-100.json",
+        "expected_check_labels_sha256": hashlib.sha256(
+            (ROOT / "docs/specs/ci/evidence/selector-expected-checks-100.json").read_bytes()
+        ).hexdigest(),
         "sample_size_requested": sample_size,
         "sample_size_replayed": len(rows),
         "selector_mode": registry.get("mode", "report-only"),
@@ -184,15 +205,21 @@ def replay(sample: dict[str, Any], sample_size: int) -> dict[str, Any]:
             "mapped_prs_without_duration_estimate": len(mapped_without_duration),
             "median_estimated_improvement": round(median(improvements), 4) if improvements else None,
             "historical_failures_outside_selection": failures_outside_selection,
-            "zero_missed_required_checks_proven": False,
+            "rows_with_missing_expected_checks": len(rows_with_missing_expected),
+            "missing_expected_checks": missing_expected_checks,
+            "zero_expected_check_misses": not rows_with_missing_expected,
+            "historical_20_percent_threshold_met": bool(improvements) and median(improvements) >= 0.2,
+            "historical_thresholds_met": historical_thresholds_met,
+            "report_only_observation_complete": False,
             "subset_gate_eligible": False,
         },
-        "conclusion": "blocked",
+        "conclusion": "blocked" if not historical_thresholds_met else "observation_required",
         "conclusion_boundary": (
             "Historical job durations estimate a possible wall-time reduction. "
-            "Failures outside a selected set are diagnostic only: the repository "
-            "has no independent expected-check label set, so they do not prove a "
-            "selector miss or safety. The selector remains report-only."
+            "Expected checks come from scripts/ci/expected_pr_checks.py, independently "
+            "of the selector registry. Historical failures outside that label set are "
+            "diagnostic only. Duration estimates use observed historical job durations; "
+            "they are not a report-only observation window. The selector remains report-only."
         ),
         "rows": rows,
     }
@@ -201,11 +228,15 @@ def replay(sample: dict[str, Any], sample_size: int) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sample", type=Path, default=DEFAULT_SAMPLE)
+    parser.add_argument("--labels", type=Path, default=DEFAULT_LABELS)
     parser.add_argument("--sample-size", type=int, default=20)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
     sample = json.loads(args.sample.read_text(encoding="utf-8"))
-    report = replay(sample, args.sample_size)
+    labels = json.loads(args.labels.read_text(encoding="utf-8"))
+    if labels.get("metrics", {}).get("zero_expected_check_misses") is not True:
+        raise SystemExit("expected-check label evidence is stale, incomplete, or has misses")
+    report = replay(sample, labels, args.sample_size)
     if args.output.exists():
         raise SystemExit(f"refusing to overwrite existing evidence: {args.output}")
     args.output.parent.mkdir(parents=True, exist_ok=True)

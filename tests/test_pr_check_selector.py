@@ -78,6 +78,13 @@ def test_shared_test_configuration_falls_back_to_full_suite():
     assert report["selected_test_paths"] == ["tests/"]
 
 
+def test_docs_corpus_baseline_uses_docs_checks_without_source_test_subset():
+    report = select_checks(["src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json"])
+    assert report["status"] == "mapped"
+    assert report["selected_checks"] == ["pr-ready", "docs-eval"]
+    assert report["selected_test_paths"] == []
+
+
 def test_missing_or_mismatched_head_input_falls_back_blocked():
     from scripts.ci.select_pr_checks import fallback_report
 

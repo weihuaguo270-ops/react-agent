@@ -33,7 +33,7 @@
     {
       "id": "harness-runtime",
       "paths": ["src/react_agent/harness/**", "tests/harness/**", "tests/evaluation/test_harness_*.py"],
-      "checks": ["lint", "test", "test-windows"],
+      "checks": ["lint", "test", "test-windows", "typecheck"],
       "pytest_paths": ["tests/harness/", "tests/evaluation/test_harness_*.py", "tests/test_harness*.py", "tests/test_sandbox_security.py"]
     },
     {
@@ -57,14 +57,26 @@
     {
       "id": "workflow-config",
       "paths": [".github/workflows/**"],
-      "checks": ["pr-ready", "lint", "test", "test-windows", "security", "docker-smoke"],
+      "checks": ["pr-ready", "lint", "test", "test-windows", "typecheck", "security", "docker-smoke", "docs-eval"],
       "pytest_paths": ["tests/test_pr_check_selector.py", "tests/test_harness_stage_scope.py"]
+    },
+    {
+      "id": "ci-implementation",
+      "paths": ["scripts/ci/**"],
+      "checks": ["pr-ready", "lint", "test", "test-windows", "typecheck", "security", "docker-smoke", "docs-eval"],
+      "pytest_paths": ["tests/test_ci_*.py", "tests/test_pr_check_selector.py", "tests/test_check_pr_ready.py"]
     },
     {
       "id": "ci-contract",
       "paths": ["scripts/ci/**", "docs/specs/ci/**", "docs/specs/registry.yaml", "progress.yaml"],
       "checks": ["pr-ready", "lint", "test", "security"],
       "pytest_paths": ["tests/test_ci_*.py", "tests/test_pr_check_selector.py", "tests/test_check_pr_ready.py"]
+    },
+    {
+      "id": "codex-skills",
+      "paths": [".codex/**"],
+      "checks": ["pr-ready", "lint", "test", "test-windows", "typecheck", "security", "docker-smoke", "docs-eval"],
+      "pytest_paths": ["tests/test_spec_workflow.py", "tests/test_stage_gate_preflight.py"]
     },
     {
       "id": "container-config",

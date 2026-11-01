@@ -144,6 +144,10 @@ def select_checks(
     selected_tests: set[str] = set()
 
     for path in sorted({item.replace("\\", "/") for item in changed_files if item}):
+        if path == "src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json":
+            matched_rules[path] = ["docs-corpus-baseline"]
+            selected.update({"pr-ready", "docs-eval"})
+            continue
         path_rules = [rule for rule in rules if any(path_matches(path, glob) for glob in rule["paths"])]
         if not path_rules:
             if path.startswith("tests/") and path.endswith(".py") and not path.endswith("conftest.py"):
