@@ -20,6 +20,11 @@ REPORT_DIR = ROOT / "artifacts/ci/stage-gates"
 PROGRESS = ROOT / "docs/specs/ci/progress.yaml"
 
 
+def canonical_bytes(path: Path) -> bytes:
+    """Hash text evidence independently of the checkout's newline policy."""
+    return path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
 def verify_snapshot(snapshot_id: str, expected_spec_revision: str | None = None) -> dict:
     snapshots_root = (ROOT / "docs/specs/ci/evidence/snapshots").resolve()
     snapshot_dir = (snapshots_root / snapshot_id).resolve()
@@ -60,7 +65,7 @@ def verify_snapshot(snapshot_id: str, expected_spec_revision: str | None = None)
         return {"status": "failed", "reason": "manifest target SHA does not match baseline content"}
     if not isinstance(source_hash, str) or not re.fullmatch(r"[0-9a-f]{64}", source_hash):
         return {"status": "failed", "reason": "snapshot source baseline hash is missing or invalid"}
-    if source_hash != hashlib.sha256(baseline_path.read_bytes()).hexdigest():
+    if source_hash != hashlib.sha256(canonical_bytes(baseline_path)).hexdigest():
         return {"status": "failed", "reason": "snapshot source baseline hash does not match the frozen baseline"}
     artifacts = manifest.get("artifacts")
     if not isinstance(artifacts, dict) or not artifacts:
@@ -70,8 +75,9 @@ def verify_snapshot(snapshot_id: str, expected_spec_revision: str | None = None)
         artifact_path = (snapshot_dir / name).resolve()
         if artifact_path.parent != snapshot_dir or not artifact_path.is_file():
             return {"status": "failed", "reason": f"snapshot artifact is missing or unsafe: {name}"}
-        digest = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
-        if digest != metadata.get("sha256") or artifact_path.stat().st_size != metadata.get("bytes"):
+        canonical = canonical_bytes(artifact_path)
+        digest = hashlib.sha256(canonical).hexdigest()
+        if digest != metadata.get("sha256") or len(canonical) != metadata.get("bytes"):
             return {"status": "failed", "reason": f"snapshot artifact integrity mismatch: {name}"}
         verified.append(name)
     return {

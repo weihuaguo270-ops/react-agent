@@ -38,11 +38,12 @@ def gh_json(endpoint: str) -> object:
 
 
 def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    return hashlib.sha256(canonical_bytes(path)).hexdigest()
+
+
+def canonical_bytes(path: Path) -> bytes:
+    """Hash text evidence independently of the checkout's newline policy."""
+    return path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
 
 def iso_minutes(start: str, end: str) -> float:
@@ -507,7 +508,7 @@ def main() -> int:
             },
             "source_baseline_sha256": sha256_file(source_dir / "phase0-baseline.json"),
             "artifacts": {
-                name: {"sha256": sha256_file(output_dir / name), "bytes": (output_dir / name).stat().st_size}
+                name: {"sha256": sha256_file(output_dir / name), "bytes": len(canonical_bytes(output_dir / name))}
                 for name in source_files
             },
         }
@@ -653,7 +654,7 @@ def main() -> int:
         },
         "source": {"kind": "github_api_collection", "repository": REPO},
         "artifacts": {
-            path.name: {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+            path.name: {"sha256": sha256_file(path), "bytes": len(canonical_bytes(path))}
             for path in sorted(output_dir.iterdir())
             if path.is_file()
         },
