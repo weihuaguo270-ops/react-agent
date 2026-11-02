@@ -4,7 +4,7 @@
 
 **状态：** Active
 **版本：** v1.5
-**最后更新：** 2026-10-30
+**最后更新：** 2026-11-02
 **负责人：** 仓库维护者
 
 本文档定义 CI 如何为 [AI 审核与变更保障 Spec](../ai-review/spec.md) 提供确定性执行结果。CI 是被总流程调用的执行子系统，不定义整个提交流程、AI findings、人工审批或发布观察。
@@ -68,7 +68,9 @@ CI 证据分为三类，不能互相替代：
 
 ### R2：变更相关检查
 
-CI 根据 Registry 和 changed files 选择最小安全检查集：格式、语法和 lint；受影响单测、导入、Schema 或最小离线回归；配置、工作流或安全边界变更的专项检查；以及适用的 Docker 或跨仓契约 smoke。当前阶段只生成 report-only scope artifact；映射明确时记录相关 subset，映射不明确时记录完整确定性 PR CI 回退。只有观察期证明没有漏选且有足够耗时收益后，才允许把选择结果接入 PR gate。
+CI 根据 Registry 和 changed files 选择最小安全检查集：格式、语法和 lint；受影响单测、导入、Schema 或最小离线回归；配置、工作流或安全边界变更的专项检查；以及适用的 Docker 或跨仓契约 smoke。当前阶段只生成 report-only scope artifact；映射明确时记录相关 subset，映射不明确时记录完整确定性 PR CI 回退。subset gate 启用前，report-only 观察须至少持续 14 个连续日历日、覆盖 10 个不同 PR `head_sha` 和 3 种确实缩小候选检查集的 Registry 规则类别；同 SHA 重跑不增加样本数，且不得为凑样本强制重跑。
+
+每个样本须校验 `base_sha/head_sha` 与 selector artifact、独立 expected-check 标签及对应完整 CI 运行一致；selected checks 相对 expected checks 的漏选数必须为零。失败、取消和缺少耗时的样本仍用于漏选统计；缺失输入或 SHA 不匹配标记为无效/blocked，不能计作通过。耗时收益至少需有 10 个不同 SHA 的可比成功运行：只比较同一 head、同一 workflow run attempt 中成功且时间戳完整的适用确定性检查，分别求完整检查集和候选子集的累计 job runtime（`completed_at - started_at`，不含排队时间），逐样本计算 `1 - subset/full`，中位数至少为 20%。同时报告端到端耗时；report-only 的累计 job runtime 改善仅为估算，不代表 PR 墙钟延迟已经下降。失败、取消、缺失 job、未映射及不可配对样本和排除原因必须保留在报告中；不足门槛、零漏选无法证明或证据不可复核时继续 report-only，不得启用 subset gate。
 
 ### R3：阶段 gate
 
