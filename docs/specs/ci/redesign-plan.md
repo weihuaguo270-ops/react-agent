@@ -53,9 +53,19 @@ Registry 只维护路径到规则和 gate 入口的映射。当前迁移先以 r
 
 新选择器和聚合器先 report-only，与现有 workflow 在相同 PR head SHA 上比较选择结果、状态语义、失败归因和时长。观察窗口内不改变旧 required checks。
 
+观察窗口只有同时满足以下条件才算完成：
+
+- 从启用 report-only 观测之日起至少经过 14 个连续日历日，并收集至少 10 个不同 PR `head_sha`；同一 SHA 的重跑只算一个样本，不为凑数强制重跑 PR；
+- 样本至少覆盖 Registry 中 3 种可缩减规则类别；每类至少有一个样本的候选检查集严格小于该 PR 的完整确定性检查集；
+- 每个用于漏选判断的样本都以事件中的 `base_sha/head_sha` 为准，head 与 selector artifact、预期检查标签及完整 CI 运行一致；将 selector 选中的检查与独立 `expected-check` 标签比较，漏选数必须为零。取消、失败和缺少耗时的运行仍参与漏选统计；输入缺失或 SHA 不匹配的样本标为无效/blocked，不能当作通过样本；
+- 至少 10 个不同 SHA 有可比的成功运行耗时。只使用同一 PR head、同一 workflow run attempt 中成功完成且时间戳完整的适用确定性检查；全量值为完整确定性检查集的 job runtime 总和，候选值为 selector 所选检查的 job runtime 总和，均以 `completed_at - started_at` 计算，排除排队时间。逐 SHA 计算 `1 - 候选值 / 全量值`，其样本中位数须至少为 20%。另行报告端到端耗时；report-only 阶段的 job runtime 节省是估算，不宣称已经缩短 PR 墙钟等待时间；
+- 失败、取消、重跑、缺失 job、未映射路径和无法配对的耗时须保留在报告中并说明处理方式；不得通过删除困难样本、覆盖旧报告或把 evidence-only 检查计入候选节省来达标。
+
+报告至少包含窗口起止日、样本 SHA/PR、规则类别、selected/expected/missing checks、完整与候选 job runtime、逐样本改善率、中位数、失败/取消/无效样本及排除原因。任一门槛未达到或证据不可复核时，Phase 2 继续 report-only，Phase 3 不得启用 subset gate。
+
 ### Phase 3：PR 快门禁
 
-启用代表性环境加受影响 subset 的快速硬门禁前，必须完成 report-only 观察。固定样本没有漏选、选择器失败时稳定回退完整确定性 PR CI，且全映射 PR 的中位验证耗时至少下降 20% 后，才允许切换。观察期仍保留现有完整 OS/Python PR 检查；切换后，未被选择的矩阵和真实 LLM 继续作为 evidence-only。Evaluation/Harness 长测不进入普通 PR 回退。
+启用代表性环境加受影响 subset 的快速硬门禁前，必须完成上述 report-only 观察窗口；至少 10 个不同 SHA 的有效样本中 expected-check 漏选为零，且候选检查累计 job runtime 的中位改善至少为 20%。还必须证明选择器出错、输入不可读或映射不清时稳定回退到完整确定性 PR CI。任何条件未满足就继续 report-only。切换前保留现有完整 OS/Python PR 检查；切换后，未被选择的矩阵和真实 LLM 继续作为 evidence-only。Evaluation/Harness 长测不进入普通 PR 回退。
 
 ### Phase 4：Branch Protection 切换
 
