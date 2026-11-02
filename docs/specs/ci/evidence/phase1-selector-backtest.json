@@ -1,0 +1,1750 @@
+{
+  "schema_version": "ci-selector-backtest/v1",
+  "generated_at": "2026-10-30T12:41:42.207309+00:00",
+  "repository": "weihuaguo270-ops/react-agent",
+  "sample_size": 100,
+  "registry_validation": {
+    "status": "pass",
+    "errors": []
+  },
+  "metrics": {
+    "changed_files": 1534,
+    "mapped_files": 1017,
+    "unmapped_files": 517,
+    "mapped_coverage": 0.663,
+    "false_positive_rules": null,
+    "missed_expected_rules": null
+  },
+  "selected_rules": [
+    "ai-review-artifacts",
+    "ci-pr-readiness",
+    "docs-corpus",
+    "harness-stage-gate",
+    "python-affected-tests",
+    "workflow-security"
+  ],
+  "samples": [
+    {
+      "pr": 183,
+      "head_sha": "1f4f47a90de6a4936a8041b95d4071f5cf2d5e34",
+      "changed_files": 18,
+      "status": "blocked",
+      "unmapped_paths": [
+        "docs/specs/ci/evidence/archive/2026-10-22/phase0-baseline.json",
+        "docs/specs/ci/evidence/archive/2026-10-22/phase0-baseline.md",
+        "docs/specs/ci/evidence/archive/2026-10-22/phase0-sample-index.md"
+      ],
+      "selected_rules": [
+        "ai-review-artifacts",
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 182,
+      "head_sha": "544769af769aaaebb407ac24d480cf5732d6692f",
+      "changed_files": 13,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ai-review-artifacts",
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 181,
+      "head_sha": "66451049eaccc471dfc1e37fd0e6b8f08a47b735",
+      "changed_files": 5,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 180,
+      "head_sha": "bcbef1f1601d2685aa576efac2cf512cacb57f34",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 179,
+      "head_sha": "955fc310eeb3ca31ea65fe4fe5f81d2a37acafe2",
+      "changed_files": 6,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 178,
+      "head_sha": "b5c6e51974915d5a29f391767f874ad416ffda31",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 177,
+      "head_sha": "4e8ca41e0ae8a7c39d5d21056f7c44b00e7ff91b",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 176,
+      "head_sha": "d7dc5fef5afc1e40f41172ae68d5ba84ea3964a8",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 175,
+      "head_sha": "e9ad6e87571f1c39ea915696f902024b2f949689",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 174,
+      "head_sha": "ca91798fffaa73b07a0e415971a2b69427847dc0",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 173,
+      "head_sha": "3351e63c45fcd76d94012c4cfac747670b14b8d1",
+      "changed_files": 1,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 172,
+      "head_sha": "d93914808956ec4a6b9a7c24090102c2e7fe5059",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 171,
+      "head_sha": "122d432b0930b9fb356ccec3b3ad4fb96b92fe58",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus"
+      ]
+    },
+    {
+      "pr": 170,
+      "head_sha": "802d8698af4db271b528798107d6a0de0ce192ab",
+      "changed_files": 10,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 169,
+      "head_sha": "4d4a2d8d529873c2eb5213315e5766b1ed6f5c37",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 168,
+      "head_sha": "4d35c8d7684cd7d6850bec1678e1d82a14e7a541",
+      "changed_files": 4,
+      "status": "blocked",
+      "unmapped_paths": [
+        "scripts/eval/smoke/build_p2_acceptance_report.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 167,
+      "head_sha": "a180cf26b5066384ccfe7ef85e55a3888cec05fd",
+      "changed_files": 6,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".codex/skills/spec-progress-workflow/SKILL.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 166,
+      "head_sha": "57e9435c6b5ac3b1fef833658da3d853508d7f10",
+      "changed_files": 12,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".codex/skills/spec-progress-workflow/SKILL.md",
+        ".codex/skills/spec-progress-workflow/references/workflow.md",
+        ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py",
+        ".codex/skills/spec-stage-acceptance/SKILL.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 165,
+      "head_sha": "ccd9bda18d2e1be71131e283fcf4841eca69bf26",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 164,
+      "head_sha": "4516abc76fa1d4f4ffb1c2043a5668373fa727dc",
+      "changed_files": 47,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".codex/skills/spec-progress-workflow/SKILL.md",
+        ".codex/skills/spec-progress-workflow/references/workflow.md",
+        ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py",
+        ".codex/skills/spec-stage-acceptance/SKILL.md",
+        "artifacts/harness/baseline-compare-latest.json",
+        "artifacts/harness/p4-acceptance-report.json",
+        "artifacts/software-delivery/repair_then_pass/acceptance.json",
+        "scripts/eval/failure/pytest_permissive_tmp.py",
+        "scripts/eval/failure/run_step_watcher_evidence.py",
+        "scripts/workflow_helper.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 163,
+      "head_sha": "cf17483d07766350eadf0e8a3a9c42a7b784de81",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 162,
+      "head_sha": "fc785cc629eb0182166b3f52cb15cffce89ae0f3",
+      "changed_files": 94,
+      "status": "blocked",
+      "unmapped_paths": [
+        "Makefile",
+        "cleanup.ps1",
+        "scripts/README_CLEANUP.md",
+        "scripts/cleanup_temp.py",
+        "scripts/eval/acceptance/harness_closed_loop.py",
+        "scripts/eval/acceptance/materialize_acceptance_evidence.py",
+        "scripts/eval/failure/collect_repair_evidence.py",
+        "scripts/eval/failure/run_failure_regression_pipeline.py",
+        "scripts/eval/smoke/build_p2_acceptance_report.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 161,
+      "head_sha": "3b2053bf746901d596bc36eb6e12fc8a1fc98a1a",
+      "changed_files": 100,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".codex/skills/spec-progress-workflow/SKILL.md",
+        ".codex/skills/spec-progress-workflow/agents/openai.yaml",
+        ".codex/skills/spec-progress-workflow/references/progress-contract.md",
+        ".codex/skills/spec-progress-workflow/references/workflow.md",
+        ".codex/skills/spec-stage-acceptance/README.md",
+        ".codex/skills/spec-stage-acceptance/SKILL.md",
+        ".codex/skills/spec-stage-acceptance/agents/openai.yaml",
+        ".codex/skills/spec-stage-acceptance/references/progress-contract.md",
+        "DOCS_REORGANIZATION_SUMMARY.md",
+        "README.md",
+        "REORGANIZATION_SUMMARY.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate"
+      ]
+    },
+    {
+      "pr": 160,
+      "head_sha": "c08f12de68c5370fc07bfc970e171d89887955c6",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 159,
+      "head_sha": "e8b23d186a63c9fdc1cf7553f834498bc107241d",
+      "changed_files": 100,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".codex/skills/spec-progress-workflow/SKILL.md",
+        ".codex/skills/spec-progress-workflow/agents/openai.yaml",
+        ".codex/skills/spec-progress-workflow/references/progress-contract.md",
+        ".codex/skills/spec-progress-workflow/references/workflow.md",
+        ".codex/skills/spec-stage-acceptance/README.md",
+        ".codex/skills/spec-stage-acceptance/SKILL.md",
+        ".codex/skills/spec-stage-acceptance/agents/openai.yaml",
+        ".codex/skills/spec-stage-acceptance/references/progress-contract.md",
+        "DOCS_REORGANIZATION_SUMMARY.md",
+        "Makefile",
+        "README.md",
+        "REORGANIZATION_SUMMARY.md",
+        "cleanup.ps1"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate"
+      ]
+    },
+    {
+      "pr": 158,
+      "head_sha": "c921abeca3e3605655a1d4b63aaa51aa55d44f39",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 157,
+      "head_sha": "92c3527d1bd400f68c5badb8b24604eb3b949c1f",
+      "changed_files": 6,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 156,
+      "head_sha": "3f33e1d87927aea5099d2f660f32cc928c464adb",
+      "changed_files": 19,
+      "status": "blocked",
+      "unmapped_paths": [
+        "P5_CHECKLIST.md",
+        "scripts/eval/acceptance/harness_closed_loop.py",
+        "scripts/eval/integration/agent_to_eval.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 155,
+      "head_sha": "9d3676883b9372cb0b0f8154e6df5b6e9ce4343d",
+      "changed_files": 7,
+      "status": "blocked",
+      "unmapped_paths": [
+        "scripts/eval/p4/generate_baseline_compare.py",
+        "scripts/eval/p4/generate_p4_report.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 154,
+      "head_sha": "1dd95c79aea7095a1d318f2c1efd04ceb96353de",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 153,
+      "head_sha": "8b722e573bcf488cc2c78fa66113d48e2930b6cf",
+      "changed_files": 15,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py",
+        "scripts/workflow_helper.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 152,
+      "head_sha": "c5d986d5bd6c697667d92597cb6267da4d7bc9be",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 151,
+      "head_sha": "ac9f1f0b84976ade0849f8abd5596f9f5746ca24",
+      "changed_files": 43,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".env.example",
+        "README.md",
+        "docker-compose.yml",
+        "llm_config.example.json",
+        "schemas/evaluation_episode.schema.json",
+        "schemas/runtime_observability.schema.json",
+        "scripts/eval/smoke/build_p2_acceptance_report.py",
+        "scripts/eval/smoke/run_p2_r1_cross_path_evidence.py",
+        "scripts/eval/smoke/run_p2_r6_redis_exporter_evidence.py",
+        "scripts/eval/smoke/run_real_idempotency_evidence.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 150,
+      "head_sha": "3de7cc85369fa75feda544f4498f628dfb34c598",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 149,
+      "head_sha": "580c5d5aeeb577de13c613303118a5a3aae6fb90",
+      "changed_files": 7,
+      "status": "blocked",
+      "unmapped_paths": [
+        "scripts/eval/smoke/run_docker_replay_evidence.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 148,
+      "head_sha": "2535f80d206182367e8fdc28665c576ed1a89923",
+      "changed_files": 6,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 147,
+      "head_sha": "cb0734576400c22c0102c6cdefa2609556db0578",
+      "changed_files": 7,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 146,
+      "head_sha": "9a0da87b9967fdd8fc6d713bde9127249f4f8b95",
+      "changed_files": 6,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 145,
+      "head_sha": "a62aced9b137e9d06251966588b1d3ef11617024",
+      "changed_files": 10,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 144,
+      "head_sha": "de46e0ec591492c610c4bb2905b7d96cdb065ab3",
+      "changed_files": 8,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 143,
+      "head_sha": "64210b35b81a883be559d13108f83336b7b0a844",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 142,
+      "head_sha": "ba081ed2c746eec465829e615fee7bbcc199e33f",
+      "changed_files": 39,
+      "status": "blocked",
+      "unmapped_paths": [
+        "README.md",
+        "schemas/README.md",
+        "schemas/evaluation_episode.schema.json",
+        "schemas/fixture_manifest.schema.json"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 141,
+      "head_sha": "a80ea55adc3be0046cb085bddafda59fc566fae9",
+      "changed_files": 5,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 140,
+      "head_sha": "83c0c02f73dd8fd419c5f888e895325aa28734c4",
+      "changed_files": 3,
+      "status": "blocked",
+      "unmapped_paths": [
+        "AGENTS.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 139,
+      "head_sha": "015cebbc022f67ca15fe234afd792a4cb1093e5e",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 138,
+      "head_sha": "fac0468d665ee8f94abe131db0a40010cc627846",
+      "changed_files": 4,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 137,
+      "head_sha": "2d433e1f32aee1e76f926242494c7e4e74624659",
+      "changed_files": 1,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 136,
+      "head_sha": "c11418c633a886b0100d466ce913ef05c3eb1e40",
+      "changed_files": 28,
+      "status": "blocked",
+      "unmapped_paths": [
+        "demos/demo_expense_workflow.py",
+        "fixtures/expense/business_cases_expanded_v1.json",
+        "fixtures/expense/expense_policy_v2.json",
+        "scripts/eval/acceptance/run_expense_candidate_eval.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 135,
+      "head_sha": "a74bbfb7f6fe53648e17f5664d1521e103bd3453",
+      "changed_files": 24,
+      "status": "blocked",
+      "unmapped_paths": [
+        "fixtures/expense/business_cases_expanded_v1.json",
+        "fixtures/expense/expense_policy_v2.json",
+        "scripts/eval/acceptance/run_expense_candidate_eval.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 134,
+      "head_sha": "0b42171a14166d4036607708e7dbba6d99ba9718",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 133,
+      "head_sha": "3a8c2269804af2d37782bc39e1a2e8ae16cc04b6",
+      "changed_files": 4,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 132,
+      "head_sha": "423d4628618191e432e6d6ec6d798b0cb111b6f4",
+      "changed_files": 9,
+      "status": "blocked",
+      "unmapped_paths": [
+        "demos/demo_expense_workflow.py",
+        "demos/demo_rag.py",
+        "fixtures/README.md",
+        "fixtures/expense/business_cases.json",
+        "fixtures/expense/expense_claims.json",
+        "fixtures/expense/expense_policy.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 131,
+      "head_sha": "0eaa56de10ad55e8251fc5ba516c25bf6ef80f1d",
+      "changed_files": 41,
+      "status": "blocked",
+      "unmapped_paths": [
+        "CHANGELOG.md",
+        "README.md",
+        "demos/demo_workflow.py",
+        "experiments/langgraph/README.md",
+        "experiments/langgraph/__init__.py",
+        "experiments/langgraph/demo_checkpoint_hitl.py",
+        "experiments/langgraph/graph/agent.py",
+        "experiments/langgraph/graph/context.py",
+        "experiments/langgraph/graph/dashboard.py",
+        "experiments/langgraph/graph/eval.py",
+        "experiments/langgraph/graph/harness/__init__.py",
+        "experiments/langgraph/graph/harness/recorder.py",
+        "experiments/langgraph/graph/harness/replay.py",
+        "experiments/langgraph/graph/harness/sandbox.py",
+        "experiments/langgraph/graph/intent.py",
+        "experiments/langgraph/graph/llm.py",
+        "experiments/langgraph/graph/main.py",
+        "experiments/langgraph/graph/mcp.py",
+        "experiments/langgraph/graph/memory.py",
+        "experiments/langgraph/graph/orchestrator.py",
+        "experiments/langgraph/graph/prompts.py",
+        "experiments/langgraph/graph/rag.py",
+        "experiments/langgraph/graph/reasoning.py",
+        "experiments/langgraph/graph/resilience.py",
+        "experiments/langgraph/graph/safety.py",
+        "experiments/langgraph/graph/tools.py",
+        "experiments/langgraph/graph/tot.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 130,
+      "head_sha": "686265894590e4d85eda321ef1ae9602e6556d1b",
+      "changed_files": 18,
+      "status": "blocked",
+      "unmapped_paths": [
+        "CHANGELOG.md",
+        "README.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 129,
+      "head_sha": "f501d29d0c2eec68ec324076f28380972ece7239",
+      "changed_files": 41,
+      "status": "blocked",
+      "unmapped_paths": [
+        "CHANGELOG.md",
+        "README.md",
+        "demos/demo_workflow.py",
+        "experiments/langgraph/README.md",
+        "experiments/langgraph/__init__.py",
+        "experiments/langgraph/demo_checkpoint_hitl.py",
+        "experiments/langgraph/graph/agent.py",
+        "experiments/langgraph/graph/context.py",
+        "experiments/langgraph/graph/dashboard.py",
+        "experiments/langgraph/graph/eval.py",
+        "experiments/langgraph/graph/harness/__init__.py",
+        "experiments/langgraph/graph/harness/recorder.py",
+        "experiments/langgraph/graph/harness/replay.py",
+        "experiments/langgraph/graph/harness/sandbox.py",
+        "experiments/langgraph/graph/intent.py",
+        "experiments/langgraph/graph/llm.py",
+        "experiments/langgraph/graph/main.py",
+        "experiments/langgraph/graph/mcp.py",
+        "experiments/langgraph/graph/memory.py",
+        "experiments/langgraph/graph/orchestrator.py",
+        "experiments/langgraph/graph/prompts.py",
+        "experiments/langgraph/graph/rag.py",
+        "experiments/langgraph/graph/reasoning.py",
+        "experiments/langgraph/graph/resilience.py",
+        "experiments/langgraph/graph/safety.py",
+        "experiments/langgraph/graph/tools.py",
+        "experiments/langgraph/graph/tot.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 128,
+      "head_sha": "47174c2e9828cd31baef53f96084c5ded323f8ca",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 127,
+      "head_sha": "e3c0f06ef5b8e7e138c4d07fde4f3bfb62575b97",
+      "changed_files": 1,
+      "status": "blocked",
+      "unmapped_paths": [
+        "README.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness"
+      ]
+    },
+    {
+      "pr": 126,
+      "head_sha": "ed679eaf77efdb572e8ef99e4c6b0e1441a81fdf",
+      "changed_files": 100,
+      "status": "blocked",
+      "unmapped_paths": [
+        "CHANGELOG.md",
+        "README.md",
+        "demos/README.md",
+        "demos/demo_context.py",
+        "demos/demo_docs_troubleshoot.py",
+        "demos/demo_expense_workflow.py",
+        "demos/demo_mcp_mock.py",
+        "demos/demo_rag.py",
+        "demos/demo_record_check.py",
+        "demos/demo_workflow.py",
+        "demos/run_github_delivery.py",
+        "eval/eval_dataset_ledger.json",
+        "examples/README.md",
+        "examples/fixtures/github_delivery_sample_test.py",
+        "fixtures/README.md",
+        "fixtures/failure_regression/trajectory_bad.json",
+        "fixtures/failure_regression/trajectory_ok.json",
+        "fixtures/github_delivery_sample.py",
+        "fixtures/github_delivery_sample_test.py",
+        "fixtures/github_delivery_task.json",
+        "fixtures/harness_closed_loop.json",
+        "fixtures/software_tasks/acceptance_task_set.json",
+        "fixtures/software_tasks/approval_denied.json",
+        "fixtures/software_tasks/fastapi-15764-agent.json",
+        "fixtures/software_tasks/fastapi-15974-agent.json",
+        "fixtures/software_tasks/fastapi-16253-agent.json",
+        "fixtures/software_tasks/repair_evidence/patches/fastapi-15974/agent.patch",
+        "fixtures/software_tasks/repair_evidence/runs/fastapi-15974-agent.json",
+        "fixtures/software_tasks/repair_evidence/runs/fastapi-15974-baseline.json",
+        "fixtures/software_tasks/tests_still_fail.json",
+        "fixtures/software_tasks/tool_timeout.json",
+        "schemas/README.md",
+        "scripts/eval/README.md",
+        "scripts/eval/acceptance/build_acceptance_report.py",
+        "scripts/eval/acceptance/harness_closed_loop.py",
+        "scripts/eval/acceptance/materialize_acceptance_evidence.py",
+        "scripts/eval/acceptance/run_expense_business_eval.py",
+        "scripts/eval/acceptance/run_github_business_tasks.py",
+        "scripts/eval/acceptance/run_github_portfolio_dataset.py",
+        "scripts/eval/acceptance/run_portfolio_acceptance.py",
+        "scripts/eval/acceptance/validate_acceptance_task_set.py",
+        "scripts/eval/execution/run_execution_http_smoke.py",
+        "scripts/eval/execution/run_execution_suite.py",
+        "scripts/eval/failure/collect_repair_evidence.py",
+        "scripts/eval/failure/finalize_fixture_evidence.py",
+        "scripts/eval/failure/reverify_repair_evidence.py",
+        "scripts/eval/failure/run_failure_flywheel.py",
+        "scripts/eval/failure/run_failure_regression_pipeline.py",
+        "scripts/eval/failure/run_flywheel_closed_loop.py",
+        "scripts/eval/failure/run_software_task_failure_regression.py",
+        "scripts/eval/failure/run_step_watcher_evidence.py",
+        "scripts/eval/integration/agent_to_eval.py",
+        "scripts/eval/publish/publish_eval_snapshot.py",
+        "scripts/eval/rag/run_public_rag_benchmark.py",
+        "scripts/eval/reliability/run_http_reliability.py",
+        "scripts/eval/reliability/run_reliability_harness.py",
+        "scripts/eval/reliability/run_reliability_live.py",
+        "scripts/eval/smoke/run_daily_smoke.py",
+        "scripts/eval/smoke/run_deploy_smoke.py",
+        "scripts/eval/smoke/run_sandbox_live_check.py",
+        "scripts/run_sandbox_live_check.ps1",
+        "scripts/validate_eval_dataset_ledger.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 125,
+      "head_sha": "b96e288596a7fefdf4c1aeea2105545e1a5bad45",
+      "changed_files": 100,
+      "status": "blocked",
+      "unmapped_paths": [
+        "CHANGELOG.md",
+        "README.md",
+        "demos/README.md",
+        "demos/demo_context.py",
+        "demos/demo_docs_troubleshoot.py",
+        "demos/demo_expense_workflow.py",
+        "demos/demo_mcp_mock.py",
+        "demos/demo_rag.py",
+        "demos/demo_record_check.py",
+        "demos/demo_workflow.py",
+        "demos/run_github_delivery.py",
+        "eval/eval_dataset_ledger.json",
+        "examples/README.md",
+        "examples/fixtures/github_delivery_sample_test.py",
+        "fixtures/README.md",
+        "fixtures/failure_regression/trajectory_bad.json",
+        "fixtures/failure_regression/trajectory_ok.json",
+        "fixtures/github_delivery_sample.py",
+        "fixtures/github_delivery_sample_test.py",
+        "fixtures/github_delivery_task.json",
+        "fixtures/harness_closed_loop.json",
+        "fixtures/software_tasks/acceptance_task_set.json",
+        "fixtures/software_tasks/approval_denied.json",
+        "fixtures/software_tasks/fastapi-15764-agent.json",
+        "fixtures/software_tasks/fastapi-15974-agent.json",
+        "fixtures/software_tasks/fastapi-16253-agent.json",
+        "fixtures/software_tasks/repair_evidence/patches/fastapi-15974/agent.patch",
+        "fixtures/software_tasks/repair_evidence/runs/fastapi-15974-agent.json",
+        "fixtures/software_tasks/repair_evidence/runs/fastapi-15974-baseline.json",
+        "fixtures/software_tasks/tests_still_fail.json",
+        "fixtures/software_tasks/tool_timeout.json",
+        "schemas/README.md",
+        "scripts/eval/README.md",
+        "scripts/eval/acceptance/build_acceptance_report.py",
+        "scripts/eval/acceptance/harness_closed_loop.py",
+        "scripts/eval/acceptance/materialize_acceptance_evidence.py",
+        "scripts/eval/acceptance/run_expense_business_eval.py",
+        "scripts/eval/acceptance/run_github_business_tasks.py",
+        "scripts/eval/acceptance/run_github_portfolio_dataset.py",
+        "scripts/eval/acceptance/run_portfolio_acceptance.py",
+        "scripts/eval/acceptance/validate_acceptance_task_set.py",
+        "scripts/eval/execution/run_execution_http_smoke.py",
+        "scripts/eval/execution/run_execution_suite.py",
+        "scripts/eval/failure/collect_repair_evidence.py",
+        "scripts/eval/failure/finalize_fixture_evidence.py",
+        "scripts/eval/failure/reverify_repair_evidence.py",
+        "scripts/eval/failure/run_failure_flywheel.py",
+        "scripts/eval/failure/run_failure_regression_pipeline.py",
+        "scripts/eval/failure/run_flywheel_closed_loop.py",
+        "scripts/eval/failure/run_software_task_failure_regression.py",
+        "scripts/eval/failure/run_step_watcher_evidence.py",
+        "scripts/eval/integration/agent_to_eval.py",
+        "scripts/eval/publish/publish_eval_snapshot.py",
+        "scripts/eval/rag/run_public_rag_benchmark.py",
+        "scripts/eval/reliability/run_http_reliability.py",
+        "scripts/eval/reliability/run_reliability_harness.py",
+        "scripts/eval/reliability/run_reliability_live.py",
+        "scripts/eval/smoke/run_daily_smoke.py",
+        "scripts/eval/smoke/run_deploy_smoke.py",
+        "scripts/eval/smoke/run_sandbox_live_check.py",
+        "scripts/run_sandbox_live_check.ps1",
+        "scripts/validate_eval_dataset_ledger.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 124,
+      "head_sha": "1946003eabf8cd0b4853198f180f8dbdef8f032e",
+      "changed_files": 20,
+      "status": "blocked",
+      "unmapped_paths": [
+        "CHANGELOG.md",
+        "examples/README.md",
+        "examples/eval/run_public_benchmark.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 123,
+      "head_sha": "15ff4443d1127ddc2e54204f17ab25d3fc56f834",
+      "changed_files": 4,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".flake8",
+        "CONTRIBUTING.md",
+        "README.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 122,
+      "head_sha": "8d47c8142f69b4e8f79810581041d4c06d987880",
+      "changed_files": 15,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".env.example",
+        "README.md",
+        "docker-compose.yml",
+        "scripts/verify_redis_task_mvp.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 121,
+      "head_sha": "515e3bdbe544449447afccf0de310a43c6629643",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 120,
+      "head_sha": "39b944357e5d0690946ec9622630881694f144ae",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 119,
+      "head_sha": "502bac0c1adf7b1a00d9a077cf9e6a0ec011fa87",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 118,
+      "head_sha": "2a56a1bd0e0096c65b0e6764c4fafd8a9430f528",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 117,
+      "head_sha": "8cddfe7f350657a1ab0a52af2427abfada1d9c11",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 116,
+      "head_sha": "82cc57b6ecc08a83ab39719605544ad2fa1208e1",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 115,
+      "head_sha": "c43f567996def05166de84a753537ca0b80fa290",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 114,
+      "head_sha": "85d607f5d98753f7e78638e09c6d9e2e1de7b7ba",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 113,
+      "head_sha": "220cbfb95d23b79d0cd5151aeb62804a406b5285",
+      "changed_files": 16,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".env.example",
+        "README.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 112,
+      "head_sha": "e7e92154687f84f270681c81c90d7a26e464fc79",
+      "changed_files": 1,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 111,
+      "head_sha": "7db48c2b627cdb9f52bb7ccf0c1baf89eb64b1b3",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 110,
+      "head_sha": "cb0b0e26cc766cfc40d43882d80ba6452f60bc00",
+      "changed_files": 1,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 109,
+      "head_sha": "4d0a9608d94196a9822338c9d3fec495d9ead460",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 108,
+      "head_sha": "f05b77c44dfb9fc13ea87f113f8085844b45bac5",
+      "changed_files": 1,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 107,
+      "head_sha": "8e10d1ae1610b6a3509d7f8802accb07f9682d81",
+      "changed_files": 6,
+      "status": "blocked",
+      "unmapped_paths": [
+        "examples/eval/run_daily_smoke.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 106,
+      "head_sha": "84cabefb10569f1064f5c75e7650366a107f078c",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus"
+      ]
+    },
+    {
+      "pr": 105,
+      "head_sha": "6cc1062cff90eb7d2dad7b232f490023f068ef74",
+      "changed_files": 5,
+      "status": "blocked",
+      "unmapped_paths": [
+        "examples/eval/harness_closed_loop.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 104,
+      "head_sha": "7465c0d7fd6931d62b7825bfb7065612ebe7214f",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus"
+      ]
+    },
+    {
+      "pr": 103,
+      "head_sha": "eadc266ca31e573068ff687ceebac7b68ccf9a23",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 102,
+      "head_sha": "99ea33e69c0efd687befed811d5dcd96ce5b4dbb",
+      "changed_files": 9,
+      "status": "blocked",
+      "unmapped_paths": [
+        "CHANGELOG.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 101,
+      "head_sha": "e530d221d392f43d79d53f082e65e47e7e9eee23",
+      "changed_files": 5,
+      "status": "blocked",
+      "unmapped_paths": [
+        "CHANGELOG.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 100,
+      "head_sha": "6c487d3a48319e85a3d0ac9846155ea9fd522e93",
+      "changed_files": 10,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".env.example",
+        "CHANGELOG.md",
+        "docker-compose.yml"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 99,
+      "head_sha": "9ec65dc4e87549de1dbae59c8fff82824b198949",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus"
+      ]
+    },
+    {
+      "pr": 98,
+      "head_sha": "485b9e078610ab3733d775d9ce317017df28e258",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 97,
+      "head_sha": "8046d088e89e6f75148856262b520b1f7ffc1474",
+      "changed_files": 6,
+      "status": "blocked",
+      "unmapped_paths": [
+        "README.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 96,
+      "head_sha": "4f3c98016943cdb6923530c776881feec3ad1a49",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus"
+      ]
+    },
+    {
+      "pr": 95,
+      "head_sha": "683096f45948ff363ea423a60ee949373539059d",
+      "changed_files": 22,
+      "status": "blocked",
+      "unmapped_paths": [
+        "schemas/business_boundary.schema.json"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 94,
+      "head_sha": "cb9a6402e5d9580776149154a7e6c903eaacd0f7",
+      "changed_files": 3,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 93,
+      "head_sha": "65dbea2864aab5a87f89b6e5a245541632d18026",
+      "changed_files": 1,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 92,
+      "head_sha": "381b4b493a1f83fed6c64adddecbe9dad1738aa0",
+      "changed_files": 49,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".gitignore",
+        "README.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V10_AUDIT.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V2_REPORT.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V3_REPORT.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V4_FAILURE_ANALYSIS.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V4_REPORT.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V4_RERUN_REPORT.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V5_FULL_REPORT.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V5_PROTOCOL.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V5_REPORT.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V6_FULL_REPORT.md",
+        "eval/blind_pilot_v1/DEVELOPMENT_V6_REPORT.md",
+        "eval/blind_pilot_v1/HELDOUT_CLICK_PROTOCOL_AUDIT.md",
+        "eval/blind_pilot_v1/HELDOUT_V10_SEPARATE_REPORT.md",
+        "eval/blind_pilot_v1/REPORT.md",
+        "eval/blind_pilot_v1/V10_DEVELOPMENT_PATCH_GATE_FINAL.md",
+        "eval/blind_pilot_v1/V10_DEVELOPMENT_RETEST_REPORT.md",
+        "eval/blind_pilot_v1/V10_HTTPX_PROTOCOL_EXCEPTION.md",
+        "eval/blind_pilot_v1/V10_HTTPX_REQUIRED_RETEST.md",
+        "eval/blind_pilot_v1/V10_ONLINE_RETEST_REPORT.md",
+        "eval/blind_pilot_v1/V10_PATCH_GATE_REPORT.md",
+        "eval/blind_pilot_v1/V10_PRE_HELDOUT_REMEDIATION.md",
+        "eval/blind_pilot_v1/V10_PROTOCOL_PATCH.md",
+        "eval/blind_pilot_v1/V10_WERKZEUG_RETRY_REPORT.md",
+        "eval/blind_pilot_v1/V5_TERMINATION_AUDIT.md",
+        "eval/blind_pilot_v1/V6_OFFLINE_ANALYSIS.md",
+        "eval/blind_pilot_v1/V7_V8_PROTOCOL_CALIBRATION.md",
+        "eval/blind_pilot_v1/development_v2_results.json",
+        "eval/blind_pilot_v1/prompt.md",
+        "eval/blind_pilot_v1/results.json",
+        "eval/blind_pilot_v1/run_protocol.json",
+        "eval/blind_pilot_v1/split_manifest.json",
+        "notes/plan-subagent-hardening.md",
+        "notes/subagent-comparison.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 91,
+      "head_sha": "51d2d54468c413a32c357d70c838efb97c650a18",
+      "changed_files": 100,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".gitignore",
+        "CHANGELOG.md",
+        "README.md",
+        "docker-compose.yml",
+        "eval/TASK_COVERAGE.md",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/baseline/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/baseline/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/baseline/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/hidden-tests/check_flags.py",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after-source.tar.gz",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/trajectory.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/trajectory.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/base-pyproject.toml",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before-source.tar.gz",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/trajectory.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/trajectory.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/environment/install/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/environment/install/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/environment/install/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/fix-pyproject.toml",
+        "eval/cross_repo_evidence/click-typed-flag-2930/manifest.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/metadata.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/reproduction.py",
+        "eval/cross_repo_evidence/click-typed-flag-2930/requirements.lock",
+        "eval/cross_repo_evidence/click-typed-flag-2930/source-manifest.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/source.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/task.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/wheels/colorama-0.4.6-py2.py3-none-any.whl",
+        "eval/cross_repo_evidence/httpx-activity-review/acceptance/hidden-tests/test_gen_delims_path.py",
+        "eval/cross_repo_evidence/httpx-activity-review/after/stdout.log",
+        "eval/cross_repo_evidence/httpx-activity-review/after/test-result.json",
+        "eval/cross_repo_evidence/httpx-activity-review/before/stdout.log",
+        "eval/cross_repo_evidence/httpx-activity-review/before/test-result.json",
+        "eval/cross_repo_evidence/httpx-activity-review/before/trajectory.json",
+        "eval/cross_repo_evidence/httpx-activity-review/manifest.json",
+        "eval/cross_repo_evidence/httpx-activity-review/metadata.json",
+        "eval/cross_repo_evidence/httpx-activity-review/task.json",
+        "eval/cross_repo_evidence/httpx-identity-review/acceptance/hidden-tests/README.txt",
+        "eval/cross_repo_evidence/httpx-identity-review/acceptance/hidden-tests/test_pipe_path_encoding.py",
+        "eval/cross_repo_evidence/httpx-identity-review/after/stdout.log",
+        "eval/cross_repo_evidence/httpx-identity-review/after/test-result.json",
+        "eval/cross_repo_evidence/httpx-identity-review/before/stdout.log",
+        "eval/cross_repo_evidence/httpx-identity-review/before/test-result.json",
+        "eval/cross_repo_evidence/httpx-identity-review/before/trajectory.json",
+        "eval/cross_repo_evidence/httpx-identity-review/manifest.json",
+        "eval/cross_repo_evidence/httpx-identity-review/metadata.json",
+        "eval/cross_repo_evidence/httpx-identity-review/task.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/acceptance/hidden-tests/test_acceptance.py",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/run-1.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/run-2.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/stdout.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/test-result.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/trajectory.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/run-1.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/run-2.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/stdout.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/test-result.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/trajectory.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/manifest.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/metadata.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/source.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/task.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/acceptance/hidden-tests/README.txt",
+        "eval/cross_repo_evidence/pydantic-identity-review/acceptance/hidden-tests/test_root_model_alias_equality.py",
+        "eval/cross_repo_evidence/pydantic-identity-review/after/stdout.log",
+        "eval/cross_repo_evidence/pydantic-identity-review/after/test-result.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/before/stdout.log",
+        "eval/cross_repo_evidence/pydantic-identity-review/before/test-result.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/before/trajectory.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/manifest.json"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 90,
+      "head_sha": "45fdf580c0cdc85dcdf48da041ca8875c39d11b9",
+      "changed_files": 3,
+      "status": "blocked",
+      "unmapped_paths": [
+        "README.md"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "python-affected-tests"
+      ]
+    },
+    {
+      "pr": 89,
+      "head_sha": "be08d40e324f802d1a9b68e9a1732cc6dacf3b22",
+      "changed_files": 100,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".gitignore",
+        "CHANGELOG.md",
+        "README.md",
+        "docker-compose.yml",
+        "eval/TASK_COVERAGE.md",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/baseline/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/baseline/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/baseline/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/hidden-tests/check_flags.py",
+        "eval/cross_repo_evidence/click-typed-flag-2930/acceptance/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after-source.tar.gz",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/repeat/trajectory.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/after/trajectory.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/base-pyproject.toml",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before-source.tar.gz",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/repeat/trajectory.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/before/trajectory.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/environment/install/stderr.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/environment/install/stdout.log",
+        "eval/cross_repo_evidence/click-typed-flag-2930/environment/install/test-result.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/fix-pyproject.toml",
+        "eval/cross_repo_evidence/click-typed-flag-2930/manifest.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/metadata.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/reproduction.py",
+        "eval/cross_repo_evidence/click-typed-flag-2930/requirements.lock",
+        "eval/cross_repo_evidence/click-typed-flag-2930/source-manifest.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/source.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/task.json",
+        "eval/cross_repo_evidence/click-typed-flag-2930/wheels/colorama-0.4.6-py2.py3-none-any.whl",
+        "eval/cross_repo_evidence/httpx-activity-review/acceptance/hidden-tests/test_gen_delims_path.py",
+        "eval/cross_repo_evidence/httpx-activity-review/after/stdout.log",
+        "eval/cross_repo_evidence/httpx-activity-review/after/test-result.json",
+        "eval/cross_repo_evidence/httpx-activity-review/before/stdout.log",
+        "eval/cross_repo_evidence/httpx-activity-review/before/test-result.json",
+        "eval/cross_repo_evidence/httpx-activity-review/before/trajectory.json",
+        "eval/cross_repo_evidence/httpx-activity-review/manifest.json",
+        "eval/cross_repo_evidence/httpx-activity-review/metadata.json",
+        "eval/cross_repo_evidence/httpx-activity-review/task.json",
+        "eval/cross_repo_evidence/httpx-identity-review/acceptance/hidden-tests/README.txt",
+        "eval/cross_repo_evidence/httpx-identity-review/acceptance/hidden-tests/test_pipe_path_encoding.py",
+        "eval/cross_repo_evidence/httpx-identity-review/after/stdout.log",
+        "eval/cross_repo_evidence/httpx-identity-review/after/test-result.json",
+        "eval/cross_repo_evidence/httpx-identity-review/before/stdout.log",
+        "eval/cross_repo_evidence/httpx-identity-review/before/test-result.json",
+        "eval/cross_repo_evidence/httpx-identity-review/before/trajectory.json",
+        "eval/cross_repo_evidence/httpx-identity-review/manifest.json",
+        "eval/cross_repo_evidence/httpx-identity-review/metadata.json",
+        "eval/cross_repo_evidence/httpx-identity-review/task.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/acceptance/hidden-tests/test_acceptance.py",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/run-1.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/run-2.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/stdout.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/test-result.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/after/trajectory.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/run-1.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/run-2.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/stdout.log",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/test-result.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/before/trajectory.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/manifest.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/metadata.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/source.json",
+        "eval/cross_repo_evidence/jinja-async-unique-1782/task.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/acceptance/hidden-tests/README.txt",
+        "eval/cross_repo_evidence/pydantic-identity-review/acceptance/hidden-tests/test_root_model_alias_equality.py",
+        "eval/cross_repo_evidence/pydantic-identity-review/after/stdout.log",
+        "eval/cross_repo_evidence/pydantic-identity-review/after/test-result.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/before/stdout.log",
+        "eval/cross_repo_evidence/pydantic-identity-review/before/test-result.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/before/trajectory.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/manifest.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/metadata.json",
+        "eval/cross_repo_evidence/pydantic-identity-review/task.json",
+        "eval/cross_repo_evidence/werkzeug-auth-whitespace-3129/acceptance/hidden-tests/check_auth.py",
+        "eval/cross_repo_evidence/werkzeug-auth-whitespace-3129/acceptance/test-result.json",
+        "eval/cross_repo_evidence/werkzeug-auth-whitespace-3129/after-source.tar.gz"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 88,
+      "head_sha": "274cc13b5b59090c682791f2f61ddec96a4376dd",
+      "changed_files": 81,
+      "status": "blocked",
+      "unmapped_paths": [
+        ".gitignore",
+        "CHANGELOG.md",
+        "README.md",
+        "docker-compose.yml",
+        "examples/eval/build_acceptance_report.py",
+        "examples/eval/collect_repair_evidence.py",
+        "examples/eval/finalize_fixture_evidence.py",
+        "examples/eval/harness_closed_loop.py",
+        "examples/eval/materialize_acceptance_evidence.py",
+        "examples/eval/reverify_repair_evidence.py",
+        "examples/eval/run_git_docs_eval.py",
+        "examples/eval/run_github_business_tasks.py",
+        "examples/eval/run_portfolio_acceptance.py",
+        "examples/eval/validate_acceptance_task_set.py",
+        "examples/fixtures/software_tasks/acceptance_task_set.json",
+        "examples/fixtures/software_tasks/approval_denied.json",
+        "examples/fixtures/software_tasks/tests_still_fail.json",
+        "examples/fixtures/software_tasks/tool_timeout.json",
+        "schemas/README.md",
+        "tests/test_real_llm.py"
+      ],
+      "selected_rules": [
+        "ci-pr-readiness",
+        "docs-corpus",
+        "harness-stage-gate",
+        "python-affected-tests",
+        "workflow-security"
+      ]
+    },
+    {
+      "pr": 87,
+      "head_sha": "65de8d5bac65d99fd9c53b3e0a32904369a81a8a",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus"
+      ]
+    },
+    {
+      "pr": 86,
+      "head_sha": "0802c3ab3ab107b92214b3dcabbe03dde9520b9f",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus"
+      ]
+    },
+    {
+      "pr": 85,
+      "head_sha": "be8c550e0f378408c9063ba6b71dc103e9b0acbc",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus"
+      ]
+    },
+    {
+      "pr": 84,
+      "head_sha": "1f1bc56cb7d09d6d0e951636fd9090c5e0ed18e7",
+      "changed_files": 2,
+      "status": "pass",
+      "unmapped_paths": [],
+      "selected_rules": [
+        "docs-corpus"
+      ]
+    }
+  ],
+  "conclusion": "blocked",
+  "conclusion_boundary": "This backtest measures path coverage only. False-positive and missed-rule metrics need an independently labeled expected-rule set and remain unmeasured; it does not prove CI job correctness or R9 runtime isolation."
+}

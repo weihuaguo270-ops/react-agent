@@ -1,4 +1,4 @@
-# CI Phase 0 当前证据核验（2026-10-29）
+# CI Phase 0 当前证据核验（2026-10-30）
 
 ## 核验结论
 
@@ -8,11 +8,11 @@
 
 ## 当前主干证据
 
-核验时间为 2026-10-28，远端只读 API 返回：
+当前基线已于 2026-10-30 在干净 checkout 刷新；本文件只记录当前证据边界，正式独立复审仍待未参与整理的审查者完成。
 
 | 项目 | 当前证据 |
 |---|---|
-| `main` | `e641adc7c95907a1bf55f7185c90faaa87b78829` |
+| `main` | `8805e5e9a875eb6584aa12d1ce79917ee7e73076` |
 | PR #173 合并 | `8446201e6495c7a302a80347bcaa0c8e7bf613fd` |
 | 合并后 CI/Harness/Evaluation push | runs `40104979097` / `40104979076` / `40104979077`，success |
 | PR #172 合并 | `e9187069684797ef5dd6cab830cafd3332880a06`；Harness/Evaluation push runs `40101578011` / `40101578014`，success |
@@ -38,12 +38,11 @@
 
 ## 未关闭事项
 
-1. `phase0-baseline.json` 的历史样本冻结在 `97c73014`，采集日期为 2026-10-22。它是历史样本，不是当前主干 fresh baseline。
-2. `docs/specs/registry.yaml` 仍是 `spec-registry/v1`，没有 CI 方向 path rules；`registry-v2.schema.json` 只是结构契约，不是已落地的 v2 registry 或 validator。
-3. 尚无冻结 PR 样本上的 selector backtest，无法报告 mapped coverage、unmapped paths、false positives 或 missed expected rules；这是 Phase 1 的实现/验收产物，不是 Phase 0 的完成门槛。
+1. 历史样本 `97c73014` 和旧当前快照 `e641adc7` 已分别保存在 archive；它们不能替代当前主干 fresh baseline。
+2. Registry v2 实例、语义 validator 和 selector backtest 已实现；100 个 PR 的 backtest 显示 1534 个 changed files 中 1017 个已映射、517 个未映射，覆盖率 66.30%，因此 selector 仍按契约 blocked。误选/漏选仍需独立 expected-rule 标注集。
 4. 尚无稳定的 `CI / PR readiness` 与 `CI / PR gate` 聚合 job；Branch Protection 仍直接要求多个独立 job。这是 Phase 4 迁移目标，不是 Phase 0 的完成门槛。
 5. `daily-smoke` 具有写权限并能创建 PR/推动合并，仍需在后续阶段执行 R9 安全审计并与观察性 smoke 职责分离。
-6. 当前逐样本数据尚未按最新 main 刷新，且正式独立复审未完成，因此 Phase 0 保持 Partial，Phase 1 尚未启动。
+6. 当前逐样本数据已按 `8805e5e` 刷新，但正式独立复审未完成，因此 Phase 0 保持 Partial；Phase 1 已启动但 R9 运行时验收仍 blocked。
 
 ## 正式独立复审前置项
 
@@ -51,9 +50,9 @@
 2. 对每条失败/取消样本保留 job/step 分类依据，不能以当前成功运行覆盖历史失败证据。
 3. 将 `registry-v2.schema.json`、CI/Harness/Evaluation 职责边界、Phase 1 验收矩阵及 R9 审计计划作为设计契约提交独立复核；validator、selector backtest 与安全执行测试留待对应阶段实施。
 
-## 独立复审结果（2026-10-29）
+## 历史独立复审结果（2026-10-29，基于 e641adc7）
 
-独立审查者在只读上下文中检查了本报告、当前 JSON/索引、`archive/2026-10-22/`、CI Spec、迁移计划和 Registry v2 schema，并通过 GitHub 只读 API 复核了当前 `main` 与 Branch Protection。当前 `main` SHA 为 `e641adc7c95907a1bf55f7185c90faaa87b78829`；该 SHA 的 CI、Harness、Evaluation push runs 分别为 `40888650027`、`40888649843`、`40888649926`，均成功。
+独立审查者在只读上下文中检查了旧基线、CI Spec、迁移计划和 Registry v2 schema，并通过 GitHub 只读 API 复核了当时的 `main` 与 Branch Protection。该结论只对 `e641adc7c95907a1bf55f7185c90faaa87b78829` 有效；旧原文已保存在 `archive/2026-10-29-e641adc7/`，不作为当前 `8805e5e` 的独立复审结论。
 
 复审确认：历史 2026-10-22 SHA `97c73014` 的快照未被覆盖；当前 JSON、Markdown 和样本索引的 SHA、样本数量、失败统计和 required checks 一致；CI、Harness、Evaluation 职责边界清楚；Phase 1 Registry v2、Phase 2 shadow、Phase 3 PR gate 和 Phase 4 Branch Protection 切换未被误算为已完成。
 
