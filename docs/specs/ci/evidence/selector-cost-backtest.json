@@ -1,0 +1,491 @@
+{
+  "schema_version": "ci-selector-cost-backtest/v1",
+  "generated_at": "2026-11-01T08:53:17.106701+00:00",
+  "repository": "weihuaguo270-ops/react-agent",
+  "sample_source": "docs/specs/ci/evidence/phase0-baseline.json",
+  "sample_size_requested": 20,
+  "sample_size_replayed": 20,
+  "selector_mode": "report-only",
+  "metrics": {
+    "mapped_prs_measured": 13,
+    "mapped_prs_with_unmeasured_labels": 13,
+    "median_estimated_improvement": 0.0306,
+    "historical_failed_checks_missed_by_selection": [],
+    "zero_missed_required_checks_proven": false,
+    "subset_gate_eligible": false
+  },
+  "conclusion": "blocked",
+  "conclusion_boundary": "Historical job durations estimate a possible wall-time reduction. They do not prove required-check completeness because the repository has no independent expected-check label set. The selector remains report-only.",
+  "rows": [
+    {
+      "pr": 182,
+      "head_sha": "544769af769aaaebb407ac24d480cf5732d6692f",
+      "changed_files": 13,
+      "status": "fallback",
+      "unmapped_paths": [
+        "scripts/ai_review/__init__.py",
+        "scripts/ai_review/validate_artifact.py"
+      ],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "test-windows",
+        "typecheck",
+        "security",
+        "docker-smoke",
+        "docs-eval"
+      ],
+      "run_id": 40887477623,
+      "run_conclusion": "success",
+      "full_wall_seconds": 230.0,
+      "selected_job_wall_seconds": 227.0,
+      "estimated_improvement": 0.013,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 181,
+      "head_sha": "66451049eaccc471dfc1e37fd0e6b8f08a47b735",
+      "changed_files": 5,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "security",
+        "docs-eval"
+      ],
+      "run_id": 40866208956,
+      "run_conclusion": "success",
+      "full_wall_seconds": 224.0,
+      "selected_job_wall_seconds": 220.0,
+      "estimated_improvement": 0.0179,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 180,
+      "head_sha": "bcbef1f1601d2685aa576efac2cf512cacb57f34",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "test-windows",
+        "security",
+        "docker-smoke",
+        "docs-eval"
+      ],
+      "run_id": 40826691409,
+      "run_conclusion": "success",
+      "full_wall_seconds": 229.0,
+      "selected_job_wall_seconds": 225.0,
+      "estimated_improvement": 0.0175,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 179,
+      "head_sha": "955fc310eeb3ca31ea65fe4fe5f81d2a37acafe2",
+      "changed_files": 6,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "security",
+        "docs-eval"
+      ],
+      "run_id": 40828232430,
+      "run_conclusion": "success",
+      "full_wall_seconds": 232.0,
+      "selected_job_wall_seconds": 228.0,
+      "estimated_improvement": 0.0172,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 178,
+      "head_sha": "b5c6e51974915d5a29f391767f874ad416ffda31",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "docs-eval"
+      ],
+      "run_id": 40645434827,
+      "run_conclusion": "failure",
+      "full_wall_seconds": 82309.0,
+      "selected_job_wall_seconds": null,
+      "estimated_improvement": null,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 177,
+      "head_sha": "4e8ca41e0ae8a7c39d5d21056f7c44b00e7ff91b",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "security",
+        "docs-eval"
+      ],
+      "run_id": 40634091284,
+      "run_conclusion": "success",
+      "full_wall_seconds": 231.0,
+      "selected_job_wall_seconds": 227.0,
+      "estimated_improvement": 0.0173,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 176,
+      "head_sha": "d7dc5fef5afc1e40f41172ae68d5ba84ea3964a8",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "docs-eval"
+      ],
+      "run_id": 40458812530,
+      "run_conclusion": "success",
+      "full_wall_seconds": 294.0,
+      "selected_job_wall_seconds": 225.0,
+      "estimated_improvement": 0.2347,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 175,
+      "head_sha": "e9ad6e87571f1c39ea915696f902024b2f949689",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "docs-eval"
+      ],
+      "run_id": 40276442687,
+      "run_conclusion": "success",
+      "full_wall_seconds": 290.0,
+      "selected_job_wall_seconds": 224.0,
+      "estimated_improvement": 0.2276,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 174,
+      "head_sha": "ca91798fffaa73b07a0e415971a2b69427847dc0",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "docs-eval"
+      ],
+      "run_id": 40166820490,
+      "run_conclusion": "success",
+      "full_wall_seconds": 298.0,
+      "selected_job_wall_seconds": 228.0,
+      "estimated_improvement": 0.2349,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 173,
+      "head_sha": "3351e63c45fcd76d94012c4cfac747670b14b8d1",
+      "changed_files": 1,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "test-windows",
+        "security",
+        "docker-smoke"
+      ],
+      "run_id": 40104228926,
+      "run_conclusion": "success",
+      "full_wall_seconds": 227.0,
+      "selected_job_wall_seconds": 224.0,
+      "estimated_improvement": 0.0132,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 172,
+      "head_sha": "d93914808956ec4a6b9a7c24090102c2e7fe5059",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "test-windows",
+        "security",
+        "docker-smoke"
+      ],
+      "run_id": 40100484418,
+      "run_conclusion": "success",
+      "full_wall_seconds": 294.0,
+      "selected_job_wall_seconds": 220.0,
+      "estimated_improvement": 0.2517,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 171,
+      "head_sha": "122d432b0930b9fb356ccec3b3ad4fb96b92fe58",
+      "changed_files": 2,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "security",
+        "docs-eval"
+      ],
+      "run_id": 40096098239,
+      "run_conclusion": "success",
+      "full_wall_seconds": 287.0,
+      "selected_job_wall_seconds": 283.0,
+      "estimated_improvement": 0.0139,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 170,
+      "head_sha": "802d8698af4db271b528798107d6a0de0ce192ab",
+      "changed_files": 10,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "security",
+        "docs-eval"
+      ],
+      "run_id": null,
+      "measurement": "unavailable"
+    },
+    {
+      "pr": 169,
+      "head_sha": "4d4a2d8d529873c2eb5213315e5766b1ed6f5c37",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "docs-eval"
+      ],
+      "run_id": 40066494131,
+      "run_conclusion": "success",
+      "full_wall_seconds": 294.0,
+      "selected_job_wall_seconds": 285.0,
+      "estimated_improvement": 0.0306,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 168,
+      "head_sha": "4d35c8d7684cd7d6850bec1678e1d82a14e7a541",
+      "changed_files": 4,
+      "status": "fallback",
+      "unmapped_paths": [
+        "scripts/eval/smoke/build_p2_acceptance_report.py"
+      ],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "test-windows",
+        "typecheck",
+        "security",
+        "docker-smoke",
+        "docs-eval"
+      ],
+      "run_id": 40051138800,
+      "run_conclusion": "success",
+      "full_wall_seconds": 289.0,
+      "selected_job_wall_seconds": 285.0,
+      "estimated_improvement": 0.0138,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 167,
+      "head_sha": "a180cf26b5066384ccfe7ef85e55a3888cec05fd",
+      "changed_files": 6,
+      "status": "fallback",
+      "unmapped_paths": [
+        ".codex/skills/spec-progress-workflow/SKILL.md"
+      ],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "test-windows",
+        "typecheck",
+        "security",
+        "docker-smoke",
+        "docs-eval"
+      ],
+      "run_id": 39950707883,
+      "run_conclusion": "success",
+      "full_wall_seconds": 253.0,
+      "selected_job_wall_seconds": 249.0,
+      "estimated_improvement": 0.0158,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 166,
+      "head_sha": "57e9435c6b5ac3b1fef833658da3d853508d7f10",
+      "changed_files": 12,
+      "status": "fallback",
+      "unmapped_paths": [
+        ".codex/skills/spec-progress-workflow/SKILL.md",
+        ".codex/skills/spec-progress-workflow/references/workflow.md",
+        ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py",
+        ".codex/skills/spec-stage-acceptance/SKILL.md"
+      ],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "test-windows",
+        "typecheck",
+        "security",
+        "docker-smoke",
+        "docs-eval"
+      ],
+      "run_id": 39944961498,
+      "run_conclusion": "success",
+      "full_wall_seconds": 298.0,
+      "selected_job_wall_seconds": 295.0,
+      "estimated_improvement": 0.0101,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 165,
+      "head_sha": "ccd9bda18d2e1be71131e283fcf4841eca69bf26",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "docs-eval"
+      ],
+      "run_id": 39907858409,
+      "run_conclusion": "success",
+      "full_wall_seconds": 274.0,
+      "selected_job_wall_seconds": 265.0,
+      "estimated_improvement": 0.0328,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 164,
+      "head_sha": "4516abc76fa1d4f4ffb1c2043a5668373fa727dc",
+      "changed_files": 47,
+      "status": "fallback",
+      "unmapped_paths": [
+        ".codex/skills/spec-progress-workflow/SKILL.md",
+        ".codex/skills/spec-progress-workflow/references/workflow.md",
+        ".codex/skills/spec-progress-workflow/scripts/spec_workflow.py",
+        ".codex/skills/spec-stage-acceptance/SKILL.md",
+        "artifacts/harness/baseline-compare-latest.json",
+        "artifacts/harness/p4-acceptance-report.json",
+        "artifacts/software-delivery/repair_then_pass/acceptance.json",
+        "scripts/eval/failure/pytest_permissive_tmp.py",
+        "scripts/eval/failure/run_step_watcher_evidence.py",
+        "scripts/workflow_helper.py",
+        "src/react_agent/apps/github_delivery.py"
+      ],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "test-windows",
+        "typecheck",
+        "security",
+        "docker-smoke",
+        "docs-eval"
+      ],
+      "run_id": 39812973334,
+      "run_conclusion": "success",
+      "full_wall_seconds": 288.0,
+      "selected_job_wall_seconds": 284.0,
+      "estimated_improvement": 0.0139,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    },
+    {
+      "pr": 163,
+      "head_sha": "cf17483d07766350eadf0e8a3a9c42a7b784de81",
+      "changed_files": 3,
+      "status": "mapped",
+      "unmapped_paths": [],
+      "selected_checks": [
+        "pr-ready",
+        "lint",
+        "test",
+        "docs-eval"
+      ],
+      "run_id": 39730335380,
+      "run_conclusion": "success",
+      "full_wall_seconds": 251.0,
+      "selected_job_wall_seconds": 240.0,
+      "estimated_improvement": 0.0438,
+      "failed_checks": [],
+      "missed_historical_failures": [],
+      "measurement": "historical_job_estimate"
+    }
+  ]
+}

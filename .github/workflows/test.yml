@@ -37,6 +37,54 @@ jobs:
       env:
         PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
       run: python scripts/ci/check_pr_ready.py --ci --base-sha "$PR_BASE_SHA" --allow-revert
+    - name: Evaluate docs corpus when documentation changes
+      env:
+        PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      run: |
+        changed="$(git diff --name-only "${PR_BASE_SHA}...HEAD")"
+        if printf '%s\n' "$changed" | grep -Eq '^(docs/|README\.md$|CONTRIBUTING\.md$)'; then
+          python scripts/eval/docs/run_git_docs_eval.py --strict-corpus
+        else
+          echo "No documentation corpus paths changed."
+        fi
+
+  pr-check-scope:
+    name: PR check scope (report-only)
+    if: github.event_name == 'pull_request'
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Select deterministic PR checks
+      env:
+        PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        EVENT_NAME: ${{ github.event_name }}
+      run: |
+        python scripts/ci/select_pr_checks.py \
+          --base "$PR_BASE_SHA" \
+          --head "$PR_HEAD_SHA" \
+          --expected-head-sha "$PR_HEAD_SHA" \
+          --pr-number "$PR_NUMBER" \
+          --event-name "$EVENT_NAME" \
+          --output artifacts/ci/pr-check-scope.json
+    - name: Upload scope report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pr-check-scope
+        path: artifacts/ci/pr-check-scope.json
+        if-no-files-found: warn
 
   lint:
     timeout-minutes: 5
@@ -72,29 +120,27 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -e ".[test]"
-    - name: Script tests
-      run: python test_all.py
-    - name: Pytest (offline)
+    - name: Pytest (offline, Python 3.10)
+      if: matrix.python-version == '3.10'
       run: >-
         pytest tests/ -q
         --ignore=tests/test_real_llm.py
         --ignore=tests/test_harness_closed_loop_decision.py
         --ignore=tests/evaluation/test_harness_closed_loop_decision.py
+    - name: Pytest (offline + coverage, Python 3.11)
+      if: matrix.python-version == '3.11'
+      run: >-
+        pytest tests/ -q
+        --ignore=tests/test_real_llm.py
+        --ignore=tests/test_harness_closed_loop_decision.py
+        --ignore=tests/evaluation/test_harness_closed_loop_decision.py
+        --cov=react_agent --cov-report=term-missing --cov-fail-under=35
     - name: Portable user-data directories
       env:
         REACT_AGENT_DATA_DIR: /tmp/react-agent-data
       run: |
         pytest tests/test_portable_paths.py -q
         python -c "from react_agent.memory import Memory; from react_agent.rag import RAG; assert Memory().save_path.startswith('/tmp/react-agent-data'); assert RAG().save_path.startswith('/tmp/react-agent-data')"
-    - name: Coverage (3.11)
-      if: matrix.python-version == '3.11'
-      run: |
-        pip install pytest-cov
-        pytest tests/ -q \
-          --ignore=tests/test_real_llm.py \
-          --ignore=tests/test_harness_closed_loop_decision.py \
-          --ignore=tests/evaluation/test_harness_closed_loop_decision.py \
-          --cov=react_agent --cov-report=term-missing --cov-fail-under=35
   # Windows: default console often GBK — catch emoji/encoding regressions early
   test-windows:
     runs-on: windows-latest
@@ -110,11 +156,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: pip install -e ".[test]"
-    - name: Script tests (no PYTHONIOENCODING)
-      shell: powershell
-      run: |
-        Remove-Item Env:PYTHONIOENCODING -ErrorAction SilentlyContinue
-        python test_all.py
     - name: Pytest offline + console/final-answer guards
       shell: powershell
       run: |

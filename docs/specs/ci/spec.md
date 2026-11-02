@@ -15,7 +15,7 @@ CI 对当前 PR `head_sha` 给出可重复、可追溯、fail-closed 的机器�
 
 - `pass`：所有适用 CI 门禁通过，且 required checks 与当前 head SHA 匹配；
 - `fail`：代码、配置、测试、PR readiness、stage gate 或安全确定性检查失败；
-- `blocked`：输入缺失、状态不完整、映射不明确或检查无法可靠判断。`blocked` 不得被 Branch Protection 当作通过。
+- `blocked`：关键输入缺失、状态不完整或检查无法可靠判断。映射不明确在 report-only 阶段触发完整确定性 PR CI 回退，不单独解释为通过或阻断。
 
 CI 负责：
 
@@ -46,7 +46,7 @@ CI 可以调用 Harness 或方向 Spec 暴露的 gate 命令，但只消费退�
 
 Registry 只记录 `path_globs -> rule_id -> gate entrypoint` 及执行约束。方向 Spec 自己拥有 stage gate 命令和 evidence 结构，CI 只判断是否触发并聚合结果。
 
-当路径没有安全映射时，CI 必须运行固定的 unmapped-safety 子集并将总状态置为 `blocked`，直到补充映射或有带原因、审批角色和到期日的一次性例外。不得静默放行，也不得在普通 PR 中无界回退到全量评测。
+当前选择器先以 report-only 运行。路径映射明确时，它记录最小确定性 PR 检查集；路径未映射时，记录诊断并回退到完整确定性 PR CI，单独的未映射状态不阻断合并。base/head 缺失、head SHA 不匹配或选择器无法可靠读取输入时，artifact 标记 `blocked`；当前旧版完整 PR 检查仍是 required，report-only job 本身不改变 Branch Protection。完整回退只包含 PR 的 lint、离线测试、平台专项、typecheck、安全和 Docker 检查，不包含 Harness/Evaluation 长测、真实 LLM 或日跑。
 
 ## 4. CI 门禁
 
@@ -56,7 +56,7 @@ Registry 只记录 `path_globs -> rule_id -> gate entrypoint` 及执行约束。
 
 ### R2：变更相关检查
 
-CI 根据 Registry 和 changed files 选择最小安全检查集：格式、语法和 lint；受影响单测、导入、Schema 或最小离线回归；配置、工作流或安全边界变更的专项检查；以及适用的 Docker 或跨仓契约 smoke。映射明确时只运行相关 subset，映射不明确时使用 unmapped-safety 并保持 `blocked`。
+CI 根据 Registry 和 changed files 选择最小安全检查集：格式、语法和 lint；受影响单测、导入、Schema 或最小离线回归；配置、工作流或安全边界变更的专项检查；以及适用的 Docker 或跨仓契约 smoke。当前阶段只生成 report-only scope artifact；映射明确时记录相关 subset，映射不明确时记录完整确定性 PR CI 回退。只有观察期证明没有漏选且有足够耗时收益后，才允许把选择结果接入 PR gate。
 
 ### R3：阶段 gate
 
@@ -87,8 +87,10 @@ CI 根据 Registry 和 changed files 选择最小安全检查集：格式、语�
 ## 6. 最小验收标准
 
 - 变更路径明确时，PR 只运行对应 subset 和必要门禁；
-- 映射缺失、阶段 gate 失败或 required 输入缺失时，CI fail closed；
+- 完整确定性回退失败、阶段 gate 失败或 required 输入缺失时，CI fail closed；
 - `check_pr_ready.py`、lint、受影响单测和适用 stage gate 都能在当前 head SHA 上复核；
+- scope selector 在固定样本上记录映射、未映射路径、回退范围和排除的 Evaluation/Harness workflow；
+- 未映射路径不会静默缩减检查，也不会把长时 Evaluation/Harness 任务带入普通 PR 回退；
 - required check 名称稳定且最终只有 `CI / PR gate` 作为合并聚合器；
 - CI 文档不定义 AI findings、审批或发布流程；
 - CI 文档不重复定义 Harness 的评分、Fixture、Replay 或 Episode 语义；

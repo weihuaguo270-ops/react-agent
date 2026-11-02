@@ -24,7 +24,7 @@ PR 事件产生 `CI / PR readiness` 和 `CI / PR gate` 两个稳定 job。readin
 
 ### 2.2 选择规则
 
-Registry 只维护路径到规则和 gate 入口的映射。映射明确时运行最小相关 subset；映射不明确时运行固定安全子集并标记 `blocked`，要求补映射或审批有期限的例外。普通 PR 不因为映射不清而静默放行或无界全量回退。
+Registry 只维护路径到规则和 gate 入口的映射。当前迁移先以 report-only 记录选择结果：映射明确时记录最小相关 subset；映射不明确时回退到完整确定性 PR CI，base/head 缺失或 SHA 不匹配时标记 `blocked`。完整回退不包含 Harness/Evaluation 长测、真实 LLM 或日跑，且在观察期内不改变 required checks。
 
 ### 2.3 阶段 gate
 
@@ -54,7 +54,7 @@ Registry 只维护路径到规则和 gate 入口的映射。映射明确时运�
 
 ### Phase 3：PR 快门禁
 
-启用代表性环境加受影响 subset 的快速硬门禁；`CI / PR gate` 在所有输入完成后输出明确结论。完整 OS/Python 矩阵、跨仓和真实 LLM 继续作为 evidence-only。映射覆盖不足时阻塞并指向 Registry owner。
+启用代表性环境加受影响 subset 的快速硬门禁前，必须完成 report-only 观察。固定样本没有漏选、选择器失败时稳定回退完整确定性 PR CI，且全映射 PR 的中位验证耗时至少下降 20% 后，才允许切换。观察期仍保留现有完整 OS/Python PR 检查；切换后，未被选择的矩阵和真实 LLM 继续作为 evidence-only。Evaluation/Harness 长测不进入普通 PR 回退。
 
 ### Phase 4：Branch Protection 切换
 
@@ -76,7 +76,7 @@ AI Review 不隶属于 CI 的 Phase 0–5，另行按其顶层 Spec 实施：
 
 ## 5. 失败与回滚
 
-代码/配置错误、受影响检查失败、PR readiness 失败、stage gate 失败、安全检查失败、聚合输入缺失和未处理的 mapping-incomplete 阻止 CI 合并输入。完整评测或真实 LLM 的失败默认只生成 evidence。
+代码/配置错误、受影响检查失败、PR readiness 失败、stage gate 失败、安全检查失败、聚合输入缺失和完整确定性回退失败阻止 CI 合并输入。映射不完整本身先生成 report-only 证据并触发完整确定性回退；完整评测或真实 LLM 的失败默认只生成 evidence。
 
 发现聚合器误报、漏报、无法创建或显著超时后，暂停提升 required checks，恢复上一版 Branch Protection 名称，保留 artifact 和失败样本，修复选择器/聚合器后从 Shadow 重新观察。回滚不删除历史 evidence，也不修改方向 Spec 的阶段完成记录。
 
@@ -84,7 +84,8 @@ AI Review 不隶属于 CI 的 Phase 0–5，另行按其顶层 Spec 实施：
 
 - 当前 diff 能追溯到选择的规则、命令和 head SHA；
 - lint、受影响单测、`check_pr_ready.py`、适用 stage gate 和安全检查均可单独定位；
-- 缺失输入和未映射路径 fail closed；
+- 缺失输入和完整确定性回退失败 fail closed；未映射路径必须记录并回退，不能静默缩减检查；
+- 未映射路径回退到完整确定性 PR CI，不能静默缩减检查或触发长时 Evaluation/Harness；
 - `CI / PR gate` 稳定创建且是唯一合并聚合器；
 - CI 结果可被 AI Review 消费，但 CI 不依赖 AI Review 才能产生自身确定性结论；
 - AI findings、风险和审批由 AI Review Spec 管理；
