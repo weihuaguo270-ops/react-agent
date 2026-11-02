@@ -20,6 +20,13 @@ EVIDENCE = ROOT / "docs/specs/ci/evidence"
 SHA = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 
 
+def tracked_files() -> list[Path]:
+    result = subprocess.run(
+        ["git", "ls-files", "-z"], cwd=ROOT, check=True, capture_output=True
+    )
+    return [ROOT / item.decode("utf-8") for item in result.stdout.split(b"\0") if item]
+
+
 def git_head() -> str:
     return subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -80,8 +87,8 @@ def workflow_snapshot(path: Path) -> dict:
 
 def docker_snapshot() -> list[dict]:
     images = []
-    for path in ROOT.rglob("Dockerfile*"):
-        if any(part in {".git", ".venv", ".pytest_cache"} for part in path.parts):
+    for path in tracked_files():
+        if not path.name.startswith("Dockerfile"):
             continue
         for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             match = re.match(r"\s*FROM\s+([^\s]+)", line)
@@ -100,7 +107,11 @@ def docker_snapshot() -> list[dict]:
 
 
 def audit() -> dict:
-    workflows = [workflow_snapshot(path) for path in sorted((ROOT / ".github/workflows").glob("*.y*ml"))]
+    workflows = [
+        workflow_snapshot(path)
+        for path in sorted(tracked_files())
+        if path.parent == ROOT / ".github/workflows" and path.suffix in {".yml", ".yaml"}
+    ]
     images = docker_snapshot()
     findings = []
     for workflow in workflows:

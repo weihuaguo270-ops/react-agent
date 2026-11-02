@@ -1,0 +1,42 @@
+{
+  "schema_version": "ci-evidence-manifest/v1",
+  "evidence_kind": "frozen_snapshot",
+  "snapshot_id": "main-8805e5e9-20261030",
+  "spec_revision": "1.5",
+  "created_at": "2026-10-30T12:58:44.069291+00:00",
+  "repository": "weihuaguo270-ops/react-agent",
+  "target": {
+    "name": "main",
+    "sha": "8805e5e9a875eb6584aa12d1ce79917ee7e73076"
+  },
+  "sample_definition": {
+    "pull_requests": "latest 100 returned by GitHub REST pulls endpoint sorted by created desc",
+    "test_workflow_runs": "latest 100 returned by test.yml workflow runs endpoint",
+    "daily_workflow_runs": "latest 50 returned by daily-smoke.yml workflow runs endpoint",
+    "failure_job_details": "all failure/cancelled/timed_out/action_required runs expanded through the jobs API"
+  },
+  "capture_mode": "promoted-existing-evidence-without-network-refresh",
+  "source_baseline_sha256": "230ca0f85ca2d88d8d0166f4f6944b5a0195184f040f52af6537d26b9827973f",
+  "artifacts": {
+    "phase0-baseline.json": {
+      "sha256": "230ca0f85ca2d88d8d0166f4f6944b5a0195184f040f52af6537d26b9827973f",
+      "bytes": 286898
+    },
+    "phase0-baseline.md": {
+      "sha256": "07e0728090b6dd31badd80f3be26a2a9836232e910e1b59d1d9f99ae6bc8c065",
+      "bytes": 4640
+    },
+    "phase0-sample-index.md": {
+      "sha256": "bba0a6aab4f575691af69ed42eb07fb6695cc7aa11fdde8ed06adece8579a1c3",
+      "bytes": 54743
+    },
+    "phase0-r9-security-snapshot.json": {
+      "sha256": "60052747b2fe67d56936b6d441799a40fe7b60f0133ef1d29f6f63c7a8ba0bc2",
+      "bytes": 9855
+    },
+    "phase0-r9-security-snapshot.md": {
+      "sha256": "a81bdc9726d08f3644ebda06dba369396f95bd94e6c87e980b5ecb067d13e44b",
+      "bytes": 2345
+    }
+  }
+}

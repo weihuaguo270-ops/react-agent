@@ -1,4 +1,4 @@
-"""Refresh the CI Phase 0 baseline from GitHub's read-only APIs.
+"""Capture an immutable CI baseline snapshot or refresh the current observation.
 
 The output is intentionally a partial baseline: Phase 1 mapping and semantic
 validation are not inferred from this snapshot.
@@ -7,7 +7,10 @@ validation are not inferred from this snapshot.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import re
+import shutil
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +21,8 @@ from audit_workflow_security import audit as audit_workflow_security
 ROOT = Path(__file__).resolve().parents[2]
 REPO = "weihuaguo270-ops/react-agent"
 EVIDENCE = ROOT / "docs/specs/ci/evidence"
+SPEC_REVISION = "1.5"
+SNAPSHOT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$")
 
 
 def gh_json(endpoint: str) -> object:
@@ -30,6 +35,15 @@ def gh_json(endpoint: str) -> object:
         encoding="utf-8",
     )
     return json.loads(result.stdout)
+
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(canonical_bytes(path)).hexdigest()
+
+
+def canonical_bytes(path: Path) -> bytes:
+    """Hash text evidence independently of the checkout's newline policy."""
+    return path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
 
 def iso_minutes(start: str, end: str) -> float:
@@ -435,8 +449,74 @@ def main() -> int:
     global REPO
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default=REPO)
+    parser.add_argument("--mode", required=True, choices=("snapshot", "observation"))
+    parser.add_argument("--snapshot-id")
+    parser.add_argument("--from-existing", action="store_true", help="freeze the current evidence files without querying GitHub")
     args = parser.parse_args()
     REPO = args.repo
+
+    if args.mode == "snapshot":
+        if not args.snapshot_id or not SNAPSHOT_ID_RE.fullmatch(args.snapshot_id):
+            parser.error("snapshot mode requires a safe --snapshot-id")
+        output_dir = EVIDENCE / "snapshots" / args.snapshot_id
+        if output_dir.exists():
+            parser.error(f"snapshot already exists and cannot be overwritten: {args.snapshot_id}")
+    else:
+        if args.snapshot_id:
+            parser.error("--snapshot-id is only valid with --mode snapshot")
+        if args.from_existing:
+            parser.error("--from-existing is only valid with --mode snapshot")
+        output_dir = EVIDENCE / "current-observation"
+
+    if args.from_existing:
+        source_dir = EVIDENCE
+        source_files = (
+            "phase0-baseline.json",
+            "phase0-baseline.md",
+            "phase0-sample-index.md",
+            "phase0-r9-security-snapshot.json",
+            "phase0-r9-security-snapshot.md",
+        )
+        missing = [name for name in source_files if not (source_dir / name).is_file()]
+        if missing:
+            parser.error("existing evidence is incomplete: " + ", ".join(missing))
+        try:
+            existing_report = json.loads((source_dir / "phase0-baseline.json").read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            parser.error(f"existing baseline JSON is invalid: {exc}")
+        output_dir.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            output_dir.mkdir()
+        except FileExistsError:
+            parser.error(f"snapshot already exists and cannot be overwritten: {args.snapshot_id}")
+        for name in source_files:
+            shutil.copy2(source_dir / name, output_dir / name)
+        manifest = {
+            "schema_version": "ci-evidence-manifest/v1",
+            "evidence_kind": "frozen_snapshot",
+            "snapshot_id": args.snapshot_id,
+            "spec_revision": SPEC_REVISION,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "source_collected_at": existing_report.get("collected_at"),
+            "repository": existing_report.get("repository"),
+            "target": existing_report.get("default_branch"),
+            "sample_definition": existing_report.get("sample_definition"),
+            "capture_mode": "promoted-existing-evidence-without-network-refresh",
+            "source": {
+                "kind": "existing_baseline_files",
+                "paths": [f"docs/specs/ci/evidence/{name}" for name in source_files],
+            },
+            "source_baseline_sha256": sha256_file(source_dir / "phase0-baseline.json"),
+            "artifacts": {
+                name: {"sha256": sha256_file(output_dir / name), "bytes": len(canonical_bytes(output_dir / name))}
+                for name in source_files
+            },
+        }
+        (output_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"evidence={output_dir.relative_to(ROOT).as_posix()}")
+        print("capture_mode=promoted-existing-evidence-without-network-refresh")
+        print(f"default_sha={existing_report.get('default_branch', {}).get('sha')}")
+        return 0
 
     prs_payload = gh_json(f"repos/{REPO}/pulls?state=all&sort=created&direction=desc&per_page=100")
     prs = prs_payload if isinstance(prs_payload, list) else prs_payload.get("pulls", [])
@@ -475,6 +555,9 @@ def main() -> int:
         )
     report = {
         "schema_version": "ci-baseline/v2",
+        "spec_revision": SPEC_REVISION,
+        "evidence_kind": "frozen_snapshot" if args.mode == "snapshot" else "current_observation",
+        "snapshot_id": args.snapshot_id if args.mode == "snapshot" else None,
         "status": "partial",
         "collected_at": datetime.now(timezone.utc).isoformat(),
         "repository": REPO,
@@ -533,20 +616,52 @@ def main() -> int:
             "unavailable_logs": summary.get("unavailable_logs"),
             "status_note": "Historical log review is retained separately and is not treated as fresh evidence for the current main SHA.",
         }
-    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    if args.mode == "snapshot":
+        output_dir.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            output_dir.mkdir()
+        except FileExistsError:
+            parser.error(f"snapshot already exists and cannot be overwritten: {args.snapshot_id}")
+    else:
+        output_dir.mkdir(parents=True, exist_ok=True)
     r9_report = report["r9_security_snapshot"]
-    (EVIDENCE / "phase0-baseline.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (EVIDENCE / "phase0-baseline.md").write_text(render_markdown(report), encoding="utf-8")
-    (EVIDENCE / "phase0-sample-index.md").write_text(render_index(report), encoding="utf-8")
-    (EVIDENCE / "phase0-r9-security-snapshot.json").write_text(
+    (output_dir / "phase0-baseline.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (output_dir / "phase0-baseline.md").write_text(render_markdown(report), encoding="utf-8")
+    (output_dir / "phase0-sample-index.md").write_text(render_index(report), encoding="utf-8")
+    (output_dir / "phase0-r9-security-snapshot.json").write_text(
         json.dumps(r9_report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     from audit_workflow_security import render as render_security_audit
 
-    (EVIDENCE / "phase0-r9-security-snapshot.md").write_text(
+    (output_dir / "phase0-r9-security-snapshot.md").write_text(
         render_security_audit(r9_report), encoding="utf-8"
     )
-    print(f"baseline={EVIDENCE / 'phase0-baseline.json'}")
+    collector_path = Path(__file__).resolve()
+    manifest = {
+        "schema_version": "ci-evidence-manifest/v1",
+        "evidence_kind": report["evidence_kind"],
+        "snapshot_id": report["snapshot_id"],
+        "spec_revision": SPEC_REVISION,
+        "created_at": report["collected_at"],
+        "source_collected_at": report["collected_at"],
+        "repository": REPO,
+        "target": {"ref": default_branch, "sha": default_sha},
+        "sample_definition": report["sample_definition"],
+        "source_baseline_sha256": sha256_file(output_dir / "phase0-baseline.json"),
+        "collector": {
+            "path": collector_path.relative_to(ROOT).as_posix(),
+            "sha256": sha256_file(collector_path),
+        },
+        "source": {"kind": "github_api_collection", "repository": REPO},
+        "artifacts": {
+            path.name: {"sha256": sha256_file(path), "bytes": len(canonical_bytes(path))}
+            for path in sorted(output_dir.iterdir())
+            if path.is_file()
+        },
+    }
+    (output_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"evidence={output_dir.relative_to(ROOT).as_posix()}")
+    print(f"evidence_kind={report['evidence_kind']}")
     print(f"default_sha={default_sha}")
     print(f"pr_samples={len(prs)} test_runs={len(test_runs)} daily_runs={len(daily_runs)}")
     return 0

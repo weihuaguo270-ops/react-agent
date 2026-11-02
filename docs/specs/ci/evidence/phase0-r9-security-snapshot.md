@@ -1,8 +1,8 @@
 # CI R9 安全快照
 
 **状态：** `attention_required`（这是 Phase 0 事实快照，不是 Phase 1 R9 验收通过）
-**采集提交：** `e641adc7c95907a1bf55f7185c90faaa87b78829`
-**采集时间：** `2026-10-29T15:38:50.791143+00:00`
+**采集提交：** `8805e5e9a875eb6584aa12d1ce79917ee7e73076`
+**采集时间：** `2026-10-30T12:58:46.166955+00:00`
 
 ## 范围
 
@@ -20,20 +20,5 @@
 - `docker-base-image-not-digest-pinned` (medium)：`Dockerfile`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 2)"`
 - `docker-base-image-not-digest-pinned` (medium)：`Dockerfile.sandbox`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 1)"`
 - `docker-base-image-not-digest-pinned` (medium)：`eval/blind_pilot_v1/Dockerfile`；计划阶段：Phase 1；详情：`"react-agent-sandbox:0.7.0 (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_clean_pr/Dockerfile`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 2)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_clean_pr/Dockerfile.sandbox`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_clean_pr/eval/blind_pilot_v1/Dockerfile`；计划阶段：Phase 1；详情：`"react-agent-sandbox:0.7.0 (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_daily_smoke_fix/Dockerfile`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 2)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_daily_smoke_fix/Dockerfile.sandbox`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_daily_smoke_fix/eval/blind_pilot_v1/Dockerfile`；计划阶段：Phase 1；详情：`"react-agent-sandbox:0.7.0 (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_phase0_branch/Dockerfile`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 2)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_phase0_branch/Dockerfile.sandbox`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_phase0_branch/eval/blind_pilot_v1/Dockerfile`；计划阶段：Phase 1；详情：`"react-agent-sandbox:0.7.0 (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_phase0_clean/Dockerfile`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 2)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_phase0_clean/Dockerfile.sandbox`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_phase0_clean/eval/blind_pilot_v1/Dockerfile`；计划阶段：Phase 1；详情：`"react-agent-sandbox:0.7.0 (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_risk_docs_rebase/Dockerfile`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 2)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_risk_docs_rebase/Dockerfile.sandbox`；计划阶段：Phase 1；详情：`"python:3.11-slim (line 1)"`
-- `docker-base-image-not-digest-pinned` (medium)：`_risk_docs_rebase/eval/blind_pilot_v1/Dockerfile`；计划阶段：Phase 1；详情：`"react-agent-sandbox:0.7.0 (line 1)"`
 
 机器可读明细见同目录的 `phase0-r9-security-snapshot.json`。
