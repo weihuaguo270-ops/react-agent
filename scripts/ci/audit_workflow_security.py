@@ -86,6 +86,7 @@ def workflow_snapshot(path: Path) -> dict:
 
 
 def docker_snapshot() -> list[dict]:
+    internal_bases = {"react-agent-sandbox:0.7.0": ROOT / "Dockerfile.sandbox"}
     images = []
     for path in tracked_files():
         if not path.name.startswith("Dockerfile"):
@@ -95,12 +96,24 @@ def docker_snapshot() -> list[dict]:
             if not match:
                 continue
             image = match.group(1)
+            source = internal_bases.get(image)
+            source_refs = []
+            if source and source.is_file():
+                source_refs = [
+                    ref.group(1)
+                    for source_line in source.read_text(encoding="utf-8").splitlines()
+                    if (ref := re.match(r"\s*FROM\s+([^\s]+)", source_line))
+                ]
+            digest_pinned = "@sha256:" in image
+            local_source_pinned = bool(source_refs) and all("@sha256:" in ref for ref in source_refs)
             images.append(
                 {
                     "path": path.relative_to(ROOT).as_posix(),
                     "line": line_no,
                     "image": image,
-                    "pinned_digest": "@sha256:" in image,
+                    "pinned_digest": digest_pinned or local_source_pinned,
+                    "pinning_basis": "digest" if digest_pinned else "repository_dockerfile" if local_source_pinned else None,
+                    "source_dockerfile": source.relative_to(ROOT).as_posix() if local_source_pinned else None,
                 }
             )
     return images
@@ -133,6 +146,16 @@ def audit() -> dict:
                     "severity": "high",
                     "path": workflow["path"],
                     "details": "Review whether untrusted pull request content could execute with elevated context.",
+                    "planned_phase": "Phase 1",
+                }
+            )
+        if "pull_request" in workflow["events"] and workflow["secret_refs"]:
+            findings.append(
+                {
+                    "id": "secret-referenced-by-fork-pr-workflow",
+                    "severity": "high",
+                    "path": workflow["path"],
+                    "details": workflow["secret_refs"],
                     "planned_phase": "Phase 1",
                 }
             )

@@ -13,8 +13,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 if __package__:
+    from . import audit_workflow_security
     from .registry_v2 import ROOT, select, validate_registry
 else:
+    import audit_workflow_security
     from registry_v2 import ROOT, select, validate_registry
 
 REPORT_DIR = ROOT / "artifacts/ci/stage-gates"
@@ -99,6 +101,63 @@ def verify_snapshot(snapshot_id: str, expected_spec_revision: str | None = None)
         "source_baseline_sha256": source_hash,
         "verified_artifacts": verified,
     }
+
+
+def validate_selector_backtest(
+    backtest: dict, sample: dict, sample_id: str, sample_path: Path, spec_revision: str
+) -> bool:
+    """Validate replay provenance and metrics without requiring zero unmapped paths."""
+    metrics = backtest.get("metrics", {})
+    if not isinstance(metrics, dict):
+        return False
+    changed = metrics.get("changed_files")
+    mapped = metrics.get("mapped_files")
+    unmapped = metrics.get("unmapped_files")
+    coverage = metrics.get("mapped_coverage")
+    counts_valid = (
+        isinstance(changed, int)
+        and not isinstance(changed, bool)
+        and isinstance(mapped, int)
+        and not isinstance(mapped, bool)
+        and isinstance(unmapped, int)
+        and not isinstance(unmapped, bool)
+        and changed == mapped + unmapped
+        and (coverage is None if changed == 0 else isinstance(coverage, (int, float)) and round(mapped / changed, 4) == coverage)
+    )
+    rows = backtest.get("samples")
+    row_counts_valid = (
+        isinstance(rows, list)
+        and len(rows) == 100
+        and all(
+            isinstance(row, dict)
+            and isinstance(row.get("changed_files"), int)
+            and not isinstance(row.get("changed_files"), bool)
+            and isinstance(row.get("unmapped_paths"), list)
+            for row in rows
+        )
+        and sum(row["changed_files"] for row in rows) == changed
+        and sum(len(row["unmapped_paths"]) for row in rows) == unmapped
+    )
+    registry_validation = backtest.get("registry_validation", {})
+    if not isinstance(registry_validation, dict):
+        return False
+    registry_ok = registry_validation.get("status") == "pass" and not registry_validation.get("errors")
+    expected_conclusion = "pass" if registry_ok and unmapped == 0 else "blocked"
+    return bool(
+        backtest.get("sample_id") == sample_id
+        and backtest.get("schema_version") == "ci-selector-backtest/v2"
+        and backtest.get("spec_revision") == spec_revision
+        and backtest.get("source_sha") == sample.get("source_sha")
+        and backtest.get("source_sha256") == hashlib.sha256(sample_path.read_bytes()).hexdigest()
+        and backtest.get("registry_sha256") == hashlib.sha256((ROOT / "docs/specs/ci/registry-v2.json").read_bytes()).hexdigest()
+        and backtest.get("sample_size") == 100
+        and counts_valid
+        and row_counts_valid
+        and registry_ok
+        and metrics.get("false_positive_rules") is None
+        and metrics.get("missed_expected_rules") is None
+        and backtest.get("conclusion") == expected_conclusion
+    )
 
 
 def run(stage: str, progress: dict | None = None) -> dict:
@@ -206,18 +265,21 @@ def run(stage: str, progress: dict | None = None) -> dict:
         if backtest_path and backtest_path.exists():
             backtest = json.loads(backtest_path.read_text(encoding="utf-8"))
             sample = json.loads(sample_path.read_text(encoding="utf-8")) if sample_ok else {}
-            valid_backtest = (
-                backtest.get("sample_id") == sample_id
-                and backtest.get("spec_revision") == spec_revision
-                and backtest.get("source_sha") == sample.get("source_sha")
-                and backtest.get("source_sha256") == hashlib.sha256(sample_path.read_bytes()).hexdigest()
-                and backtest.get("registry_sha256") == hashlib.sha256((ROOT / "docs/specs/ci/registry-v2.json").read_bytes()).hexdigest()
-                and backtest.get("metrics", {}).get("false_positive_rules") is None
-                and backtest.get("metrics", {}).get("missed_expected_rules") is None
-                and backtest.get("sample_size") == 100
-            ) if sample_ok else False
-            replay_passed = valid_backtest and backtest.get("conclusion") == "pass"
-            report["checks"].append({"id": "selector-backtest", "status": "passed" if replay_passed else "blocked" if valid_backtest else "failed", "metrics": backtest.get("metrics"), "conclusion": backtest.get("conclusion"), "source_sha256": backtest.get("source_sha256")})
+            valid_backtest = validate_selector_backtest(backtest, sample, sample_id, sample_path, spec_revision) if sample_ok and isinstance(backtest, dict) else False
+            # A fixed replay can be valid evidence while remaining ineligible
+            # for a subset gate because unmapped paths or missing labels exist.
+            # Keep those two decisions separate: Phase 1 accepts the evidence
+            # contract, while later phases decide whether subset gating is safe.
+            replay_evidence_passed = valid_backtest
+            report["checks"].append({
+                "id": "selector-backtest",
+                "status": "passed" if replay_evidence_passed else "failed",
+                "evidence_status": "valid" if replay_evidence_passed else "invalid",
+                "gate_eligibility": "eligible" if backtest.get("conclusion") == "pass" else "blocked",
+                "metrics": backtest.get("metrics"),
+                "conclusion": backtest.get("conclusion"),
+                "source_sha256": backtest.get("source_sha256"),
+            })
         else:
             report["checks"].append({"id": "selector-backtest", "status": "failed", "reason": "backtest evidence missing"})
         selector = select(["src/react_agent/harness/contracts/__init__.py", "docs/specs/ci/spec.md", "unmapped/example.xyz"])
@@ -228,11 +290,50 @@ def run(stage: str, progress: dict | None = None) -> dict:
                 "result": selector,
             }
         )
-        r9_status = next((item.get("status") for item in progress["stages"][stage].get("acceptance", []) if item.get("id") == "CI-P1-3"), "blocked")
-        report["checks"].append({"id": "r9-execution-acceptance", "status": "blocked" if r9_status != "complete" else "passed", "reason": "Fork secret isolation and effective runtime permissions require an isolated GitHub Actions run."})
+        r9_acceptance = next((item for item in progress["stages"][stage].get("acceptance", []) if item.get("id") == "CI-P1-3"), {})
+        r9_status = r9_acceptance.get("status", "blocked")
+        security_snapshot = audit_workflow_security.audit()
+        security_findings = security_snapshot.get("findings", [])
+        report["checks"].append({
+            "id": "r9-static-security-audit",
+            "status": "passed" if not security_findings else "failed",
+            "head_sha": security_snapshot["head_sha"],
+            "finding_count": len(security_findings),
+            "findings": security_findings,
+        })
+        r9_evidence_path = next(
+            (ROOT / path for path in r9_acceptance.get("evidence", []) if path.endswith("phase1-r9-acceptance.json")),
+            None,
+        )
+        try:
+            r9_evidence = json.loads(r9_evidence_path.read_text(encoding="utf-8")) if r9_evidence_path else {}
+        except (OSError, json.JSONDecodeError):
+            r9_evidence = {}
+        if not isinstance(r9_evidence, dict):
+            r9_evidence = {}
+        runtime = r9_evidence.get("runtime_acceptance", {})
+        if not isinstance(runtime, dict):
+            runtime = {}
+        r9_runtime_passed = (
+            r9_status == "complete"
+            and r9_evidence.get("schema_version") == "ci-r9-acceptance/v1"
+            and r9_evidence.get("head_sha") == head_sha
+            and r9_evidence.get("findings_remain") is False
+            and runtime.get("status") == "passed"
+        )
+        report["checks"].append({
+            "id": "r9-execution-acceptance",
+            "status": "passed" if r9_runtime_passed and not security_findings else "blocked",
+            "evidence_path": r9_evidence_path.relative_to(ROOT).as_posix() if r9_evidence_path else None,
+            "evidence_head_sha": r9_evidence.get("head_sha"),
+            "runtime_status": runtime.get("status"),
+            "reason": None if r9_runtime_passed else "Current-head isolated GitHub Actions evidence for fork Secret isolation and effective permissions is missing or incomplete.",
+        })
         fail_closed_ok = selector["status"] == "blocked" and bool(selector["unmapped_paths"])
         replay_check = next(item for item in report["checks"] if item["id"] == "selector-backtest")
-        report["status"] = "passed" if not errors and fail_closed_ok and sample_ok and replay_check["status"] == "passed" and r9_status == "complete" else "blocked"
+        static_audit = next(item for item in report["checks"] if item["id"] == "r9-static-security-audit")
+        runtime_check = next(item for item in report["checks"] if item["id"] == "r9-execution-acceptance")
+        report["status"] = "passed" if not errors and fail_closed_ok and sample_ok and replay_check["status"] == "passed" and static_audit["status"] == "passed" and runtime_check["status"] == "passed" else "blocked"
     else:
         report["status"] = "blocked"
         report["reason"] = f"{stage} is not implemented; no pass conclusion is available."
@@ -254,7 +355,9 @@ def main() -> int:
         raise SystemExit(f"refusing to overwrite gate report: {target}")
     encoded = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     target.write_text(encoded, encoding="utf-8")
-    digest = hashlib.sha256(encoded.encode()).hexdigest()
+    # Hash the bytes as persisted on disk after platform newline handling.
+    # The progress source must reproduce this digest on Windows and POSIX.
+    digest = hashlib.sha256(canonical_bytes(target)).hexdigest()
     progress = json.loads(PROGRESS.read_text(encoding="utf-8"))
     progress["updated_at"] = datetime.now(timezone.utc).isoformat()
     progress["stages"][args.stage]["last_gate"] = {
