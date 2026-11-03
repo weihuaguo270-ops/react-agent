@@ -1,0 +1,50 @@
+{
+  "schema_version": "ci-evidence-manifest/v1",
+  "evidence_kind": "current_observation",
+  "snapshot_id": null,
+  "spec_revision": "1.5",
+  "created_at": "2026-11-03T03:26:03.197942+00:00",
+  "source_collected_at": "2026-11-03T03:26:03.197942+00:00",
+  "repository": "weihuaguo270-ops/react-agent",
+  "target": {
+    "ref": "main",
+    "sha": "16d03460fab16914a2752698aeb0053e32f5a3a0"
+  },
+  "sample_definition": {
+    "pull_requests": "latest 100 returned by GitHub REST pulls endpoint sorted by created desc",
+    "test_workflow_runs": "latest 100 returned by test.yml workflow runs endpoint",
+    "daily_workflow_runs": "latest 50 returned by daily-smoke.yml workflow runs endpoint",
+    "failure_job_details": "all failure/cancelled/timed_out/action_required runs expanded through the jobs API"
+  },
+  "source_baseline_sha256": "40fc756eb1a19b99f463bcdc9641bdadf8090a29a629cb98355385edeb6d4586",
+  "collector": {
+    "path": "scripts/ci/refresh_phase0_baseline.py",
+    "sha256": "f42beba5cb1fe89ce5bef2cce083dfdf66bcce3a450fc9622971990928bfc1de"
+  },
+  "source": {
+    "kind": "github_api_collection",
+    "repository": "weihuaguo270-ops/react-agent"
+  },
+  "artifacts": {
+    "phase0-baseline.json": {
+      "sha256": "40fc756eb1a19b99f463bcdc9641bdadf8090a29a629cb98355385edeb6d4586",
+      "bytes": 283483
+    },
+    "phase0-baseline.md": {
+      "sha256": "0c7991e4b9fcffcfaf448b4f56494b61726c484ee14cf65d15d406e1f2a67b0c",
+      "bytes": 4962
+    },
+    "phase0-r9-security-snapshot.json": {
+      "sha256": "ae2adde59b6e20abdab9a05e18005bc16e3a5698540b235b1907ebd834ea8e1b",
+      "bytes": 10466
+    },
+    "phase0-r9-security-snapshot.md": {
+      "sha256": "521cb28f970b5ce5d5495aa4b0cb7458dd23bded1e857f9614bc411ae12f701e",
+      "bytes": 2425
+    },
+    "phase0-sample-index.md": {
+      "sha256": "cef2c90fa95c38fb184bb416bcb76efa03fb1c5e1c1d5d7cad883bfa3e6ed28b",
+      "bytes": 54602
+    }
+  }
+}

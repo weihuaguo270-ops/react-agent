@@ -16,7 +16,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from statistics import median
 
-from audit_workflow_security import audit as audit_workflow_security
+if __package__:
+    from .audit_workflow_security import audit as audit_workflow_security
+    from .audit_workflow_security import render as render_security_audit
+else:
+    from audit_workflow_security import audit as audit_workflow_security
+    from audit_workflow_security import render as render_security_audit
 
 ROOT = Path(__file__).resolve().parents[2]
 REPO = "weihuaguo270-ops/react-agent"
@@ -44,6 +49,15 @@ def sha256_file(path: Path) -> str:
 def canonical_bytes(path: Path) -> bytes:
     """Hash text evidence independently of the checkout's newline policy."""
     return path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def manifest_artifacts(output_dir: Path) -> dict[str, dict[str, int | str]]:
+    """Hash evidence files; a manifest cannot contain its own content hash."""
+    return {
+        path.name: {"sha256": sha256_file(path), "bytes": len(canonical_bytes(path))}
+        for path in sorted(output_dir.iterdir())
+        if path.is_file() and path.name != "manifest.json"
+    }
 
 
 def iso_minutes(start: str, end: str) -> float:
@@ -222,12 +236,12 @@ def summarize(runs: list[dict]) -> dict:
     }
 
 
-def workflow_responsibilities() -> list[dict]:
-    """Freeze the current workflow-to-logical-group mapping before Registry v2."""
-    return [
+def workflow_responsibilities(required_checks: list[str]) -> list[dict]:
+    """Describe logical jobs and bind required status to observed protection."""
+    responsibilities = [
         {
             "workflow": "test.yml",
-            "job": "pr-ready",
+            "job": "PR ready audit",
             "logical_group": "pr_readiness",
             "mode": "pull_request_only",
             "target_phase": "Phase 2",
@@ -244,7 +258,7 @@ def workflow_responsibilities() -> list[dict]:
         {
             "workflow": "test.yml",
             "job": "test",
-            "logical_group": "python_matrix_and_full_offline_evaluation",
+            "logical_group": "python_matrix_and_offline_tests",
             "mode": "offline_plus_sibling_repositories",
             "target_phase": "Phase 2",
             "required_now": True,
@@ -306,6 +320,13 @@ def workflow_responsibilities() -> list[dict]:
             "required_now": False,
         },
     ]
+    for item in responsibilities:
+        job = item["job"]
+        item["required_contexts"] = [
+            name for name in required_checks if name == job or name.startswith(f"{job} (")
+        ]
+        item["required_now"] = bool(item["required_contexts"])
+    return responsibilities
 
 
 def reproduction_metadata() -> dict:
@@ -329,7 +350,7 @@ def limitations() -> list[str]:
         "Wall-clock is created_at to updated_at and includes queue time; it is not execution-only duration.",
         "GitHub API sample is the latest 100 PRs, 100 test.yml runs, and 50 daily-smoke.yml runs; no historical pagination beyond those limits.",
         "Failure categories are name-based triage hints and do not replace log-level root-cause review.",
-        "The current spec-registry/v1 has no path rules, so mapping coverage is intentionally not_measured.",
+        "This collector does not execute selector backtests; mapping metrics belong to the canonical Phase 1 evidence.",
         "The R9 snapshot is static evidence; fork Secret isolation and runtime permission behavior require a Phase 1 acceptance run.",
         "The Phase 1 matrix is frozen as a contract for later work and is not evidence that Phase 1 has passed.",
     ]
@@ -337,11 +358,10 @@ def limitations() -> list[str]:
 
 def phase1_matrix_review() -> dict:
     return {
-        "status": "frozen_contract_reviewed",
-        "source": "docs/specs/ci/redesign-plan.md#phase-1-registry-and-stage-signals",
-        "scenario_count": 13,
+        "status": "reference_only",
+        "source": "docs/specs/ci/redesign-plan.md",
         "execution_status": "not_executed_in_phase_0",
-        "reason": "Phase 0 freezes the acceptance contract; semantic validator, backtest, progress comparator and R9 tests belong to Phase 1.",
+        "reason": "Semantic validation, selector backtests and R9 execution belong to Phase 1 and are not Phase 0 exit requirements.",
     }
 
 
@@ -349,17 +369,20 @@ def render_markdown(report: dict) -> str:
     test = report["workflows"]["test.yml"]
     daily = report["workflows"]["daily-smoke.yml"]
     checks = report["required_checks"]
-    return f"""# CI Phase 0 基线报告
+    observation = report.get("evidence_kind") == "current_observation"
+    title = "CI 当前观测报告" if observation else "CI Phase 0 冻结基线报告"
+    return f"""# {title}
 
 ## 状态
 
-**阶段状态：** Partial（基线快照和安全快照已刷新；独立复审、Registry v2 语义校验和 R9 验收仍未完成）<br>
+**证据类型：** `{report.get('evidence_kind', 'frozen_snapshot')}`<br>
+**验收边界：** 采样与静态安全证据不构成阶段通过；阶段状态仅见 `../progress.yaml`。<br>
 **采集时间：** {report['collected_at']}<br>
 **仓库：** {REPO}
 **默认分支 SHA：** `{report['default_branch']['sha']}`<br>
 **来源：** GitHub Actions、Pull Request、Branch Protection 只读 API 快照。
 
-本报告只冻结当前事实，不把 Registry v2、路径映射、聚合器或 Branch Protection 迁移解释为已完成。
+本报告只记录采集时的事实，不把 Registry v2、路径映射、聚合器或 Branch Protection 迁移解释为已完成。当前观测可刷新；冻结快照和历史失败证据不可覆盖。
 
 ## 样本与方法
 
@@ -374,7 +397,7 @@ def render_markdown(report: dict) -> str:
 |---|---|---|---|---|---:|
 {chr(10).join(f"| `{item['workflow']}` | `{item['job']}` | `{item['logical_group']}` | `{item['mode']}` | `{item['target_phase']}` | {'yes' if item['required_now'] else 'no'} |" for item in report['workflow_responsibilities'])}
 
-该表是 Registry v2 之前的初步迁移表；它不表示路径映射已经实现。
+该表仅记录逻辑组职责，required 状态来自本次 Branch Protection 采集；它不替代 Registry 或 Phase 1 selector backtest。
 
 ## 当前 Required Checks
 
@@ -382,9 +405,9 @@ def render_markdown(report: dict) -> str:
 
 Branch Protection：strict={report['branch_protection']['strict']}，管理员保护={report['branch_protection']['enforce_admins']}，线性历史={report['branch_protection']['required_linear_history']}，稳定聚合器={report['branch_protection']['stable_required_aggregator_present']}。
 
-当前仍没有稳定聚合器；`Real LLM gate` 只表示 Secret 探测，不等价于实际 smoke 通过。
+聚合器是否 required 以本次保护规则为准。Evaluation、真实 LLM 及 Harness 质量证据不由本报告推断；Secret 探测不等价于 live smoke 通过。
 
-## PR #172/#173 合并后 push runs
+## PR #172/#173 合并提交关联 runs（按实际事件保留）
 
 {chr(10).join(f"- PR #{run['merge_pr_number']}：run `{run['run_id']}`，workflow `{run['workflow']}`，event `{run['event']}`，conclusion `{run['conclusion']}`，head `{run['head_sha']}`" for run in report['merge_followup_runs']) or '- 未发现对应的合并提交 workflow run；需在复审时核对 API 返回。'}
 
@@ -399,7 +422,7 @@ Branch Protection：strict={report['branch_protection']['strict']}，管理员�
 
 ## Phase 0 退出结论
 
-仍待完成：独立复审逐样本证据、Phase 1 语义校验和 R9 正式验收。Phase 1 验收矩阵已冻结并复核为后续契约，但没有在本阶段执行。当前 v1 Registry 没有 path rules，因此 mapping coverage 保持 `not_measured`，不得伪造历史覆盖率。
+Phase 0 由冻结快照完整性、证据生命周期分离、gate 校验和当前 Spec 下的独立复审决定。当前观测不能替代独立复审，也不要求 Phase 1 语义校验、R9 远端执行或 Phase 2 shadow 窗口先完成。本采集器不执行 selector，因此 mapping coverage 保持 `not_measured`；已执行的 Phase 1 结果见唯一进度源。
 
 ## 复核边界
 
@@ -579,7 +602,7 @@ def main() -> int:
             "daily-smoke.yml": {**summarize(daily_runs), "runs": daily_runs},
         },
         "merge_followup_runs": collect_merge_followups(prs),
-        "workflow_responsibilities": workflow_responsibilities(),
+        "workflow_responsibilities": workflow_responsibilities(protection.get("required_status_checks", {}).get("contexts", [])),
         "reproduction": reproduction_metadata(),
         "limitations": limitations(),
         "audit_fields": {
@@ -596,11 +619,11 @@ def main() -> int:
             "strict": protection.get("required_status_checks", {}).get("strict"),
             "enforce_admins": protection.get("enforce_admins", {}).get("enabled"),
             "required_linear_history": protection.get("required_linear_history", {}).get("enabled"),
-            "stable_required_aggregator_present": False,
+            "stable_required_aggregator_present": "CI / PR gate" in protection.get("required_status_checks", {}).get("contexts", []),
         },
         "owners": {"ci_maintainer": "repository_maintainers", "registry_maintainer": "repository_maintainers", "progress_owner": "repository_maintainers", "branch_protection_operator": "repository_maintainers"},
         "comparison_scope": {"baseline_ref": default_branch, "baseline_sha": default_sha, "current_worktree_ref": subprocess.run(["git", "branch", "--show-current"], cwd=ROOT, check=True, capture_output=True, text=True).stdout.strip(), "current_worktree_sha": current_sha, "fresh_rerun_required_for_completion": True},
-        "mapping_coverage_backtest": {"status": "not_measured", "reason": "spec-registry/v1 has no path rules", "planned_phase": "Phase 1", "required_before": "Phase 2", "required_outputs": ["mapped_coverage", "unmapped_paths", "false_positive_rules", "missed_expected_rules"]},
+        "mapping_coverage_backtest": {"status": "not_measured", "reason": "This collector does not execute the selector; consult canonical Phase 1 evidence.", "planned_phase": "Phase 1", "required_before": "Phase 2", "required_outputs": ["mapped_coverage", "unmapped_paths", "false_positive_rules", "missed_expected_rules"]},
     }
     historical_log_review = EVIDENCE / "phase0-failure-log-review-2026-10-28.json"
     if historical_log_review.exists():
@@ -631,8 +654,6 @@ def main() -> int:
     (output_dir / "phase0-r9-security-snapshot.json").write_text(
         json.dumps(r9_report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    from audit_workflow_security import render as render_security_audit
-
     (output_dir / "phase0-r9-security-snapshot.md").write_text(
         render_security_audit(r9_report), encoding="utf-8"
     )
@@ -653,11 +674,7 @@ def main() -> int:
             "sha256": sha256_file(collector_path),
         },
         "source": {"kind": "github_api_collection", "repository": REPO},
-        "artifacts": {
-            path.name: {"sha256": sha256_file(path), "bytes": len(canonical_bytes(path))}
-            for path in sorted(output_dir.iterdir())
-            if path.is_file()
-        },
+        "artifacts": manifest_artifacts(output_dir),
     }
     (output_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"evidence={output_dir.relative_to(ROOT).as_posix()}")

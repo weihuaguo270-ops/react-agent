@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-10-30T14:48:19.418901+00:00",
+  "updated_at": "2026-11-03T04:36:22.550466+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -64,16 +64,19 @@
             "docs/specs/ci/evidence/snapshots/main-8805e5e9-20261030/phase0-baseline.json",
             "docs/specs/ci/evidence/snapshots/main-8805e5e9-20261030/phase0-sample-index.md"
           ],
-          "status": "in_progress"
+          "status": "complete"
         },
         {
           "id": "CI-P0-2-v2",
           "title": "Current observation and docs corpus baseline are separate from frozen CI snapshots",
           "evidence": [
+            "docs/specs/ci/evidence/current-observation/manifest.json",
+            "docs/specs/ci/evidence/current-observation/phase0-baseline.json",
             "scripts/ci/refresh_phase0_baseline.py",
+            "tests/test_refresh_phase0_baseline.py",
             "src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json"
           ],
-          "status": "in_progress"
+          "status": "complete"
         },
         {
           "id": "CI-P0-3-v2",
@@ -82,7 +85,7 @@
             "scripts/ci/ci_stage_gate.py",
             "tests/test_ci_stage_gate.py"
           ],
-          "status": "in_progress"
+          "status": "complete"
         },
         {
           "id": "CI-P0-4-v2",
@@ -90,13 +93,13 @@
           "evidence": [
             "docs/specs/ci/evidence/reviews/phase0-review-main-8805e5e9-v1.5.md"
           ],
-          "status": "partial"
+          "status": "complete"
         }
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "artifacts/ci/stage-gates/phase-0-20261030T144815188988Z-8805e5e9.json",
-        "report_sha256": "bbfba42a279dea7405d4129aa4bfef6b2afe3d1b43ff3a8ead8c2f55aabd8259",
+        "report": "artifacts/ci/stage-gates/phase-0-20261103T043622549075Z-16d03460.json",
+        "report_sha256": "637cb44c931be42bb2517b0d4b3b43c76231a9671c1e5d61206199930d87671a",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": "main-8805e5e9-20261030"
@@ -172,10 +175,10 @@
     }
   },
   "last_gate": {
-    "stage": "Phase 1",
+    "stage": "Phase 0",
     "status": "blocked",
-    "report": "artifacts/ci/stage-gates/phase-1-20261030T144819418901Z-8805e5e9.json",
-    "report_sha256": "0a5ef1a92567def2844d433dd2c20369061ab8184bec149d504a509e53d9f0b2",
+    "report": "artifacts/ci/stage-gates/phase-0-20261103T043622549075Z-16d03460.json",
+    "report_sha256": "637cb44c931be42bb2517b0d4b3b43c76231a9671c1e5d61206199930d87671a",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
     "snapshot_id": "main-8805e5e9-20261030"

@@ -6,6 +6,16 @@ import json
 from scripts.ci import ci_stage_gate
 
 
+def test_test_environment_exposes_repository_source_and_permissive_dirs(monkeypatch, tmp_path):
+    monkeypatch.setattr(ci_stage_gate, "ROOT", tmp_path)
+    monkeypatch.setenv("PYTHONPATH", "existing-path")
+
+    env = ci_stage_gate.test_environment()
+
+    assert env["REACT_AGENT_PERMISSIVE_TEST_DIRS"] == "1"
+    assert env["PYTHONPATH"].split(ci_stage_gate.os.pathsep) == [str((tmp_path / "src").resolve()), "existing-path"]
+
+
 def test_snapshot_integrity_does_not_require_current_head(tmp_path, monkeypatch):
     snapshot_dir = tmp_path / "docs/specs/ci/evidence/snapshots/sample"
     snapshot_dir.mkdir(parents=True)

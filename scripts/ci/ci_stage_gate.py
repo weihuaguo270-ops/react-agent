@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -23,6 +24,16 @@ PROGRESS = ROOT / "docs/specs/ci/progress.yaml"
 def canonical_bytes(path: Path) -> bytes:
     """Hash text evidence independently of the checkout's newline policy."""
     return path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def test_environment() -> dict[str, str]:
+    """Run focused tests with the repository source tree and test-dir policy."""
+    env = dict(os.environ)
+    source_path = str((ROOT / "src").resolve())
+    existing = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, (source_path, existing)))
+    env["REACT_AGENT_PERMISSIVE_TEST_DIRS"] = "1"
+    return env
 
 
 def verify_snapshot(snapshot_id: str, expected_spec_revision: str | None = None) -> dict:
@@ -113,6 +124,7 @@ def run(stage: str, progress: dict | None = None) -> dict:
         test = subprocess.run(
             [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *configured_tests],
             cwd=ROOT,
+            env=test_environment(),
             capture_output=True,
             text=True,
             check=False,
@@ -147,18 +159,34 @@ def run(stage: str, progress: dict | None = None) -> dict:
         )
         missing_review = [path for path in review.get("evidence", []) if not (ROOT / path).is_file()]
         review_passed = review.get("status") == "complete" and not missing_review
+        review_report = {}
+        if review_passed and review.get("evidence"):
+            try:
+                review_text = (ROOT / review["evidence"][0]).read_text(encoding="utf-8")
+                conclusion_match = re.search(r"(?im)^\s*(?:#+\s*)?(?:[-*]\s*)?(?:Conclusion|结论)\s*[:：]\s*`?([A-Za-z_]+)", review_text)
+                review_report = {"conclusion": conclusion_match.group(1) if conclusion_match else None}
+            except OSError:
+                review_report = {}
         report["checks"].append({
             "id": "phase0-independent-review",
             "status": "passed" if review_passed else "blocked",
             "acceptance_status": review.get("status"),
             "missing_evidence": missing_review,
         })
+        review_conclusion = review_report.get("conclusion")
+        review_conclusion_passed = review_conclusion == "Complete"
+        report["checks"].append({
+            "id": "phase0-review-conclusion",
+            "status": "passed" if review_conclusion_passed else "blocked",
+            "conclusion": review_conclusion,
+            "reason": None if review_conclusion_passed else "independent review did not conclude Complete",
+        })
         technical_passed = (
             snapshot_result["status"] == "passed"
             and report["checks"][0].get("status") == "passed"
             and corpus_separate
         )
-        report["status"] = "passed" if technical_passed and review_passed else "blocked"
+        report["status"] = "passed" if technical_passed and review_passed and review_conclusion_passed else "blocked"
     elif stage == "Phase 1":
         errors = validate_registry()
         report["checks"].append(
