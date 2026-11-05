@@ -28,3 +28,20 @@ def test_unclassified_path_requires_complete_deterministic_suite():
     assert report["checks"] == [
         "pr-ready", "lint", "test", "test-windows", "typecheck", "security", "docker-smoke", "docs-eval"
     ]
+
+
+def test_evaluation_evidence_does_not_pull_in_runtime_ci():
+    report = expected_checks(["eval/cross_repo_evidence/sample/manifest.json"])
+    assert report["checks"] == ["pr-ready"]
+    assert report["class"] == "evaluation_evidence"
+
+
+def test_real_llm_source_remains_evidence_only():
+    report = expected_checks(["tests/test_real_llm.py"])
+    assert report["checks"] == ["pr-ready"]
+    assert report["class"] == "real_llm_evidence"
+
+
+def test_evaluation_dockerfile_keeps_container_security_checks():
+    report = expected_checks(["eval/cross_repo_evidence/sample/Dockerfile"])
+    assert report["checks"] == ["pr-ready", "security", "docker-smoke"]

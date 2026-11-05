@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-05T12:58:38.960204+00:00",
+  "updated_at": "2026-11-05T15:12:26.182182+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -49,9 +49,9 @@
   ],
   "phase0_snapshot_id": "main-8805e5e9-20261030",
   "selector_sample_id": "main-8805e5e9-20261030",
-  "selector_backtest_report": "docs/specs/ci/evidence/phase1-selector-backtest-main-d43cff29-20261103.json",
-  "selector_rule_labels": "docs/specs/ci/evidence/selector-expected-rules-100.json",
-  "selector_rule_backtest_report": "docs/specs/ci/evidence/phase1-selector-rule-backtest-main-8805e5e9-20261105.json",
+  "selector_backtest_report": "docs/specs/ci/evidence/phase1-selector-backtest-main-647fd645-20261105.json",
+  "selector_rule_labels": "docs/specs/ci/evidence/selector-expected-rules-100-20261105-path-mapping-v4.json",
+  "selector_rule_backtest_report": "docs/specs/ci/evidence/phase1-selector-rule-backtest-main-647fd645-20261105-v4.json",
   "stages": {
     "Phase 0": {
       "name": "Evidence lifecycle and CI risk baseline",
@@ -130,11 +130,11 @@
             "docs/specs/ci/evidence/phase1-selector-backtest-main-d43cff29-20261103.json",
             "scripts/ci/label_expected_rules.py",
             "scripts/ci/rule_level_backtest.py",
-            "docs/specs/ci/evidence/selector-expected-rules-100.json",
-            "docs/specs/ci/evidence/phase1-selector-rule-backtest-main-8805e5e9-20261105.json"
+            "docs/specs/ci/evidence/selector-expected-rules-100-20261105-path-mapping-v4.json",
+            "docs/specs/ci/evidence/phase1-selector-rule-backtest-main-647fd645-20261105-v4.json"
           ],
           "status": "in_progress",
-          "notes": "The fixed v2 replay remains bound to the frozen path sample and reports 651 unmapped paths and 67.32% path coverage. An independent rule-level label set and replay now measure only comparable rows; unresolved path classes remain unmeasured, so subset-gate eligibility stays blocked until the mapping scope is complete and the 100-row sample has no unresolved paths."
+          "notes": "The current fixed replay is bound to the frozen path sample and reports 73 genuinely unmapped paths plus 3 excluded historical archive paths, for 96.34% mapped-or-excluded coverage. Independent rule-level labels compare 91 of 100 rows with zero false-positive or missed rules; 9 rows remain unmeasured because their paths cannot be safely classified. Subset-gate eligibility remains blocked until those unresolved classes are resolved or explicitly accepted as permanent fail-closed boundaries."
         },
         {
           "id": "CI-P1-3",
@@ -148,8 +148,8 @@
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "artifacts/ci/stage-gates/phase-1-20261105T125838947450Z-5886505f.json",
-        "report_sha256": "b6fc4a842f58f89d07c35da882f15f26ad7d73f9fc61c014e88121309eb2011f",
+        "report": "artifacts/ci/stage-gates/phase-1-20261105T151226177768Z-647fd645.json",
+        "report_sha256": "ae80746bada064000bea784522a0c879e9dbdf69c52f59f428c5ff6428c3ebe7",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": "main-8805e5e9-20261030"
@@ -183,8 +183,8 @@
   "last_gate": {
     "stage": "Phase 1",
     "status": "blocked",
-    "report": "artifacts/ci/stage-gates/phase-1-20261105T125838947450Z-5886505f.json",
-    "report_sha256": "b6fc4a842f58f89d07c35da882f15f26ad7d73f9fc61c014e88121309eb2011f",
+    "report": "artifacts/ci/stage-gates/phase-1-20261105T151226177768Z-647fd645.json",
+    "report_sha256": "ae80746bada064000bea784522a0c879e9dbdf69c52f59f428c5ff6428c3ebe7",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
     "snapshot_id": "main-8805e5e9-20261030"

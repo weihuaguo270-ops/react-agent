@@ -39,3 +39,17 @@ def test_network_allowlist_without_hosts_is_rejected() -> None:
     gate = registry["directions"]["ci"]["rules"][0]["gate"]
     gate["network"] = "allowlist"
     assert any("needs allowed_domains" in error for error in validate_registry(registry))
+
+
+def test_manual_evidence_rule_does_not_require_automated_gate() -> None:
+    registry = load_registry()
+    rule = next(rule for rule in registry["directions"]["ci"]["rules"] if rule["id"] == "evaluation-evidence")
+    assert rule["execution"] == "manual"
+    assert "gate" not in rule
+    assert validate_registry(registry) == []
+
+
+def test_root_literal_glob_does_not_match_nested_basename() -> None:
+    result = select(["fixtures/README.md"])
+    assert "ci-pr-readiness" not in result["selected_rules"]
+    assert "evaluation-evidence" in result["selected_rules"]

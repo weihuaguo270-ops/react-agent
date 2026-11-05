@@ -11,7 +11,7 @@
       "rules": [
         {
           "id": "ci-pr-readiness",
-          "path_globs": ["scripts/ci/**", "docs/specs/ci/**", ".github/workflows/**", "pyproject.toml"],
+          "path_globs": ["scripts/ci/**", "docs/specs/ci/**", ".github/workflows/**", ".codex/**", "pyproject.toml", "AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "DOCS_REORGANIZATION_SUMMARY.md", "REORGANIZATION_SUMMARY.md", "README.md", "Makefile", "cleanup.ps1", ".gitignore", ".env.example", "llm_config.example.json"],
           "exclude_globs": ["docs/specs/ci/evidence/archive/**"],
           "priority": "P0",
           "execution": "automated",
@@ -31,7 +31,7 @@
         },
         {
           "id": "python-affected-tests",
-          "path_globs": ["src/**", "tests/**", "pyproject.toml"],
+          "path_globs": ["src/**", "tests/**", "pyproject.toml", "test_all.py"],
           "exclude_globs": ["tests/test_real_llm.py"],
           "priority": "P1",
           "execution": "automated",
@@ -71,7 +71,7 @@
         },
         {
           "id": "workflow-security",
-          "path_globs": [".github/workflows/**", "Dockerfile", "Dockerfile.*", "eval/**/Dockerfile*"],
+          "path_globs": [".github/workflows/**", "Dockerfile", "Dockerfile.*", "docker-compose.yml", "docker-compose*.yml", "eval/**/Dockerfile*"],
           "exclude_globs": [],
           "priority": "P0",
           "execution": "automated",
@@ -128,6 +128,40 @@
             "secret_refs": [],
             "write_paths": []
           }
+        },
+        {
+          "id": "evaluation-evidence",
+          "path_globs": [
+            "eval/**",
+            "artifacts/**",
+            "fixtures/**",
+            "scripts/**",
+            "demos/**",
+            "schemas/**",
+            "notes/**"
+          ],
+          "exclude_globs": ["scripts/ci/**", "scripts/ai_review/**"],
+          "priority": "P1",
+          "execution": "manual",
+          "local": "none",
+          "evidence": "docs/specs/ci/evidence/selector-expected-rules-100.json",
+          "applicability": "changed",
+          "maintainer": "repository-maintainers",
+          "reviewer_role": "repository-maintainers",
+          "approver_role": "repository-maintainers"
+        },
+        {
+          "id": "real-llm-evidence",
+          "path_globs": ["tests/test_real_llm.py"],
+          "exclude_globs": [],
+          "priority": "P1",
+          "execution": "manual",
+          "local": "none",
+          "evidence": "docs/specs/ci/evidence/selector-expected-rules-100.json",
+          "applicability": "changed",
+          "maintainer": "repository-maintainers",
+          "reviewer_role": "repository-maintainers",
+          "approver_role": "repository-maintainers"
         }
       ],
       "unmapped": [

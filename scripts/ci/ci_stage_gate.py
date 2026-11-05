@@ -113,6 +113,7 @@ def validate_selector_backtest(
     changed = metrics.get("changed_files")
     mapped = metrics.get("mapped_files")
     unmapped = metrics.get("unmapped_files")
+    excluded = metrics.get("excluded_files", 0)
     coverage = metrics.get("mapped_coverage")
     counts_valid = (
         isinstance(changed, int)
@@ -121,8 +122,10 @@ def validate_selector_backtest(
         and not isinstance(mapped, bool)
         and isinstance(unmapped, int)
         and not isinstance(unmapped, bool)
-        and changed == mapped + unmapped
-        and (coverage is None if changed == 0 else isinstance(coverage, (int, float)) and round(mapped / changed, 4) == coverage)
+        and isinstance(excluded, int)
+        and not isinstance(excluded, bool)
+        and changed == mapped + unmapped + excluded
+        and (coverage is None if changed == 0 else isinstance(coverage, (int, float)) and round((mapped + excluded) / changed, 4) == coverage)
     )
     rows = backtest.get("samples")
     row_counts_valid = (
@@ -133,10 +136,12 @@ def validate_selector_backtest(
             and isinstance(row.get("changed_files"), int)
             and not isinstance(row.get("changed_files"), bool)
             and isinstance(row.get("unmapped_paths"), list)
+            and isinstance(row.get("excluded_paths", []), list)
             for row in rows
         )
         and sum(row["changed_files"] for row in rows) == changed
         and sum(len(row["unmapped_paths"]) for row in rows) == unmapped
+        and sum(len(row.get("excluded_paths", [])) for row in rows) == excluded
     )
     registry_validation = backtest.get("registry_validation", {})
     if not isinstance(registry_validation, dict):
@@ -198,10 +203,12 @@ def validate_rule_level_backtest(
         return False
     row_count = sum(row.get("changed_files", 0) for row in rows if isinstance(row, dict))
     unmapped_count = sum(len(row.get("unmapped_paths", [])) for row in rows if isinstance(row, dict))
+    excluded_count = sum(len(row.get("excluded_paths", [])) for row in rows if isinstance(row, dict))
     comparable_count = sum(row.get("comparison_status") == "comparable" for row in rows if isinstance(row, dict))
     expected_metrics = {
         "changed_files": row_count,
         "unmapped_files": unmapped_count,
+        "excluded_files": excluded_count,
         "comparable_rows": comparable_count,
         "unmeasured_rows": len(rows) - comparable_count,
         "measurement_status": "complete" if comparable_count == len(rows) else "partial",

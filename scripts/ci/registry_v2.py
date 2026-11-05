@@ -32,6 +32,10 @@ def repo_files() -> set[str]:
 def path_matches(path: str, pattern: str) -> bool:
     path = path.replace("\\", "/")
     pattern = pattern.replace("\\", "/")
+    # A root-level filename in the registry must not silently match a nested
+    # file with the same basename (Path.match treats it as a basename glob).
+    if "/" not in pattern and not any(char in pattern for char in "*?[]"):
+        return path == pattern
     return fnmatch.fnmatchcase(path, pattern) or Path(path).match(pattern)
 
 
@@ -64,19 +68,20 @@ def validate_registry(registry: dict | None = None) -> list[str]:
             if rule.get("execution") == "automated" and not rule.get("gate"):
                 errors.append(f"{rule_id}: automated rule has no gate")
             gate = rule.get("gate", {})
-            for key in ("argv", "working_directory", "timeout_minutes", "network", "allowed_domains", "secret_refs", "write_paths"):
-                if key not in gate:
-                    errors.append(f"{rule_id}: gate missing {key}")
-            workdir = gate.get("working_directory")
-            if workdir and not (ROOT / workdir).is_dir():
-                errors.append(f"{rule_id}: working_directory does not exist: {workdir}")
-            argv = gate.get("argv", [])
-            if any(any(token in arg for token in (";", "&&", "||", "|", ">", "<", "..")) for arg in argv):
-                errors.append(f"{rule_id}: unsafe gate argv")
-            if gate.get("network") == "none" and gate.get("allowed_domains"):
-                errors.append(f"{rule_id}: network=none cannot allow domains")
-            if gate.get("network") == "allowlist" and not gate.get("allowed_domains"):
-                errors.append(f"{rule_id}: network=allowlist needs allowed_domains")
+            if rule.get("execution") == "automated":
+                for key in ("argv", "working_directory", "timeout_minutes", "network", "allowed_domains", "secret_refs", "write_paths"):
+                    if key not in gate:
+                        errors.append(f"{rule_id}: gate missing {key}")
+                workdir = gate.get("working_directory")
+                if workdir and not (ROOT / workdir).is_dir():
+                    errors.append(f"{rule_id}: working_directory does not exist: {workdir}")
+                argv = gate.get("argv", [])
+                if any(any(token in arg for token in (";", "&&", "||", "|", ">", "<", "..")) for arg in argv):
+                    errors.append(f"{rule_id}: unsafe gate argv")
+                if gate.get("network") == "none" and gate.get("allowed_domains"):
+                    errors.append(f"{rule_id}: network=none cannot allow domains")
+                if gate.get("network") == "allowlist" and not gate.get("allowed_domains"):
+                    errors.append(f"{rule_id}: network=allowlist needs allowed_domains")
         for item in direction.get("unmapped", []):
             if item.get("safety_gate_rule_id") not in rule_ids:
                 errors.append(f"{item.get('id')}: safety gate rule is missing")

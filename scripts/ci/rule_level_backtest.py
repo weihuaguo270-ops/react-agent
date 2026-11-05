@@ -42,7 +42,7 @@ def replay(sample_path: Path, labels_path: Path) -> dict:
     rows: list[dict] = []
     false_positive: set[str] = set()
     missed: set[str] = set()
-    changed_files = unmapped_files = 0
+    changed_files = unmapped_files = excluded_files = 0
     comparable_rows = 0
     for pr, source in source_rows.items():
         paths = source.get("changed_paths")
@@ -64,13 +64,21 @@ def replay(sample_path: Path, labels_path: Path) -> dict:
             false_positive.update(extra)
             missed.update(missing)
         changed_files += len(paths)
-        unmapped_files += len(result["unmapped_paths"])
+        excluded = [
+            path
+            for path in result["unmapped_paths"]
+            if path in set(label_rows[pr].get("excluded_paths", []))
+        ]
+        effective_unmapped = [path for path in result["unmapped_paths"] if path not in excluded]
+        unmapped_files += len(effective_unmapped)
+        excluded_files += len(excluded)
         rows.append(
             {
                 "pr": pr,
                 "head_sha": source.get("head_sha"),
                 "changed_files": len(paths),
-                "unmapped_paths": result["unmapped_paths"],
+                "unmapped_paths": effective_unmapped,
+                "excluded_paths": excluded,
                 "expected_rules": sorted(expected),
                 "selected_rules": sorted(selected),
                 "missing_expected_rules": missing,
@@ -102,6 +110,7 @@ def replay(sample_path: Path, labels_path: Path) -> dict:
         "metrics": {
             "changed_files": changed_files,
             "unmapped_files": unmapped_files,
+            "excluded_files": excluded_files,
             "comparable_rows": comparable_rows,
             "unmeasured_rows": len(rows) - comparable_rows,
             "measurement_status": "complete" if measurement_complete else "partial",
@@ -113,7 +122,7 @@ def replay(sample_path: Path, labels_path: Path) -> dict:
         "samples": rows,
         "conclusion": conclusion,
         "gate_eligibility": "eligible" if conclusion == "pass" else "blocked",
-        "conclusion_boundary": "Rule-level comparison is measured only for rows with independently classified paths; unresolved paths and selector fallbacks remain blocked.",
+        "conclusion_boundary": "Rule-level comparison is measured only for rows with independently classified paths; historical evidence archives are intentionally excluded, while unresolved paths and selector fallbacks remain blocked.",
     }
 
 

@@ -79,8 +79,58 @@
       "pytest_paths": ["tests/test_spec_workflow.py", "tests/test_stage_gate_preflight.py"]
     },
     {
+      "id": "ai-review-tools",
+      "paths": ["scripts/ai_review/**"],
+      "checks": ["pr-ready", "test"],
+      "pytest_paths": ["tests/test_ai_review_artifact.py"]
+    },
+    {
+      "id": "evaluation-evidence",
+      "paths": [
+        "eval/**",
+        "experiments/**",
+        "artifacts/**",
+        "fixtures/**",
+        "examples/eval/**",
+        "examples/fixtures/**",
+        "scripts/**",
+        "demos/**",
+        "schemas/**",
+        "notes/**"
+      ],
+      "checks": ["pr-ready"]
+    },
+    {
+      "id": "real-llm-evidence",
+      "paths": ["tests/test_real_llm.py"],
+      "checks": ["pr-ready"]
+    },
+    {
+      "id": "project-metadata",
+      "paths": [
+        "AGENTS.md",
+        "CHANGELOG.md",
+        "DOCS_REORGANIZATION_SUMMARY.md",
+        "REORGANIZATION_SUMMARY.md",
+        "P5_CHECKLIST.md",
+        ".gitignore",
+        ".flake8",
+        ".env.example",
+        "llm_config.example.json",
+        "Makefile",
+        "cleanup.ps1"
+      ],
+      "checks": ["pr-ready"]
+    },
+    {
+      "id": "test-entrypoint",
+      "paths": ["test_all.py"],
+      "checks": ["pr-ready", "test"],
+      "pytest_paths": ["tests/"]
+    },
+    {
       "id": "container-config",
-      "paths": ["Dockerfile", "Dockerfile.*", "docker-compose*.yml", "docker-compose*.yaml"],
+      "paths": ["Dockerfile", "Dockerfile.*", "docker-compose*.yml", "docker-compose*.yaml", "eval/**/Dockerfile*"],
       "checks": ["security", "docker-smoke"]
     },
     {

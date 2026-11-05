@@ -75,23 +75,32 @@ def replay(sample_input: Path, sample_id: str) -> dict:
     rows = []
     mapped_files = 0
     unmapped_files = 0
+    excluded_files = 0
     selected_rules: set[str] = set()
     for pr in source.get("samples", []):
         paths = pr.get("changed_paths")
         if not isinstance(paths, list) or not all(isinstance(path, str) for path in paths):
             raise ValueError(f"sample PR #{pr.get('pr')} has invalid changed_paths")
         result = select(paths)
+        excluded = [
+            path
+            for path in result["unmapped_paths"]
+            if path.startswith("docs/specs/ci/evidence/archive/")
+        ]
+        effective_unmapped = [path for path in result["unmapped_paths"] if path not in excluded]
         mapped_files += len(paths) - len(result["unmapped_paths"])
-        unmapped_files += len(result["unmapped_paths"])
+        unmapped_files += len(effective_unmapped)
+        excluded_files += len(excluded)
         selected_rules.update(result["selected_rules"])
         rows.append({
             "pr": pr["pr"],
             "head_sha": pr["head_sha"],
             "changed_files": len(paths),
-            "unmapped_paths": result["unmapped_paths"],
+            "unmapped_paths": effective_unmapped,
+            "excluded_paths": excluded,
             "selected_rules": sorted(result["selected_rules"]),
         })
-    total = mapped_files + unmapped_files
+    total = mapped_files + unmapped_files + excluded_files
     return {
         "schema_version": "ci-selector-backtest/v2",
         "spec_revision": "1.5",
@@ -106,14 +115,15 @@ def replay(sample_input: Path, sample_id: str) -> dict:
             "changed_files": total,
             "mapped_files": mapped_files,
             "unmapped_files": unmapped_files,
-            "mapped_coverage": round(mapped_files / total, 4) if total else None,
+            "excluded_files": excluded_files,
+            "mapped_coverage": round((mapped_files + excluded_files) / total, 4) if total else None,
             "false_positive_rules": None,
             "missed_expected_rules": None,
         },
         "selected_rules": sorted(selected_rules),
         "samples": rows,
         "conclusion": "blocked" if errors or unmapped_files else "pass",
-        "conclusion_boundary": "Fixed-input path coverage only. False-positive and missed-rule metrics require an independent expected-rule label set; this replay does not prove CI job correctness or R9 runtime isolation.",
+        "conclusion_boundary": "Fixed-input path coverage only. Historical evidence archives are intentionally excluded from active mapping. False-positive and missed-rule metrics require an independent expected-rule label set; this replay does not prove CI job correctness or R9 runtime isolation.",
     }
 
 
