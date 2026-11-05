@@ -65,6 +65,11 @@ def validate_registry(registry: dict | None = None) -> list[str]:
                     errors.append(f"{rule_id}: unsafe path glob: {pattern}")
                 elif not any(path_matches(path, normalized) for path in files):
                     errors.append(f"{rule_id}: path glob matches no tracked file: {pattern}")
+            historical_globs = rule.get("historical_path_globs", [])
+            for pattern in historical_globs:
+                normalized = pattern.replace("\\", "/")
+                if normalized.startswith("/") or ".." in Path(normalized).parts:
+                    errors.append(f"{rule_id}: unsafe historical path glob: {pattern}")
             if rule.get("execution") == "automated" and not rule.get("gate"):
                 errors.append(f"{rule_id}: automated rule has no gate")
             gate = rule.get("gate", {})
@@ -114,7 +119,8 @@ def select(changed_files: list[str], registry: dict | None = None) -> dict:
     for path in changed_files:
         matched = []
         for rule in direction["rules"]:
-            if any(path_matches(path, glob) for glob in rule["path_globs"]):
+            all_globs = rule["path_globs"] + rule.get("historical_path_globs", [])
+            if any(path_matches(path, glob) for glob in all_globs):
                 if not any(path_matches(path, glob) for glob in rule.get("exclude_globs", [])):
                     matched.append(rule["id"])
         if matched:

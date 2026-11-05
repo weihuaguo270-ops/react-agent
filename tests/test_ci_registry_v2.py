@@ -53,3 +53,18 @@ def test_root_literal_glob_does_not_match_nested_basename() -> None:
     result = select(["fixtures/README.md"])
     assert "ci-pr-readiness" not in result["selected_rules"]
     assert "evaluation-evidence" in result["selected_rules"]
+
+
+def test_registry_maps_historical_experiment_and_example_evidence_paths() -> None:
+    result = select([
+        "experiments/langgraph/graph/agent.py",
+        "examples/fixtures/software_tasks/tool_timeout.json",
+        "examples/eval/run_failure_regression_pipeline.py",
+        ".flake8",
+        "P5_CHECKLIST.md",
+        "examples/README.md",
+    ])
+
+    assert result["unmapped_paths"] == []
+    assert "evaluation-evidence" in result["selected_rules"]
+    assert "ci-pr-readiness" in result["selected_rules"]

@@ -40,8 +40,11 @@ def _path_checks(path: str) -> tuple[set[str], str]:
         path,
         (
             "eval/**",
+            "experiments/**",
             "artifacts/**",
             "fixtures/**",
+            "examples/eval/**",
+            "examples/fixtures/**",
             "scripts/**",
             "demos/**",
             "schemas/**",
@@ -82,6 +85,8 @@ def _path_checks(path: str) -> tuple[set[str], str]:
         "CHANGELOG.md",
         "DOCS_REORGANIZATION_SUMMARY.md",
         "REORGANIZATION_SUMMARY.md",
+        "P5_CHECKLIST.md",
+        "examples/README.md",
         "llm_config.example.json",
     }:
         return {"pr-ready"}, "project_metadata"

@@ -45,3 +45,20 @@ def test_real_llm_source_remains_evidence_only():
 def test_evaluation_dockerfile_keeps_container_security_checks():
     report = expected_checks(["eval/cross_repo_evidence/sample/Dockerfile"])
     assert report["checks"] == ["pr-ready", "security", "docker-smoke"]
+
+
+def test_examples_readme_uses_project_metadata_scope():
+    report = expected_checks(["examples/README.md"])
+    assert report["checks"] == ["pr-ready"]
+    assert report["class"] == "project_metadata"
+
+
+def test_historical_experiment_and_example_paths_are_evidence_only():
+    for path in (
+        "experiments/langgraph/graph/agent.py",
+        "examples/fixtures/software_tasks/tool_timeout.json",
+        "examples/eval/run_failure_regression_pipeline.py",
+    ):
+        report = expected_checks([path])
+        assert report["checks"] == ["pr-ready"]
+        assert report["class"] == "evaluation_evidence"
