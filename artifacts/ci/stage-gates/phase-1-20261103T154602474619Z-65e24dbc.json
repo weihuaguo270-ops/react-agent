@@ -1,0 +1,108 @@
+{
+  "schema_version": "ci-stage-gate/v1",
+  "spec_revision": "1.5",
+  "acceptance_revision": "ci-acceptance/2026-10-30-v2",
+  "stage": "Phase 1",
+  "command": [
+    "python",
+    "scripts/ci/ci_stage_gate.py",
+    "--stage",
+    "Phase 1"
+  ],
+  "generated_at": "2026-11-03T15:45:54.453589+00:00",
+  "gate_head_sha": "65e24dbca57b98a6a4de51bc2cca6ccb594b0031",
+  "checks": [
+    {
+      "id": "focused-tests",
+      "status": "passed",
+      "command": [
+        "D:\\agent_learning_projects\\react-agent\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_ci_registry_v2.py",
+        "tests/test_ci_stage_gate.py",
+        "tests/test_selector_backtest.py"
+      ],
+      "exit_code": 0,
+      "stdout": "................                                                         [100%]\n============================== warnings summary ===============================\nsrc\\react_agent\\harness\\contracts\\parser.py:15\n  C:\\Users\\1\\.codex\\worktrees\\ci-phase0-independent-review\\react-agent\\_phase1_work\\src\\react_agent\\harness\\contracts\\parser.py:15: DeprecationWarning: react_agent.harness.schema is deprecated and will be removed after the P5 compatibility period. Use 'from react_agent.harness.contracts import validate_trajectory, normalize_trajectory, parse_trajectory, SCHEMA_VERSION' instead. See docs/specs/harness/evidence/phase5-migration/inventory.md for details.\n    from ..schema import (\n\nD:\\agent_learning_projects\\react-agent\\.venv\\Lib\\site-packages\\_pytest\\config\\__init__.py:1464\n  D:\\agent_learning_projects\\react-agent\\.venv\\Lib\\site-packages\\_pytest\\config\\__init__.py:1464: PytestConfigWarning: Unknown config option: cache_dir\n  \n    self._warn_or_fail_if_strict(f\"Unknown config option: {key}\\n\")\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n16 passed, 2 warnings in 3.22s\n",
+      "stderr": ""
+    },
+    {
+      "id": "registry-v2-semantic-validation",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "selector-fixed-sample",
+      "status": "passed",
+      "path": "docs/specs/ci/evidence/selector-samples/main-8805e5e9-20261030.json"
+    },
+    {
+      "id": "selector-backtest",
+      "status": "passed",
+      "evidence_status": "valid",
+      "gate_eligibility": "blocked",
+      "metrics": {
+        "changed_files": 1992,
+        "mapped_files": 1341,
+        "unmapped_files": 651,
+        "mapped_coverage": 0.6732,
+        "false_positive_rules": null,
+        "missed_expected_rules": null
+      },
+      "conclusion": "blocked",
+      "source_sha256": "05e7b925f24c753208c056c39ad8e229e19ad8ebf2883409b644aae98af80982"
+    },
+    {
+      "id": "selector-fail-closed",
+      "status": "passed",
+      "result": {
+        "schema_version": "ci-selector/v1",
+        "status": "blocked",
+        "changed_files": [
+          "src/react_agent/harness/contracts/__init__.py",
+          "docs/specs/ci/spec.md",
+          "unmapped/example.xyz"
+        ],
+        "selected_rules": {
+          "python-affected-tests": [
+            "src/react_agent/harness/contracts/__init__.py"
+          ],
+          "harness-stage-gate": [
+            "src/react_agent/harness/contracts/__init__.py"
+          ],
+          "ci-pr-readiness": [
+            "docs/specs/ci/spec.md"
+          ],
+          "docs-corpus": [
+            "docs/specs/ci/spec.md"
+          ]
+        },
+        "unmapped_paths": [
+          "unmapped/example.xyz"
+        ],
+        "safety_gate_rule_id": "ci-pr-readiness"
+      }
+    },
+    {
+      "id": "r9-static-security-audit",
+      "status": "passed",
+      "head_sha": "65e24dbca57b98a6a4de51bc2cca6ccb594b0031",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "id": "r9-execution-acceptance",
+      "status": "blocked",
+      "evidence_path": "docs/specs/ci/evidence/phase1-r9-acceptance.json",
+      "evidence_head_sha": "65e24dbca57b98a6a4de51bc2cca6ccb594b0031",
+      "runtime_status": "not_executed",
+      "reason": "Current-head isolated GitHub Actions evidence for fork Secret isolation and effective permissions is missing or incomplete."
+    }
+  ],
+  "selector_sample_id": "main-8805e5e9-20261030",
+  "status": "blocked"
+}
