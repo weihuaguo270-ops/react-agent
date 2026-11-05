@@ -26,7 +26,12 @@ def sha256(path: Path) -> str:
 
 def matches(path: str, patterns: tuple[str, ...]) -> bool:
     normalized = path.replace("\\", "/")
-    return any(fnmatch.fnmatchcase(normalized, pattern) or Path(normalized).match(pattern) for pattern in patterns)
+    return any(
+        normalized == pattern
+        if "/" not in pattern and not any(char in pattern for char in "*?[]")
+        else fnmatch.fnmatchcase(normalized, pattern) or Path(normalized).match(pattern)
+        for pattern in patterns
+    )
 
 
 def expected_rules_for_path(path: str) -> tuple[set[str], str]:
@@ -36,14 +41,57 @@ def expected_rules_for_path(path: str) -> tuple[set[str], str]:
     if matches(path, ("docs/specs/ci/evidence/archive/**",)):
         return set(), "excluded_historical_archive"
 
+    # These paths are evidence, examples, or non-production tooling. They are
+    # explicitly reviewable without pretending that Evaluation/Harness runs
+    # are ordinary PR checks.
+    if path == "tests/test_real_llm.py":
+        return {"real-llm-evidence"}, "evidence_only_real_llm"
+    if matches(
+        path,
+        (
+            "eval/**",
+            "artifacts/**",
+            "fixtures/**",
+            "scripts/**",
+            "demos/**",
+            "schemas/**",
+            "notes/**",
+        ),
+    ) and not matches(path, ("scripts/ci/**", "scripts/ai_review/**")):
+        rules = {"evaluation-evidence"}
+        if matches(path, (".github/workflows/**", "Dockerfile", "Dockerfile.*", "docker-compose*.yml", "docker-compose*.yaml", "eval/**/Dockerfile*")):
+            rules.add("workflow-security")
+        return rules, "evidence_only_nonproduction"
+
     rules: set[str] = set()
-    if matches(path, ("scripts/ci/**", "docs/specs/ci/**", ".github/workflows/**", "pyproject.toml")):
+    if matches(
+        path,
+        (
+            "scripts/ci/**",
+            "docs/specs/ci/**",
+            ".github/workflows/**",
+            ".codex/**",
+            "pyproject.toml",
+            "AGENTS.md",
+            "CHANGELOG.md",
+            "CONTRIBUTING.md",
+            "DOCS_REORGANIZATION_SUMMARY.md",
+            "REORGANIZATION_SUMMARY.md",
+            "README.md",
+            "Makefile",
+            "cleanup.ps1",
+            ".gitignore",
+            ".flake8",
+            ".env.example",
+            "llm_config.example.json",
+        ),
+    ):
         rules.add("ci-pr-readiness")
-    if matches(path, ("src/**", "tests/**", "pyproject.toml")):
+    if matches(path, ("src/**", "tests/**", "pyproject.toml", "test_all.py")) and path != "tests/test_real_llm.py":
         rules.add("python-affected-tests")
     if path.startswith("docs/") and not path.startswith("docs/specs/ci/evidence/archive/"):
         rules.add("docs-corpus")
-    if matches(path, (".github/workflows/**", "Dockerfile", "Dockerfile.*", "eval/**/Dockerfile*")):
+    if matches(path, (".github/workflows/**", "Dockerfile", "Dockerfile.*", "docker-compose.yml", "docker-compose*.yml", "docker-compose*.yaml", "eval/**/Dockerfile*")):
         rules.add("workflow-security")
     if matches(path, ("progress.yaml", "src/react_agent/harness/**", "tests/harness/**", "docs/specs/harness/**")):
         rules.add("harness-stage-gate")

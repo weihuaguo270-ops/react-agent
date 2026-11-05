@@ -19,7 +19,12 @@ FULL = (
 
 def _matches(path: str, patterns: tuple[str, ...]) -> bool:
     normalized = path.replace("\\", "/")
-    return any(fnmatch.fnmatchcase(normalized, pattern) for pattern in patterns)
+    return any(
+        normalized == pattern
+        if "/" not in pattern and not any(char in pattern for char in "*?[]")
+        else fnmatch.fnmatchcase(normalized, pattern)
+        for pattern in patterns
+    )
 
 
 def _path_checks(path: str) -> tuple[set[str], str]:
@@ -29,6 +34,26 @@ def _path_checks(path: str) -> tuple[set[str], str]:
         return {"pr-ready", "lint", "security", "docker-smoke"}, "container_config"
     if path == "src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json":
         return {"pr-ready", "docs-eval"}, "docs_corpus_baseline"
+    if path == "tests/test_real_llm.py":
+        return {"pr-ready"}, "real_llm_evidence"
+    if _matches(
+        path,
+        (
+            "eval/**",
+            "artifacts/**",
+            "fixtures/**",
+            "scripts/**",
+            "demos/**",
+            "schemas/**",
+            "notes/**",
+        ),
+    ) and not _matches(path, ("scripts/ci/**", "scripts/ai_review/**")):
+        checks = {"pr-ready"}
+        if _matches(path, ("eval/**/Dockerfile*", "Dockerfile*", "docker-compose*.yml", "docker-compose*.yaml")):
+            checks.update({"security", "docker-smoke"})
+        return checks, "evaluation_evidence"
+    if _matches(path, ("scripts/ai_review/**",)):
+        return {"pr-ready", "test"}, "ai_review_tools"
     if _matches(path, ("docs/**", "README.md", "CONTRIBUTING.md")):
         return {"pr-ready", "docs-eval"}, "docs"
     if _matches(path, ("src/react_agent/apps/docs_troubleshoot/**", "tests/apps/docs_troubleshoot/**")):
@@ -47,10 +72,21 @@ def _path_checks(path: str) -> tuple[set[str], str]:
         return checks, "python_source"
     if path.startswith("tests/") and path.endswith((".json", ".yaml", ".yml")):
         return {"pr-ready", "test"}, "test_fixture"
-    if path in {".gitignore", "Makefile", "cleanup.ps1", "CHANGELOG.md"}:
-        return set(FULL), "project_control"
-    if path.startswith(("eval/", "experiments/", "artifacts/", "fixtures/")):
-        return set(FULL), "evaluation_or_fixture_boundary"
+    if path in {
+        "AGENTS.md",
+        ".gitignore",
+        ".flake8",
+        ".env.example",
+        "Makefile",
+        "cleanup.ps1",
+        "CHANGELOG.md",
+        "DOCS_REORGANIZATION_SUMMARY.md",
+        "REORGANIZATION_SUMMARY.md",
+        "llm_config.example.json",
+    }:
+        return {"pr-ready"}, "project_metadata"
+    if path == "test_all.py":
+        return {"pr-ready", "test"}, "test_entrypoint"
     return set(FULL), "unknown"
 
 

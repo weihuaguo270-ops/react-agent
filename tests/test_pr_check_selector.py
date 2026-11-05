@@ -78,6 +78,31 @@ def test_shared_test_configuration_falls_back_to_full_suite():
     assert report["selected_test_paths"] == ["tests/"]
 
 
+def test_evaluation_evidence_uses_pr_ready_only():
+    report = select_checks(["eval/cross_repo_evidence/sample/manifest.json"])
+
+    assert report["status"] == "mapped"
+    assert report["selected_checks"] == ["pr-ready"]
+    assert report["selected_test_paths"] == []
+    assert report["unmapped_paths"] == []
+
+
+def test_real_llm_evidence_does_not_enter_offline_test_matrix():
+    report = select_checks(["tests/test_real_llm.py"])
+
+    assert report["status"] == "mapped"
+    assert report["selected_checks"] == ["pr-ready"]
+    assert report["selected_test_paths"] == []
+
+
+def test_ai_review_tool_selects_its_contract_test():
+    report = select_checks(["scripts/ai_review/validate_artifact.py"])
+
+    assert report["status"] == "mapped"
+    assert report["selected_checks"] == ["pr-ready", "test"]
+    assert report["selected_test_paths"] == ["tests/test_ai_review_artifact.py"]
+
+
 def test_docs_corpus_baseline_uses_docs_checks_without_source_test_subset():
     report = select_checks(["src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json"])
     assert report["status"] == "mapped"
