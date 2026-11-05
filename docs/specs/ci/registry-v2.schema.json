@@ -91,6 +91,11 @@
           "pattern": "^[a-z][a-z0-9_-]*$"
         },
         "path_globs": { "$ref": "#/$defs/pathGlobs" },
+        "historical_path_globs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/repositoryPath" }
+        },
         "exclude_globs": {
           "type": "array",
           "uniqueItems": true,

@@ -14,6 +14,18 @@ def test_expected_rule_policy_does_not_import_registry_semantics():
     assert expected_rules_for_path("unknown/file.xyz")[1] == "unresolved_path_scope"
 
 
+def test_expected_rule_policy_classifies_historical_evidence_and_metadata_paths():
+    assert expected_rules_for_path("experiments/langgraph/graph/agent.py") == (
+        {"evaluation-evidence"}, "evidence_only_nonproduction"
+    )
+    assert expected_rules_for_path("examples/fixtures/software_tasks/tool_timeout.json") == (
+        {"evaluation-evidence"}, "evidence_only_nonproduction"
+    )
+    assert expected_rules_for_path("P5_CHECKLIST.md") == ({"ci-pr-readiness"}, "known_rule_scope")
+    assert expected_rules_for_path("examples/README.md") == ({"ci-pr-readiness"}, "known_rule_scope")
+    assert expected_rules_for_path(".flake8") == ({"ci-pr-readiness"}, "known_rule_scope")
+
+
 def test_rule_level_replay_keeps_unresolved_rows_unmeasured(tmp_path, monkeypatch):
     sample_path = tmp_path / "sample.json"
     sample = {
