@@ -1,0 +1,6 @@
+interface:
+  display_name: "Validation Scope"
+  short_description: "Select focused checks and avoid duplicate validation"
+  default_prompt: "Use $validation-scope when adding tests, gates, or materially expanding validation."
+policy:
+  allow_implicit_invocation: true
