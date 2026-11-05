@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-05T11:43:19.744321+00:00",
+  "updated_at": "2026-11-05T12:58:38.960204+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -148,8 +148,8 @@
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "artifacts/ci/stage-gates/phase-1-20261105T114319732335Z-9cbd1a0f.json",
-        "report_sha256": "d49e3cad677cd0557dbc4d29d907889f28c6ffb91cbf530e3f4a7f07651996a9",
+        "report": "artifacts/ci/stage-gates/phase-1-20261105T125838947450Z-5886505f.json",
+        "report_sha256": "b6fc4a842f58f89d07c35da882f15f26ad7d73f9fc61c014e88121309eb2011f",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": "main-8805e5e9-20261030"
@@ -183,8 +183,8 @@
   "last_gate": {
     "stage": "Phase 1",
     "status": "blocked",
-    "report": "artifacts/ci/stage-gates/phase-1-20261105T114319732335Z-9cbd1a0f.json",
-    "report_sha256": "d49e3cad677cd0557dbc4d29d907889f28c6ffb91cbf530e3f4a7f07651996a9",
+    "report": "artifacts/ci/stage-gates/phase-1-20261105T125838947450Z-5886505f.json",
+    "report_sha256": "b6fc4a842f58f89d07c35da882f15f26ad7d73f9fc61c014e88121309eb2011f",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
     "snapshot_id": "main-8805e5e9-20261030"
