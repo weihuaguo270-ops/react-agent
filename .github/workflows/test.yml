@@ -89,12 +89,6 @@ jobs:
         path: artifacts/ci/pr-check-scope.json
         if-no-files-found: warn
 
-  r9-runtime-probe:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
-    uses: weihuaguo270-ops/react-agent/.github/workflows/r9-runtime-probe.yml@d4c1a2b542e3016b0a6fe80089ff2ca10f6edfbf
-    permissions:
-      contents: read
-
   lint:
     timeout-minutes: 5
     runs-on: ubuntu-latest
