@@ -33,6 +33,11 @@ commit, updating a pull request, or merging a pull request.
 
 - Use the smallest relevant focused tests first, then run the repository CI
   equivalent for changes that cross module or workflow boundaries.
+- Before adding tests, gates, or broader validation, inspect existing coverage
+  and select the smallest checks that cover this change. Add validation only
+  for a concrete risk not already covered; when the validation scope expands
+  materially, use `$validation-scope` and briefly state the distinct risk and
+  trigger in the delivery summary.
 - For workflow changes, check the event, environment variables, permissions,
   required checks, and the difference between offline/mock and production
   behavior.
