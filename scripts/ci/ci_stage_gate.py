@@ -13,10 +13,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 if __package__:
-    from . import audit_workflow_security
+    from . import audit_workflow_security, r9_runtime_probe
     from .registry_v2 import ROOT, select, validate_registry
 else:
     import audit_workflow_security
+    import r9_runtime_probe
     from registry_v2 import ROOT, select, validate_registry
 
 REPORT_DIR = ROOT / "artifacts/ci/stage-gates"
@@ -226,11 +227,21 @@ def validate_rule_level_backtest(
     return backtest.get("conclusion") == expected_conclusion
 
 
-def run(stage: str, progress: dict | None = None) -> dict:
+def run(
+    stage: str,
+    progress: dict | None = None,
+    *,
+    r9_runtime_evidence: Path | None = None,
+    expected_head_sha: str | None = None,
+    expected_base_sha: str | None = None,
+) -> dict:
     progress = progress or json.loads(PROGRESS.read_text(encoding="utf-8"))
-    head_sha = subprocess.run(
+    actual_head_sha = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True, capture_output=True, text=True
     ).stdout.strip()
+    head_sha = expected_head_sha or actual_head_sha
+    if not re.fullmatch(r"[0-9a-f]{40}", head_sha):
+        raise ValueError("expected head SHA must be a 40-character commit SHA")
     acceptance_revision = progress.get("acceptance_revision")
     spec_revision = progress.get("spec_revision")
     report = {
@@ -243,6 +254,13 @@ def run(stage: str, progress: dict | None = None) -> dict:
         "gate_head_sha": head_sha,
         "checks": [],
     }
+    if expected_head_sha is not None:
+        report["checks"].append({
+            "id": "expected-head-checkout-binding",
+            "status": "passed" if actual_head_sha == expected_head_sha else "failed",
+            "actual_head_sha": actual_head_sha,
+            "expected_head_sha": expected_head_sha,
+        })
     registry = json.loads((ROOT / "docs/specs/registry.yaml").read_text(encoding="utf-8"))
     configured_tests = registry["directions"]["ci"]["gate"]["tests"].get(stage, [])
     if configured_tests:
@@ -417,19 +435,35 @@ def run(stage: str, progress: dict | None = None) -> dict:
         runtime = r9_evidence.get("runtime_acceptance", {})
         if not isinstance(runtime, dict):
             runtime = {}
-        r9_runtime_passed = (
-            r9_status == "complete"
-            and r9_evidence.get("schema_version") == "ci-r9-acceptance/v1"
-            and r9_evidence.get("head_sha") == head_sha
-            and r9_evidence.get("findings_remain") is False
-            and runtime.get("status") == "passed"
-        )
+        runtime_validation = None
+        evidence_path = r9_evidence_path
+        if r9_runtime_evidence is not None:
+            evidence_path = r9_runtime_evidence
+            try:
+                probe_report = json.loads(r9_runtime_evidence.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                probe_report = {}
+            runtime_validation = r9_runtime_probe.validate_report(
+                probe_report if isinstance(probe_report, dict) else {},
+                expected_head_sha=head_sha,
+                expected_base_sha=expected_base_sha or "",
+            )
+            r9_runtime_passed = runtime_validation["status"] == "passed"
+        else:
+            r9_runtime_passed = (
+                r9_status == "complete"
+                and r9_evidence.get("schema_version") == "ci-r9-acceptance/v1"
+                and r9_evidence.get("head_sha") == head_sha
+                and r9_evidence.get("findings_remain") is False
+                and runtime.get("status") == "passed"
+            )
         report["checks"].append({
             "id": "r9-execution-acceptance",
             "status": "passed" if r9_runtime_passed and not security_findings else "blocked",
-            "evidence_path": r9_evidence_path.relative_to(ROOT).as_posix() if r9_evidence_path else None,
-            "evidence_head_sha": r9_evidence.get("head_sha"),
-            "runtime_status": runtime.get("status"),
+            "evidence_path": evidence_path.as_posix() if evidence_path else None,
+            "evidence_head_sha": runtime_validation["head_sha"] if runtime_validation else r9_evidence.get("head_sha"),
+            "runtime_status": runtime_validation["status"] if runtime_validation else runtime.get("status"),
+            "runtime_validation_errors": runtime_validation["errors"] if runtime_validation else [],
             "reason": None if r9_runtime_passed else "Current-head isolated GitHub Actions evidence for fork Secret isolation and effective permissions is missing or incomplete.",
         })
         fail_closed_ok = selector["status"] == "blocked" and bool(selector["unmapped_paths"])
@@ -447,8 +481,16 @@ def run(stage: str, progress: dict | None = None) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--stage", required=True, choices=[f"Phase {n}" for n in range(6)])
+    parser.add_argument("--r9-runtime-evidence", type=Path)
+    parser.add_argument("--expected-head-sha")
+    parser.add_argument("--expected-base-sha")
     args = parser.parse_args()
-    report = run(args.stage)
+    report = run(
+        args.stage,
+        r9_runtime_evidence=args.r9_runtime_evidence,
+        expected_head_sha=args.expected_head_sha,
+        expected_base_sha=args.expected_base_sha,
+    )
     test_failures = [item for item in report["checks"] if item["status"] in {"failed", "blocked"}]
     if test_failures and report["status"] == "passed":
         report["status"] = "blocked"

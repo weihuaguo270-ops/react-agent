@@ -143,7 +143,9 @@
             "docs/specs/ci/evidence/phase1-r9-acceptance.json",
             "docs/specs/ci/evidence/phase1-r9-runtime-probe-contract.md",
             ".github/workflows/r9-runtime-probe.yml",
+              "scripts/ci/ci_stage_gate.py",
             "scripts/ci/r9_runtime_probe.py",
+              "tests/test_ci_stage_gate.py",
             "tests/test_r9_runtime_probe.py"
           ],
           "status": "blocked",
