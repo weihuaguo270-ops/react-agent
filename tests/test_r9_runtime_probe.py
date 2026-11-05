@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.ci.r9_runtime_probe import build_report
+from scripts.ci.r9_runtime_probe import build_report, validate_report
 
 
 def _event(*, fork: bool) -> dict:
@@ -42,3 +42,23 @@ def test_non_pull_request_payload_is_blocked() -> None:
     report = build_report({"repository": {"full_name": "x"}})
 
     assert report["status"] == "blocked"
+
+
+def test_gate_validator_requires_remote_provenance(monkeypatch) -> None:
+    monkeypatch.setenv("TRUSTED_WORKFLOW_REF", "owner/repo/.github/workflows/r9-runtime-probe.yml@" + "d" * 40)
+    report = build_report(_event(fork=True), run_id="123")
+
+    result = validate_report(report, expected_head_sha="a" * 40, expected_base_sha="b" * 40)
+
+    assert result["status"] == "passed"
+    assert result["errors"] == []
+
+
+def test_gate_validator_rejects_sha_mismatch(monkeypatch) -> None:
+    monkeypatch.setenv("TRUSTED_WORKFLOW_REF", "owner/repo/.github/workflows/r9-runtime-probe.yml@" + "d" * 40)
+    report = build_report(_event(fork=True), run_id="123")
+
+    result = validate_report(report, expected_head_sha="c" * 40, expected_base_sha="b" * 40)
+
+    assert result["status"] == "blocked"
+    assert "head_sha" in " ".join(result["errors"])
