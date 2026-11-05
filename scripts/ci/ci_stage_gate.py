@@ -160,6 +160,65 @@ def validate_selector_backtest(
     )
 
 
+def validate_rule_level_backtest(
+    backtest: dict,
+    labels: dict,
+    sample: dict,
+    sample_id: str,
+    sample_path: Path,
+    labels_path: Path,
+    spec_revision: str,
+) -> bool:
+    """Validate independent Registry rule labels and their replay provenance."""
+
+    metrics = backtest.get("metrics")
+    rows = backtest.get("samples")
+    label_rows = labels.get("rows")
+    if not isinstance(metrics, dict) or not isinstance(rows, list) or not isinstance(label_rows, list):
+        return False
+    if labels.get("schema_version") != "ci-selector-expected-rules/v1":
+        return False
+    if labels.get("label_set_is_independent_of_registry") is not True:
+        return False
+    if backtest.get("schema_version") != "ci-selector-rule-backtest/v1":
+        return False
+    if backtest.get("sample_id") != sample_id or labels.get("sample_id") != sample_id:
+        return False
+    if backtest.get("spec_revision") != spec_revision:
+        return False
+    if backtest.get("source_sha") != sample.get("source_sha"):
+        return False
+    if backtest.get("source_sample_sha256") != hashlib.sha256(sample_path.read_bytes()).hexdigest():
+        return False
+    if backtest.get("expected_labels_sha256") != hashlib.sha256(labels_path.read_bytes()).hexdigest():
+        return False
+    if backtest.get("registry_sha256") != hashlib.sha256((ROOT / "docs/specs/ci/registry-v2.json").read_bytes()).hexdigest():
+        return False
+    if len(rows) != 100 or len(label_rows) != 100:
+        return False
+    row_count = sum(row.get("changed_files", 0) for row in rows if isinstance(row, dict))
+    unmapped_count = sum(len(row.get("unmapped_paths", [])) for row in rows if isinstance(row, dict))
+    comparable_count = sum(row.get("comparison_status") == "comparable" for row in rows if isinstance(row, dict))
+    expected_metrics = {
+        "changed_files": row_count,
+        "unmapped_files": unmapped_count,
+        "comparable_rows": comparable_count,
+        "unmeasured_rows": len(rows) - comparable_count,
+        "measurement_status": "complete" if comparable_count == len(rows) else "partial",
+    }
+    if any(metrics.get(key) != value for key, value in expected_metrics.items()):
+        return False
+    if not isinstance(metrics.get("false_positive_rules"), list) or not isinstance(metrics.get("missed_expected_rules"), list):
+        return False
+    expected_conclusion = "pass" if (
+        metrics["measurement_status"] == "complete"
+        and unmapped_count == 0
+        and not metrics["false_positive_rules"]
+        and not metrics["missed_expected_rules"]
+    ) else "blocked"
+    return backtest.get("conclusion") == expected_conclusion
+
+
 def run(stage: str, progress: dict | None = None) -> dict:
     progress = progress or json.loads(PROGRESS.read_text(encoding="utf-8"))
     head_sha = subprocess.run(
@@ -282,6 +341,43 @@ def run(stage: str, progress: dict | None = None) -> dict:
             })
         else:
             report["checks"].append({"id": "selector-backtest", "status": "failed", "reason": "backtest evidence missing"})
+        labels_path_value = progress.get("selector_rule_labels")
+        rule_backtest_path_value = progress.get("selector_rule_backtest_report")
+        labels_path = ROOT / labels_path_value if labels_path_value else None
+        rule_backtest_path = ROOT / rule_backtest_path_value if rule_backtest_path_value else None
+        labels_ok = bool(labels_path and labels_path.is_file())
+        report["checks"].append({
+            "id": "selector-rule-labels",
+            "status": "passed" if labels_ok else "blocked",
+            "path": labels_path.relative_to(ROOT).as_posix() if labels_ok else None,
+        })
+        rule_backtest_ok = False
+        if labels_ok and rule_backtest_path and rule_backtest_path.is_file() and sample_ok:
+            try:
+                labels = json.loads(labels_path.read_text(encoding="utf-8"))
+                rule_backtest = json.loads(rule_backtest_path.read_text(encoding="utf-8"))
+                sample = json.loads(sample_path.read_text(encoding="utf-8"))
+                rule_backtest_ok = validate_rule_level_backtest(
+                    rule_backtest,
+                    labels,
+                    sample,
+                    sample_id,
+                    sample_path,
+                    labels_path,
+                    spec_revision,
+                )
+                report["checks"].append({
+                    "id": "selector-rule-level-backtest",
+                    "status": "passed" if rule_backtest_ok else "failed",
+                    "evidence_status": "valid" if rule_backtest_ok else "invalid",
+                    "path": rule_backtest_path.relative_to(ROOT).as_posix(),
+                    "metrics": rule_backtest.get("metrics"),
+                    "conclusion": rule_backtest.get("conclusion"),
+                })
+            except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                report["checks"].append({"id": "selector-rule-level-backtest", "status": "failed", "reason": "rule-level evidence is unreadable"})
+        else:
+            report["checks"].append({"id": "selector-rule-level-backtest", "status": "blocked", "reason": "independent labels or rule-level backtest evidence is missing"})
         selector = select(["src/react_agent/harness/contracts/__init__.py", "docs/specs/ci/spec.md", "unmapped/example.xyz"])
         report["checks"].append(
             {
@@ -331,9 +427,10 @@ def run(stage: str, progress: dict | None = None) -> dict:
         })
         fail_closed_ok = selector["status"] == "blocked" and bool(selector["unmapped_paths"])
         replay_check = next(item for item in report["checks"] if item["id"] == "selector-backtest")
+        rule_replay_check = next(item for item in report["checks"] if item["id"] == "selector-rule-level-backtest")
         static_audit = next(item for item in report["checks"] if item["id"] == "r9-static-security-audit")
         runtime_check = next(item for item in report["checks"] if item["id"] == "r9-execution-acceptance")
-        report["status"] = "passed" if not errors and fail_closed_ok and sample_ok and replay_check["status"] == "passed" and static_audit["status"] == "passed" and runtime_check["status"] == "passed" else "blocked"
+        report["status"] = "passed" if not errors and fail_closed_ok and sample_ok and replay_check["status"] == "passed" and rule_replay_check["status"] == "passed" and static_audit["status"] == "passed" and runtime_check["status"] == "passed" else "blocked"
     else:
         report["status"] = "blocked"
         report["reason"] = f"{stage} is not implemented; no pass conclusion is available."
