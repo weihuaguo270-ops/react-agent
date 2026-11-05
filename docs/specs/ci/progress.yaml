@@ -140,7 +140,11 @@
           "id": "CI-P1-3",
           "title": "R9 workflow and container security checks are executable",
           "evidence": [
-            "docs/specs/ci/evidence/phase1-r9-acceptance.json"
+            "docs/specs/ci/evidence/phase1-r9-acceptance.json",
+            "docs/specs/ci/evidence/phase1-r9-runtime-probe-contract.md",
+            ".github/workflows/r9-runtime-probe.yml",
+            "scripts/ci/r9_runtime_probe.py",
+            "tests/test_r9_runtime_probe.py"
           ],
           "status": "blocked",
           "notes": "The executable static audit covers Action commit pins, workflow permissions, fork-PR Secret references, and Docker base provenance. Fork Secret isolation and effective GitHub Actions permissions still require a current-head isolated remote run."
