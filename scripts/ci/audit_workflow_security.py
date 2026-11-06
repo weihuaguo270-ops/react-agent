@@ -86,31 +86,23 @@ def workflow_snapshot(path: Path) -> dict:
 
 
 def r9_workflow_pin_drift(workflows: list[dict]) -> dict | None:
-    """Detect a reusable R9 workflow whose declared provenance pin drifted."""
-    caller = next((item for item in workflows if item["path"] == ".github/workflows/test.yml"), None)
+    """Require runtime provenance to come from the called workflow context."""
     probe_path = ROOT / ".github/workflows/r9-runtime-probe.yml"
-    if not caller or not probe_path.is_file():
+    if not probe_path.is_file():
         return None
-    caller_refs = {
-        item["version"]
-        for item in caller["uses"]
-        if item["action"].endswith("/.github/workflows/r9-runtime-probe.yml")
-    }
     text = probe_path.read_text(encoding="utf-8")
-    match = re.search(
-        r"TRUSTED_WORKFLOW_REF:\s*[^\s@]+/\.github/workflows/r9-runtime-probe\.yml@([0-9a-f]{40})",
-        text,
-        re.IGNORECASE,
+    dynamic = re.search(
+        r"TRUSTED_WORKFLOW_REF:\s*\$\{\{\s*job\.workflow_ref\s*\}\}", text
     )
-    declared = match.group(1).lower() if match else None
-    if len(caller_refs) != 1 or declared is None or declared.lower() not in caller_refs:
+    if dynamic is None:
+        declared = re.search(r"TRUSTED_WORKFLOW_REF:\s*([^\s]+)", text)
         return {
-            "id": "r9-reusable-workflow-pin-drift",
+            "id": "r9-workflow-provenance-source-invalid",
             "severity": "high",
             "path": ".github/workflows/r9-runtime-probe.yml",
             "details": {
-                "caller_pins": sorted(caller_refs),
-                "declared_trusted_workflow_pin": declared,
+                "declared_trusted_workflow_ref": declared.group(1) if declared else None,
+                "required_source": "${{ job.workflow_ref }}",
             },
             "planned_phase": "Phase 1",
         }
