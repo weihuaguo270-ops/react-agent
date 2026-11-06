@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-05T16:26:31.301690+00:00",
+  "updated_at": "2026-11-06T07:34:39.268232+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -143,9 +143,9 @@
             "docs/specs/ci/evidence/phase1-r9-acceptance.json",
             "docs/specs/ci/evidence/phase1-r9-runtime-probe-contract.md",
             ".github/workflows/r9-runtime-probe.yml",
-              "scripts/ci/ci_stage_gate.py",
+            "scripts/ci/ci_stage_gate.py",
             "scripts/ci/r9_runtime_probe.py",
-              "tests/test_ci_stage_gate.py",
+            "tests/test_ci_stage_gate.py",
             "tests/test_r9_runtime_probe.py"
           ],
           "status": "blocked",
@@ -163,9 +163,38 @@
     },
     "Phase 2": {
       "name": "Shadow",
-      "status": "not_started",
+      "status": "in_progress",
       "gate_command": "python scripts/ci/ci_stage_gate.py --stage \"Phase 2\"",
-      "acceptance": []
+      "acceptance": [
+        {
+          "id": "CI-P2-1",
+          "title": "Report-only selector and independent expected-check artifacts have a fail-closed aggregation contract",
+          "evidence": [
+            "scripts/ci/aggregate_shadow_observation.py",
+            "scripts/ci/expected_pr_checks.py",
+            "tests/test_shadow_observation.py",
+            ".github/workflows/test.yml"
+          ],
+          "status": "complete"
+        },
+        {
+          "id": "CI-P2-2",
+          "title": "The report-only observation window meets the Spec thresholds",
+          "evidence": [
+            "docs/specs/ci/evidence/phase2-shadow-observation.md"
+          ],
+          "status": "blocked",
+          "notes": "The aggregator is ready, but Phase 1 R9 still lacks a real external-fork run and no 14-day observation window has been collected. This item cannot pass from historical backtests or a single artifact."
+        }
+      ],
+      "last_gate": {
+        "status": "blocked",
+        "report": "artifacts/ci/stage-gates/phase-2-20261106T073439250107Z-753b1252.json",
+        "report_sha256": "37d3921269dac23d04f1414e75531bebf8d89dbe2c4071f52c8a1d800dddb892",
+        "spec_revision": "1.5",
+        "acceptance_revision": "ci-acceptance/2026-10-30-v2",
+        "snapshot_id": null
+      }
     },
     "Phase 3": {
       "name": "PR gate",
@@ -187,12 +216,12 @@
     }
   },
   "last_gate": {
-    "stage": "Phase 1",
+    "stage": "Phase 2",
     "status": "blocked",
-    "report": "artifacts/ci/stage-gates/phase-1-20261105T162631276111Z-f30bf634.json",
-    "report_sha256": "ec34b24b876e1f5dad069f1c986fd7af380ef99191c378910742ccddfa78313c",
+    "report": "artifacts/ci/stage-gates/phase-2-20261106T073439250107Z-753b1252.json",
+    "report_sha256": "37d3921269dac23d04f1414e75531bebf8d89dbe2c4071f52c8a1d800dddb892",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-    "snapshot_id": "main-8805e5e9-20261030"
+    "snapshot_id": null
   }
 }

@@ -81,7 +81,7 @@
         "tests": {
           "Phase 0": ["tests/test_ci_registry_v2.py", "tests/test_ci_stage_gate.py", "tests/test_refresh_phase0_baseline.py"],
           "Phase 1": ["tests/test_ci_registry_v2.py", "tests/test_ci_stage_gate.py", "tests/test_selector_backtest.py", "tests/test_rule_level_backtest.py"],
-          "Phase 2": [],
+          "Phase 2": ["tests/test_shadow_observation.py"],
           "Phase 3": [],
           "Phase 4": [],
           "Phase 5": []

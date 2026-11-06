@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import fnmatch
+import argparse
+import json
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
 
 
 FULL = (
@@ -113,3 +118,60 @@ def expected_checks(changed_files: list[str]) -> dict:
         "class": "+".join(classes),
         "reason": "per-path independent policy; union of required checks",
     }
+
+
+def _resolve_commit(ref: str) -> str:
+    result = subprocess.run(
+        ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
+def _changed_files(base: str, head: str) -> tuple[list[str], str, str]:
+    base_sha = _resolve_commit(base)
+    head_sha = _resolve_commit(head)
+    result = subprocess.run(
+        ["git", "diff", "--name-only", f"{base_sha}...{head_sha}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.splitlines(), base_sha, head_sha
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base", required=True)
+    parser.add_argument("--head", default="HEAD")
+    parser.add_argument("--pr-number", type=int)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+
+    changed_files, base_sha, head_sha = _changed_files(args.base, args.head)
+    policy = expected_checks(changed_files)
+    report = {
+        "schema_version": "ci-expected-pr-checks/v1",
+        "mode": "report-only",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "base_sha": base_sha,
+        "head_sha": head_sha,
+        "pr_number": args.pr_number,
+        "changed_files": sorted({item.replace("\\", "/") for item in changed_files if item}),
+        "expected_checks": policy["checks"],
+        "change_class": policy["class"],
+        "reason": policy["reason"],
+        "source": "scripts/ci/expected_pr_checks.py",
+    }
+    encoded = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(encoded, encoding="utf-8")
+    print(encoded, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
