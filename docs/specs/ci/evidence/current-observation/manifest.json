@@ -3,12 +3,12 @@
   "evidence_kind": "current_observation",
   "snapshot_id": null,
   "spec_revision": "1.5",
-  "created_at": "2026-11-06T12:00:21.249867+00:00",
-  "source_collected_at": "2026-11-06T12:00:21.249867+00:00",
+  "created_at": "2026-11-06T12:45:16.896009+00:00",
+  "source_collected_at": "2026-11-06T12:45:16.896009+00:00",
   "repository": "weihuaguo270-ops/react-agent",
   "target": {
     "name": "main",
-    "sha": "c6be917c92e8552145ea36103c730464bb0deddb"
+    "sha": "e8d750faf8a1f883fff5eaf396d8cb67b82e342f"
   },
   "sample_definition": {
     "pull_requests": "latest 100 returned by GitHub REST pulls endpoint sorted by created desc",
@@ -16,10 +16,10 @@
     "daily_workflow_runs": "latest 50 returned by daily-smoke.yml workflow runs endpoint",
     "failure_job_details": "all failure/cancelled/timed_out/action_required runs expanded through the jobs API"
   },
-  "source_baseline_sha256": "aa91f6b9720abf5e1953ad68c47ef50582dffe0ec9c42122f517a4c4ae0894fd",
+  "source_baseline_sha256": "69723dae254ce047cdbfb6d87a41befa4884eec24f0091601b6945daca3afa55",
   "collector": {
     "path": "scripts/ci/refresh_phase0_baseline.py",
-    "sha256": "8f8d6474da840e211d5f289bbc6b3fa9cf2dc5b3c966b1a3edd86ebcac46277b"
+    "sha256": "bf835bff7f4c3eefdac92346df76a0f35d9171021a3507e5cca94e3a2e3aecfb"
   },
   "source": {
     "kind": "github_api_collection",
@@ -27,24 +27,24 @@
   },
   "artifacts": {
     "phase0-baseline.json": {
-      "sha256": "aa91f6b9720abf5e1953ad68c47ef50582dffe0ec9c42122f517a4c4ae0894fd",
-      "bytes": 264918
+      "sha256": "69723dae254ce047cdbfb6d87a41befa4884eec24f0091601b6945daca3afa55",
+      "bytes": 263936
     },
     "phase0-baseline.md": {
-      "sha256": "31ae8ce41a1ec45455ed8ae806adbeeb3b2155012b37b585672f63d60a4c9b29",
+      "sha256": "10c750684eb9809acb43bee5f35faf308f5d734967a4473c6ea93983d9407624",
       "bytes": 4984
     },
     "phase0-r9-security-snapshot.json": {
-      "sha256": "1279213c7591aaa943250cebfb321b7d42798a43e7bada022de3047afa048f2c",
+      "sha256": "f1c97bda6eb4985b49f2eff69209c09ce053c4651359c9bd7160e7fd39959ebb",
       "bytes": 13259
     },
     "phase0-r9-security-snapshot.md": {
-      "sha256": "c2d2ed18a81d965574ade6a1de71166d71f2d193b8db44eb9cf93484ea43903e",
+      "sha256": "64d1293f36554169eed3be833c0b2d310b627ecb5db548e69b65f376b5b471fa",
       "bytes": 582
     },
     "phase0-sample-index.md": {
-      "sha256": "6f078803a5ebcaf2f5e3a6c0c1c3c2079d91192a2dd453dbe68cf0d33d72c247",
-      "bytes": 54036
+      "sha256": "b19dbed527453ce0d5942b3934fec2934291fa711e6dc0e33a90b56ff18c91c2",
+      "bytes": 54016
     }
   }
 }

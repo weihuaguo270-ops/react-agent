@@ -618,7 +618,7 @@ def main() -> int:
             "conclusion_boundary": ["run_mode", "mapping_coverage_backtest", "fresh_rerun_required_for_completion"],
         },
         "phase1_acceptance_matrix_review": phase1_matrix_review(),
-        "r9_security_snapshot": audit_workflow_security(),
+        "r9_security_snapshot": audit_workflow_security(head_sha=default_sha),
         "required_checks": protection.get("required_status_checks", {}).get("contexts", []),
         "branch_protection": {
             "strict": protection.get("required_status_checks", {}).get("strict"),

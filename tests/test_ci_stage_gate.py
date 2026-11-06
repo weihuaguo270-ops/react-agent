@@ -226,3 +226,10 @@ def test_workflow_security_audit_accepts_dynamic_r9_workflow_ref(tmp_path, monke
     report = audit_workflow_security.audit()
 
     assert not any(item["id"] == "r9-workflow-provenance-source-invalid" for item in report["findings"])
+
+
+def test_workflow_security_audit_accepts_explicit_observed_head_sha(monkeypatch):
+    monkeypatch.setattr(audit_workflow_security, "git_head", lambda: "a" * 40)
+    report = audit_workflow_security.audit(head_sha="b" * 40)
+
+    assert report["head_sha"] == "b" * 40

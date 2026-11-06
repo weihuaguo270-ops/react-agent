@@ -143,7 +143,7 @@ def docker_snapshot() -> list[dict]:
     return images
 
 
-def audit() -> dict:
+def audit(head_sha: str | None = None) -> dict:
     workflows = [
         workflow_snapshot(path)
         for path in sorted(tracked_files())
@@ -223,7 +223,7 @@ def audit() -> dict:
         "schema_version": "ci-r9-security-snapshot/v1",
         "status": "attention_required" if findings else "clean",
         "collected_at": datetime.now(timezone.utc).isoformat(),
-        "head_sha": git_head(),
+        "head_sha": head_sha or git_head(),
         "scope": {
             "workflow_files": [item["path"] for item in workflows],
             "dockerfiles": sorted({item["path"] for item in images}),
