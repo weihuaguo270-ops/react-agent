@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-
+from scripts.ci.collect_shadow_observation import runtime_observation
 from scripts.ci.aggregate_shadow_observation import aggregate
 
 
@@ -102,3 +102,104 @@ def test_missing_expected_check_is_never_eligible(tmp_path):
 
     assert report["conclusion"] == "blocked"
     assert report["metrics"]["missing_expected_checks"] == ["lint", "test"]
+
+
+def test_runtime_observation_pairs_successful_jobs_from_one_attempt():
+    selector = {
+        "selected_checks": ["pr-ready", "lint"],
+        "runtime_improvement": None,
+    }
+    jobs = [
+        {
+            "name": "PR ready audit",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:02:00Z",
+            "conclusion": "success",
+        },
+        {
+            "name": "lint",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:01:00Z",
+            "conclusion": "success",
+        },
+        {
+            "name": "test (3.11)",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:05:00Z",
+            "conclusion": "success",
+        },
+        {"name": "unrelated", "conclusion": "failure"},
+    ]
+
+    result = runtime_observation(selector, jobs, {"id": 42, "run_attempt": 1})
+
+    assert result["runtime_comparable"] is True
+    assert result["runtime_full_seconds"] == 480.0
+    assert result["runtime_selected_seconds"] == 180.0
+    assert result["runtime_improvement"] == 0.625
+
+
+def test_runtime_observation_blocks_failed_or_incomplete_jobs():
+    selector = {"selected_checks": ["lint"]}
+    jobs = [
+        {
+            "name": "lint",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:01:00Z",
+            "conclusion": "failure",
+        },
+        {
+            "name": "test (3.10)",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": None,
+            "conclusion": "success",
+        },
+    ]
+
+    result = runtime_observation(selector, jobs, {"id": 43, "run_attempt": 1})
+
+    assert result["runtime_comparable"] is False
+    assert result["runtime_source"] is None
+    assert result["runtime_selected_seconds"] is None
+    assert result["runtime_incomplete"] is True
+
+
+def test_collect_can_use_older_attempt_when_newest_artifact_is_missing(tmp_path, monkeypatch):
+    from scripts.ci import collect_shadow_observation as collector
+    from contextlib import contextmanager
+
+    runs = {
+        "workflow_runs": [
+            {"id": 2, "head_sha": "a" * 40, "created_at": "2026-11-06T11:00:00Z", "event": "pull_request"},
+            {"id": 1, "head_sha": "a" * 40, "created_at": "2026-11-06T10:00:00Z", "event": "pull_request"},
+        ]
+    }
+    selector, expected = _pair(7, "2026-11-06", "python")
+    selector["head_sha"] = "a" * 40
+    expected["head_sha"] = "a" * 40
+    selector_path = tmp_path / "selector.json"
+    expected_path = tmp_path / "expected.json"
+    selector_path.write_text(__import__("json").dumps(selector), encoding="utf-8")
+    expected_path.write_text(__import__("json").dumps(expected), encoding="utf-8")
+
+    monkeypatch.setattr(collector, "gh_json", lambda endpoint: runs if endpoint.endswith("/runs?event=pull_request&per_page=100") else {"jobs": []})
+
+    def fake_download(repo, run_id, destination):
+        if run_id == 2:
+            raise ValueError("scope artifact is missing selector or expected-check JSON")
+        destination.mkdir(parents=True, exist_ok=True)
+        return selector_path, expected_path
+
+    monkeypatch.setattr(collector, "download_artifact", fake_download)
+
+    @contextmanager
+    def local_tempdir(*args, **kwargs):
+        scratch = tmp_path / "downloads"
+        scratch.mkdir()
+        yield str(scratch)
+
+    monkeypatch.setattr(collector.tempfile, "TemporaryDirectory", local_tempdir)
+
+    report = collector.collect("owner/repo", "test.yml", tmp_path / "report.json")
+    assert report["sample_count"] == 1
+    assert any(item["run_id"] == 2 for item in report["excluded_runs"])

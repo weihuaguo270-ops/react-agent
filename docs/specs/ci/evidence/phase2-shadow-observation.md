@@ -17,5 +17,11 @@ artifact、SHA 不匹配、漏选和不可比较的 runtime 样本；同一 `hea
 20% 的 runtime 改善中位数。该报告不会修改 required checks 或 Branch
 Protection。
 
+`.github/workflows/shadow-observation.yml` 每日以只读权限收集最近的
+`test.yml` PR runs，下载并绑定两个 report-only artifact，再从同一 workflow
+attempt 的 job 时间戳生成明确标注的 runtime estimate。下载失败、过期 artifact、
+缺少 job 或失败 job 都会保留在 `excluded_runs`/`invalid_samples` 中，不能被
+静默删除或当作有效样本。
+
 当前尚未有可计入窗口的 live aggregate report。Phase 1 的 R9 外部 fork
 隔离运行仍缺证据，因此本阶段只能保持 report-only。

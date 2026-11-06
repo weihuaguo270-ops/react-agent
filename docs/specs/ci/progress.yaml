@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-06T07:34:39.268232+00:00",
+  "updated_at": "2026-11-06T08:27:07.647572+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -171,9 +171,11 @@
           "title": "Report-only selector and independent expected-check artifacts have a fail-closed aggregation contract",
           "evidence": [
             "scripts/ci/aggregate_shadow_observation.py",
+            "scripts/ci/collect_shadow_observation.py",
             "scripts/ci/expected_pr_checks.py",
             "tests/test_shadow_observation.py",
-            ".github/workflows/test.yml"
+            ".github/workflows/test.yml",
+            ".github/workflows/shadow-observation.yml"
           ],
           "status": "complete"
         },
@@ -189,8 +191,8 @@
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "artifacts/ci/stage-gates/phase-2-20261106T073439250107Z-753b1252.json",
-        "report_sha256": "37d3921269dac23d04f1414e75531bebf8d89dbe2c4071f52c8a1d800dddb892",
+        "report": "artifacts/ci/stage-gates/phase-2-20261106T082707634463Z-13280a3e.json",
+        "report_sha256": "4b11ac74245ad1e37a9f502f4c27aa94dc4940a32c4a19f0f9bfd237874e0ec7",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": null
@@ -218,8 +220,8 @@
   "last_gate": {
     "stage": "Phase 2",
     "status": "blocked",
-    "report": "artifacts/ci/stage-gates/phase-2-20261106T073439250107Z-753b1252.json",
-    "report_sha256": "37d3921269dac23d04f1414e75531bebf8d89dbe2c4071f52c8a1d800dddb892",
+    "report": "artifacts/ci/stage-gates/phase-2-20261106T082707634463Z-13280a3e.json",
+    "report_sha256": "4b11ac74245ad1e37a9f502f4c27aa94dc4940a32c4a19f0f9bfd237874e0ec7",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
     "snapshot_id": null
