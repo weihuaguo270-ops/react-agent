@@ -1,13 +1,15 @@
 {
   "schema_version": "ci-r9-security-snapshot/v1",
-  "status": "attention_required",
-  "collected_at": "2026-11-03T03:26:05.262719+00:00",
-  "head_sha": "16d03460fab16914a2752698aeb0053e32f5a3a0",
+  "status": "clean",
+  "collected_at": "2026-11-06T12:00:23.159067+00:00",
+  "head_sha": "c6be917c92e8552145ea36103c730464bb0deddb",
   "scope": {
     "workflow_files": [
       ".github/workflows/daily-smoke.yml",
       ".github/workflows/evaluation.yml",
       ".github/workflows/harness.yml",
+      ".github/workflows/r9-runtime-probe.yml",
+      ".github/workflows/shadow-observation.yml",
       ".github/workflows/test.yml"
     ],
     "dockerfiles": [
@@ -27,22 +29,22 @@
       ],
       "uses": [
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/upload-artifact@v4",
+          "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
           "action": "actions/upload-artifact",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "pinned_commit": true
         }
       ],
       "secret_refs": [
@@ -62,52 +64,52 @@
       ],
       "uses": [
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/upload-artifact@v4",
+          "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
           "action": "actions/upload-artifact",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/upload-artifact@v4",
+          "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
           "action": "actions/upload-artifact",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "pinned_commit": true
         }
       ],
       "secret_refs": [
@@ -127,22 +129,22 @@
       ],
       "uses": [
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         }
       ],
       "secret_refs": [],
@@ -150,6 +152,75 @@
       "explicit_permissions": true,
       "contains_pull_request_target": false,
       "checkout_refs_pr_head": true,
+      "write_operations": []
+    },
+    {
+      "path": ".github/workflows/r9-runtime-probe.yml",
+      "events": [],
+      "uses": [
+        {
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "action": "actions/checkout",
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
+        },
+        {
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "action": "actions/checkout",
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
+        },
+        {
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "action": "actions/setup-python",
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
+        },
+        {
+          "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "action": "actions/upload-artifact",
+          "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "pinned_commit": true
+        }
+      ],
+      "secret_refs": [],
+      "write_permissions": [],
+      "explicit_permissions": true,
+      "contains_pull_request_target": false,
+      "checkout_refs_pr_head": true,
+      "write_operations": []
+    },
+    {
+      "path": ".github/workflows/shadow-observation.yml",
+      "events": [
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "uses": [
+        {
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "action": "actions/checkout",
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
+        },
+        {
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "action": "actions/setup-python",
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
+        },
+        {
+          "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "action": "actions/upload-artifact",
+          "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "pinned_commit": true
+        }
+      ],
+      "secret_refs": [],
+      "write_permissions": [],
+      "explicit_permissions": true,
+      "contains_pull_request_target": false,
+      "checkout_refs_pr_head": false,
       "write_operations": []
     },
     {
@@ -161,105 +232,111 @@
       ],
       "uses": [
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/upload-artifact@v4",
+          "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
           "action": "actions/upload-artifact",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "weihuaguo270-ops/react-agent/.github/workflows/r9-runtime-probe.yml@ae9c6d0559c38478b492c91748e2eb73b91926e3",
+          "action": "weihuaguo270-ops/react-agent/.github/workflows/r9-runtime-probe.yml",
+          "version": "ae9c6d0559c38478b492c91748e2eb73b91926e3",
+          "pinned_commit": true
+        },
+        {
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/setup-python@v5",
+          "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
           "action": "actions/setup-python",
-          "version": "v5",
-          "pinned_commit": false
+          "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+          "pinned_commit": true
         },
         {
-          "reference": "actions/checkout@v4",
+          "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
           "action": "actions/checkout",
-          "version": "v4",
-          "pinned_commit": false
+          "version": "11d5960a326750d5838078e36cf38b85af677262",
+          "pinned_commit": true
         }
       ],
       "secret_refs": [],
       "write_permissions": [],
-      "explicit_permissions": false,
+      "explicit_permissions": true,
       "contains_pull_request_target": false,
       "checkout_refs_pr_head": true,
       "write_operations": []
@@ -269,112 +346,27 @@
     {
       "path": "Dockerfile",
       "line": 2,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
+      "image": "python:3.11-slim@sha256:db20d8506e2f15b6db39b40b6015ca46bae855dec6dd326d462cfe79ae972893",
+      "pinned_digest": true,
+      "pinning_basis": "digest",
+      "source_dockerfile": null
     },
     {
       "path": "Dockerfile.sandbox",
       "line": 1,
-      "image": "python:3.11-slim",
-      "pinned_digest": false
+      "image": "python:3.11-slim@sha256:db20d8506e2f15b6db39b40b6015ca46bae855dec6dd326d462cfe79ae972893",
+      "pinned_digest": true,
+      "pinning_basis": "digest",
+      "source_dockerfile": null
     },
     {
       "path": "eval/blind_pilot_v1/Dockerfile",
       "line": 1,
       "image": "react-agent-sandbox:0.7.0",
-      "pinned_digest": false
+      "pinned_digest": true,
+      "pinning_basis": "repository_dockerfile",
+      "source_dockerfile": "Dockerfile.sandbox"
     }
   ],
-  "findings": [
-    {
-      "id": "external-actions-not-commit-pinned",
-      "severity": "high",
-      "path": ".github/workflows/daily-smoke.yml",
-      "details": [
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/upload-artifact@v4"
-      ],
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "external-actions-not-commit-pinned",
-      "severity": "high",
-      "path": ".github/workflows/evaluation.yml",
-      "details": [
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/upload-artifact@v4",
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/upload-artifact@v4"
-      ],
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "external-actions-not-commit-pinned",
-      "severity": "high",
-      "path": ".github/workflows/harness.yml",
-      "details": [
-        "actions/checkout@v4",
-        "actions/checkout@v4",
-        "actions/setup-python@v5"
-      ],
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "external-actions-not-commit-pinned",
-      "severity": "high",
-      "path": ".github/workflows/test.yml",
-      "details": [
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/upload-artifact@v4",
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/checkout@v4"
-      ],
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "workflow-permissions-not-explicit",
-      "severity": "medium",
-      "path": ".github/workflows/test.yml",
-      "details": "Effective GITHUB_TOKEN permissions depend on repository defaults.",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "Dockerfile",
-      "details": "python:3.11-slim (line 2)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "Dockerfile.sandbox",
-      "details": "python:3.11-slim (line 1)",
-      "planned_phase": "Phase 1"
-    },
-    {
-      "id": "docker-base-image-not-digest-pinned",
-      "severity": "medium",
-      "path": "eval/blind_pilot_v1/Dockerfile",
-      "details": "react-agent-sandbox:0.7.0 (line 1)",
-      "planned_phase": "Phase 1"
-    }
-  ]
+  "findings": []
 }

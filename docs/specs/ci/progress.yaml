@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-06T08:27:07.647572+00:00",
+  "updated_at": "2026-11-06T12:02:02.773252+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -47,7 +47,7 @@
       "reason": "Historical conclusion remains valid only for its recorded SHA and prior acceptance revision; it is not approval under CI Spec v1.5."
     }
   ],
-  "phase0_snapshot_id": "main-8805e5e9-20261030",
+  "phase0_snapshot_id": "main-c6be917c-20261106-v2",
   "selector_sample_id": "main-8805e5e9-20261030",
   "selector_backtest_report": "docs/specs/ci/evidence/phase1-selector-backtest-main-8805e5e9-20261106.json",
   "selector_rule_labels": "docs/specs/ci/evidence/selector-expected-rules-100-20261106.json",
@@ -62,9 +62,9 @@
           "id": "CI-P0-1-v2",
           "title": "Immutable snapshot has identity, provenance, sample boundaries, and verified file hashes",
           "evidence": [
-            "docs/specs/ci/evidence/snapshots/main-8805e5e9-20261030/manifest.json",
-            "docs/specs/ci/evidence/snapshots/main-8805e5e9-20261030/phase0-baseline.json",
-            "docs/specs/ci/evidence/snapshots/main-8805e5e9-20261030/phase0-sample-index.md"
+            "docs/specs/ci/evidence/snapshots/main-c6be917c-20261106-v2/manifest.json",
+            "docs/specs/ci/evidence/snapshots/main-c6be917c-20261106-v2/phase0-baseline.json",
+            "docs/specs/ci/evidence/snapshots/main-c6be917c-20261106-v2/phase0-sample-index.md"
           ],
           "status": "complete"
         },
@@ -100,11 +100,11 @@
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "artifacts/ci/stage-gates/phase-0-20261103T043622549075Z-16d03460.json",
-        "report_sha256": "637cb44c931be42bb2517b0d4b3b43c76231a9671c1e5d61206199930d87671a",
+        "report": "artifacts/ci/stage-gates/phase-0-20261106T120202764928Z-c6be917c.json",
+        "report_sha256": "575b9af5c94017741f01ff1003b28a61d5721696244d93b01da65c6deceedf4e",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-        "snapshot_id": "main-8805e5e9-20261030"
+        "snapshot_id": "main-c6be917c-20261106-v2"
       }
     },
     "Phase 1": {
@@ -218,12 +218,12 @@
     }
   },
   "last_gate": {
-    "stage": "Phase 2",
+    "stage": "Phase 0",
     "status": "blocked",
-    "report": "artifacts/ci/stage-gates/phase-2-20261106T082707634463Z-13280a3e.json",
-    "report_sha256": "4b11ac74245ad1e37a9f502f4c27aa94dc4940a32c4a19f0f9bfd237874e0ec7",
+    "report": "artifacts/ci/stage-gates/phase-0-20261106T120202764928Z-c6be917c.json",
+    "report_sha256": "575b9af5c94017741f01ff1003b28a61d5721696244d93b01da65c6deceedf4e",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-    "snapshot_id": null
+    "snapshot_id": "main-c6be917c-20261106-v2"
   }
 }

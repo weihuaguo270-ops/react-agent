@@ -60,6 +60,11 @@ def manifest_artifacts(output_dir: Path) -> dict[str, dict[str, int | str]]:
     }
 
 
+def manifest_target(default_branch: str, default_sha: str) -> dict[str, str]:
+    """Use the field names consumed by the immutable snapshot gate."""
+    return {"name": default_branch, "sha": default_sha}
+
+
 def iso_minutes(start: str, end: str) -> float:
     left = datetime.fromisoformat(start.replace("Z", "+00:00"))
     right = datetime.fromisoformat(end.replace("Z", "+00:00"))
@@ -666,7 +671,7 @@ def main() -> int:
         "created_at": report["collected_at"],
         "source_collected_at": report["collected_at"],
         "repository": REPO,
-        "target": {"ref": default_branch, "sha": default_sha},
+        "target": manifest_target(default_branch, default_sha),
         "sample_definition": report["sample_definition"],
         "source_baseline_sha256": sha256_file(output_dir / "phase0-baseline.json"),
         "collector": {
