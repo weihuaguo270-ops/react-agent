@@ -45,6 +45,7 @@ def test_non_pull_request_payload_is_blocked() -> None:
 
 
 def test_gate_validator_requires_remote_provenance(monkeypatch) -> None:
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
     monkeypatch.setenv("TRUSTED_WORKFLOW_REF", "owner/repo/.github/workflows/r9-runtime-probe.yml@" + "d" * 40)
     report = build_report(_event(fork=True), run_id="123")
 
