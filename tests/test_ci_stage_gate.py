@@ -202,20 +202,27 @@ def test_workflow_security_audit_flags_secret_on_pull_request(tmp_path, monkeypa
 
 
 def test_workflow_security_audit_flags_r9_pin_drift(tmp_path, monkeypatch):
-    caller = tmp_path / ".github/workflows/test.yml"
     probe = tmp_path / ".github/workflows/r9-runtime-probe.yml"
-    caller.parent.mkdir(parents=True)
-    caller.write_text(
-        "jobs:\n  r9-runtime-probe:\n    uses: owner/repo/.github/workflows/r9-runtime-probe.yml@" + "a" * 40 + "\n",
-        encoding="utf-8",
-    )
+    probe.parent.mkdir(parents=True)
     probe.write_text(
         "env:\n  TRUSTED_WORKFLOW_REF: owner/repo/.github/workflows/r9-runtime-probe.yml@" + "b" * 40 + "\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(audit_workflow_security, "ROOT", tmp_path)
-    monkeypatch.setattr(audit_workflow_security, "tracked_files", lambda: [caller, probe])
+    monkeypatch.setattr(audit_workflow_security, "tracked_files", lambda: [probe])
 
     report = audit_workflow_security.audit()
 
-    assert any(item["id"] == "r9-reusable-workflow-pin-drift" for item in report["findings"])
+    assert any(item["id"] == "r9-workflow-provenance-source-invalid" for item in report["findings"])
+
+
+def test_workflow_security_audit_accepts_dynamic_r9_workflow_ref(tmp_path, monkeypatch):
+    probe = tmp_path / ".github/workflows/r9-runtime-probe.yml"
+    probe.parent.mkdir(parents=True)
+    probe.write_text("env:\n  TRUSTED_WORKFLOW_REF: ${{ job.workflow_ref }}\n", encoding="utf-8")
+    monkeypatch.setattr(audit_workflow_security, "ROOT", tmp_path)
+    monkeypatch.setattr(audit_workflow_security, "tracked_files", lambda: [probe])
+
+    report = audit_workflow_security.audit()
+
+    assert not any(item["id"] == "r9-workflow-provenance-source-invalid" for item in report["findings"])
