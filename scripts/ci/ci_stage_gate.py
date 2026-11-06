@@ -472,6 +472,27 @@ def run(
         static_audit = next(item for item in report["checks"] if item["id"] == "r9-static-security-audit")
         runtime_check = next(item for item in report["checks"] if item["id"] == "r9-execution-acceptance")
         report["status"] = "passed" if not errors and fail_closed_ok and sample_ok and replay_check["status"] == "passed" and rule_replay_check["status"] == "passed" and static_audit["status"] == "passed" and runtime_check["status"] == "passed" else "blocked"
+    elif stage == "Phase 2":
+        observation_path = ROOT / "docs/specs/ci/evidence/phase2-shadow-observation.md"
+        observation_text = observation_path.read_text(encoding="utf-8") if observation_path.is_file() else ""
+        contract_paths = [
+            ROOT / "scripts/ci/aggregate_shadow_observation.py",
+            ROOT / "scripts/ci/expected_pr_checks.py",
+            ROOT / "tests/test_shadow_observation.py",
+        ]
+        contract_ok = all(path.is_file() for path in contract_paths)
+        report["checks"].append({
+            "id": "shadow-aggregation-contract",
+            "status": "passed" if contract_ok else "blocked",
+            "evidence": [path.relative_to(ROOT).as_posix() for path in contract_paths if path.is_file()],
+        })
+        report["checks"].append({
+            "id": "shadow-observation-window",
+            "status": "blocked",
+            "evidence": observation_path.relative_to(ROOT).as_posix() if observation_path.is_file() else None,
+            "reason": "The live 14-day observation window is not complete; report-only evidence cannot authorize a subset gate.",
+        })
+        report["status"] = "blocked"
     else:
         report["status"] = "blocked"
         report["reason"] = f"{stage} is not implemented; no pass conclusion is available."

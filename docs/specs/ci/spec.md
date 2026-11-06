@@ -130,6 +130,17 @@ CI 迁移阶段使用 `docs/specs/ci/progress.yaml` 中的唯一验收源。每�
 - R9 的 fork Secret 隔离及有效运行权限须有隔离远端执行证据；本地静态快照不能替代该证据。
 - Phase 1 只有所有新验收项通过后才能标记完成。
 
+### Phase 2：Shadow
+
+新选择器和聚合器先 report-only，与现有 workflow 在相同 PR head SHA 上比较选择结果、状态语义、失败归因和时长。观察窗口内不改变旧 required checks。
+
+每个 PR 的 report-only artifact 必须同时包含 selector 结果和独立的
+expected-check policy。`scripts/ci/aggregate_shadow_observation.py` 只接受
+两者在 `pr_number`、`base_sha`、`head_sha` 和 changed paths 上一致的配对，
+并在缺失、重复、SHA 不匹配或漏选时保持 `blocked`。聚合器只消费同一
+workflow attempt 中显式提供的 runtime improvement；不会从排队时间或单次
+workflow wall time 推断节省，也不会启用 subset gate。
+
 ## 8. 相关入口
 
 - [AI 审核与变更保障 Spec](../ai-review/spec.md)

@@ -81,12 +81,25 @@ jobs:
           --pr-number "$PR_NUMBER" \
           --event-name "$EVENT_NAME" \
           --output artifacts/ci/pr-check-scope.json
+    - name: Generate independent expected-check record
+      env:
+        PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        python scripts/ci/expected_pr_checks.py \
+          --base "$PR_BASE_SHA" \
+          --head "$PR_HEAD_SHA" \
+          --pr-number "$PR_NUMBER" \
+          --output artifacts/ci/expected-pr-checks.json
     - name: Upload scope report
       if: always()
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: pr-check-scope
-        path: artifacts/ci/pr-check-scope.json
+        path: |
+          artifacts/ci/pr-check-scope.json
+          artifacts/ci/expected-pr-checks.json
         if-no-files-found: warn
 
   r9-runtime-probe:
