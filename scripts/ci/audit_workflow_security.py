@@ -85,6 +85,38 @@ def workflow_snapshot(path: Path) -> dict:
     }
 
 
+def r9_workflow_pin_drift(workflows: list[dict]) -> dict | None:
+    """Detect a reusable R9 workflow whose declared provenance pin drifted."""
+    caller = next((item for item in workflows if item["path"] == ".github/workflows/test.yml"), None)
+    probe_path = ROOT / ".github/workflows/r9-runtime-probe.yml"
+    if not caller or not probe_path.is_file():
+        return None
+    caller_refs = {
+        item["version"]
+        for item in caller["uses"]
+        if item["action"].endswith("/.github/workflows/r9-runtime-probe.yml")
+    }
+    text = probe_path.read_text(encoding="utf-8")
+    match = re.search(
+        r"TRUSTED_WORKFLOW_REF:\s*[^\s@]+/\.github/workflows/r9-runtime-probe\.yml@([0-9a-f]{40})",
+        text,
+        re.IGNORECASE,
+    )
+    declared = match.group(1).lower() if match else None
+    if len(caller_refs) != 1 or declared is None or declared.lower() not in caller_refs:
+        return {
+            "id": "r9-reusable-workflow-pin-drift",
+            "severity": "high",
+            "path": ".github/workflows/r9-runtime-probe.yml",
+            "details": {
+                "caller_pins": sorted(caller_refs),
+                "declared_trusted_workflow_pin": declared,
+            },
+            "planned_phase": "Phase 1",
+        }
+    return None
+
+
 def docker_snapshot() -> list[dict]:
     internal_bases = {"react-agent-sandbox:0.7.0": ROOT / "Dockerfile.sandbox"}
     images = []
@@ -127,6 +159,8 @@ def audit() -> dict:
     ]
     images = docker_snapshot()
     findings = []
+    if (finding := r9_workflow_pin_drift(workflows)) is not None:
+        findings.append(finding)
     for workflow in workflows:
         unpinned = [item["reference"] for item in workflow["uses"] if not item["pinned_commit"]]
         if unpinned:
