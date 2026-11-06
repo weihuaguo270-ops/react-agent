@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-06T12:46:32.728872+00:00",
+  "updated_at": "2026-11-06T13:28:05.692580+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -183,16 +183,17 @@
           "id": "CI-P2-2",
           "title": "The report-only observation window meets the Spec thresholds",
           "evidence": [
-            "docs/specs/ci/evidence/phase2-shadow-observation.md"
+            "docs/specs/ci/evidence/phase2-shadow-observation.md",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-06.json"
           ],
           "status": "blocked",
-          "notes": "The aggregator is ready, but Phase 1 R9 still lacks a real external-fork run and no 14-day observation window has been collected. This item cannot pass from historical backtests or a single artifact."
+          "notes": "Live report-only run 42224158528 is bound to main 2facfa0baa3084090b262a4d8c7c58f27f9bc606 and has 8 valid samples across 8 head SHAs, zero missing expected checks, and zero invalid samples. The one-day window, one strict-subset category, zero comparable runtime samples, and missing current-head R9 external-fork evidence keep this item blocked."
         }
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "artifacts/ci/stage-gates/phase-2-20261106T082707634463Z-13280a3e.json",
-        "report_sha256": "4b11ac74245ad1e37a9f502f4c27aa94dc4940a32c4a19f0f9bfd237874e0ec7",
+        "report": "artifacts/ci/stage-gates/phase-2-20261106T132805675979Z-2facfa0b.json",
+        "report_sha256": "6ecd9a77877dedbb43fb40e683c93a4c3b102d626db97d446b1e25101f8c474e",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": null
@@ -218,12 +219,12 @@
     }
   },
   "last_gate": {
-    "stage": "Phase 0",
+    "stage": "Phase 2",
     "status": "blocked",
-    "report": "artifacts/ci/stage-gates/phase-0-20261106T124632701342Z-7f15d200.json",
-    "report_sha256": "4714424aaf18b8a33d9c4647c5e170c1afcd7a73d8e1433828040027045b43c4",
+    "report": "artifacts/ci/stage-gates/phase-2-20261106T132805675979Z-2facfa0b.json",
+    "report_sha256": "6ecd9a77877dedbb43fb40e683c93a4c3b102d626db97d446b1e25101f8c474e",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-    "snapshot_id": "main-c6be917c-20261106-v2"
+    "snapshot_id": null
   }
 }

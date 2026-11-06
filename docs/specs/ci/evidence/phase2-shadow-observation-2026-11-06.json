@@ -1,0 +1,55 @@
+{
+  "schema_version": "ci-shadow-observation/v1",
+  "evidence_kind": "live_report_only_observation",
+  "repository": "weihuaguo270-ops/react-agent",
+  "workflow": ".github/workflows/shadow-observation.yml",
+  "run_id": 42224158528,
+  "run_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42224158528",
+  "head_sha": "2facfa0baa3084090b262a4d8c7c58f27f9bc606",
+  "generated_at": "2026-11-06T13:17:26.700248+00:00",
+  "window_start": "2026-11-06",
+  "window_end": "2026-11-06",
+  "elapsed_calendar_days": 1,
+  "sample_count": 8,
+  "unique_head_sha_count": 8,
+  "source_run_count": 100,
+  "invalid_samples": [],
+  "excluded_sample_count": 92,
+  "rows": [
+    {"pr": 196, "head_sha": "07a42db203fc9380f42d5e2ce0f2d3d698827212", "change_class": "cross_cutting+docs+docs_corpus_baseline+tests", "selector_status": "mapped", "selected_is_strict_subset": false, "missing_checks": [], "unmapped_paths": []},
+    {"pr": 197, "head_sha": "7613f643142c9258cffaef2e6d8b46d85e6f8b7d", "change_class": "cross_cutting+docs+docs_corpus_baseline+tests", "selector_status": "mapped", "selected_is_strict_subset": false, "missing_checks": [], "unmapped_paths": []},
+    {"pr": 198, "head_sha": "bcd4e927c5e51f35e32ecd9eef6643626881e078", "change_class": "docs", "selector_status": "mapped", "selected_is_strict_subset": true, "missing_checks": [], "unmapped_paths": []},
+    {"pr": 199, "head_sha": "adb45655e87f9e3a36d9124392c0d6e35d6c32d0", "change_class": "cross_cutting+docs_corpus_baseline+tests", "selector_status": "mapped", "selected_is_strict_subset": false, "missing_checks": [], "unmapped_paths": []},
+    {"pr": 200, "head_sha": "4a5a9343ec91312b80f302d718e39db7b156705d", "change_class": "cross_cutting+docs+docs_corpus_baseline+tests", "selector_status": "mapped", "selected_is_strict_subset": false, "missing_checks": [], "unmapped_paths": []},
+    {"pr": 201, "head_sha": "0acf0aff1c2e0297103dd32654d01d324a1f737b", "change_class": "cross_cutting+docs+docs_corpus_baseline+tests", "selector_status": "mapped", "selected_is_strict_subset": false, "missing_checks": [], "unmapped_paths": []},
+    {"pr": 202, "head_sha": "7f15d20019e01cbefc8ab38c14482531cf8decff", "change_class": "cross_cutting+docs+docs_corpus_baseline+tests", "selector_status": "mapped", "selected_is_strict_subset": false, "missing_checks": [], "unmapped_paths": []},
+    {"pr": 203, "head_sha": "890677929cd02109f40250fb4948cbc6e092e5df", "change_class": "cross_cutting+docs+docs_corpus_baseline+tests", "selector_status": "mapped", "selected_is_strict_subset": false, "missing_checks": [], "unmapped_paths": []}
+  ],
+  "metrics": {
+    "unmapped_path_count": 0,
+    "missing_expected_checks": [],
+    "comparable_runtime_count": 0,
+    "median_runtime_improvement": null,
+    "rule_categories_with_strict_subset": ["docs"],
+    "criteria": {
+      "observation_days_at_least_14": false,
+      "unique_head_shas_at_least_10": false,
+      "three_shrinking_rule_categories": false,
+      "zero_expected_check_misses": true,
+      "ten_comparable_runtime_shas": false,
+      "median_runtime_improvement_at_least_20_percent": false,
+      "no_invalid_samples": true
+    },
+    "subset_gate_eligible": false
+  },
+  "conclusion": "blocked",
+  "conclusion_boundary": "Report-only evidence does not enable a subset gate or change Branch Protection.",
+  "blocking_reasons": [
+    "The observation window is one day, below the required 14 consecutive calendar days.",
+    "There are 8 unique head SHAs, below the required 10.",
+    "Only one rule category has a strict subset, below the required 3.",
+    "No comparable runtime samples are available, so the 10-sample and 20-percent median improvement criteria cannot pass.",
+    "Phase 1 R9 still lacks a current-head isolated external-fork run."
+  ],
+  "excluded_run_evidence": "The full collector report, including all excluded run IDs and reasons, is retained in the workflow artifact for run 42224158528."
+}
