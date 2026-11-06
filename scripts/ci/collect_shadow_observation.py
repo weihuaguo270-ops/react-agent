@@ -30,6 +30,17 @@ CHECKS = {
     "security": "security",
     "docker-smoke": "docker-smoke",
 }
+FULL_CHECKS = {
+    "pr-ready",
+    "lint",
+    "test",
+    "test-windows",
+    "typecheck",
+    "security",
+    "docker-smoke",
+    "docs-eval",
+}
+RUNTIME_CHECKS = FULL_CHECKS - {"docs-eval"}
 
 
 def gh_json(endpoint: str) -> Any:
@@ -65,25 +76,34 @@ def duration(job: dict[str, Any]) -> float | None:
     return value if value >= 0 else None
 
 
-def runtime_observation(selector: dict[str, Any], jobs: list[dict[str, Any]], run: dict[str, Any]) -> dict[str, Any]:
+def runtime_observation(
+    selector: dict[str, Any],
+    jobs: list[dict[str, Any]],
+    run: dict[str, Any],
+    *,
+    expected_checks: set[str] | None = None,
+) -> dict[str, Any]:
     selected = set(selector.get("selected_checks") or [])
     measured: list[tuple[str, float, str | None]] = []
     incomplete = False
+    discovered: set[str] = set()
     for job in jobs:
         check = job_check(str(job.get("name") or ""))
         if not check:
             continue
+        discovered.add(check)
         seconds = duration(job)
         conclusion = job.get("conclusion")
         if seconds is None or conclusion not in {"success", "skipped", "neutral"}:
             incomplete = True
         else:
             measured.append((check, seconds, conclusion))
+    expected = set(expected_checks or RUNTIME_CHECKS)
+    missing_checks = sorted(expected - discovered)
+    incomplete = incomplete or bool(missing_checks)
     full_seconds = sum(item[1] for item in measured)
     selected_seconds = sum(item[1] for item in measured if item[0] in selected)
-    comparable = not incomplete and full_seconds > 0 and selected < set({
-        "pr-ready", "lint", "test", "test-windows", "typecheck", "security", "docker-smoke", "docs-eval"
-    })
+    comparable = not incomplete and full_seconds > 0 and selected < expected
     result = {
         "workflow_run_id": run.get("id"),
         "run_attempt": run.get("run_attempt"),
@@ -93,6 +113,7 @@ def runtime_observation(selector: dict[str, Any], jobs: list[dict[str, Any]], ru
         "runtime_improvement": round(1 - selected_seconds / full_seconds, 4) if comparable else None,
         "runtime_comparable": comparable,
         "runtime_incomplete": incomplete,
+        "runtime_missing_checks": missing_checks,
     }
     selector.update(result)
     return selector
@@ -152,8 +173,20 @@ def collect(repo: str, workflow: str, output: Path, *, limit: int = 100) -> dict
                 selector_path, expected_path = download_artifact(repo, run_id, run_dir)
                 selector = json.loads(selector_path.read_text(encoding="utf-8"))
                 labels = json.loads(expected_path.read_text(encoding="utf-8"))
+                selector_head = str(selector.get("head_sha") or "").lower()
+                expected_head = str(labels.get("head_sha") or "").lower()
+                if selector_head != head_sha or expected_head != head_sha:
+                    raise ValueError("run and selector/expected-check artifacts are not bound to the same head SHA")
                 jobs = gh_json(f"repos/{repo}/actions/runs/{run_id}/jobs?per_page=100").get("jobs", [])
-                enriched = runtime_observation(selector, jobs, run)
+                expected_checks = labels.get("expected_checks")
+                if not isinstance(expected_checks, list) or not all(isinstance(item, str) for item in expected_checks):
+                    raise ValueError("expected-check artifact has invalid expected_checks")
+                enriched = runtime_observation(
+                    selector,
+                    jobs,
+                    run,
+                    expected_checks=set(expected_checks) & RUNTIME_CHECKS,
+                )
                 enriched["base_sha"] = selector.get("base_sha")
                 sample_dir = artifact_root / str(run_id)
                 sample_dir.mkdir(parents=True, exist_ok=True)
