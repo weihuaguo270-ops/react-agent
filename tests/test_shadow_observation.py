@@ -128,15 +128,44 @@ def test_runtime_observation_pairs_successful_jobs_from_one_attempt():
             "completed_at": "2026-11-06T10:05:00Z",
             "conclusion": "success",
         },
+        {
+            "name": "test-windows (3.11)",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:06:00Z",
+            "conclusion": "success",
+        },
+        {
+            "name": "typecheck",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:02:30Z",
+            "conclusion": "success",
+        },
+        {
+            "name": "security",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:03:00Z",
+            "conclusion": "success",
+        },
+        {
+            "name": "docker-smoke",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:04:00Z",
+            "conclusion": "success",
+        },
         {"name": "unrelated", "conclusion": "failure"},
     ]
 
-    result = runtime_observation(selector, jobs, {"id": 42, "run_attempt": 1})
+    result = runtime_observation(
+        selector,
+        jobs,
+        {"id": 42, "run_attempt": 1},
+        expected_checks={"pr-ready", "lint", "test"},
+    )
 
     assert result["runtime_comparable"] is True
-    assert result["runtime_full_seconds"] == 480.0
+    assert result["runtime_full_seconds"] == 1410.0
     assert result["runtime_selected_seconds"] == 180.0
-    assert result["runtime_improvement"] == 0.625
+    assert result["runtime_improvement"] == 0.8723
 
 
 def test_runtime_observation_blocks_failed_or_incomplete_jobs():
@@ -156,12 +185,78 @@ def test_runtime_observation_blocks_failed_or_incomplete_jobs():
         },
     ]
 
-    result = runtime_observation(selector, jobs, {"id": 43, "run_attempt": 1})
+    result = runtime_observation(
+        selector,
+        jobs,
+        {"id": 43, "run_attempt": 1},
+        expected_checks={"lint", "test"},
+    )
 
     assert result["runtime_comparable"] is False
     assert result["runtime_source"] is None
     assert result["runtime_selected_seconds"] is None
     assert result["runtime_incomplete"] is True
+
+
+def test_runtime_observation_rejects_missing_expected_check():
+    selector = {"selected_checks": ["lint"]}
+    jobs = [
+        {
+            "name": "lint",
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:01:00Z",
+            "conclusion": "success",
+        }
+    ]
+
+    result = runtime_observation(
+        selector,
+        jobs,
+        {"id": 44, "run_attempt": 1},
+        expected_checks={"lint", "test"},
+    )
+
+    assert result["runtime_comparable"] is False
+    assert result["runtime_missing_checks"] == ["test"]
+
+
+def test_collect_excludes_artifacts_bound_to_another_head(tmp_path, monkeypatch):
+    from scripts.ci import collect_shadow_observation as collector
+    from contextlib import contextmanager
+
+    runs = {
+        "workflow_runs": [
+            {"id": 1, "head_sha": "a" * 40, "created_at": "2026-11-06T10:00:00Z", "event": "pull_request"},
+        ]
+    }
+    selector, expected = _pair(7, "2026-11-06", "python", head="b" * 40)
+    selector_path = tmp_path / "selector.json"
+    expected_path = tmp_path / "expected.json"
+    selector_path.write_text(__import__("json").dumps(selector), encoding="utf-8")
+    expected_path.write_text(__import__("json").dumps(expected), encoding="utf-8")
+
+    monkeypatch.setattr(
+        collector,
+        "gh_json",
+        lambda endpoint: runs if endpoint.endswith("/runs?event=pull_request&per_page=100") else {"jobs": []},
+    )
+
+    def fake_download(repo, run_id, destination):
+        return selector_path, expected_path
+
+    monkeypatch.setattr(collector, "download_artifact", fake_download)
+
+    @contextmanager
+    def local_tempdir(*args, **kwargs):
+        scratch = tmp_path / "downloads"
+        scratch.mkdir()
+        yield str(scratch)
+
+    monkeypatch.setattr(collector.tempfile, "TemporaryDirectory", local_tempdir)
+
+    report = collector.collect("owner/repo", "test.yml", tmp_path / "report.json")
+    assert report["sample_count"] == 0
+    assert any("same head SHA" in item["reason"] for item in report["excluded_runs"])
 
 
 def test_collect_can_use_older_attempt_when_newest_artifact_is_missing(tmp_path, monkeypatch):
