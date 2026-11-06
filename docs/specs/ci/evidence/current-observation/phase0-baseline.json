@@ -4,11 +4,11 @@
   "evidence_kind": "current_observation",
   "snapshot_id": null,
   "status": "partial",
-  "collected_at": "2026-11-03T03:26:03.197942+00:00",
+  "collected_at": "2026-11-06T12:00:21.249867+00:00",
   "repository": "weihuaguo270-ops/react-agent",
   "default_branch": {
     "name": "main",
-    "sha": "16d03460fab16914a2752698aeb0053e32f5a3a0"
+    "sha": "c6be917c92e8552145ea36103c730464bb0deddb"
   },
   "sample_definition": {
     "pull_requests": "latest 100 returned by GitHub REST pulls endpoint sorted by created desc",
@@ -18,9 +18,279 @@
   },
   "pull_requests": {
     "sample_size": 100,
-    "from_created_at": "2026-09-27T06:23:01Z",
-    "to_created_at": "2026-11-02T10:00:16Z",
+    "from_created_at": "2026-09-30T03:24:42Z",
+    "to_created_at": "2026-11-06T11:34:58Z",
     "samples": [
+      {
+        "number": 201,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/201",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-06T11:34:58Z",
+        "updated_at": "2026-11-06T11:39:21Z",
+        "merged_at": "2026-11-06T11:39:19Z",
+        "merge_commit_sha": "c6be917c92e8552145ea36103c730464bb0deddb",
+        "base_sha": "80382b7985063f15e1226017ae451cbef533d769",
+        "head_sha": "0acf0aff1c2e0297103dd32654d01d324a1f737b",
+        "head_ref": "codex/r9-pin-current-main",
+        "base_ref": "main",
+        "test_run_ids": [
+          42211332094
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 200,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/200",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-06T11:07:54Z",
+        "updated_at": "2026-11-06T11:12:01Z",
+        "merged_at": "2026-11-06T11:11:59Z",
+        "merge_commit_sha": "80382b7985063f15e1226017ae451cbef533d769",
+        "base_sha": "31d821b11117e76551351fd4c0cc1cce10673435",
+        "head_sha": "4a5a9343ec91312b80f302d718e39db7b156705d",
+        "head_ref": "codex/r9-provenance-pin",
+        "base_ref": "main",
+        "test_run_ids": [
+          42207930353
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 199,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/199",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-06T10:32:35Z",
+        "updated_at": "2026-11-06T10:37:38Z",
+        "merged_at": "2026-11-06T10:37:36Z",
+        "merge_commit_sha": "31d821b11117e76551351fd4c0cc1cce10673435",
+        "base_sha": "9ba922d1bfe576aa922919fc892e5bd043ea4e2c",
+        "head_sha": "adb45655e87f9e3a36d9124392c0d6e35d6c32d0",
+        "head_ref": "codex/ci-shadow-observation-integrity",
+        "base_ref": "main",
+        "test_run_ids": [
+          42203469365
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 198,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/198",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-06T09:49:16Z",
+        "updated_at": "2026-11-06T09:52:36Z",
+        "merged_at": "2026-11-06T09:52:33Z",
+        "merge_commit_sha": "9ba922d1bfe576aa922919fc892e5bd043ea4e2c",
+        "base_sha": "cf2f6f8c28f13a79a4483c9b5b88b10bc83fe530",
+        "head_sha": "bcd4e927c5e51f35e32ecd9eef6643626881e078",
+        "head_ref": "codex/ci-r9-static-evidence",
+        "base_ref": "main",
+        "test_run_ids": [
+          42197913611
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 197,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/197",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-06T08:43:21Z",
+        "updated_at": "2026-11-06T08:48:38Z",
+        "merged_at": "2026-11-06T08:48:38Z",
+        "merge_commit_sha": "cf2f6f8c28f13a79a4483c9b5b88b10bc83fe530",
+        "base_sha": "13280a3ea94f456fcb1214f616815d5680aa9c20",
+        "head_sha": "7613f643142c9258cffaef2e6d8b46d85e6f8b7d",
+        "head_ref": "codex/ci-shadow-observation-collector",
+        "base_ref": "main",
+        "test_run_ids": [
+          42189715152
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 196,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/196",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-06T07:43:12Z",
+        "updated_at": "2026-11-06T07:48:15Z",
+        "merged_at": "2026-11-06T07:48:13Z",
+        "merge_commit_sha": "13280a3ea94f456fcb1214f616815d5680aa9c20",
+        "base_sha": "753b1252af72e5a717dd42ff02345ec356c80783",
+        "head_sha": "07a42db203fc9380f42d5e2ce0f2d3d698827212",
+        "head_ref": "codex/ci-phase2-shadow",
+        "base_ref": "main",
+        "test_run_ids": [
+          42182722366
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 195,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/195",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-06T06:13:55Z",
+        "updated_at": "2026-11-06T06:21:08Z",
+        "merged_at": "2026-11-06T06:21:05Z",
+        "merge_commit_sha": "753b1252af72e5a717dd42ff02345ec356c80783",
+        "base_sha": "7a2a1e00578604a9d0c81c5448f0e32077b9f4cd",
+        "head_sha": "e1d890e94f356daec286026ad4d2527ad0626288",
+        "head_ref": "codex/fix-r9-runtime-test-event",
+        "base_ref": "main",
+        "test_run_ids": [
+          42173514711
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 194,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/194",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-05T17:45:32Z",
+        "updated_at": "2026-11-05T17:48:55Z",
+        "merged_at": "2026-11-05T17:48:53Z",
+        "merge_commit_sha": "7a2a1e00578604a9d0c81c5448f0e32077b9f4cd",
+        "base_sha": "ae9c6d0559c38478b492c91748e2eb73b91926e3",
+        "head_sha": "200730e6011c58da325321d8249eee4d18f4e4cf",
+        "head_ref": "codex/ci-r9-workflow-caller",
+        "base_ref": "main",
+        "test_run_ids": [
+          42077745109
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 193,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/193",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-05T17:34:47Z",
+        "updated_at": "2026-11-05T17:43:00Z",
+        "merged_at": "2026-11-05T17:42:57Z",
+        "merge_commit_sha": "ae9c6d0559c38478b492c91748e2eb73b91926e3",
+        "base_sha": "d4c1a2b542e3016b0a6fe80089ff2ca10f6edfbf",
+        "head_sha": "df667517ede2f0b5231dbf71d510bd02d968f106",
+        "head_ref": "codex/ci-r9-gate-consumer",
+        "base_ref": "main",
+        "test_run_ids": [
+          42076804105
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 192,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/192",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-05T17:10:17Z",
+        "updated_at": "2026-11-05T17:13:52Z",
+        "merged_at": "2026-11-05T17:13:49Z",
+        "merge_commit_sha": "d4c1a2b542e3016b0a6fe80089ff2ca10f6edfbf",
+        "base_sha": "b7fc9251579cc1bb5d358aaf9c4c60d6391c683d",
+        "head_sha": "7c1034f1596c5af1bdccd391eaf4ae8437d4b259",
+        "head_ref": "codex/ci-r9-runtime-probe",
+        "base_ref": "main",
+        "test_run_ids": [
+          42071965405
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 191,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/191",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-05T16:36:02Z",
+        "updated_at": "2026-11-05T16:43:39Z",
+        "merged_at": "2026-11-05T16:43:36Z",
+        "merge_commit_sha": "b7fc9251579cc1bb5d358aaf9c4c60d6391c683d",
+        "base_sha": "e779970b3dfc88933194cf39253bffd3f86ca50e",
+        "head_sha": "4122309ee484dd022dce78618b9744956fdd8f89",
+        "head_ref": "codex/ci-phase1-historical-paths",
+        "base_ref": "main",
+        "test_run_ids": [
+          42066116106
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 190,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/190",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-05T15:22:08Z",
+        "updated_at": "2026-11-05T15:30:20Z",
+        "merged_at": "2026-11-05T15:30:16Z",
+        "merge_commit_sha": "e779970b3dfc88933194cf39253bffd3f86ca50e",
+        "base_sha": "647fd645d5a944399af716898205c414b6622732",
+        "head_sha": "e5e7f161555bfcc941ef8ee9fcb7af48bea87f11",
+        "head_ref": "codex/ci-phase1-path-mapping",
+        "base_ref": "main",
+        "test_run_ids": [
+          42054274257
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 189,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/189",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-05T12:46:46Z",
+        "updated_at": "2026-11-05T13:04:37Z",
+        "merged_at": "2026-11-05T13:04:36Z",
+        "merge_commit_sha": "647fd645d5a944399af716898205c414b6622732",
+        "base_sha": "3e74f099547b8c4a23cde32e08a8d9b8e0d96378",
+        "head_sha": "592444e157e4d751e7b0d3234e81d53a1cd3f5d5",
+        "head_ref": "codex/ci-phase1-registry-r9",
+        "base_ref": "main",
+        "test_run_ids": [
+          42032003624
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 188,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/188",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-05T09:23:30Z",
+        "updated_at": "2026-11-05T11:08:02Z",
+        "merged_at": "2026-11-05T11:08:00Z",
+        "merge_commit_sha": "3e74f099547b8c4a23cde32e08a8d9b8e0d96378",
+        "base_sha": "d43cff29f517ad732fcd37d79da3c8976bff40e9",
+        "head_sha": "321efa63d0c5e7a6254366809ed2563dd5f78be8",
+        "head_ref": "codex/validation-scope",
+        "base_ref": "main",
+        "test_run_ids": [
+          42001985523
+        ],
+        "daily_run_ids": []
+      },
+      {
+        "number": 187,
+        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/187",
+        "state": "closed",
+        "merged": true,
+        "created_at": "2026-11-03T05:48:45Z",
+        "updated_at": "2026-11-03T07:47:26Z",
+        "merged_at": "2026-11-03T07:47:26Z",
+        "merge_commit_sha": "d43cff29f517ad732fcd37d79da3c8976bff40e9",
+        "base_sha": "16d03460fab16914a2752698aeb0053e32f5a3a0",
+        "head_sha": "fc86afeea8d93f118084a294ceeb0d2d2d7ae200",
+        "head_ref": "codex/ci-phase0-independent-review",
+        "base_ref": "main",
+        "test_run_ids": [
+          41586080096
+        ],
+        "daily_run_ids": []
+      },
       {
         "number": 186,
         "url": "https://github.com/weihuaguo270-ops/react-agent/pull/186",
@@ -500,9 +770,7 @@
         "head_sha": "c08f12de68c5370fc07bfc970e171d89887955c6",
         "head_ref": "automation/daily-smoke-2026-10-21-39551529550-1",
         "base_ref": "main",
-        "test_run_ids": [
-          39551570176
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -518,9 +786,7 @@
         "head_sha": "e8b23d186a63c9fdc1cf7553f834498bc107241d",
         "head_ref": "feat/improve-ci-workflow",
         "base_ref": "main",
-        "test_run_ids": [
-          39582035222
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -536,9 +802,7 @@
         "head_sha": "c921abeca3e3605655a1d4b63aaa51aa55d44f39",
         "head_ref": "automation/daily-smoke-2026-10-20-39376428510-1",
         "base_ref": "main",
-        "test_run_ids": [
-          39376461893
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -554,9 +818,7 @@
         "head_sha": "92c3527d1bd400f68c5badb8b24604eb3b949c1f",
         "head_ref": "feat/improve-ci-workflow",
         "base_ref": "main",
-        "test_run_ids": [
-          39271912104
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -572,9 +834,7 @@
         "head_sha": "3f33e1d87927aea5099d2f660f32cc928c464adb",
         "head_ref": "feat/p4-baseline-compare",
         "base_ref": "main",
-        "test_run_ids": [
-          39226805285
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -590,9 +850,7 @@
         "head_sha": "9d3676883b9372cb0b0f8154e6df5b6e9ce4343d",
         "head_ref": "feat/p4-baseline-compare",
         "base_ref": "main",
-        "test_run_ids": [
-          39207750369
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -608,9 +866,7 @@
         "head_sha": "1dd95c79aea7095a1d318f2c1efd04ceb96353de",
         "head_ref": "automation/daily-smoke-2026-10-19-39206656155-1",
         "base_ref": "main",
-        "test_run_ids": [
-          39206689242
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -626,9 +882,7 @@
         "head_sha": "8b722e573bcf488cc2c78fa66113d48e2930b6cf",
         "head_ref": "feat/p3-evaluation-convergence",
         "base_ref": "main",
-        "test_run_ids": [
-          39205237978
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -644,9 +898,7 @@
         "head_sha": "c5d986d5bd6c697667d92597cb6267da4d7bc9be",
         "head_ref": "automation/daily-smoke-2026-10-18-39100758764-1",
         "base_ref": "main",
-        "test_run_ids": [
-          39100788839
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -662,9 +914,7 @@
         "head_sha": "ac9f1f0b84976ade0849f8abd5596f9f5746ca24",
         "head_ref": "codex/harness-p2-release",
         "base_ref": "main",
-        "test_run_ids": [
-          39049698738
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -680,9 +930,7 @@
         "head_sha": "3de7cc85369fa75feda544f4498f628dfb34c598",
         "head_ref": "automation/daily-smoke-2026-10-17-39006047505-1",
         "base_ref": "main",
-        "test_run_ids": [
-          39006070976
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -698,9 +946,7 @@
         "head_sha": "580c5d5aeeb577de13c613303118a5a3aae6fb90",
         "head_ref": "codex/harness-r5-replay-executor",
         "base_ref": "main",
-        "test_run_ids": [
-          38909337598
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -716,9 +962,7 @@
         "head_sha": "2535f80d206182367e8fdc28665c576ed1a89923",
         "head_ref": "codex/harness-r5-deterministic-replay",
         "base_ref": "main",
-        "test_run_ids": [
-          38903269262
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -734,9 +978,7 @@
         "head_sha": "cb0734576400c22c0102c6cdefa2609556db0578",
         "head_ref": "codex/harness-r4-structured-output",
         "base_ref": "main",
-        "test_run_ids": [
-          38900533962
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -752,9 +994,7 @@
         "head_sha": "9a0da87b9967fdd8fc6d713bde9127249f4f8b95",
         "head_ref": "codex/harness-r3-orchestration-adapters",
         "base_ref": "main",
-        "test_run_ids": [
-          38896973457
-        ],
+        "test_run_ids": [],
         "daily_run_ids": []
       },
       {
@@ -1462,246 +1702,6 @@
         "base_ref": "main",
         "test_run_ids": [],
         "daily_run_ids": []
-      },
-      {
-        "number": 101,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/101",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-30T03:14:11Z",
-        "updated_at": "2026-09-30T05:17:58Z",
-        "merged_at": "2026-09-30T04:54:34Z",
-        "merge_commit_sha": "017367a5ee5474cdcfacb78a1ce6993c393dc6f2",
-        "base_sha": "fccea6ef22f5677b114b0355cba15e1394912006",
-        "head_sha": "e530d221d392f43d79d53f082e65e47e7e9eee23",
-        "head_ref": "feat/fastapi-async-approvals",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 100,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/100",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-30T03:13:50Z",
-        "updated_at": "2026-09-30T05:17:57Z",
-        "merged_at": "2026-09-30T04:50:15Z",
-        "merge_commit_sha": "fccea6ef22f5677b114b0355cba15e1394912006",
-        "base_sha": "8fcd250aa9ce2aab5342388b9d5aef1dca723b18",
-        "head_sha": "6c487d3a48319e85a3d0ac9846155ea9fd522e93",
-        "head_ref": "fix/fastapi-auth-host-parity",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 99,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/99",
-        "state": "closed",
-        "merged": false,
-        "created_at": "2026-09-29T06:39:26Z",
-        "updated_at": "2026-10-01T09:12:21Z",
-        "merged_at": null,
-        "merge_commit_sha": "a5ac6b7a2c9f4bcbe4bfc80c875da9a2855c1725",
-        "base_sha": "8fcd250aa9ce2aab5342388b9d5aef1dca723b18",
-        "head_sha": "9ec65dc4e87549de1dbae59c8fff82824b198949",
-        "head_ref": "automation/daily-smoke-2026-09-29-36532179505-1",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 98,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/98",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-28T09:21:02Z",
-        "updated_at": "2026-09-30T16:31:35Z",
-        "merged_at": "2026-09-28T09:23:33Z",
-        "merge_commit_sha": "8fcd250aa9ce2aab5342388b9d5aef1dca723b18",
-        "base_sha": "3ebd44497001461180a110bf3b588a9797901a6e",
-        "head_sha": "485b9e078610ab3733d775d9ce317017df28e258",
-        "head_ref": "docs/status-service-layer",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 97,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/97",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-28T09:11:39Z",
-        "updated_at": "2026-09-30T16:31:36Z",
-        "merged_at": "2026-09-28T09:14:56Z",
-        "merge_commit_sha": "3ebd44497001461180a110bf3b588a9797901a6e",
-        "base_sha": "bdb5d4210d049ea39c8b85c9d99579ace78a566d",
-        "head_sha": "8046d088e89e6f75148856262b520b1f7ffc1474",
-        "head_ref": "fix/service-default-entry",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 96,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/96",
-        "state": "closed",
-        "merged": false,
-        "created_at": "2026-09-28T06:25:42Z",
-        "updated_at": "2026-10-01T09:12:20Z",
-        "merged_at": null,
-        "merge_commit_sha": "1f45eb6594e6baa8fbee040cfee6d96c25362ced",
-        "base_sha": "bdb5d4210d049ea39c8b85c9d99579ace78a566d",
-        "head_sha": "4f3c98016943cdb6923530c776881feec3ad1a49",
-        "head_ref": "automation/daily-smoke-2026-09-28-36386383287-1",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 95,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/95",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-28T05:48:37Z",
-        "updated_at": "2026-09-30T16:31:36Z",
-        "merged_at": "2026-09-28T06:04:28Z",
-        "merge_commit_sha": "6a0e3f5a381a7d7bee80b8bc9854502023345564",
-        "base_sha": "4350c49b3a61f0776e01320b8ca4a63c9f075b4b",
-        "head_sha": "683096f45948ff363ea423a60ee949373539059d",
-        "head_ref": "feat/service-layer-skills",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 94,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/94",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-28T04:07:25Z",
-        "updated_at": "2026-09-30T16:31:35Z",
-        "merged_at": "2026-09-28T04:27:22Z",
-        "merge_commit_sha": "4350c49b3a61f0776e01320b8ca4a63c9f075b4b",
-        "base_sha": "b55d040500e269d5d3c0c7a783dbb345f90672e3",
-        "head_sha": "cb9a6402e5d9580776149154a7e6c903eaacd0f7",
-        "head_ref": "chore/daily-smoke-backfill",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 93,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/93",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-28T03:54:14Z",
-        "updated_at": "2026-09-30T16:31:35Z",
-        "merged_at": "2026-09-28T03:57:05Z",
-        "merge_commit_sha": "b55d040500e269d5d3c0c7a783dbb345f90672e3",
-        "base_sha": "0a303f98163bf4ab534421998b974e1ca904f44c",
-        "head_sha": "65dbea2864aab5a87f89b6e5a245541632d18026",
-        "head_ref": "ci/daily-smoke-automerge",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 92,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/92",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-28T02:31:34Z",
-        "updated_at": "2026-09-28T02:57:09Z",
-        "merged_at": "2026-09-28T02:56:45Z",
-        "merge_commit_sha": "0a303f98163bf4ab534421998b974e1ca904f44c",
-        "base_sha": "ec33c106ba277bb0bfaa780ebf13300c0ae28c67",
-        "head_sha": "381b4b493a1f83fed6c64adddecbe9dad1738aa0",
-        "head_ref": "feat/subagent-hardening",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 91,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/91",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-27T13:01:44Z",
-        "updated_at": "2026-09-30T16:31:35Z",
-        "merged_at": "2026-09-27T14:24:56Z",
-        "merge_commit_sha": "ec33c106ba277bb0bfaa780ebf13300c0ae28c67",
-        "base_sha": "41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b",
-        "head_sha": "51d2d54468c413a32c357d70c838efb97c650a18",
-        "head_ref": "feat/failure-regression",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 90,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/90",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-27T12:56:02Z",
-        "updated_at": "2026-09-27T12:57:58Z",
-        "merged_at": "2026-09-27T12:57:50Z",
-        "merge_commit_sha": "26dbaceb730b3b6b5749d3d259cb7a2306c5a280",
-        "base_sha": "193ad8cd132787e0ee61b34500d255b35ab9e8b9",
-        "head_sha": "45fdf580c0cdc85dcdf48da041ca8875c39d11b9",
-        "head_ref": "docs/refresh-intro-docs",
-        "base_ref": "feat/failure-regression",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 89,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/89",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-27T12:39:06Z",
-        "updated_at": "2026-09-30T16:31:36Z",
-        "merged_at": "2026-09-27T12:40:38Z",
-        "merge_commit_sha": "193ad8cd132787e0ee61b34500d255b35ab9e8b9",
-        "base_sha": "49228eb56e945cf23ee60d5838a5a538442e1288",
-        "head_sha": "be08d40e324f802d1a9b68e9a1732cc6dacf3b22",
-        "head_ref": "feat/security-and-transport-tuning",
-        "base_ref": "feat/failure-regression",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 88,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/88",
-        "state": "closed",
-        "merged": true,
-        "created_at": "2026-09-27T11:10:40Z",
-        "updated_at": "2026-09-27T11:26:04Z",
-        "merged_at": "2026-09-27T11:26:02Z",
-        "merge_commit_sha": "49228eb56e945cf23ee60d5838a5a538442e1288",
-        "base_sha": "8786c9134d2965995793868750f9b6b95aa8e199",
-        "head_sha": "274cc13b5b59090c682791f2f61ddec96a4376dd",
-        "head_ref": "feat/security-and-transport-tuning",
-        "base_ref": "feat/failure-regression",
-        "test_run_ids": [],
-        "daily_run_ids": []
-      },
-      {
-        "number": 87,
-        "url": "https://github.com/weihuaguo270-ops/react-agent/pull/87",
-        "state": "closed",
-        "merged": false,
-        "created_at": "2026-09-27T06:23:01Z",
-        "updated_at": "2026-10-01T09:12:19Z",
-        "merged_at": null,
-        "merge_commit_sha": "344db8bdfc950d2138faa4d818a043225b878d4f",
-        "base_sha": "41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b",
-        "head_sha": "65de8d5bac65d99fd9c53b3e0a32904369a81a8a",
-        "head_ref": "automation/daily-smoke-2026-09-27-36299910211-1",
-        "base_ref": "main",
-        "test_run_ids": [],
-        "daily_run_ids": []
       }
     ]
   },
@@ -1709,16 +1709,805 @@
     "test.yml": {
       "count": 100,
       "by_conclusion": {
-        "success": 64,
-        "failure": 34,
+        "success": 78,
+        "failure": 19,
+        "startup_failure": 1,
         "cancelled": 2
       },
       "wall_clock_minutes": {
-        "p50": 3.21,
+        "p50": 2.76,
         "p95": 4.97,
         "max": 1371.82
       },
       "runs": [
+        {
+          "run_id": 42211850200,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42211850200",
+          "workflow": "test.yml",
+          "run_number": 475,
+          "run_attempt": 1,
+          "display_title": "ci: derive R9 provenance from workflow context",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "c6be917c92e8552145ea36103c730464bb0deddb",
+          "created_at": "2026-11-06T11:39:21Z",
+          "updated_at": "2026-11-06T11:41:34Z",
+          "wall_clock_minutes": 2.22,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42211332094,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42211332094",
+          "workflow": "test.yml",
+          "run_number": 474,
+          "run_attempt": 1,
+          "display_title": "ci: derive R9 provenance from workflow context",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/r9-pin-current-main",
+          "head_sha": "0acf0aff1c2e0297103dd32654d01d324a1f737b",
+          "created_at": "2026-11-06T11:35:02Z",
+          "updated_at": "2026-11-06T11:37:22Z",
+          "wall_clock_minutes": 2.33,
+          "pull_request_numbers": [
+            201
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42208447831,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42208447831",
+          "workflow": "test.yml",
+          "run_number": 473,
+          "run_attempt": 1,
+          "display_title": "ci: enforce R9 workflow provenance pin (#200)",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "80382b7985063f15e1226017ae451cbef533d769",
+          "created_at": "2026-11-06T11:12:02Z",
+          "updated_at": "2026-11-06T11:14:17Z",
+          "wall_clock_minutes": 2.25,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42207930353,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42207930353",
+          "workflow": "test.yml",
+          "run_number": 472,
+          "run_attempt": 1,
+          "display_title": "ci: enforce R9 workflow provenance pin",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/r9-provenance-pin",
+          "head_sha": "4a5a9343ec91312b80f302d718e39db7b156705d",
+          "created_at": "2026-11-06T11:07:59Z",
+          "updated_at": "2026-11-06T11:10:18Z",
+          "wall_clock_minutes": 2.32,
+          "pull_request_numbers": [
+            200
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42204112551,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42204112551",
+          "workflow": "test.yml",
+          "run_number": 471,
+          "run_attempt": 1,
+          "display_title": "ci: validate shadow runtime sample integrity (#199)",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "31d821b11117e76551351fd4c0cc1cce10673435",
+          "created_at": "2026-11-06T10:37:38Z",
+          "updated_at": "2026-11-06T10:39:59Z",
+          "wall_clock_minutes": 2.35,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42203469365,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42203469365",
+          "workflow": "test.yml",
+          "run_number": 470,
+          "run_attempt": 1,
+          "display_title": "ci: validate shadow runtime sample integrity",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-shadow-observation-integrity",
+          "head_sha": "adb45655e87f9e3a36d9124392c0d6e35d6c32d0",
+          "created_at": "2026-11-06T10:32:38Z",
+          "updated_at": "2026-11-06T10:34:46Z",
+          "wall_clock_minutes": 2.13,
+          "pull_request_numbers": [
+            199
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42198323214,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42198323214",
+          "workflow": "test.yml",
+          "run_number": 469,
+          "run_attempt": 1,
+          "display_title": "docs(ci): refresh R9 static security snapshot (#198)",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "9ba922d1bfe576aa922919fc892e5bd043ea4e2c",
+          "created_at": "2026-11-06T09:52:36Z",
+          "updated_at": "2026-11-06T09:54:55Z",
+          "wall_clock_minutes": 2.32,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42197913611,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42197913611",
+          "workflow": "test.yml",
+          "run_number": 468,
+          "run_attempt": 1,
+          "display_title": "docs(ci): refresh R9 static security snapshot",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-r9-static-evidence",
+          "head_sha": "bcd4e927c5e51f35e32ecd9eef6643626881e078",
+          "created_at": "2026-11-06T09:49:20Z",
+          "updated_at": "2026-11-06T09:51:33Z",
+          "wall_clock_minutes": 2.22,
+          "pull_request_numbers": [
+            198
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42190350929,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42190350929",
+          "workflow": "test.yml",
+          "run_number": 467,
+          "run_attempt": 1,
+          "display_title": "ci: collect report-only shadow observations (#197)",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "cf2f6f8c28f13a79a4483c9b5b88b10bc83fe530",
+          "created_at": "2026-11-06T08:48:40Z",
+          "updated_at": "2026-11-06T08:50:50Z",
+          "wall_clock_minutes": 2.17,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42189715152,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42189715152",
+          "workflow": "test.yml",
+          "run_number": 466,
+          "run_attempt": 1,
+          "display_title": "ci: collect report-only shadow observations",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-shadow-observation-collector",
+          "head_sha": "7613f643142c9258cffaef2e6d8b46d85e6f8b7d",
+          "created_at": "2026-11-06T08:43:24Z",
+          "updated_at": "2026-11-06T08:45:23Z",
+          "wall_clock_minutes": 1.98,
+          "pull_request_numbers": [
+            197
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42183273168,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42183273168",
+          "workflow": "test.yml",
+          "run_number": 465,
+          "run_attempt": 1,
+          "display_title": "ci: add report-only shadow observation contract (#196)",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "13280a3ea94f456fcb1214f616815d5680aa9c20",
+          "created_at": "2026-11-06T07:48:15Z",
+          "updated_at": "2026-11-06T07:50:24Z",
+          "wall_clock_minutes": 2.15,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42182722366,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42182722366",
+          "workflow": "test.yml",
+          "run_number": 464,
+          "run_attempt": 1,
+          "display_title": "ci: add report-only Phase 2 shadow observation",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-phase2-shadow",
+          "head_sha": "07a42db203fc9380f42d5e2ce0f2d3d698827212",
+          "created_at": "2026-11-06T07:43:16Z",
+          "updated_at": "2026-11-06T07:45:34Z",
+          "wall_clock_minutes": 2.3,
+          "pull_request_numbers": [
+            196
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42173875084,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42173875084",
+          "workflow": "test.yml",
+          "run_number": 463,
+          "run_attempt": 1,
+          "display_title": "test: bind R9 provenance fixture to pull request event",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "753b1252af72e5a717dd42ff02345ec356c80783",
+          "created_at": "2026-11-06T06:21:08Z",
+          "updated_at": "2026-11-06T06:23:23Z",
+          "wall_clock_minutes": 2.25,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42173514711,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42173514711",
+          "workflow": "test.yml",
+          "run_number": 462,
+          "run_attempt": 1,
+          "display_title": "test: bind R9 provenance fixture to pull request event",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/fix-r9-runtime-test-event",
+          "head_sha": "e1d890e94f356daec286026ad4d2527ad0626288",
+          "created_at": "2026-11-06T06:17:40Z",
+          "updated_at": "2026-11-06T06:19:50Z",
+          "wall_clock_minutes": 2.17,
+          "pull_request_numbers": [
+            195
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42173133785,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42173133785",
+          "workflow": "test.yml",
+          "run_number": 461,
+          "run_attempt": 1,
+          "display_title": "test: bind R9 provenance fixture to pull request event",
+          "event": "pull_request",
+          "conclusion": "failure",
+          "head_branch": "codex/fix-r9-runtime-test-event",
+          "head_sha": "7fdf023579b13756310cd0add53193813d60128d",
+          "created_at": "2026-11-06T06:13:59Z",
+          "updated_at": "2026-11-06T06:16:16Z",
+          "wall_clock_minutes": 2.28,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [
+            {
+              "name": "PR ready audit",
+              "conclusion": "failure",
+              "failed_steps": [
+                {
+                  "name": "Check PR readiness",
+                  "conclusion": "failure",
+                  "category": "security_audit",
+                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
+                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
+                }
+              ]
+            }
+          ],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42078276725,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42078276725",
+          "workflow": "test.yml",
+          "run_number": 460,
+          "run_attempt": 1,
+          "display_title": "ci: invoke R9 gate for fork pull requests (#194)",
+          "event": "push",
+          "conclusion": "failure",
+          "head_branch": "main",
+          "head_sha": "7a2a1e00578604a9d0c81c5448f0e32077b9f4cd",
+          "created_at": "2026-11-05T17:48:55Z",
+          "updated_at": "2026-11-05T17:51:02Z",
+          "wall_clock_minutes": 2.12,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [
+            {
+              "name": "test (3.10)",
+              "conclusion": "failure",
+              "failed_steps": [
+                {
+                  "name": "Pytest (offline, Python 3.10)",
+                  "conclusion": "failure",
+                  "category": "test_or_evaluation",
+                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
+                  "reproduction_command": null
+                }
+              ]
+            },
+            {
+              "name": "test (3.11)",
+              "conclusion": "failure",
+              "failed_steps": [
+                {
+                  "name": "Pytest (offline + coverage, Python 3.11)",
+                  "conclusion": "failure",
+                  "category": "test_or_evaluation",
+                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
+                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py --cov=react_agent --cov-fail-under=35"
+                }
+              ]
+            }
+          ],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42077745109,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42077745109",
+          "workflow": "test.yml",
+          "run_number": 459,
+          "run_attempt": 1,
+          "display_title": "ci: invoke R9 gate for fork pull requests",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-r9-workflow-caller",
+          "head_sha": "200730e6011c58da325321d8249eee4d18f4e4cf",
+          "created_at": "2026-11-05T17:45:37Z",
+          "updated_at": "2026-11-05T17:48:00Z",
+          "wall_clock_minutes": 2.38,
+          "pull_request_numbers": [
+            194
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42077323227,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42077323227",
+          "workflow": "test.yml",
+          "run_number": 458,
+          "run_attempt": 1,
+          "display_title": "feat(ci): consume R9 fork evidence in Phase 1 gate (#193)",
+          "event": "push",
+          "conclusion": "failure",
+          "head_branch": "main",
+          "head_sha": "ae9c6d0559c38478b492c91748e2eb73b91926e3",
+          "created_at": "2026-11-05T17:43:00Z",
+          "updated_at": "2026-11-05T17:45:19Z",
+          "wall_clock_minutes": 2.32,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [
+            {
+              "name": "test (3.11)",
+              "conclusion": "failure",
+              "failed_steps": [
+                {
+                  "name": "Pytest (offline + coverage, Python 3.11)",
+                  "conclusion": "failure",
+                  "category": "test_or_evaluation",
+                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
+                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py --cov=react_agent --cov-fail-under=35"
+                }
+              ]
+            },
+            {
+              "name": "test (3.10)",
+              "conclusion": "failure",
+              "failed_steps": [
+                {
+                  "name": "Pytest (offline, Python 3.10)",
+                  "conclusion": "failure",
+                  "category": "test_or_evaluation",
+                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
+                  "reproduction_command": null
+                }
+              ]
+            }
+          ],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42076804105,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42076804105",
+          "workflow": "test.yml",
+          "run_number": 457,
+          "run_attempt": 1,
+          "display_title": "feat(ci): consume R9 fork evidence in Phase 1 gate",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-r9-gate-consumer",
+          "head_sha": "df667517ede2f0b5231dbf71d510bd02d968f106",
+          "created_at": "2026-11-05T17:39:46Z",
+          "updated_at": "2026-11-05T17:41:57Z",
+          "wall_clock_minutes": 2.18,
+          "pull_request_numbers": [
+            193
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42076005836,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42076005836",
+          "workflow": "test.yml",
+          "run_number": 456,
+          "run_attempt": 1,
+          "display_title": "feat(ci): consume R9 fork evidence in Phase 1 gate",
+          "event": "pull_request",
+          "conclusion": "startup_failure",
+          "head_branch": "codex/ci-r9-gate-consumer",
+          "head_sha": "a5d866fc16f7181d3ac6079b6f9ab319e4799194",
+          "created_at": "2026-11-05T17:34:50Z",
+          "updated_at": "2026-11-05T17:34:51Z",
+          "wall_clock_minutes": 0.02,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42072555388,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42072555388",
+          "workflow": "test.yml",
+          "run_number": 455,
+          "run_attempt": 1,
+          "display_title": "feat(ci): add trusted R9 fork runtime probe (#192)",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "d4c1a2b542e3016b0a6fe80089ff2ca10f6edfbf",
+          "created_at": "2026-11-05T17:13:52Z",
+          "updated_at": "2026-11-05T17:16:10Z",
+          "wall_clock_minutes": 2.3,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42071965405,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42071965405",
+          "workflow": "test.yml",
+          "run_number": 454,
+          "run_attempt": 1,
+          "display_title": "feat(ci): add trusted R9 fork runtime probe",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-r9-runtime-probe",
+          "head_sha": "7c1034f1596c5af1bdccd391eaf4ae8437d4b259",
+          "created_at": "2026-11-05T17:10:22Z",
+          "updated_at": "2026-11-05T17:12:29Z",
+          "wall_clock_minutes": 2.12,
+          "pull_request_numbers": [
+            192
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42067407284,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42067407284",
+          "workflow": "test.yml",
+          "run_number": 453,
+          "run_attempt": 1,
+          "display_title": "feat(ci): classify historical selector paths explicitly (#191)",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "b7fc9251579cc1bb5d358aaf9c4c60d6391c683d",
+          "created_at": "2026-11-05T16:43:41Z",
+          "updated_at": "2026-11-05T16:46:03Z",
+          "wall_clock_minutes": 2.37,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42066116106,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42066116106",
+          "workflow": "test.yml",
+          "run_number": 451,
+          "run_attempt": 1,
+          "display_title": "feat(ci): classify historical selector paths explicitly",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-phase1-historical-paths",
+          "head_sha": "4122309ee484dd022dce78618b9744956fdd8f89",
+          "created_at": "2026-11-05T16:36:06Z",
+          "updated_at": "2026-11-05T16:38:28Z",
+          "wall_clock_minutes": 2.37,
+          "pull_request_numbers": [
+            191
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42055637468,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42055637468",
+          "workflow": "test.yml",
+          "run_number": 450,
+          "run_attempt": 1,
+          "display_title": "feat(ci): compress Phase 1 selector scope (#190)",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "e779970b3dfc88933194cf39253bffd3f86ca50e",
+          "created_at": "2026-11-05T15:30:20Z",
+          "updated_at": "2026-11-05T15:32:41Z",
+          "wall_clock_minutes": 2.35,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42054274257,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42054274257",
+          "workflow": "test.yml",
+          "run_number": 449,
+          "run_attempt": 1,
+          "display_title": "feat(ci): compress Phase 1 selector scope",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-phase1-path-mapping",
+          "head_sha": "e5e7f161555bfcc941ef8ee9fcb7af48bea87f11",
+          "created_at": "2026-11-05T15:22:13Z",
+          "updated_at": "2026-11-05T15:24:36Z",
+          "wall_clock_minutes": 2.38,
+          "pull_request_numbers": [
+            190
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42032551377,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42032551377",
+          "workflow": "test.yml",
+          "run_number": 448,
+          "run_attempt": 1,
+          "display_title": "feat(ci): add independent rule-level selector evidence",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "647fd645d5a944399af716898205c414b6622732",
+          "created_at": "2026-11-05T13:04:39Z",
+          "updated_at": "2026-11-05T13:06:57Z",
+          "wall_clock_minutes": 2.3,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42032003624,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42032003624",
+          "workflow": "test.yml",
+          "run_number": 447,
+          "run_attempt": 1,
+          "display_title": "feat(ci): add independent rule-level selector evidence",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-phase1-registry-r9",
+          "head_sha": "592444e157e4d751e7b0d3234e81d53a1cd3f5d5",
+          "created_at": "2026-11-05T13:00:55Z",
+          "updated_at": "2026-11-05T13:03:04Z",
+          "wall_clock_minutes": 2.15,
+          "pull_request_numbers": [
+            189
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42031577184,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42031577184",
+          "workflow": "test.yml",
+          "run_number": 446,
+          "run_attempt": 1,
+          "display_title": "feat(ci): add independent rule-level selector evidence",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-phase1-registry-r9",
+          "head_sha": "5886505fa7fd0aa47c83be2799a7f6f626ca7ed9",
+          "created_at": "2026-11-05T12:57:55Z",
+          "updated_at": "2026-11-05T13:00:06Z",
+          "wall_clock_minutes": 2.18,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42016444572,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42016444572",
+          "workflow": "test.yml",
+          "run_number": 445,
+          "run_attempt": 1,
+          "display_title": "docs(ai-review): scope validation growth (#188)",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "3e74f099547b8c4a23cde32e08a8d9b8e0d96378",
+          "created_at": "2026-11-05T11:08:03Z",
+          "updated_at": "2026-11-05T11:10:02Z",
+          "wall_clock_minutes": 1.98,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 42001985523,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42001985523",
+          "workflow": "test.yml",
+          "run_number": 444,
+          "run_attempt": 1,
+          "display_title": "docs(ai-review): scope validation growth",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/validation-scope",
+          "head_sha": "321efa63d0c5e7a6254366809ed2563dd5f78be8",
+          "created_at": "2026-11-05T09:23:33Z",
+          "updated_at": "2026-11-05T09:25:42Z",
+          "wall_clock_minutes": 2.15,
+          "pull_request_numbers": [
+            188
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 41598653605,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41598653605",
+          "workflow": "test.yml",
+          "run_number": 443,
+          "run_attempt": 1,
+          "display_title": "docs(ci): record Phase 0 independent review evidence",
+          "event": "push",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "d43cff29f517ad732fcd37d79da3c8976bff40e9",
+          "created_at": "2026-11-03T07:47:28Z",
+          "updated_at": "2026-11-03T07:49:43Z",
+          "wall_clock_minutes": 2.25,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
+        {
+          "run_id": 41586080096,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41586080096",
+          "workflow": "test.yml",
+          "run_number": 442,
+          "run_attempt": 1,
+          "display_title": "docs(ci): record Phase 0 independent review evidence",
+          "event": "pull_request",
+          "conclusion": "success",
+          "head_branch": "codex/ci-phase0-independent-review",
+          "head_sha": "fc86afeea8d93f118084a294ceeb0d2d2d7ae200",
+          "created_at": "2026-11-03T05:48:48Z",
+          "updated_at": "2026-11-03T05:51:03Z",
+          "wall_clock_minutes": 2.25,
+          "pull_request_numbers": [
+            187
+          ],
+          "association_basis": [
+            "exact_pr_head_sha"
+          ],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_ci_with_conditional_live_llm"
+        },
         {
           "run_id": 41425695229,
           "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41425695229",
@@ -3726,1303 +4515,6 @@
           ],
           "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
           "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39588383263,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39588383263",
-          "workflow": "test.yml",
-          "run_number": 374,
-          "run_attempt": 1,
-          "display_title": "docs: split documentation and Spec reorganization from PR #159",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "codex/pr159-docs-spec-split",
-          "head_sha": "28e1248e151588659d982c7dc95c375b6ebb7d6d",
-          "created_at": "2026-10-21T10:57:37Z",
-          "updated_at": "2026-10-21T10:59:08Z",
-          "wall_clock_minutes": 1.52,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39582035222,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39582035222",
-          "workflow": "test.yml",
-          "run_number": 373,
-          "run_attempt": 1,
-          "display_title": "docs: reorganize documentation structure and update content",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/improve-ci-workflow",
-          "head_sha": "e8b23d186a63c9fdc1cf7553f834498bc107241d",
-          "created_at": "2026-10-21T10:05:49Z",
-          "updated_at": "2026-10-21T10:07:53Z",
-          "wall_clock_minutes": 2.07,
-          "pull_request_numbers": [
-            159
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39581128752,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39581128752",
-          "workflow": "test.yml",
-          "run_number": 372,
-          "run_attempt": 1,
-          "display_title": "docs: reorganize documentation structure and update content",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/improve-ci-workflow",
-          "head_sha": "68b037e08ef6955f94dbad7d135c845ee9e14df0",
-          "created_at": "2026-10-21T09:58:49Z",
-          "updated_at": "2026-10-21T10:01:00Z",
-          "wall_clock_minutes": 2.18,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39580433261,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39580433261",
-          "workflow": "test.yml",
-          "run_number": 371,
-          "run_attempt": 1,
-          "display_title": "docs: reorganize documentation structure and update content",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/improve-ci-workflow",
-          "head_sha": "abae4d44a35d7527d60afdcb55b651f0a9db3d7b",
-          "created_at": "2026-10-21T09:53:22Z",
-          "updated_at": "2026-10-21T09:55:42Z",
-          "wall_clock_minutes": 2.33,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39552208733,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39552208733",
-          "workflow": "test.yml",
-          "run_number": 370,
-          "run_attempt": 1,
-          "display_title": "docs: reorganize documentation structure and update content",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/improve-ci-workflow",
-          "head_sha": "ba4834545debd56cf16704633f2141e9a325c3bd",
-          "created_at": "2026-10-21T05:54:19Z",
-          "updated_at": "2026-10-21T05:56:28Z",
-          "wall_clock_minutes": 2.15,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.10)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39551570176,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39551570176",
-          "workflow": "test.yml",
-          "run_number": 369,
-          "run_attempt": 2,
-          "display_title": "chore(daily-smoke): append 2026-10-21 variance row",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "automation/daily-smoke-2026-10-21-39551529550-1",
-          "head_sha": "c08f12de68c5370fc07bfc970e171d89887955c6",
-          "created_at": "2026-10-21T05:47:39Z",
-          "updated_at": "2026-10-21T05:51:06Z",
-          "wall_clock_minutes": 3.45,
-          "pull_request_numbers": [
-            160
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39551534740,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39551534740",
-          "workflow": "test.yml",
-          "run_number": 368,
-          "run_attempt": 1,
-          "display_title": "CI",
-          "event": "workflow_dispatch",
-          "conclusion": "failure",
-          "head_branch": "feat/improve-ci-workflow",
-          "head_sha": "ad1d3cd8176385408cd14a7f9f146c613370a875",
-          "created_at": "2026-10-21T05:47:17Z",
-          "updated_at": "2026-10-21T05:49:38Z",
-          "wall_clock_minutes": 2.35,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39376461893,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39376461893",
-          "workflow": "test.yml",
-          "run_number": 367,
-          "run_attempt": 2,
-          "display_title": "chore(daily-smoke): append 2026-10-20 variance row",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "automation/daily-smoke-2026-10-20-39376428510-1",
-          "head_sha": "c921abeca3e3605655a1d4b63aaa51aa55d44f39",
-          "created_at": "2026-10-20T05:43:57Z",
-          "updated_at": "2026-10-20T05:47:21Z",
-          "wall_clock_minutes": 3.4,
-          "pull_request_numbers": [
-            158
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39271912104,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39271912104",
-          "workflow": "test.yml",
-          "run_number": 366,
-          "run_attempt": 1,
-          "display_title": "feat(ci): improve CI workflow with revert support and automation tools",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "feat/improve-ci-workflow",
-          "head_sha": "92c3527d1bd400f68c5badb8b24604eb3b949c1f",
-          "created_at": "2026-10-19T14:45:57Z",
-          "updated_at": "2026-10-19T14:49:11Z",
-          "wall_clock_minutes": 3.23,
-          "pull_request_numbers": [
-            157
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39270933205,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39270933205",
-          "workflow": "test.yml",
-          "run_number": 365,
-          "run_attempt": 1,
-          "display_title": "feat(ci): improve CI workflow with revert support and automation tools",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/improve-ci-workflow",
-          "head_sha": "d02fba11b51a0fcd002ac7c0a3985316fbeaf4bc",
-          "created_at": "2026-10-19T14:39:30Z",
-          "updated_at": "2026-10-19T14:40:58Z",
-          "wall_clock_minutes": 1.47,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            },
-            {
-              "name": "test (3.10)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39229492516,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39229492516",
-          "workflow": "test.yml",
-          "run_number": 364,
-          "run_attempt": 1,
-          "display_title": "feat(ci): improve CI workflow with revert support and automation tools",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/improve-ci-workflow",
-          "head_sha": "fb6812c79b771e8613054f1c5ceb314dd4fbd4f2",
-          "created_at": "2026-10-19T09:21:50Z",
-          "updated_at": "2026-10-19T09:23:21Z",
-          "wall_clock_minutes": 1.52,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.10)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39226805285,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39226805285",
-          "workflow": "test.yml",
-          "run_number": 363,
-          "run_attempt": 1,
-          "display_title": "Feat/p4 baseline compare",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "feat/p4-baseline-compare",
-          "head_sha": "3f33e1d87927aea5099d2f660f32cc928c464adb",
-          "created_at": "2026-10-19T09:00:11Z",
-          "updated_at": "2026-10-19T09:03:19Z",
-          "wall_clock_minutes": 3.13,
-          "pull_request_numbers": [
-            156
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39225905785,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39225905785",
-          "workflow": "test.yml",
-          "run_number": 362,
-          "run_attempt": 1,
-          "display_title": "Feat/p4 baseline compare",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/p4-baseline-compare",
-          "head_sha": "78b74d386337a9d74d0398fe886a4295a22c1e3f",
-          "created_at": "2026-10-19T08:52:42Z",
-          "updated_at": "2026-10-19T08:54:08Z",
-          "wall_clock_minutes": 1.43,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39225323517,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39225323517",
-          "workflow": "test.yml",
-          "run_number": 361,
-          "run_attempt": 1,
-          "display_title": "Feat/p4 baseline compare",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/p4-baseline-compare",
-          "head_sha": "0e4d424cea853583fda73e3c514b33bf850c196f",
-          "created_at": "2026-10-19T08:47:47Z",
-          "updated_at": "2026-10-19T08:49:29Z",
-          "wall_clock_minutes": 1.7,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39223114834,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39223114834",
-          "workflow": "test.yml",
-          "run_number": 360,
-          "run_attempt": 1,
-          "display_title": "Feat/p4 baseline compare",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/p4-baseline-compare",
-          "head_sha": "f840b086e7365c9f66ea33128dc70d0bc61b1267",
-          "created_at": "2026-10-19T08:29:23Z",
-          "updated_at": "2026-10-19T08:30:37Z",
-          "wall_clock_minutes": 1.23,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.11)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.10)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39207750369,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39207750369",
-          "workflow": "test.yml",
-          "run_number": 359,
-          "run_attempt": 1,
-          "display_title": "feat(harness): complete P4 Replay and Regression Gates",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "feat/p4-baseline-compare",
-          "head_sha": "9d3676883b9372cb0b0f8154e6df5b6e9ce4343d",
-          "created_at": "2026-10-19T06:03:37Z",
-          "updated_at": "2026-10-19T06:06:37Z",
-          "wall_clock_minutes": 3.0,
-          "pull_request_numbers": [
-            155
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39207246801,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39207246801",
-          "workflow": "test.yml",
-          "run_number": 358,
-          "run_attempt": 1,
-          "display_title": "feat(harness): complete P4 Replay and Regression Gates",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/p4-baseline-compare",
-          "head_sha": "aa1021631ef34dca299a8b9476ac1f5b8210e068",
-          "created_at": "2026-10-19T05:57:56Z",
-          "updated_at": "2026-10-19T05:59:25Z",
-          "wall_clock_minutes": 1.48,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39206689242,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39206689242",
-          "workflow": "test.yml",
-          "run_number": 357,
-          "run_attempt": 2,
-          "display_title": "chore(daily-smoke): append 2026-10-19 variance row",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "automation/daily-smoke-2026-10-19-39206656155-1",
-          "head_sha": "1dd95c79aea7095a1d318f2c1efd04ceb96353de",
-          "created_at": "2026-10-19T05:51:24Z",
-          "updated_at": "2026-10-19T05:54:34Z",
-          "wall_clock_minutes": 3.17,
-          "pull_request_numbers": [
-            154
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39205237978,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39205237978",
-          "workflow": "test.yml",
-          "run_number": 356,
-          "run_attempt": 1,
-          "display_title": "feat(eval): complete P3 Evaluation Convergence",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "feat/p3-evaluation-convergence",
-          "head_sha": "8b722e573bcf488cc2c78fa66113d48e2930b6cf",
-          "created_at": "2026-10-19T05:34:14Z",
-          "updated_at": "2026-10-19T05:37:22Z",
-          "wall_clock_minutes": 3.13,
-          "pull_request_numbers": [
-            153
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39204692861,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39204692861",
-          "workflow": "test.yml",
-          "run_number": 355,
-          "run_attempt": 1,
-          "display_title": "feat(eval): complete P3 Evaluation Convergence",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/p3-evaluation-convergence",
-          "head_sha": "a907aab5f08d78a0d5651f1687fe7b0a7dbc6d1b",
-          "created_at": "2026-10-19T05:27:56Z",
-          "updated_at": "2026-10-19T05:29:20Z",
-          "wall_clock_minutes": 1.4,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "cancelled",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39204212034,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39204212034",
-          "workflow": "test.yml",
-          "run_number": 354,
-          "run_attempt": 1,
-          "display_title": "feat(eval): complete P3 Evaluation Convergence",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/p3-evaluation-convergence",
-          "head_sha": "3eb7ec5e71bb6816d2ddfe9b1209d38b0a9dfcc9",
-          "created_at": "2026-10-19T05:22:25Z",
-          "updated_at": "2026-10-19T05:23:49Z",
-          "wall_clock_minutes": 1.4,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "test (3.10)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39203898820,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39203898820",
-          "workflow": "test.yml",
-          "run_number": 353,
-          "run_attempt": 1,
-          "display_title": "feat(eval): complete P3 Evaluation Convergence",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/p3-evaluation-convergence",
-          "head_sha": "12b4c406a37005cf872d352fb25d971cddbea861",
-          "created_at": "2026-10-19T05:18:55Z",
-          "updated_at": "2026-10-19T05:20:26Z",
-          "wall_clock_minutes": 1.52,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            },
-            {
-              "name": "test (3.10)",
-              "conclusion": "cancelled",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            },
-            {
-              "name": "test (3.11)",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Pytest (offline)",
-                  "conclusion": "failure",
-                  "category": "test_or_evaluation",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "pytest tests/ -q --ignore=tests/test_real_llm.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39203461199,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39203461199",
-          "workflow": "test.yml",
-          "run_number": 352,
-          "run_attempt": 1,
-          "display_title": "feat(eval): complete P3 Evaluation Convergence",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "feat/p3-evaluation-convergence",
-          "head_sha": "f0a09656233650d9c3e435306e6d5fd9d1628cef",
-          "created_at": "2026-10-19T05:13:56Z",
-          "updated_at": "2026-10-19T05:16:49Z",
-          "wall_clock_minutes": 2.88,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "PR ready audit",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Check PR readiness",
-                  "conclusion": "failure",
-                  "category": "security_audit",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "python scripts/ci/check_pr_ready.py --ci --base-sha <PR_BASE_SHA> --allow-revert"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39100788839,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39100788839",
-          "workflow": "test.yml",
-          "run_number": 351,
-          "run_attempt": 2,
-          "display_title": "chore(daily-smoke): append 2026-10-18 variance row",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "automation/daily-smoke-2026-10-18-39100758764-1",
-          "head_sha": "c5d986d5bd6c697667d92597cb6267da4d7bc9be",
-          "created_at": "2026-10-18T05:30:32Z",
-          "updated_at": "2026-10-18T05:33:34Z",
-          "wall_clock_minutes": 3.03,
-          "pull_request_numbers": [
-            152
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39049698738,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39049698738",
-          "workflow": "test.yml",
-          "run_number": 350,
-          "run_attempt": 1,
-          "display_title": "feat(harness): complete P2 runtime convergence",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "codex/harness-p2-release",
-          "head_sha": "ac9f1f0b84976ade0849f8abd5596f9f5746ca24",
-          "created_at": "2026-10-17T16:30:23Z",
-          "updated_at": "2026-10-17T16:32:56Z",
-          "wall_clock_minutes": 2.55,
-          "pull_request_numbers": [
-            151
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39048533475,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39048533475",
-          "workflow": "test.yml",
-          "run_number": 349,
-          "run_attempt": 1,
-          "display_title": "feat(harness): complete P2 runtime convergence",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "codex/harness-p2-release",
-          "head_sha": "2186e2d8616d5913157518b8c6d0e987f86e8d14",
-          "created_at": "2026-10-17T16:14:22Z",
-          "updated_at": "2026-10-17T16:17:20Z",
-          "wall_clock_minutes": 2.97,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "docker-smoke",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Run container",
-                  "conclusion": "failure",
-                  "category": "docker_runtime_or_healthcheck",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "docker build -t react-agent:ci . && python scripts/eval/smoke/run_deploy_smoke.py"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 39006070976,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/39006070976",
-          "workflow": "test.yml",
-          "run_number": 348,
-          "run_attempt": 2,
-          "display_title": "chore(daily-smoke): append 2026-10-17 variance row",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "automation/daily-smoke-2026-10-17-39006047505-1",
-          "head_sha": "3de7cc85369fa75feda544f4498f628dfb34c598",
-          "created_at": "2026-10-17T05:23:15Z",
-          "updated_at": "2026-10-17T05:26:09Z",
-          "wall_clock_minutes": 2.9,
-          "pull_request_numbers": [
-            150
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 38909337598,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38909337598",
-          "workflow": "test.yml",
-          "run_number": 347,
-          "run_attempt": 1,
-          "display_title": "feat(harness): execute deterministic replay results",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "codex/harness-r5-replay-executor",
-          "head_sha": "580c5d5aeeb577de13c613303118a5a3aae6fb90",
-          "created_at": "2026-10-16T13:37:55Z",
-          "updated_at": "2026-10-16T13:40:36Z",
-          "wall_clock_minutes": 2.68,
-          "pull_request_numbers": [
-            149
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 38905977487,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38905977487",
-          "workflow": "test.yml",
-          "run_number": 346,
-          "run_attempt": 1,
-          "display_title": "feat(harness): execute deterministic replay results",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "codex/harness-r5-replay-executor",
-          "head_sha": "8a93a3a35efc1565c2cb639002b53a1460e87800",
-          "created_at": "2026-10-16T13:11:39Z",
-          "updated_at": "2026-10-16T13:14:22Z",
-          "wall_clock_minutes": 2.72,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 38903269262,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38903269262",
-          "workflow": "test.yml",
-          "run_number": 345,
-          "run_attempt": 1,
-          "display_title": "feat(harness): add deterministic replay manifests",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "codex/harness-r5-deterministic-replay",
-          "head_sha": "2535f80d206182367e8fdc28665c576ed1a89923",
-          "created_at": "2026-10-16T12:49:38Z",
-          "updated_at": "2026-10-16T12:52:21Z",
-          "wall_clock_minutes": 2.72,
-          "pull_request_numbers": [
-            148
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 38900533962,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38900533962",
-          "workflow": "test.yml",
-          "run_number": 344,
-          "run_attempt": 1,
-          "display_title": "feat(harness): add StructuredOutputContract",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "codex/harness-r4-structured-output",
-          "head_sha": "cb0734576400c22c0102c6cdefa2609556db0578",
-          "created_at": "2026-10-16T12:26:36Z",
-          "updated_at": "2026-10-16T12:29:13Z",
-          "wall_clock_minutes": 2.62,
-          "pull_request_numbers": [
-            147
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 38896973457,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38896973457",
-          "workflow": "test.yml",
-          "run_number": 343,
-          "run_attempt": 1,
-          "display_title": "feat(harness): add runtime orchestration adapters",
-          "event": "pull_request",
-          "conclusion": "success",
-          "head_branch": "codex/harness-r3-orchestration-adapters",
-          "head_sha": "9a0da87b9967fdd8fc6d713bde9127249f4f8b95",
-          "created_at": "2026-10-16T11:55:12Z",
-          "updated_at": "2026-10-16T11:57:54Z",
-          "wall_clock_minutes": 2.7,
-          "pull_request_numbers": [
-            146
-          ],
-          "association_basis": [
-            "exact_pr_head_sha"
-          ],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
-        },
-        {
-          "run_id": 38896011487,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/38896011487",
-          "workflow": "test.yml",
-          "run_number": 342,
-          "run_attempt": 1,
-          "display_title": "feat(harness): add runtime orchestration adapters",
-          "event": "pull_request",
-          "conclusion": "failure",
-          "head_branch": "codex/harness-r3-orchestration-adapters",
-          "head_sha": "2723930228e50dd8778744d5edc07d7973e92d8d",
-          "created_at": "2026-10-16T11:46:34Z",
-          "updated_at": "2026-10-16T11:49:12Z",
-          "wall_clock_minutes": 2.63,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [
-            {
-              "name": "typecheck",
-              "conclusion": "failure",
-              "failed_steps": [
-                {
-                  "name": "Run mypy src/react_agent --ignore-missing-imports --allow-untyped-defs --allow-incomplete-defs --exclude '(tot|planner|orchestrator|rag|mcp_client|dashboard|intent)/?' --disable-error-code=arg-type --disable-error-code=assignment --disable-error-code=attr-defined --disable-error-code=return-value --disable-error-code=union-attr --disable-error-code=var-annotated --disable-error-code=misc --disable-error-code=operator --disable-error-code=call-overload --disable-error-code=name-defined --disable-error-code=index --disable-error-code=has-type --disable-error-code=valid-type --disable-error-code=call-arg",
-                  "conclusion": "failure",
-                  "category": "typecheck",
-                  "classification_basis": "job/step name heuristic; inspect logs for root cause",
-                  "reproduction_command": "mypy src/react_agent --ignore-missing-imports"
-                }
-              ]
-            }
-          ],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_ci_with_conditional_live_llm"
         }
       ]
     },
@@ -5038,6 +4530,86 @@
         "max": 9.17
       },
       "runs": [
+        {
+          "run_id": 42182937230,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42182937230",
+          "workflow": "daily-smoke.yml",
+          "run_number": 120,
+          "run_attempt": 1,
+          "display_title": "Daily smoke",
+          "event": "schedule",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "753b1252af72e5a717dd42ff02345ec356c80783",
+          "created_at": "2026-11-06T07:45:12Z",
+          "updated_at": "2026-11-06T07:45:36Z",
+          "wall_clock_minutes": 0.4,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_mock_plus_optional_write_automation"
+        },
+        {
+          "run_id": 41989538637,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41989538637",
+          "workflow": "daily-smoke.yml",
+          "run_number": 119,
+          "run_attempt": 1,
+          "display_title": "Daily smoke",
+          "event": "schedule",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "d43cff29f517ad732fcd37d79da3c8976bff40e9",
+          "created_at": "2026-11-05T07:46:03Z",
+          "updated_at": "2026-11-05T07:46:29Z",
+          "wall_clock_minutes": 0.43,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_mock_plus_optional_write_automation"
+        },
+        {
+          "run_id": 41791436932,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41791436932",
+          "workflow": "daily-smoke.yml",
+          "run_number": 118,
+          "run_attempt": 1,
+          "display_title": "Daily smoke",
+          "event": "schedule",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "d43cff29f517ad732fcd37d79da3c8976bff40e9",
+          "created_at": "2026-11-04T07:19:16Z",
+          "updated_at": "2026-11-04T07:19:45Z",
+          "wall_clock_minutes": 0.48,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_mock_plus_optional_write_automation"
+        },
+        {
+          "run_id": 41597909915,
+          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41597909915",
+          "workflow": "daily-smoke.yml",
+          "run_number": 117,
+          "run_attempt": 1,
+          "display_title": "Daily smoke",
+          "event": "schedule",
+          "conclusion": "success",
+          "head_branch": "main",
+          "head_sha": "16d03460fab16914a2752698aeb0053e32f5a3a0",
+          "created_at": "2026-11-03T07:40:46Z",
+          "updated_at": "2026-11-03T07:41:14Z",
+          "wall_clock_minutes": 0.47,
+          "pull_request_numbers": [],
+          "association_basis": [],
+          "reviewed_jobs": [],
+          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
+          "run_mode": "offline_mock_plus_optional_write_automation"
+        },
         {
           "run_id": 41406206215,
           "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/41406206215",
@@ -6059,86 +5631,6 @@
           "reviewed_jobs": [],
           "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
           "run_mode": "offline_mock_plus_optional_write_automation"
-        },
-        {
-          "run_id": 35566532075,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/35566532075",
-          "workflow": "daily-smoke.yml",
-          "run_number": 70,
-          "run_attempt": 1,
-          "display_title": "Daily smoke",
-          "event": "schedule",
-          "conclusion": "success",
-          "head_branch": "main",
-          "head_sha": "41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b",
-          "created_at": "2026-09-21T05:58:37Z",
-          "updated_at": "2026-09-21T05:59:01Z",
-          "wall_clock_minutes": 0.4,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_mock_plus_optional_write_automation"
-        },
-        {
-          "run_id": 35492700813,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/35492700813",
-          "workflow": "daily-smoke.yml",
-          "run_number": 69,
-          "run_attempt": 1,
-          "display_title": "Daily smoke",
-          "event": "schedule",
-          "conclusion": "success",
-          "head_branch": "main",
-          "head_sha": "41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b",
-          "created_at": "2026-09-20T05:50:41Z",
-          "updated_at": "2026-09-20T05:51:03Z",
-          "wall_clock_minutes": 0.37,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_mock_plus_optional_write_automation"
-        },
-        {
-          "run_id": 35424238158,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/35424238158",
-          "workflow": "daily-smoke.yml",
-          "run_number": 68,
-          "run_attempt": 1,
-          "display_title": "Daily smoke",
-          "event": "schedule",
-          "conclusion": "success",
-          "head_branch": "main",
-          "head_sha": "41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b",
-          "created_at": "2026-09-19T05:32:51Z",
-          "updated_at": "2026-09-19T05:33:14Z",
-          "wall_clock_minutes": 0.38,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_mock_plus_optional_write_automation"
-        },
-        {
-          "run_id": 35311489677,
-          "url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/35311489677",
-          "workflow": "daily-smoke.yml",
-          "run_number": 67,
-          "run_attempt": 1,
-          "display_title": "Daily smoke",
-          "event": "schedule",
-          "conclusion": "success",
-          "head_branch": "main",
-          "head_sha": "41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b",
-          "created_at": "2026-09-18T05:36:50Z",
-          "updated_at": "2026-09-18T05:37:17Z",
-          "wall_clock_minutes": 0.45,
-          "pull_request_numbers": [],
-          "association_basis": [],
-          "reviewed_jobs": [],
-          "classification_basis": "run conclusion and Jobs API failed steps; association uses recorded API links or exact head SHA",
-          "run_mode": "offline_mock_plus_optional_write_automation"
         }
       ]
     }
@@ -6496,14 +5988,16 @@
   },
   "r9_security_snapshot": {
     "schema_version": "ci-r9-security-snapshot/v1",
-    "status": "attention_required",
-    "collected_at": "2026-11-03T03:26:05.262719+00:00",
-    "head_sha": "16d03460fab16914a2752698aeb0053e32f5a3a0",
+    "status": "clean",
+    "collected_at": "2026-11-06T12:00:23.159067+00:00",
+    "head_sha": "c6be917c92e8552145ea36103c730464bb0deddb",
     "scope": {
       "workflow_files": [
         ".github/workflows/daily-smoke.yml",
         ".github/workflows/evaluation.yml",
         ".github/workflows/harness.yml",
+        ".github/workflows/r9-runtime-probe.yml",
+        ".github/workflows/shadow-observation.yml",
         ".github/workflows/test.yml"
       ],
       "dockerfiles": [
@@ -6523,22 +6017,22 @@
         ],
         "uses": [
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/upload-artifact@v4",
+            "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
             "action": "actions/upload-artifact",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "pinned_commit": true
           }
         ],
         "secret_refs": [
@@ -6558,52 +6052,52 @@
         ],
         "uses": [
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/upload-artifact@v4",
+            "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
             "action": "actions/upload-artifact",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/upload-artifact@v4",
+            "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
             "action": "actions/upload-artifact",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "pinned_commit": true
           }
         ],
         "secret_refs": [
@@ -6623,22 +6117,22 @@
         ],
         "uses": [
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           }
         ],
         "secret_refs": [],
@@ -6646,6 +6140,75 @@
         "explicit_permissions": true,
         "contains_pull_request_target": false,
         "checkout_refs_pr_head": true,
+        "write_operations": []
+      },
+      {
+        "path": ".github/workflows/r9-runtime-probe.yml",
+        "events": [],
+        "uses": [
+          {
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "action": "actions/checkout",
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
+          },
+          {
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "action": "actions/checkout",
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
+          },
+          {
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+            "action": "actions/setup-python",
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
+          },
+          {
+            "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "action": "actions/upload-artifact",
+            "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "pinned_commit": true
+          }
+        ],
+        "secret_refs": [],
+        "write_permissions": [],
+        "explicit_permissions": true,
+        "contains_pull_request_target": false,
+        "checkout_refs_pr_head": true,
+        "write_operations": []
+      },
+      {
+        "path": ".github/workflows/shadow-observation.yml",
+        "events": [
+          "schedule",
+          "workflow_dispatch"
+        ],
+        "uses": [
+          {
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "action": "actions/checkout",
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
+          },
+          {
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+            "action": "actions/setup-python",
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
+          },
+          {
+            "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "action": "actions/upload-artifact",
+            "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "pinned_commit": true
+          }
+        ],
+        "secret_refs": [],
+        "write_permissions": [],
+        "explicit_permissions": true,
+        "contains_pull_request_target": false,
+        "checkout_refs_pr_head": false,
         "write_operations": []
       },
       {
@@ -6657,105 +6220,111 @@
         ],
         "uses": [
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/upload-artifact@v4",
+            "reference": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
             "action": "actions/upload-artifact",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "weihuaguo270-ops/react-agent/.github/workflows/r9-runtime-probe.yml@ae9c6d0559c38478b492c91748e2eb73b91926e3",
+            "action": "weihuaguo270-ops/react-agent/.github/workflows/r9-runtime-probe.yml",
+            "version": "ae9c6d0559c38478b492c91748e2eb73b91926e3",
+            "pinned_commit": true
+          },
+          {
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/setup-python@v5",
+            "reference": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
             "action": "actions/setup-python",
-            "version": "v5",
-            "pinned_commit": false
+            "version": "a26af69be951a213d495a4c3e4e4022e16d87065",
+            "pinned_commit": true
           },
           {
-            "reference": "actions/checkout@v4",
+            "reference": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "action": "actions/checkout",
-            "version": "v4",
-            "pinned_commit": false
+            "version": "11d5960a326750d5838078e36cf38b85af677262",
+            "pinned_commit": true
           }
         ],
         "secret_refs": [],
         "write_permissions": [],
-        "explicit_permissions": false,
+        "explicit_permissions": true,
         "contains_pull_request_target": false,
         "checkout_refs_pr_head": true,
         "write_operations": []
@@ -6765,114 +6334,29 @@
       {
         "path": "Dockerfile",
         "line": 2,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
+        "image": "python:3.11-slim@sha256:db20d8506e2f15b6db39b40b6015ca46bae855dec6dd326d462cfe79ae972893",
+        "pinned_digest": true,
+        "pinning_basis": "digest",
+        "source_dockerfile": null
       },
       {
         "path": "Dockerfile.sandbox",
         "line": 1,
-        "image": "python:3.11-slim",
-        "pinned_digest": false
+        "image": "python:3.11-slim@sha256:db20d8506e2f15b6db39b40b6015ca46bae855dec6dd326d462cfe79ae972893",
+        "pinned_digest": true,
+        "pinning_basis": "digest",
+        "source_dockerfile": null
       },
       {
         "path": "eval/blind_pilot_v1/Dockerfile",
         "line": 1,
         "image": "react-agent-sandbox:0.7.0",
-        "pinned_digest": false
+        "pinned_digest": true,
+        "pinning_basis": "repository_dockerfile",
+        "source_dockerfile": "Dockerfile.sandbox"
       }
     ],
-    "findings": [
-      {
-        "id": "external-actions-not-commit-pinned",
-        "severity": "high",
-        "path": ".github/workflows/daily-smoke.yml",
-        "details": [
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/upload-artifact@v4"
-        ],
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "external-actions-not-commit-pinned",
-        "severity": "high",
-        "path": ".github/workflows/evaluation.yml",
-        "details": [
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/upload-artifact@v4",
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/upload-artifact@v4"
-        ],
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "external-actions-not-commit-pinned",
-        "severity": "high",
-        "path": ".github/workflows/harness.yml",
-        "details": [
-          "actions/checkout@v4",
-          "actions/checkout@v4",
-          "actions/setup-python@v5"
-        ],
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "external-actions-not-commit-pinned",
-        "severity": "high",
-        "path": ".github/workflows/test.yml",
-        "details": [
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/upload-artifact@v4",
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/checkout@v4",
-          "actions/setup-python@v5",
-          "actions/checkout@v4"
-        ],
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "workflow-permissions-not-explicit",
-        "severity": "medium",
-        "path": ".github/workflows/test.yml",
-        "details": "Effective GITHUB_TOKEN permissions depend on repository defaults.",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "Dockerfile",
-        "details": "python:3.11-slim (line 2)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "Dockerfile.sandbox",
-        "details": "python:3.11-slim (line 1)",
-        "planned_phase": "Phase 1"
-      },
-      {
-        "id": "docker-base-image-not-digest-pinned",
-        "severity": "medium",
-        "path": "eval/blind_pilot_v1/Dockerfile",
-        "details": "react-agent-sandbox:0.7.0 (line 1)",
-        "planned_phase": "Phase 1"
-      }
-    ]
+    "findings": []
   },
   "required_checks": [
     "lint",
@@ -6899,9 +6383,9 @@
   },
   "comparison_scope": {
     "baseline_ref": "main",
-    "baseline_sha": "16d03460fab16914a2752698aeb0053e32f5a3a0",
-    "current_worktree_ref": "",
-    "current_worktree_sha": "16d03460fab16914a2752698aeb0053e32f5a3a0",
+    "baseline_sha": "c6be917c92e8552145ea36103c730464bb0deddb",
+    "current_worktree_ref": "codex/ci-phase0-refresh-main",
+    "current_worktree_sha": "c6be917c92e8552145ea36103c730464bb0deddb",
     "fresh_rerun_required_for_completion": true
   },
   "mapping_coverage_backtest": {

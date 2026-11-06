@@ -73,3 +73,10 @@ def test_manifest_artifacts_exclude_manifest_self_hash(tmp_path):
 
     assert set(artifacts) == {"phase0-baseline.json"}
     assert artifacts["phase0-baseline.json"]["sha256"] == collector.sha256_file(baseline)
+
+
+def test_manifest_target_matches_snapshot_gate_contract():
+    assert collector.manifest_target("main", "a" * 40) == {
+        "name": "main",
+        "sha": "a" * 40,
+    }

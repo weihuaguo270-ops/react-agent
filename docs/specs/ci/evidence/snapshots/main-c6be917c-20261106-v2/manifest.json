@@ -1,0 +1,50 @@
+{
+  "schema_version": "ci-evidence-manifest/v1",
+  "evidence_kind": "frozen_snapshot",
+  "snapshot_id": "main-c6be917c-20261106-v2",
+  "spec_revision": "1.5",
+  "created_at": "2026-11-06T11:58:06.060329+00:00",
+  "source_collected_at": "2026-11-06T11:58:06.060329+00:00",
+  "repository": "weihuaguo270-ops/react-agent",
+  "target": {
+    "name": "main",
+    "sha": "c6be917c92e8552145ea36103c730464bb0deddb"
+  },
+  "sample_definition": {
+    "pull_requests": "latest 100 returned by GitHub REST pulls endpoint sorted by created desc",
+    "test_workflow_runs": "latest 100 returned by test.yml workflow runs endpoint",
+    "daily_workflow_runs": "latest 50 returned by daily-smoke.yml workflow runs endpoint",
+    "failure_job_details": "all failure/cancelled/timed_out/action_required runs expanded through the jobs API"
+  },
+  "source_baseline_sha256": "4cdef5a984877bf394f12aad525ebc8e11e8f98f20a9b55491cbad112a5ab860",
+  "collector": {
+    "path": "scripts/ci/refresh_phase0_baseline.py",
+    "sha256": "8f8d6474da840e211d5f289bbc6b3fa9cf2dc5b3c966b1a3edd86ebcac46277b"
+  },
+  "source": {
+    "kind": "github_api_collection",
+    "repository": "weihuaguo270-ops/react-agent"
+  },
+  "artifacts": {
+    "phase0-baseline.json": {
+      "sha256": "4cdef5a984877bf394f12aad525ebc8e11e8f98f20a9b55491cbad112a5ab860",
+      "bytes": 264937
+    },
+    "phase0-baseline.md": {
+      "sha256": "50384b2882e4055a09f752fa3d04c430fcc483c737cbb00762f99ef6b32b134c",
+      "bytes": 4988
+    },
+    "phase0-r9-security-snapshot.json": {
+      "sha256": "3d99eef00d1239fdb964c303d9d855dfc739f25ef29b17dab18f250b3cd75b94",
+      "bytes": 13259
+    },
+    "phase0-r9-security-snapshot.md": {
+      "sha256": "26cc7beec5a55f00f39adbbb092ef46af9241fb7bcf4835a67fff1c61d5cb28e",
+      "bytes": 582
+    },
+    "phase0-sample-index.md": {
+      "sha256": "6f078803a5ebcaf2f5e3a6c0c1c3c2079d91192a2dd453dbe68cf0d33d72c247",
+      "bytes": 54036
+    }
+  }
+}
