@@ -1,6 +1,13 @@
 # CI Phase 2 Shadow Observation
 
-**状态：** `Blocked`（report-only 聚合器已实现，观察窗口尚未开始）
+**状态：** `Blocked`（report-only 聚合器已实现，当前 live observation 只有 1 天）
+
+当前观测证据来自主干 `2facfa0baa3084090b262a4d8c7c58f27f9bc606` 上的
+shadow workflow run [42224158528](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42224158528)，
+结构化摘要见 [`phase2-shadow-observation-2026-11-06.json`](phase2-shadow-observation-2026-11-06.json)。
+本次 run 成功生成 8 个有效样本和 8 个不同的 `head_sha`；没有 invalid sample、
+unmapped path 或 expected-check 漏选。完整的 excluded run ID 与原因仍保留在该
+workflow artifact 中，摘要文件不替代原始 artifact。
 
 本报告只记录 Phase 2 的当前边界，不把历史 backtest 或单次 PR artifact
 解释为观察窗口通过。`.github/workflows/test.yml` 现在为每个 PR 同时上传：
@@ -23,5 +30,8 @@ attempt 的 job 时间戳生成明确标注的 runtime estimate。下载失败�
 缺少 job 或失败 job 都会保留在 `excluded_runs`/`invalid_samples` 中，不能被
 静默删除或当作有效样本。
 
-当前尚未有可计入窗口的 live aggregate report。Phase 1 的 R9 外部 fork
-隔离运行仍缺证据，因此本阶段只能保持 report-only。
+本次 live aggregate report 的 `conclusion` 仍为 `blocked`：观察窗口只有 1 天，
+只有 `docs` 一个严格缩小规则类别，可比 runtime 为 0，尚未满足 14 天、10 个不同
+head SHA、3 类缩小规则、10 个 runtime 样本及至少 20% 中位改善的全部门槛。Phase 1
+的 R9 外部 fork 隔离运行也仍缺当前 head 的有效证据，因此本阶段继续保持 report-only，
+不授权 subset gate 或 Branch Protection 变更。
