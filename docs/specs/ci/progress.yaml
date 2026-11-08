@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-08T18:05:08.879461+00:00",
+  "updated_at": "2026-11-08T18:27:47.267171+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -189,16 +189,17 @@
             "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42498318135.json",
             "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42500593569.json",
             "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42503842381.json",
-            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42506093380.json"
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42506093380.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42509905741.json"
           ],
           "status": "blocked",
-          "notes": "Latest provenance-complete report-only run 42506093380 is bound to collector head 52d37f672bdc1f0580ffc92d0b69007dc3e853b5 and has 19 valid samples across 19 head SHAs, zero missing expected checks, zero invalid samples, and 5 comparable runtime samples. The three-day window, two strict-subset categories, fewer than 10 runtime samples, and missing current-head R9 external-fork evidence keep this item blocked. Runs 42503842381, 42500593569, 42498318135, 42494250302, and 42490947219 remain preserved as historical evidence."
+          "notes": "Latest provenance-complete report-only run 42509905741 is bound to collector head 8fc110e8be12eb53c6584d3b86e82a9d61e383ee and has 23 valid samples across 23 head SHAs, zero missing expected checks, zero invalid samples, and 5 comparable runtime samples. The three-day window, two strict-subset categories, fewer than 10 runtime samples, and missing current-head R9 external-fork evidence keep this item blocked. Runs 42506093380, 42503842381, 42500593569, 42498318135, 42494250302, and 42490947219 remain preserved as historical evidence."
         }
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "docs/specs/ci/evidence/gates/phase-2-20261108T180508863680Z-94b02c8a.json",
-        "report_sha256": "59546543f20561901d36a7a00344bf4de2cf5f8329f89765ba560e1122139585",
+        "report": "docs/specs/ci/evidence/gates/phase-2-20261108T182747259388Z-8fc110e8.json",
+        "report_sha256": "8d41dd0ad84ed1860a54287c813bb0ba67355a93752df6bc107f59bdb6e423f3",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": null
@@ -226,8 +227,8 @@
   "last_gate": {
     "stage": "Phase 2",
     "status": "blocked",
-    "report": "docs/specs/ci/evidence/gates/phase-2-20261108T180508863680Z-94b02c8a.json",
-    "report_sha256": "59546543f20561901d36a7a00344bf4de2cf5f8329f89765ba560e1122139585",
+    "report": "docs/specs/ci/evidence/gates/phase-2-20261108T182747259388Z-8fc110e8.json",
+    "report_sha256": "8d41dd0ad84ed1860a54287c813bb0ba67355a93752df6bc107f59bdb6e423f3",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
     "snapshot_id": null
