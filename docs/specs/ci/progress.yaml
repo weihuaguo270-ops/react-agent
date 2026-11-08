@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-08T16:13:56.617061+00:00",
+  "updated_at": "2026-11-08T16:40:02.189068+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -186,16 +186,17 @@
             "docs/specs/ci/evidence/phase2-shadow-observation.md",
             "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-08.json",
             "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-08-run-42494250302.json",
-            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42498318135.json"
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42498318135.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42500593569.json"
           ],
           "status": "blocked",
-          "notes": "Latest provenance-complete report-only run 42498318135 is bound to collector head fc2dcbea8d0a71fafcfe9c35ae0015693797225a and has 14 valid samples across 14 head SHAs, zero missing expected checks, and zero invalid samples. The three-day window, two strict-subset categories, zero comparable runtime samples, and missing current-head R9 external-fork evidence keep this item blocked. Runs 42494250302 and 42490947219 remain preserved as historical evidence."
+          "notes": "Latest provenance-complete report-only run 42500593569 is bound to collector head da3fbd312a69bef0fe0e2ce10c566bf0056a5cca and has 15 valid samples across 15 head SHAs, zero missing expected checks, and zero invalid samples. The three-day window, two strict-subset categories, zero comparable runtime samples, and missing current-head R9 external-fork evidence keep this item blocked. Runs 42498318135, 42494250302, and 42490947219 remain preserved as historical evidence."
         }
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "docs/specs/ci/evidence/gates/phase-2-20261108T161356609032Z-fc2dcbea.json",
-        "report_sha256": "97ef6f46828c54ea22d51fdaf809ad1bfbecbd91762aa60af3cde29c92410402",
+        "report": "docs/specs/ci/evidence/gates/phase-2-20261108T164002174678Z-da3fbd31.json",
+        "report_sha256": "ca321d6ca54bcf1768cad8e8e0b57ca6939288bb4a4adf523162740a186b9a8a",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": null
@@ -223,8 +224,8 @@
   "last_gate": {
     "stage": "Phase 2",
     "status": "blocked",
-    "report": "docs/specs/ci/evidence/gates/phase-2-20261108T161356609032Z-fc2dcbea.json",
-    "report_sha256": "97ef6f46828c54ea22d51fdaf809ad1bfbecbd91762aa60af3cde29c92410402",
+    "report": "docs/specs/ci/evidence/gates/phase-2-20261108T164002174678Z-da3fbd31.json",
+    "report_sha256": "ca321d6ca54bcf1768cad8e8e0b57ca6939288bb4a4adf523162740a186b9a8a",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
     "snapshot_id": null
