@@ -3,12 +3,12 @@
   "evidence_kind": "current_observation",
   "snapshot_id": null,
   "spec_revision": "1.5",
-  "created_at": "2026-11-06T12:45:16.896009+00:00",
-  "source_collected_at": "2026-11-06T12:45:16.896009+00:00",
+  "created_at": "2026-11-08T14:17:44.347578+00:00",
+  "source_collected_at": "2026-11-08T14:17:44.347578+00:00",
   "repository": "weihuaguo270-ops/react-agent",
   "target": {
     "name": "main",
-    "sha": "e8d750faf8a1f883fff5eaf396d8cb67b82e342f"
+    "sha": "944574e8e2cdd69192502d799996fb7ab646b858"
   },
   "sample_definition": {
     "pull_requests": "latest 100 returned by GitHub REST pulls endpoint sorted by created desc",
@@ -16,7 +16,7 @@
     "daily_workflow_runs": "latest 50 returned by daily-smoke.yml workflow runs endpoint",
     "failure_job_details": "all failure/cancelled/timed_out/action_required runs expanded through the jobs API"
   },
-  "source_baseline_sha256": "69723dae254ce047cdbfb6d87a41befa4884eec24f0091601b6945daca3afa55",
+  "source_baseline_sha256": "a21b910ecfa7772be4e2b7ad658f0b3fba9f7d7b974e4b5ca2dea15bfeb906d2",
   "collector": {
     "path": "scripts/ci/refresh_phase0_baseline.py",
     "sha256": "bf835bff7f4c3eefdac92346df76a0f35d9171021a3507e5cca94e3a2e3aecfb"
@@ -27,24 +27,24 @@
   },
   "artifacts": {
     "phase0-baseline.json": {
-      "sha256": "69723dae254ce047cdbfb6d87a41befa4884eec24f0091601b6945daca3afa55",
-      "bytes": 263936
+      "sha256": "a21b910ecfa7772be4e2b7ad658f0b3fba9f7d7b974e4b5ca2dea15bfeb906d2",
+      "bytes": 262942
     },
     "phase0-baseline.md": {
-      "sha256": "10c750684eb9809acb43bee5f35faf308f5d734967a4473c6ea93983d9407624",
+      "sha256": "7295505e507ca9dedf3ab1430c00fd084f5eec9dd7d5fcbf1b8fc6d4e91c6218",
       "bytes": 4984
     },
     "phase0-r9-security-snapshot.json": {
-      "sha256": "f1c97bda6eb4985b49f2eff69209c09ce053c4651359c9bd7160e7fd39959ebb",
+      "sha256": "8c27228e2722cce9f1b7d4461daf27711bd7d6f199c1b443b37dd8503513a6ad",
       "bytes": 13259
     },
     "phase0-r9-security-snapshot.md": {
-      "sha256": "64d1293f36554169eed3be833c0b2d310b627ecb5db548e69b65f376b5b471fa",
+      "sha256": "b30239a3a19f7fd223b7e4d45c70a73d6b2454b306ac81c7af1be36dd0827bf9",
       "bytes": 582
     },
     "phase0-sample-index.md": {
-      "sha256": "b19dbed527453ce0d5942b3934fec2934291fa711e6dc0e33a90b56ff18c91c2",
-      "bytes": 54016
+      "sha256": "8b01998e438f6e7f3e3b1179e83b7e5fd1b8d7e93d69cc2f9f1438c4d33e38cc",
+      "bytes": 53960
     }
   }
 }
