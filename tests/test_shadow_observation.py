@@ -231,6 +231,36 @@ def test_runtime_observation_blocks_failed_or_incomplete_jobs():
     assert result["runtime_incomplete"] is True
 
 
+def test_runtime_observation_compares_against_full_matrix_when_policy_is_smaller():
+    selector = {"selected_checks": ["docs-eval", "pr-ready", "lint", "test"]}
+    jobs = [
+        {
+            "name": name,
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:01:00Z",
+            "conclusion": "success",
+        }
+        for name in (
+            "PR ready audit",
+            "lint",
+            "test (3.10)",
+            "test-windows (3.10)",
+            "typecheck",
+            "security",
+            "docker-smoke",
+        )
+    ]
+
+    result = runtime_observation(
+        selector,
+        jobs,
+        {"id": 45, "run_attempt": 1},
+        expected_checks={"pr-ready"},
+    )
+
+    assert result["runtime_comparable"] is True
+    assert result["runtime_missing_checks"] == []
+
 def test_runtime_observation_rejects_missing_expected_check():
     selector = {"selected_checks": ["lint"]}
     jobs = [
