@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 from scripts.ci.selector_backtest import replay
+from scripts.ci.hash_utils import sha256_file
 
 
 def test_replay_uses_fixed_paths_and_keeps_unmeasured_labels(tmp_path):
@@ -21,3 +23,9 @@ def test_replay_uses_fixed_paths_and_keeps_unmeasured_labels(tmp_path):
     assert report["metrics"]["false_positive_rules"] is None
     assert report["metrics"]["missed_expected_rules"] is None
     assert report["conclusion"] == "blocked"
+
+
+def test_evidence_hash_is_stable_for_crlf_checkout(tmp_path):
+    path = tmp_path / "evidence.json"
+    path.write_bytes(b'{"sample": true}\r\n')
+    assert sha256_file(path) == hashlib.sha256(b'{"sample": true}\n').hexdigest()

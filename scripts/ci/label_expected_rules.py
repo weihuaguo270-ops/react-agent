@@ -9,19 +9,19 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
-import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+
+if __package__:
+    from .hash_utils import sha256_file
+else:
+    from hash_utils import sha256_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SAMPLE = ROOT / "docs/specs/ci/evidence/selector-samples/main-8805e5e9-20261030.json"
 DEFAULT_OUTPUT = ROOT / "docs/specs/ci/evidence/selector-expected-rules-100.json"
-
-
-def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def matches(path: str, patterns: tuple[str, ...]) -> bool:
@@ -108,6 +108,7 @@ def expected_rules_for_path(path: str) -> tuple[set[str], str]:
 
 
 def build(sample: dict, sample_path: Path) -> dict:
+    sample_path = sample_path.resolve()
     rows: list[dict] = []
     for item in sample.get("samples", []):
         paths = item.get("changed_paths")
@@ -145,7 +146,7 @@ def build(sample: dict, sample_path: Path) -> dict:
         "sample_id": sample.get("sample_id"),
         "source_sha": sample.get("source_sha"),
         "source_sample": sample_path.relative_to(ROOT).as_posix(),
-        "source_sample_sha256": sha256(sample_path),
+        "source_sample_sha256": sha256_file(sample_path),
         "sample_size": len(rows),
         "policy": "scripts/ci/label_expected_rules.py",
         "policy_basis": "independent path-class policy reviewed separately from registry-v2.json",
@@ -173,8 +174,9 @@ def main() -> int:
     args = parser.parse_args()
     if args.output.exists():
         raise SystemExit(f"refusing to overwrite existing evidence: {args.output}")
-    sample = json.loads(args.sample.read_text(encoding="utf-8"))
-    report = build(sample, args.sample)
+    sample_path = args.sample.resolve()
+    sample = json.loads(sample_path.read_text(encoding="utf-8"))
+    report = build(sample, sample_path)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report["metrics"], ensure_ascii=False))

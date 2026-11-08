@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 import subprocess
@@ -11,16 +10,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 if __package__:
+    from .hash_utils import sha256_file
     from .registry_v2 import ROOT, select, validate_registry
 else:
+    from hash_utils import sha256_file
     from registry_v2 import ROOT, select, validate_registry
 
 REPO = "weihuaguo270-ops/react-agent"
 SAMPLE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$")
-
-
-def sha256_bytes(value: bytes) -> str:
-    return hashlib.sha256(value).hexdigest()
 
 
 def gh_json(endpoint: str) -> object:
@@ -60,15 +57,15 @@ def capture_sample(baseline_path: Path, snapshot_id: str, output: Path, repo: st
         "repository": repo,
         "source_snapshot_id": snapshot_id,
         "source_sha": baseline["default_branch"]["sha"],
-        "source_baseline_sha256": sha256_bytes(baseline_bytes),
+        "source_baseline_sha256": sha256_file(baseline_path),
         "sample_size": len(rows),
         "samples": rows,
     }
 
 
 def replay(sample_input: Path, sample_id: str) -> dict:
-    source_bytes = sample_input.read_bytes()
-    source = json.loads(source_bytes)
+    sample_input = sample_input.resolve()
+    source = json.loads(sample_input.read_text(encoding="utf-8"))
     if source.get("schema_version") != "ci-selector-sample/v1" or source.get("sample_id") != sample_id:
         raise ValueError("fixed sample identity does not match the requested sample id")
     errors = validate_registry()
@@ -108,8 +105,8 @@ def replay(sample_input: Path, sample_id: str) -> dict:
         "sample_id": sample_id,
         "sample_size": len(rows),
         "source_sha": source.get("source_sha"),
-        "source_sha256": sha256_bytes(source_bytes),
-        "registry_sha256": sha256_bytes((ROOT / "docs/specs/ci/registry-v2.json").read_bytes()),
+        "source_sha256": sha256_file(sample_input),
+        "registry_sha256": sha256_file(ROOT / "docs/specs/ci/registry-v2.json"),
         "registry_validation": {"status": "pass" if not errors else "fail", "errors": errors},
         "metrics": {
             "changed_files": total,

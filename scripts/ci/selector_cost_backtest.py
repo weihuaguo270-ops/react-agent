@@ -9,7 +9,6 @@ no required check was missed.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import subprocess
 from datetime import datetime, timezone
@@ -17,7 +16,12 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
-from select_pr_checks import load_registry, select_checks
+if __package__:
+    from .hash_utils import sha256_file
+    from .select_pr_checks import load_registry, select_checks
+else:
+    from hash_utils import sha256_file
+    from select_pr_checks import load_registry, select_checks
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -193,9 +197,9 @@ def replay(sample: dict[str, Any], labels: dict[str, Any], sample_size: int) -> 
         "repository": REPO,
         "sample_source": "docs/specs/ci/evidence/phase0-baseline.json",
         "expected_check_labels": "docs/specs/ci/evidence/selector-expected-checks-100.json",
-        "expected_check_labels_sha256": hashlib.sha256(
-            (ROOT / "docs/specs/ci/evidence/selector-expected-checks-100.json").read_bytes()
-        ).hexdigest(),
+        "expected_check_labels_sha256": sha256_file(
+            ROOT / "docs/specs/ci/evidence/selector-expected-checks-100.json"
+        ),
         "sample_size_requested": sample_size,
         "sample_size_replayed": len(rows),
         "selector_mode": registry.get("mode", "report-only"),

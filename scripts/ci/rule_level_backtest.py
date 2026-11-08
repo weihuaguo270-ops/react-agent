@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 if __package__:
+    from .hash_utils import sha256_file
     from .registry_v2 import ROOT, select, validate_registry
 else:
+    from hash_utils import sha256_file
     from registry_v2 import ROOT, select, validate_registry
 
 
@@ -19,11 +20,9 @@ DEFAULT_LABELS = ROOT / "docs/specs/ci/evidence/selector-expected-rules-100.json
 DEFAULT_OUTPUT = ROOT / "docs/specs/ci/evidence/phase1-selector-rule-backtest-main-8805e5e9-20261105.json"
 
 
-def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
 def replay(sample_path: Path, labels_path: Path) -> dict:
+    sample_path = sample_path.resolve()
+    labels_path = labels_path.resolve()
     sample = json.loads(sample_path.read_text(encoding="utf-8"))
     labels = json.loads(labels_path.read_text(encoding="utf-8"))
     errors = validate_registry()
@@ -31,7 +30,7 @@ def replay(sample_path: Path, labels_path: Path) -> dict:
         raise ValueError("expected rule label schema is invalid")
     if labels.get("sample_id") != sample.get("sample_id"):
         raise ValueError("label sample identity does not match fixed sample")
-    if labels.get("source_sample_sha256") != sha256(sample_path):
+    if labels.get("source_sample_sha256") != sha256_file(sample_path):
         raise ValueError("label source sample hash does not match fixed sample")
 
     source_rows = {row["pr"]: row for row in sample.get("samples", [])}
@@ -98,9 +97,9 @@ def replay(sample_path: Path, labels_path: Path) -> dict:
         "sample_id": sample.get("sample_id"),
         "sample_size": len(rows),
         "source_sha": sample.get("source_sha"),
-        "source_sample_sha256": sha256(sample_path),
-        "expected_labels_sha256": sha256(labels_path),
-        "registry_sha256": sha256(ROOT / "docs/specs/ci/registry-v2.json"),
+        "source_sample_sha256": sha256_file(sample_path),
+        "expected_labels_sha256": sha256_file(labels_path),
+        "registry_sha256": sha256_file(ROOT / "docs/specs/ci/registry-v2.json"),
         "registry_validation": {"status": "pass" if not errors else "fail", "errors": errors},
         "label_provenance": {
             "schema_version": labels.get("schema_version"),

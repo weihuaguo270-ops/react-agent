@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 
+from scripts.ci.label_expected_rules import build as build_expected_rules
 from scripts.ci.label_expected_rules import expected_rules_for_path
 from scripts.ci.rule_level_backtest import replay
 from scripts.ci.ci_stage_gate import validate_rule_level_backtest
@@ -59,6 +61,44 @@ def test_rule_level_replay_keeps_unresolved_rows_unmeasured(tmp_path, monkeypatc
 
     assert report["metrics"]["measurement_status"] == "partial"
     assert report["conclusion"] == "blocked"
+
+
+def test_rule_level_replay_accepts_relative_paths(tmp_path, monkeypatch):
+    sample_path = tmp_path / "sample.json"
+    sample = {
+        "schema_version": "ci-selector-sample/v1",
+        "sample_id": "sample",
+        "source_sha": "a" * 40,
+        "samples": [],
+    }
+    sample_path.write_text(json.dumps(sample), encoding="utf-8")
+    labels_path = tmp_path / "labels.json"
+    labels_path.write_text(json.dumps({
+        "schema_version": "ci-selector-expected-rules/v1",
+        "sample_id": "sample",
+        "source_sample_sha256": hashlib.sha256(sample_path.read_bytes()).hexdigest(),
+        "rows": [],
+    }), encoding="utf-8")
+    registry = tmp_path / "docs/specs/ci/registry-v2.json"
+    registry.parent.mkdir(parents=True)
+    registry.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr("scripts.ci.rule_level_backtest.ROOT", tmp_path)
+    monkeypatch.setattr("scripts.ci.rule_level_backtest.validate_registry", lambda: [])
+    monkeypatch.chdir(tmp_path)
+    report = replay(Path("sample.json"), Path("labels.json"))
+    assert report["sample_size"] == 0
+
+
+def test_expected_rule_labels_accept_relative_sample_path(tmp_path, monkeypatch):
+    sample_path = tmp_path / "sample.json"
+    sample = {"sample_id": "sample", "source_sha": "a" * 40, "samples": []}
+    sample_path.write_text(json.dumps(sample), encoding="utf-8")
+    monkeypatch.setattr("scripts.ci.label_expected_rules.ROOT", tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    labels = build_expected_rules(sample, Path("sample.json"))
+
+    assert labels["source_sample"] == "sample.json"
 
 
 def test_gate_rejects_labels_that_claim_registry_independence_without_provenance(tmp_path):
