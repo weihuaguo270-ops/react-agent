@@ -184,10 +184,11 @@
           "title": "The report-only observation window meets the Spec thresholds",
           "evidence": [
             "docs/specs/ci/evidence/phase2-shadow-observation.md",
-            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-08.json"
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-08.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-08-run-42494250302.json"
           ],
           "status": "blocked",
-          "notes": "Live report-only run 42490947219 is bound to main 944574e8e2cdd69192502d799996fb7ab646b858 and has 11 valid samples across 11 head SHAs, zero missing expected checks, and zero invalid samples. The three-day window, two strict-subset categories, zero comparable runtime samples, and missing current-head R9 external-fork evidence keep this item blocked."
+          "notes": "Latest live report-only run 42494250302 is bound to main 944574e8e2cdd69192502d799996fb7ab646b858 and has 12 valid samples across 12 head SHAs, zero missing expected checks, and zero invalid samples. The three-day window, two strict-subset categories, zero comparable runtime samples, and missing current-head R9 external-fork evidence keep this item blocked. Prior run 42490947219 remains preserved as historical same-day evidence."
         }
       ],
       "last_gate": {

@@ -2,11 +2,12 @@
 
 **状态：** `Blocked`（report-only 聚合器已实现，当前 live observation 只有 3 天）
 
-当前观测证据来自主干 `944574e8e2cdd69192502d799996fb7ab646b858` 上的
-shadow workflow run [42490947219](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42490947219)，
-结构化摘要见 [`phase2-shadow-observation-2026-11-08.json`](phase2-shadow-observation-2026-11-08.json)。
-本次 run 成功生成 11 个有效样本和 11 个不同的 `head_sha`；没有 invalid sample、
-unmapped path 或 expected-check 漏选，并包含 PR #206 的 report-only artifact。完整的
+当前最新观测证据来自主干 `944574e8e2cdd69192502d799996fb7ab646b858` 上的
+shadow workflow run [42494250302](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42494250302)，
+结构化摘要见 [`phase2-shadow-observation-2026-11-08-run-42494250302.json`](phase2-shadow-observation-2026-11-08-run-42494250302.json)。
+本次 run 成功生成 12 个有效样本和 12 个不同的 `head_sha`；没有 invalid sample、
+unmapped path 或 expected-check 漏选，并包含 PR #206、#207 的 report-only artifact。前一轮
+42490947219 的结构化报告仍保留在 [`phase2-shadow-observation-2026-11-08.json`](phase2-shadow-observation-2026-11-08.json)，完整的
 excluded run ID 与原因仍保留在该 workflow artifact 中，摘要文件不替代原始 artifact。
 
 本报告只记录 Phase 2 的当前边界，不把历史 backtest 或单次 PR artifact
@@ -31,7 +32,7 @@ attempt 的 job 时间戳生成明确标注的 runtime estimate。下载失败�
 静默删除或当作有效样本。
 
 本次 live aggregate report 的 `conclusion` 仍为 `blocked`：观察窗口只有 3 天，
-已有 11 个不同 `head_sha`，但只有 `docs` 与 `docs+docs_corpus_baseline` 两个严格缩小
+已有 12 个不同 `head_sha`，但只有 `docs` 与 `docs+docs_corpus_baseline` 两个严格缩小
 规则类别，可比 runtime 为 0，尚未满足 14 天、3 类缩小规则、10 个 runtime 样本及至少
 20% 中位改善的全部门槛。Phase 1
 的 R9 外部 fork 隔离运行也仍缺当前 head 的有效证据，因此本阶段继续保持 report-only，
