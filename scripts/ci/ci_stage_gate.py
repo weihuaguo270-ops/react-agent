@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import re
@@ -14,19 +13,16 @@ from pathlib import Path
 
 if __package__:
     from . import audit_workflow_security, r9_runtime_probe
+    from .hash_utils import canonical_bytes, sha256_file
     from .registry_v2 import ROOT, select, validate_registry
 else:
     import audit_workflow_security
     import r9_runtime_probe
+    from hash_utils import canonical_bytes, sha256_file
     from registry_v2 import ROOT, select, validate_registry
 
 REPORT_DIR = ROOT / "artifacts/ci/stage-gates"
 PROGRESS = ROOT / "docs/specs/ci/progress.yaml"
-
-
-def canonical_bytes(path: Path) -> bytes:
-    """Hash text evidence independently of the checkout's newline policy."""
-    return path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
 
 def test_environment() -> dict[str, str]:
@@ -79,7 +75,7 @@ def verify_snapshot(snapshot_id: str, expected_spec_revision: str | None = None)
         return {"status": "failed", "reason": "manifest target SHA does not match baseline content"}
     if not isinstance(source_hash, str) or not re.fullmatch(r"[0-9a-f]{64}", source_hash):
         return {"status": "failed", "reason": "snapshot source baseline hash is missing or invalid"}
-    if source_hash != hashlib.sha256(canonical_bytes(baseline_path)).hexdigest():
+    if source_hash != sha256_file(baseline_path):
         return {"status": "failed", "reason": "snapshot source baseline hash does not match the frozen baseline"}
     artifacts = manifest.get("artifacts")
     if not isinstance(artifacts, dict) or not artifacts:
@@ -90,7 +86,7 @@ def verify_snapshot(snapshot_id: str, expected_spec_revision: str | None = None)
         if artifact_path.parent != snapshot_dir or not artifact_path.is_file():
             return {"status": "failed", "reason": f"snapshot artifact is missing or unsafe: {name}"}
         canonical = canonical_bytes(artifact_path)
-        digest = hashlib.sha256(canonical).hexdigest()
+        digest = sha256_file(artifact_path)
         if digest != metadata.get("sha256") or len(canonical) != metadata.get("bytes"):
             return {"status": "failed", "reason": f"snapshot artifact integrity mismatch: {name}"}
         verified.append(name)
@@ -154,8 +150,8 @@ def validate_selector_backtest(
         and backtest.get("schema_version") == "ci-selector-backtest/v2"
         and backtest.get("spec_revision") == spec_revision
         and backtest.get("source_sha") == sample.get("source_sha")
-        and backtest.get("source_sha256") == hashlib.sha256(sample_path.read_bytes()).hexdigest()
-        and backtest.get("registry_sha256") == hashlib.sha256((ROOT / "docs/specs/ci/registry-v2.json").read_bytes()).hexdigest()
+        and backtest.get("source_sha256") == sha256_file(sample_path)
+        and backtest.get("registry_sha256") == sha256_file(ROOT / "docs/specs/ci/registry-v2.json")
         and backtest.get("sample_size") == 100
         and counts_valid
         and row_counts_valid
@@ -194,11 +190,11 @@ def validate_rule_level_backtest(
         return False
     if backtest.get("source_sha") != sample.get("source_sha"):
         return False
-    if backtest.get("source_sample_sha256") != hashlib.sha256(sample_path.read_bytes()).hexdigest():
+    if backtest.get("source_sample_sha256") != sha256_file(sample_path):
         return False
-    if backtest.get("expected_labels_sha256") != hashlib.sha256(labels_path.read_bytes()).hexdigest():
+    if backtest.get("expected_labels_sha256") != sha256_file(labels_path):
         return False
-    if backtest.get("registry_sha256") != hashlib.sha256((ROOT / "docs/specs/ci/registry-v2.json").read_bytes()).hexdigest():
+    if backtest.get("registry_sha256") != sha256_file(ROOT / "docs/specs/ci/registry-v2.json"):
         return False
     if len(rows) != 100 or len(label_rows) != 100:
         return False
@@ -524,7 +520,7 @@ def main() -> int:
     target.write_text(encoded, encoding="utf-8")
     # Hash the bytes as persisted on disk after platform newline handling.
     # The progress source must reproduce this digest on Windows and POSIX.
-    digest = hashlib.sha256(canonical_bytes(target)).hexdigest()
+    digest = sha256_file(target)
     progress = json.loads(PROGRESS.read_text(encoding="utf-8"))
     progress["updated_at"] = datetime.now(timezone.utc).isoformat()
     progress["stages"][args.stage]["last_gate"] = {
