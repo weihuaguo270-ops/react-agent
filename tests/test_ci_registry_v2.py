@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 
+import pytest
+
 from scripts.ci.registry_v2 import load_registry, select, validate_registry
 
 
@@ -14,6 +16,14 @@ def test_duplicate_rule_ids_are_rejected() -> None:
     direction = registry["directions"]["ci"]
     direction["rules"].append(copy.deepcopy(direction["rules"][0]))
     assert any("duplicate or missing rule id" in error for error in validate_registry(registry))
+
+
+def test_duplicate_json_keys_are_rejected_at_any_object_depth(tmp_path) -> None:
+    registry_path = tmp_path / "duplicate.json"
+    registry_path.write_text('{"outer": {"priority": "P0", "priority": "P1"}}', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="duplicate JSON key: priority"):
+        load_registry(registry_path)
 
 
 def test_unknown_changed_path_fails_closed_with_safety_gate() -> None:
