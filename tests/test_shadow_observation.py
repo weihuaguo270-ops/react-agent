@@ -292,6 +292,23 @@ def test_collect_excludes_artifacts_bound_to_another_head(tmp_path, monkeypatch)
     assert any("same head SHA" in item["reason"] for item in report["excluded_runs"])
 
 
+def test_collect_records_workflow_provenance(tmp_path, monkeypatch):
+    from scripts.ci import collect_shadow_observation as collector
+
+    monkeypatch.setattr(collector, "gh_json", lambda endpoint: {"workflow_runs": []})
+    monkeypatch.setenv("GITHUB_RUN_ID", "42494250302")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
+    monkeypatch.setenv("GITHUB_SERVER_URL", "https://github.example")
+    monkeypatch.setenv("GITHUB_SHA", "A" * 40)
+
+    report = collector.collect("fallback/repo", "test.yml", tmp_path / "report.json")
+
+    assert report["repository"] == "owner/repo"
+    assert report["run_id"] == 42494250302
+    assert report["run_url"] == "https://github.example/owner/repo/actions/runs/42494250302"
+    assert report["collector_head_sha"] == "a" * 40
+
+
 def test_collect_can_use_older_attempt_when_newest_artifact_is_missing(tmp_path, monkeypatch):
     from scripts.ci import collect_shadow_observation as collector
     from contextlib import contextmanager
