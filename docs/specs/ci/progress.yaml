@@ -195,7 +195,7 @@
             "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42515109880.json"
           ],
           "status": "blocked",
-          "notes": "Latest provenance-complete report-only run 42515109880 is bound to collector head d5f0dc95b252411eb374f929666451fc7373443d and has 27 valid samples across 27 head SHAs, zero missing expected checks, zero invalid samples, and 5 comparable runtime samples. The three-day window, two strict-subset categories, fewer than 10 runtime samples, and missing current-head R9 external-fork evidence keep this item blocked. Earlier runs remain preserved as historical evidence."
+          "notes": "Latest provenance-complete report-only run 42515109880 is bound to collector head d5f0dc95b252411eb374f929666451fc7373443d and has 27 valid samples across 27 head SHAs, zero missing expected checks, zero invalid samples, and 5 comparable runtime samples. The three-day window, two strict-subset categories, and fewer than 10 runtime samples keep this item blocked. R9 external-fork isolation is tracked independently by CI-P1-3 and is not a CI-P2-2 observation-window criterion. Earlier runs remain preserved as historical evidence."
         }
       ],
       "last_gate": {

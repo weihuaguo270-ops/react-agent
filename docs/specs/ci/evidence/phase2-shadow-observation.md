@@ -36,6 +36,9 @@ attempt 的 job 时间戳生成明确标注的 runtime estimate。下载失败�
 本次 live aggregate report 的 `conclusion` 仍为 `blocked`：观察窗口只有 3 天，
 已有 27 个不同 `head_sha`，但只有 `docs` 与 `docs+docs_corpus_baseline` 两个严格缩小
 规则类别，可比 runtime 为 5，尚未满足 14 天、3 类缩小规则、10 个 runtime 样本及至少
-20% 中位改善的全部门槛。Phase 1
-的 R9 外部 fork 隔离运行也仍缺当前 head 的有效证据，因此本阶段继续保持 report-only，
-不授权 subset gate 或 Branch Protection 变更。
+20% 中位改善的全部门槛。因此 Phase 2 继续保持 report-only，不授权 subset gate 或
+Branch Protection 变更。
+
+Phase 1 的 R9 外部 fork 隔离运行是独立的 `CI-P1-3` 验收项，不属于本观察窗口的
+`CI-P2-2` 门槛；其缺失应在 Phase 1 gate 中单独保持 `blocked`，不能作为 Phase 2
+观察窗口失败原因重复计算。
