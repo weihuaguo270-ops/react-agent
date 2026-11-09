@@ -1,0 +1,68 @@
+{
+  "schema_version": "ci-stage-gate/v1",
+  "spec_revision": "1.5",
+  "acceptance_revision": "ci-acceptance/2026-10-30-v2",
+  "stage": "Phase 0",
+  "command": [
+    "python",
+    "scripts/ci/ci_stage_gate.py",
+    "--stage",
+    "Phase 0"
+  ],
+  "generated_at": "2026-11-09T09:44:55.109216+00:00",
+  "gate_head_sha": "574fb3b9bf8b2c11201c45cbfdaf9ed47f155454",
+  "checks": [
+    {
+      "id": "focused-tests",
+      "status": "passed",
+      "command": [
+        "D:\\agent_learning_projects\\react-agent\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_ci_registry_v2.py",
+        "tests/test_ci_stage_gate.py",
+        "tests/test_refresh_phase0_baseline.py"
+      ],
+      "exit_code": 0,
+      "stdout": "............................                                             [100%]\n============================== warnings summary ===============================\nsrc\\react_agent\\harness\\contracts\\parser.py:15\n  C:\\Users\\1\\.codex\\worktrees\\ci-r9-runtime-evidence\\phase0-gate-evidence\\src\\react_agent\\harness\\contracts\\parser.py:15: DeprecationWarning: react_agent.harness.schema is deprecated and will be removed after the P5 compatibility period. Use 'from react_agent.harness.contracts import validate_trajectory, normalize_trajectory, parse_trajectory, SCHEMA_VERSION' instead. See docs/specs/harness/evidence/phase5-migration/inventory.md for details.\n    from ..schema import (\n\nD:\\agent_learning_projects\\react-agent\\.venv\\Lib\\site-packages\\_pytest\\config\\__init__.py:1464\n  D:\\agent_learning_projects\\react-agent\\.venv\\Lib\\site-packages\\_pytest\\config\\__init__.py:1464: PytestConfigWarning: Unknown config option: cache_dir\n  \n    self._warn_or_fail_if_strict(f\"Unknown config option: {key}\\n\")\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n28 passed, 2 warnings in 3.06s\n",
+      "stderr": ""
+    },
+    {
+      "id": "immutable-snapshot-integrity",
+      "status": "passed",
+      "snapshot_id": "main-c6be917c-20261106-v2",
+      "target_sha": "c6be917c92e8552145ea36103c730464bb0deddb",
+      "spec_revision": "1.5",
+      "source_baseline_sha256": "4cdef5a984877bf394f12aad525ebc8e11e8f98f20a9b55491cbad112a5ab860",
+      "verified_artifacts": [
+        "phase0-baseline.json",
+        "phase0-baseline.md",
+        "phase0-r9-security-snapshot.json",
+        "phase0-r9-security-snapshot.md",
+        "phase0-sample-index.md"
+      ]
+    },
+    {
+      "id": "docs-corpus-baseline-separation",
+      "status": "passed",
+      "path": "src/react_agent/apps/docs_troubleshoot/git_docs_corpus_baseline.json"
+    },
+    {
+      "id": "phase0-independent-review",
+      "status": "passed",
+      "acceptance_status": "complete",
+      "missing_evidence": []
+    },
+    {
+      "id": "phase0-review-conclusion",
+      "status": "blocked",
+      "conclusion": "Partial",
+      "reason": "independent review did not conclude Complete"
+    }
+  ],
+  "snapshot_id": "main-c6be917c-20261106-v2",
+  "status": "blocked"
+}
