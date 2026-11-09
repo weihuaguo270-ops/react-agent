@@ -1,533 +1,107 @@
-# ReAct Agent
+# 企业内部工作助手（work-assistant）
 
-## 本地跨项目开发环境
+`react-agent` 是企业内部工作助手的过渡仓库：面向需要查规范、处理报销的员工，提供受控 Agent 执行、引用证据、人工审批和完整轨迹。仓库名暂保留为 `react-agent`，对外产品叙事以 **work-assistant** 为准。
 
-完整闭环验收需要本工作区中的 `trace-debugger` 和 `llm-eval-engine`。在四项目并列目录下，可使用项目虚拟环境安装本地 editable 依赖：
+## 一句话定位
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements-dev-local.txt --no-deps
-```
+企业内部工作助手帮助员工完成两件办公事：**规范咨询**（`docs_troubleshoot`）和**报销办理**（`expense`）。运行时、权限闸门、轨迹和评测是实现这些应用的工程能力，不是单独对外销售的通用 Agent 框架。
 
-该文件只引用相邻项目源码，不复制或维护第二份实现。
+## 做什么 / 不做什么
 
-## 项目定位
+| 做什么 | 不做什么 |
+|---|---|
+| 依据内部文档回答规范问题，缺少证据时拒答或转人工 | 不宣称生产 SaaS、企业多租户或长期线上 SLA |
+| 按政策和表单约束办理报销，保留决策与审批证据 | 不把合成任务、离线指标或沙箱成功率写成生产业务成功率 |
+| 受控调用工具、记录 Format B 轨迹、支持回归验收 | 不把仓库包装成通用 Agent 平台、自动根因诊断或云 APM |
 
-**受控 Agent 运行时**，面向三类企业场景：软件工程自动化、业务流程自动化、智能客服与知识库。提供权限边界、完整轨迹记录、任务验收和失败治理能力。
+当前证据是可部署、可评测的工程原型，包含合成任务与 `external_real_sandbox`。GitHub 写入和 PR 生命周期在沙箱中是真实演练，但不代表生产用户、真实流量或企业权限体系已经接入。
 
-## 对外口径
+## 两个办公场景
 
-可以表述为可部署、可评测的 Agent 工程原型；不能表述为生产 SaaS、长期线上 SLA、企业多租户权限平台或自动根因诊断系统。当前状态与 P0 见 [`docs/STATUS.md`](docs/STATUS.md)。
+### 规范咨询（主场景）
 
-## 结构入口
-
-运行时核心位于 `src/react_agent/`，演示入口位于 `demos/`，评测入口位于 `scripts/eval/`，轨迹契约位于 `schemas/`，架构、评测、失败回归和成熟度文档位于 `docs/`。
-
-闭环验收：`python scripts/eval/acceptance/harness_closed_loop.py --fixture --report-out artifacts/portfolio_acceptance.json`
-
-软件交付最小验收集（5 条）：`python scripts/eval/acceptance/build_acceptance_report.py`
-证据目录生成：`python scripts/eval/acceptance/materialize_acceptance_evidence.py`
-
-Mutable runtime artifacts no longer write into the installed package. See
-[`docs/features/portability.md`](docs/features/portability.md) for data-directory overrides.
-
-受控工程任务交付：[`docs/features/github-delivery-workflow.md`](docs/features/github-delivery-workflow.md)。默认影子执行；人工审批绑定计划指纹，外部 Draft PR 写入需单独显式授权。
-
-[![CI](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml/badge.svg)](https://github.com/weihuaguo270-ops/react-agent/actions/workflows/test.yml) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![scope](https://img.shields.io/badge/应用-软件工程·流程自动化·智能客服-lightgrey)](docs/features/application-direction.md)
-
-个人维护的 **Agent 运行时**（`react_loop` + ToolGuard + Harness + 权限闸门），面向三类企业应用：**软件工程自动化**、**业务流程自动化**、**智能客服与知识库**。详见 [`docs/features/application-direction.md`](docs/features/application-direction.md)。
-
-结构：[`docs/architecture/structure.md`](docs/architecture/structure.md) · 架构：[`docs/architecture/core-architecture.md`](docs/architecture/core-architecture.md) · 评测：[`docs/testing/frameworks/eval-index.md`](docs/testing/frameworks/eval-index.md) · 进展：[`docs/STATUS.md`](docs/STATUS.md) · 失败回归：[`docs/operations/failure-regression-pipeline.md`](docs/operations/failure-regression-pipeline.md) · 成熟度：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
-
-## 业务目标
-
-本项目是 **Agent 业务的执行底座**：业务方提供任务、工具和验收标准，运行时负责受控调用工具、记录完整轨迹，并把结果交给评测和失败治理系统。优先服务三类可复用场景：编码/执行、客服/工作流自动化、RAG/研究。
-
-| 业务问题 | 项目交付 |
-|------------------|----------|
-| Agent 是否在权限边界内完成任务 | 权限闸门、ToolGuard、可切换的工具隔离 |
-| 结果能否被业务和质量团队复核 | 引用/拒答策略、Format B 轨迹、Task Episode 验收标准 |
-| 失败是否能进入回归闭环 | Harness、StepWatcher、离线/HTTP eval 和跨仓接口 |
-| 能否作为应用原型交付验证 | 多 app HTTP、Web UI、Docker 与可复现演示 |
-
-**当前阶段：** 已形成可部署、可评测的工程原型，并在独立的
-[`agent-delivery-sandbox`](https://github.com/weihuaguo270-ops/agent-delivery-sandbox)
-完成 24 条合成 Issue 的 Shadow 运行、4 条受控 Draft PR、人工接受/拒绝、合并与回滚演练。
-该证据标记为 `external_real_sandbox`：GitHub 写入和 PR 生命周期是真实的，但任务不来自生产用户；
-尚未证明多租户隔离、真实业务 SLA、长期线上流量稳定性或企业权限体系集成。
-
-## 三大业务应用方向
-
-| 方向 | 业务场景 | 快速入口 |
-|------|----------|----------|
-| **① 软件工程 Agent** | 编码执行、Issue 任务、GitHub PR 自动化、多步工具调用 | `python -m react_agent "用 calculator 算 17*19"` · [`run_execution_suite.py`](scripts/eval/execution/run_execution_suite.py) |
-| **② 企业流程自动化** | 报销审批工作流、政策合规决策、表单验证与状态机编排 | [`demo_expense_workflow.py`](demos/demo_expense_workflow.py) · [`run_expense_business_eval.py`](scripts/eval/acceptance/run_expense_business_eval.py) |
-| **③ 智能客服与知识库** | 证据化文档排障、引用溯源、拒答策略、Runbook 自动化 | `docker compose up` · [`run_docs_troubleshoot_eval.py`](scripts/eval/docs/run_docs_troubleshoot_eval.py) |
-
-**插件功能**（默认关闭，按需启用）：
-- **RAG** - 检索增强生成 (`REACT_AGENT_PLUGINS=rag`)
-- **MCP** - Model Context Protocol 集成 (`REACT_AGENT_PLUGINS=mcp`)
-- **Orchestration** - 多 Agent 编排
-- **ToT** - Tree of Thought 推理
-- 详见 [`docs/features/plugins.md`](docs/features/plugins.md)
-
-**Since v0.5.0：** `POST /v1/chat` 支持 `app=docs_troubleshoot|expense|default`；`GET /v1/info` 列出 applications。默认离线 app 由 `REACT_AGENT_DEFAULT_APP` 控制（兼容旧 `REACT_AGENT_APP`）。
-
-**0.9.0 之后（Unreleased）：** `POST/GET /v1/chat/stream` 提供 `text/event-stream` 进度事件，两个服务面共用同一套事件词表与帧格式（`id:` 序号 + `event:` + 多行 `data:`）。
-
-**异步任务队列 MVP（Unreleased）：** `POST /v1/tasks` 可将任务写入 Redis Streams，由独立 Worker 执行，任务状态、结果和错误持久化到 PostgreSQL；`GET /v1/tasks/{task_id}` 查询持久化记录，`DELETE /v1/tasks/{task_id}` 支持协作式取消。默认内存任务模式继续用于本地回归，Redis 模式通过 `REACT_AGENT_QUEUE_BACKEND=redis` 启用。完整配置、状态机、故障恢复和验收证据见 [`docs/specs/redis-task/mvp-spec.md`](docs/specs/redis-task/mvp-spec.md)。
-
-该部署由当前目录的 Docker Compose 提供 PostgreSQL 与 Redis：API/Worker 在 Compose 网络内分别连接 `postgres:5432` 和 `redis:6379`；默认项目名下对应 `react-agent-postgres-1` 与 `react-agent-redis-1`。宿主机访问项目 Redis 使用 `127.0.0.1:6380`，PostgreSQL 未发布宿主机端口。已有的 `learn-postgres`、`learn-redis` 是独立容器，不是这套 Compose 服务。用 `docker compose ps postgres redis` 查看本项目服务是否正在运行；若覆盖 `REACT_AGENT_DATABASE_URL` 或 `REACT_AGENT_REDIS_URL`，以覆盖后的地址为准。
-
-**垂直 demo（② 的子场景）：** [证据化文档排障](docs/features/evidence-docs-troubleshoot.md) — 引用/拒答/现场证据；`agent_runner` 默认离线循环 · Live 走 `react_loop`。
-
-```bash
-# ① 软件工程 Agent
-python scripts/eval/execution/run_execution_suite.py --modes agent
-
-# ② 企业流程自动化（Expense 工作流）
-python demos/demo_expense_workflow.py
-python scripts/eval/acceptance/run_expense_business_eval.py --split dev
-
-# ③ 智能客服与知识库（docs_troubleshoot）
-docker compose up --build
-python scripts/eval/docs/run_docs_troubleshoot_eval.py
-```
-
-## 垂直 demo：证据化文档排障
+员工询问内部 API、部署、故障排查或操作规范。助手检索文档、校验引用、组织证据化回答；没有足够依据时拒答。入口与评测：
 
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
-python demos/demo_workflow.py                   # 确定性 Workflow（legacy DAG）
-python -m react_agent.workflow run docs_troubleshoot --query "401 返回什么？"
-python scripts/eval/docs/run_docs_troubleshoot_eval.py      # 黄金集 34 条（默认 agent 路径）
-python scripts/eval/docs/run_fault_eval.py                  # 故障模拟 12 条
-python scripts/eval/docs/run_production_eval.py             # 生产盲测 5 条
-python scripts/eval/docs/run_git_docs_eval.py               # Git 文档 held-out 5 条
-python -m react_agent.server --port 8765           # 浏览器 http://127.0.0.1:8765/ · 产品 UI
-docker compose up --build                         # 同上 · 见 docs/features/deploy.md
+python scripts/eval/docs/run_docs_troubleshoot_eval.py
+python -m react_agent.server --port 8765
 ```
 
-### 外部业务任务证据
+### 报销办理（第二场景）
 
-GitHub 只读数据集按仓库簇隔离 dev/golden/held-out，保存 Request ID、来源 URL、
-数据指纹、失败切片和人工接管率。默认 10 个仓库、5 类任务，共 50 条：
+员工提交报销信息，助手按政策、表单和状态机完成校验，必要时进入人工审批，并输出可审计的业务终态。入口与评测：
 
 ```bash
-python scripts/eval/acceptance/run_github_portfolio_dataset.py \
-  --cache-dir artifacts/github-cache \
-  --out artifacts/github-business-dataset.json
-```
-
-完成门禁要求任务数不少于 50、存在 held-out 且全部来源可追溯。公开 API 限流或仓库采集失败时
-命令返回非零状态；缓存用于断点续跑，不把部分结果记为完整业务成功证据。
-运行器优先使用 `GITHUB_TOKEN` / `GH_TOKEN`，未设置时读取当前 `gh auth` 凭据；启动批量采集前
-会检查剩余 API 配额。2026-08-13 认证运行结果为 50/50，快照见
-[`docs/testing/baselines/archive/2026-q3/github_portfolio_dataset_20260813.json`](docs/testing/baselines/archive/2026-q3/github_portfolio_dataset_20260813.json)。
-
-Workflow v5（legacy DAG）：`现场证据 → search → lookup_api → synthesize → policy → diagnosis`。  
-**默认运行时**为 **Agent 循环**（`agent_runner.py`）：根据观测选工具、强制 `verify_citations`、写 Harness 轨迹；Live 模式用 `react_loop` + LLM。详见 [`EVIDENCE_DOCS_TROUBLESHOOT.md`](docs/features/evidence-docs-troubleshoot.md) · 评测：[`DOCS_TROUBLESHOOT_EVAL.md`](docs/testing/frameworks/docs-troubleshoot-eval.md) · **Since v0.4.0**。
-
-**产品特色 vs 可视化：** 差异化在 **Agent 运作本身** — 工具选择循环、引用校验工具步、权限闸门、Harness 轨迹与 failure flywheel；eval 是验收手段而非卖点。可视化 **中等**：内置 Web UI（`/`）展示证据链与 agent 步数；CLI + JSON + 轨迹文件仍是回归主路径。
-
-## 范围与定位
-
-| 是 | 不是 |
-|----|------|
-| **三类企业应用**：软件工程自动化 · 业务流程自动化 · 智能客服与知识库 | 单一产品或通用 AIOps 平台 |
-| Agent 运行时 + 循环治理（ToolGuard、Harness、权限、轨迹飞轮） | 图编排平台 / LangGraph 替代品 |
-| 可部署 HTTP + Docker + 多套 eval 证据 + 服务鉴权 / 异步人工审批 | 多租户 SLA / 自动线上根因 |
-
-跨仓：**本仓 Core** = 执行 + capability 规则打分；**llm-eval-engine** = Process Reward / 人机校准；**trace-debugger** = 轨迹启发式复盘 + Harness Health 门禁。共享约定见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
-
-证据地图：[`docs/testing/frameworks/p0-evidence-map.md`](docs/testing/frameworks/p0-evidence-map.md) · Harness 五维健康度：[`docs/testing/frameworks/harness-health.md`](docs/testing/frameworks/harness-health.md)。
-
-## 架构概览
-
-```
-query
-  ├─ react_loop（① 软件工程 Agent，默认 Live）
-  ├─ agent_runner（② 企业流程自动化）
-  └─ agent_runner / server（③ 智能客服与知识库）
-        → permission gate → tools / ToolGuard → Format B 轨迹
-```
-
-| 维度 | Core（默认） |
-|------|----------------|
-| **入口** | `agent_runner` / `react_loop()` / `python -m react_agent.server` |
-| **依赖** | 标准库 + LLM API（离线 Agent 可不需 Key） |
-| **侧重点** | 主流 ReAct 形态 + 循环内治理、Harness、评测验收 |
-
-### 执行流程（Core）
-
-```
-query
-  ├─ run_docs() → agent_runner（默认）
-  │     观测 → search/lookup/parse_* → verify_citations → policy → diagnosis
-  ├─ react_loop()（Live）
-  │     LLM 选工具 → 同一套 docs 工具与 prompt
-  └─ run_workflow("docs_troubleshoot")（legacy DAG）
-```
-
-多 Agent 编排（Orchestrator / Worker）的能力与边界见 [多 Agent 编排](#多-agent-编排orchestrator--worker)；MCP / RAG 为**实验能力**，见 [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。成熟度评判见 [`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)。
-
-### 模块清单
-
-完整地图见 [`docs/architecture/structure.md`](docs/architecture/structure.md)。精简树：
-
-```
-src/react_agent/          # Core 默认
-├── workflow/ · react_loop.py · apps/docs_troubleshoot/ · apps/expense/ · server/
-├── skills/ · multimodal.py         # 可注册 skill 边界 / 制品证据（不调用 OCR/VLM）
-├── tools/ · tool_scope.py · write_sets.py
-├── orchestrator.py · planner.py · intent/    # 多 Agent 编排 / 意图识别
-├── safety/ · harness/ · resilience.py · eval/
-demos/                    # 演示入口
-scripts/eval/             # 评测入口（按类别分子目录）
-fixtures/                 # 评测与演示共用夹具
-docs/                     # STRUCTURE · CORE · EVAL_INDEX；报告在 reports/
-```
-
-## 核心功能
-
-### 多 Provider LLM 支持
-
-优先读取项目根目录 `.env` / `llm_config.json`（`.env` 会覆盖系统里残留的旧 API Key），也可用环境变量切换 provider：
-
-```bash
-export LLM_PROVIDER=deepseek   # 或 openai / anthropic
-```
-
-### 权限与沙箱（两层）
-
-**Permissions（准不准）** 与 **Sandbox（崩不崩）** 是两层，互不替代：
-
-| 层 | 模块 | 职责 |
-|----|------|------|
-| 权限闸门 | `safety/permissions.py` + `permission_gate.py` | deny → ask → allow；**模型 tool_call ≠ 允许执行** |
-| 工具隔离 | `harness/sandbox.py` | 开发用进程后端；生产用失败关闭的容器后端 |
-
-权限评估顺序（Harness 强制）：
-
-1. **DENY** — 参数 DENY 规则或工具表 DENY（默认拦截）
-2. **ASK** — 确认族工具再分两档：
-   - **`CONFIRM_READ`**（敏感只读）：任意模式直接放行（如 `read_config_snapshot`、`probe_service_health`）
-   - **`CONFIRM`**（副作用）：三种处置之一：
-     - **异步人工审批（默认）**：`REACT_AGENT_APPROVAL_MODE` 未设或为 `async` → 落盘待批，经 `GET/POST /v1/approvals` 批准后带 `approval_id` 重试
-     - 注入 HITL：交互式询问（需真人在同一通道）
-     - 显式 `auto_allow` / `off`：放行（启动日志与 `/ready` 告警）；或 `REACT_AGENT_STRICT_CONFIRM=1` 直接拒绝
-3. **ALLOW** — SAFE / NOTIFY
-
-关闭权限闸门：`REACT_AGENT_PERMISSION_GATE=0`。
-
-> 审批被建模为**状态**而非消息：HTTP 请求无法挂着等人几分钟，因此不需要 WebSocket。
-> 待批项持久化到 `REACT_AGENT_DATA_DIR`（容器部署需挂卷，否则重启即丢）；
-> 审批目录不可写时闸门**失败关闭**（拒绝执行），不会退化为放行。
-
-工具名表 + 参数规则示例（`safety/permissions.py`）：
-
-| 等级 | 行为 | 适用场景（示例） |
-|------|------|------------------|
-| SAFE | 自动放行 | web_search、calculator |
-| NOTIFY | 记录后继续 | 部分读信息工具 |
-| CONFIRM_READ | 敏感只读，闸门放行 | read_config_snapshot、probe_service_health |
-| CONFIRM | 默认 async 待批 | write_file、execute_python、apply_fix_step |
-| DENY | 默认拦截 | delete_directory、install_package |
-
-范围与限制：
-- 权限层 **不是** OS ACL；未知工具名会进入 Sandbox，但权限表仍应显式登记。
-- `process` 后端仅隔离崩溃/超时；不可信代码必须使用 `container` 后端。
-- `container + required` 实施非 root、只读根、默认断网和资源限额；运行时不可用时失败关闭。
-- 严格容器模式禁止 MCP 宿主直连，需要独立隔离 Broker。
-
-`harness/sandbox.py` 支持 `off` / `auto` / `on` 和 `process` / `container`。
-生产配置与威胁模型见 [`docs/features/sandbox-security.md`](docs/features/sandbox-security.md)。
-
-### 多 Agent 编排（Orchestrator / Worker）
-
-`orchestrator.py` + `planner.py` 实现 Orchestrator–Worker 模式：Planner 把请求拆成
-带依赖的子任务，按拓扑分层（同层并行），每个 Worker 跑独立 ReAct 循环，结果汇总回
-主对话。入口是 `multi_agent_chain()`（CLI 用 `--parallel`）。
-
-```bash
-python -m react_agent --parallel "搜索今天的汇率，并且算一下 100 美元换成人民币"
-```
-
-> CLI 只在提问里出现「同时 / 并且 / 还有 / 另外 / 且」等并列词时才自动走编排路径；
-> 其他提问仍走单 Agent 的 `react_loop`。`--parallel` 只是允许同层任务并行执行。
-
-Planner 的 `context: fork` 让子任务带上**父会话答案摘要**（不是完整历史，提示词里
-会如实说明），适合"基于刚才的结论继续做"的子任务。
-
-**能力与边界**（完整表见 [`docs/architecture/core-architecture.md`](docs/architecture/core-architecture.md)）：
-
-| 能力 | 现状 |
-|------|------|
-| Worker 工具面 | 按声明收窄（`tool_scope.py`）；未知工具名告警，严格模式抛错；**空声明不等于全量** |
-| 同层并行 | **写冲突检测默认开启**：写集可能相交的任务拆到不同段串行 |
-| 写集来源 | Planner 输出 `\| writes: 路径`；**未声明或 `unknown` 一律按冲突保守串行** |
-| 委派深度 | 默认 `1`（允许直接子级，禁止更深嵌套）；超限明确拒绝 |
-| 并发上限 | 默认 `4` |
-| Worker 记忆 | 默认不读不写长期记忆 |
-
-> ⚠️ **并行 Worker 没有工作区隔离**：它们共享同一进程与同一工作目录，同时修改
-> 同一文件仍会互相覆盖。当前的安全保障是「写集声明 + 冲突分层」这套调度约定，
-> **不是隔离机制**。因此读密集任务（检索、审查、日志分析）适合并行；写密集任务
-> 必须先声明写集，声明不完整时调度器会保守串行——这是设计意图，不是缺陷。
-> 独立 worktree / 进程外隔离尚未实施。
-
-### 服务入口点与能力包
-
-两个 HTTP 入口点，按是否安装 `[service]` 决定默认走哪个：
-
-| 入口点 | 依赖 | 说明 |
-|--------|------|------|
-| `react-agent-server` | 无（标准库） | 零依赖服务面，离线/最小运行时 |
-| `react-agent-api` | `react-agent[service]` | FastAPI + Uvicorn 服务面 |
-
-`python -m react_agent.server` 与容器镜像**默认使用 FastAPI**（镜像内已装 `[service]`）；
-**仅核心安装**（未装 fastapi）时自动回退到标准库服务面，轻量运行时不受影响。端口与就绪探针
-两者一致（`REACT_AGENT_HOST` / `REACT_AGENT_PORT`，`/health` + `/ready`）：两个 Python 入口点的默认绑定是
-`127.0.0.1:8765`；容器镜像与 `docker-compose.yml` 通过 `REACT_AGENT_HOST=0.0.0.0` 对外暴露。
-容器细节与构建参数见 [`docs/features/deploy.md`](docs/features/deploy.md)。
-
-能力包按需安装（core 安装保持轻量，`dependencies = []`）：
-
-```bash
-pip install -e ".[service]"     # FastAPI 服务面
-pip install -e ".[rag]"         # 语义检索（numpy / scikit-learn / sentence-transformers）
-```
-
-**插件功能**：`react_agent/` 提供可选的插件能力（RAG、MCP、Multi-Agent、ToT、Dashboard）。
-这些功能默认不注册进核心工具表，通过 `REACT_AGENT_PLUGINS=1` 按需启用。详见 [`docs/features/plugins.md`](docs/features/plugins.md)。
-
-### 执行轨迹（Harness）
-
-每步 thought / action / observation 写入 Format B JSON，供回放和跨仓对接（`harness/recorder.py` → `schemas/harness_trajectory.schema.json`）。
-
-**Task Episode**（v0.2.7+）：轨迹可携带 `task_episode_id` 与 `acceptance_criteria`，与 eval case 对齐，供 trace-debugger scan/compare 与 Process Reward 共用验收边界。详见 [`docs/testing/frameworks/harness-health.md`](docs/testing/frameworks/harness-health.md)。
-
-```python
-from react_agent.harness.recorder import start_trajectory, current_trajectory
-
-start_trajectory(
-    query="17 * 19",
-    task_episode_id="exec_calc_mul",
-    acceptance_criteria=["tool calculator returns 323"],
-)
-result = react_loop("17 * 19")
-trajectory = current_trajectory()
-
-# 逐步骤回放
-from react_agent.harness.replay import replay_trajectory
-replay_trajectory(trajectory)
-```
-
-安装 sibling [trace-debugger](https://github.com/weihuaguo270-ops/trace-debugger) 后，Harness 默认启用 **StepWatcher** 实时失败记录；发版前可 `tdebug scan … --compare --findings-out` 做回归门禁。
-
-### RAG / MCP / Context / 业务 Demo
-
-插件功能和演示入口见 [`docs/features/plugins.md`](docs/features/plugins.md) 和 [`docs/features/application-direction.md`](docs/features/application-direction.md)。工作流总览：[`docs/architecture/agent-workflow.md`](docs/architecture/agent-workflow.md)、[`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md)。
-
-```bash
-set REACT_AGENT_PLUGINS=rag,mcp
-set REACT_AGENT_RAG_MODE=keyword
-set REACT_AGENT_MCP_MOCK=1
-python demos/demo_rag.py
-python demos/demo_mcp_mock.py
 python demos/demo_expense_workflow.py
+python scripts/eval/acceptance/run_expense_business_eval.py --split dev
 ```
 
-## 快速开始
+两条场景属于同一员工工作助手，不是两个并列产品。底层 `react_loop`、`agent_runner`、ToolGuard、Harness 和服务入口由两个场景复用。
+
+## 受控变更交付：规划中的独立项目
+
+原 GitHub 交付能力将独立命名为 **受控变更交付（`change-delivery`）**。它负责读取 Issue、影子执行、隔离测试，并在人工审批后创建 Draft PR。当前阶段只保留在文档中，不拆 Git 仓库、不迁移代码、不与两个主场景并列宣传。
+
+详见 [`docs/change-delivery-plan.md`](docs/change-delivery-plan.md) 和技术附录 [`docs/features/github-delivery-workflow.md`](docs/features/github-delivery-workflow.md)。
+
+## 跨仓质量闭环
+
+工作助手或未来的 `change-delivery` 产出轨迹后，质量配件按固定顺序消费：
+
+```text
+工作助手或受控变更交付产出轨迹
+  → trace-debugger：规则失败打标、scan/compare、CI
+  → llm-eval-engine：过程/业务证据与失败门，输出 pass/review/hold
+```
+
+- [`trace-debugger`](https://github.com/weihuaguo270-ops/trace-debugger)：轨迹失败雷达与 CI 钩子，提供便宜、可解释、可回归的失败证据，不做最终发版裁决。
+- [`llm-eval-engine`](https://github.com/weihuaguo270-ops/llm-eval-engine)：发版前自检，汇总过程、业务、失败门和性能证据，输出 `pass` / `review` / `hold`。
+- 两个质量仓保持独立，也可被 `change-delivery` 编排进 CI；不会合并成一个交付仓。
+
+共享轨迹契约见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
+
+## 运行与验收入口
 
 ```bash
-pip install -e ".[test]"
-cp .env.example .env
-python -m react_agent "法国的首都是什么？"
+# 本地 Agent 冒烟
+python -m react_agent "用 calculator 算 17*19"
+
+# 规范咨询
+python scripts/eval/docs/run_docs_troubleshoot_eval.py
+
+# 报销办理
+python scripts/eval/acceptance/run_expense_business_eval.py --split dev
+
+# 跨仓闭环验收
+python scripts/eval/acceptance/run_portfolio_acceptance.py
 ```
 
-Web 面板（实验）：`REACT_AGENT_EXPERIMENTAL_TOOLS=1` 后 `python -m react_agent.dashboard.server`。
+运行时核心在 `src/react_agent/`，应用入口在 `src/react_agent/apps/`，演示在 `demos/`，评测在 `scripts/eval/`，轨迹契约在 `schemas/`。
 
-## 评测（EVAL-ONLY）
+## 项目命名与边界
 
-文档排障四套离线门禁 + capability 规则打分：[`docs/testing/frameworks/docs-troubleshoot-eval.md`](docs/testing/frameworks/docs-troubleshoot-eval.md) · [`docs/testing/frameworks/eval-index.md`](docs/testing/frameworks/eval-index.md) · 证据地图：[`docs/testing/frameworks/p0-evidence-map.md`](docs/testing/frameworks/p0-evidence-map.md)。
+| 名称 | 角色 | 边界 |
+|---|---|---|
+| 企业内部工作助手 / `work-assistant` | 对外主产品 | 规范咨询 + 报销办理 |
+| 受控变更交付 / `change-delivery` | 规划中的独立产品 | Issue → 影子执行 → 人工审批 → Draft PR |
+| `trace-debugger` | 质量配件 | 失败信号、规则回归、CI，不做最终裁决 |
+| `llm-eval-engine` | 质量配件 | 发版前自检，输出 `pass/review/hold` |
 
-失败自动检出 → 回归门禁 → 修复后强制复验：[`docs/operations/failure-regression-pipeline.md`](docs/operations/failure-regression-pipeline.md) · 答辩口径：[`docs/FAILURE_REGRESSION_PITCH.md`](docs/FAILURE_REGRESSION_PITCH.md)（可写「夹具 + 3 条 SoftwareTask 已复现」；不可写 SLA / 自优化）。
+## 简历项目简介
 
-```bash
-python scripts/eval/docs/run_docs_troubleshoot_eval.py         # golden 34
-python scripts/eval/docs/run_fault_eval.py                     # fault 12
-python scripts/eval/docs/run_production_eval.py                # production 5
-python scripts/eval/docs/run_git_docs_eval.py                  # git docs 5
-python -m react_agent.eval --dataset capability
-python scripts/eval/execution/run_execution_suite.py --publish
-python scripts/eval/rag/run_public_rag_benchmark.py           # 分层 RAG：引用 by_tier + drop-off
-python scripts/eval/acceptance/run_expense_business_eval.py          # 有状态业务任务：dev/golden/held_out
-```
+企业内部工作助手（`work-assistant`）工程原型，面向员工规范咨询与报销办理两类办公场景。
+实现证据化文档问答、政策约束下的报销工作流、权限闸门、人工审批和完整 Agent 轨迹。
+通过 `trace-debugger` 接入规则失败扫描与 CI 回归，通过 `llm-eval-engine` 汇总过程和业务证据并输出发布前结论。
+在合成任务与 `external_real_sandbox` 中完成可复现实验，验证了应用闭环和质量配件协作。
+当前证据支持可部署、可评测的工程原型，不等同于生产 SaaS、多租户平台或长期线上 SLA。
 
-报销场景可导出跨仓 `EvaluationEpisode v1`，也可用故障画像验证发布门禁确实会阻断：
+## 进一步阅读
 
-```bash
-python scripts/eval/acceptance/run_expense_business_eval.py \
-  --agent-version expense-agent-v2 \
-  --episodes-out artifacts/expense-v2 \
-  --report-out artifacts/expense-v2.json
-python scripts/eval/acceptance/run_expense_business_eval.py \
-  --agent-version expense-agent-broken \
-  --profile no_action --compare-reference
-```
-
-真实外部系统和部署可靠性证据可分别运行：
-
-```bash
-python scripts/eval/acceptance/run_github_business_tasks.py --repository langchain-ai/langgraph
-python scripts/eval/reliability/run_http_reliability.py --url http://127.0.0.1:8765 \
-  --requests 50 --concurrency 10
-```
-
-GitHub 路径默认只读；动态 Issue 内容不是冻结 Benchmark。HTTP 报告只代表指定目标与负载。
-
-Expense 业务集不以答案关键词作为主门禁，而是检查 claim 数据库终态和审计事件数；
-可用 `--episodes-out` 导出 `evaluation-episode/v1`，交给 sibling 评测与失败治理仓。
-
-与 [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) 校准口径：**held_out live κ≈0.69**（n=20，CI[0.46,0.92]）— 见 [METRICS_TRUST](https://github.com/weihuaguo270-ops/llm-eval-engine/blob/master/docs/METRICS_TRUST.md)；有效口径以该文档为准。  
-失败归因：[trace-debugger FAILURE_INDEX](https://github.com/weihuaguo270-ops/trace-debugger/blob/master/docs/FAILURE_INDEX.md)。
-
-### Harness 轨迹 Schema + 闭环 Demo
-
-三仓共用 **Format B** 轨迹约定（1-based `step`，工具参数优先 `arguments` 字符串）：
-
-| 产物 | 路径 |
-|------|------|
-| JSON Schema | [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json) |
-| 校验 / 归一化 | `react_agent.harness.contracts.parse_trajectory()`（旧 `react_agent.harness.schema` 为兼容入口） |
-| 离线 fixture | `fixtures/harness_closed_loop.json` |
-| 一键 demo | `python scripts/eval/acceptance/harness_closed_loop.py` |
-
-闭环：`Agent 记录 → Trace Debugger 失败分类 → Eval Engine Process Reward`（CI 的 `test` job 会 clone 两仓并跑 demo + **契约测试**）。
-
-**跨仓集成验证：**
-
-| 验证项 | 命令 / CI |
-|--------|-----------|
-| 跨仓评分 API | `pytest tests/test_eval_engine_contract.py` |
-| Agent→Eval 路径 | `python tests/ci_verify_integration.py`（由 CI 的 `test` job 执行） |
-| Schema→tdebug→eval | `python scripts/eval/acceptance/harness_closed_loop.py --fixture` |
-
-```bash
-pip install -e ../trace-debugger -e ../llm-eval-engine   # 本地旁路仓
-python scripts/eval/acceptance/harness_closed_loop.py --fixture
-python scripts/eval/acceptance/harness_closed_loop.py --mock-agent
-```
-
-## 测试
-
-```bash
-# 离线单测（含 capability_scorer、resilience）
-pytest tests/ -q
-
-# 全模块脚本测试（不依赖 LLM）
-python test_all.py
-
-# 真实 LLM：CI 冒烟子集 / 全量（无 Key 时自动 skip）
-pytest tests/test_real_llm.py -v -m real_llm_smoke
-pytest tests/test_real_llm.py -v -m real_llm
-```
-
-### CI 与真实 LLM
-
-| Job | 触发 | 行为 |
-|-----|------|------|
-| lint | push、PR | Ruff（`src/`、`tests/`，仅启用 `F` 规则） |
-| test / test-windows | push、PR | 离线单测与脚本测试；`test` 还会 clone 两个 sibling 仓跑跨仓 demo 与契约测试 |
-| typecheck | push、PR | mypy（`src/react_agent`） |
-| security | push、PR | 干净 venv 里跑 pip-audit |
-| docker-smoke | push、PR | 构建镜像，打 `/ready` 并跑部署冒烟 |
-| **Real LLM gate** | push、PR | 探测 `DEEPSEEK_API_KEY`；无 Key 时下游 live job 显示 Skipped |
-| **Real LLM (smoke)** | push、PR（且已配置 Secret） | 跑 `real_llm_smoke`（事实问答 / 计算器 / 多步推理）；**失败会使该 job 红** |
-| **Real LLM (full)** | Actions → Run workflow → suite=`full` | 全量 `real_llm` |
-
-主干保护要求上述 9 项必需检查（`lint`、`test (3.10)`、`test (3.11)`、`test-windows (3.10)`、`test-windows (3.11)`、`typecheck`、`security`、`docker-smoke`、`Real LLM gate`）全绿。另一个 workflow `daily-smoke`（每日 UTC 01:00 定时 + 手动）只负责写跨日 variance 日志，不参与主干门禁。
-
-在仓库 **Settings → Secrets and variables → Actions** 添加 `DEEPSEEK_API_KEY`（与本地 `.env` 同名即可）。未配置时 **Real LLM gate** 会标记无 Key，smoke/full job 显示为 **Skipped**，不影响离线 CI。
-
-也可本地写入 Secret（勿把 Key 提交进 Git）：
-
-```bash
-# 从 .env 读取一行写入 GitHub（需已 gh auth login）
-gh secret set DEEPSEEK_API_KEY --repo weihuaguo270-ops/react-agent < <(grep '^DEEPSEEK_API_KEY=' .env | cut -d= -f2-)
-```
-
-仓库忽略本地 `llm_config.json`；CI / 新环境会回退到已提交的 [`llm_config.example.json`](llm_config.example.json)（Key 仍只来自环境变量 / Secret）。
-
-## 服务部署与安全
-
-`python -m react_agent.server --port 8765` 暴露的 HTTP 面**默认不鉴权**（本地开发便利）。除 `/health`、`/ready` 探针外，所有接口都能驱动 Agent 工具（含 `execute_python`），因此一旦对外可达必须显式加固。完整说明：[`docs/features/deploy.md`](docs/features/deploy.md)。
-
-| 能力 | 开关 | 作用 |
-|------|------|------|
-| 共享密钥鉴权 | `REACT_AGENT_AUTH_TOKEN` | 除探针外全接口要求 `Authorization: Bearer`（或 `X-Api-Key`） |
-| Host 头校验 | `REACT_AGENT_HOST_VALIDATION`（默认 `loopback`） | 防 **DNS rebinding**；`allowlist` 档未声明域名则拒绝启动，`REACT_AGENT_ALLOWED_HOSTS` 声明域名 |
-| 异步人工审批（默认） | `REACT_AGENT_APPROVAL_MODE`（默认 `async`） | 副作用 `CONFIRM` 阻塞待批，经 `/v1/approvals` 批准；本地可设 `auto_allow` / `off` |
-| 答案流式 | `REACT_AGENT_LLM_STREAM`（默认开） | `/v1/chat/stream` 推送 `answer_delta`；客户端断连即**取消执行**，不再空烧 LLM 调用 |
-| 写冲突串行化 | `REACT_AGENT_WRITE_CONFLICT_SERIALIZE`（默认 `1`） | 同层写集可能相交的 Worker 拆段串行；设 `0` 回到历史并行行为 |
-| Worker 工具面严格模式 | `REACT_AGENT_SCOPE_STRICT`（默认 `0`） | `1` 时工具面声明含未知工具名直接抛错，而非仅告警 |
-| 委派深度上限 | `REACT_AGENT_SUBAGENT_MAX_DEPTH`（默认 `1`） | 子 Agent 不得再派生更深层子 Agent；超限明确拒绝 |
-| 同层并发上限 | `REACT_AGENT_SUBAGENT_MAX_CONCURRENCY`（默认 `4`） | `0` 表示不限 |
-| Worker 记忆回写 | `REACT_AGENT_WORKER_MEMORY_WRITE`（默认 `0`） | 是否允许 Worker 回写长期记忆（默认禁止，避免并行污染） |
-
-出站与进程边界亦加固：SSRF 守卫（`safety/net_guard.py`）、`trace_id` 路径穿越防护、MCP/沙箱子进程环境白名单、轨迹落盘脱敏、app 工具作用域隔离（`docs_tools` 不外溢到 Core）。
-
-## 环境要求
-
-- Python 3.10+
-- LLM API key（运行 Agent / 真实评测时需要）
-
-## 相关项目
-
-- [llm-eval-engine](https://github.com/weihuaguo270-ops/llm-eval-engine) — LLM 评估实验框架（Process Reward）
-- [llm-inference-pipeline](https://github.com/weihuaguo270-ops/llm-inference-pipeline) — LLM 推理链路实现、基准与发布性能证据
-- [trace-debugger](https://github.com/weihuaguo270-ops/trace-debugger) — 轨迹分析小工具
-
-## Artifact 引用
-
-Harness 轨迹支持 input_artifacts、output_artifacts 和步骤级 artifacts。
-Recorder 只保留 id、media_type、uri 等白名单字段；Schema 校验禁止 data/base64
-内嵌内容。该能力只记录媒体引用，不读取或评估媒体内容。
-
-## 📚 文档
-
-**⚠️ 贡献文档前必读：** [`docs/CONTRIBUTING_DOCS.md`](docs/CONTRIBUTING_DOCS.md)
-
-### 文档结构
-
-项目文档按功能分类组织：
-
-| 目录 | 说明 | 主要内容 |
-|------|------|---------|
-| [`docs/architecture/`](docs/architecture/) | 🏗️ 架构设计 | 核心架构、系统结构、Agent 工作流 |
-| [`docs/features/`](docs/features/) | ✨ 功能说明 | 插件系统、应用方向、部署指南 |
-| [`docs/specs/`](docs/specs/) | 📋 规格定义 | Harness/Expense/Redis 规格和验收 |
-| [`docs/testing/`](docs/testing/) | 🧪 测试评测 | 评测框架、基线、回归测试 |
-| [`docs/operations/`](docs/operations/) | 🔧 运维流程 | CI 改进、失败回归、制品管理 |
-
-完整文档导航：[`docs/README.md`](docs/README.md)
-
-### 规格文档规则
-
-如果你要：
-- **创建/修改规格** → 先阅读 [`docs/specs/ORGANIZATION_RULES.md`](docs/specs/ORGANIZATION_RULES.md)
-- **编写规格内容** → 参考 [`docs/specs/SPEC_WRITING_STANDARD.md`](docs/specs/SPEC_WRITING_STANDARD.md)
-- **创建任何文档** → 遵循 [`docs/CONTRIBUTING_DOCS.md`](docs/CONTRIBUTING_DOCS.md)
-
-**重要：** 不遵守文档规则的 PR 可能被要求修改。
-
----
-
-## License
-
-MIT
-
-## 贡献与安全
-
-见 [CONTRIBUTING.md](CONTRIBUTING.md) / [SECURITY.md](SECURITY.md)。
+- 当前状态：[`docs/STATUS.md`](docs/STATUS.md)
+- 应用方向：[`docs/features/application-direction.md`](docs/features/application-direction.md)
+- 变更交付计划：[`docs/change-delivery-plan.md`](docs/change-delivery-plan.md)
+- 口径检查清单：[`docs/PORTFOLIO_POSITIONING_CHECKLIST.md`](docs/PORTFOLIO_POSITIONING_CHECKLIST.md)
+- 架构：[`docs/architecture/core-architecture.md`](docs/architecture/core-architecture.md)
+- 生产边界：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)

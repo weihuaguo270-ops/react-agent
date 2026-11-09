@@ -1,122 +1,72 @@
-# 应用方向（主流 Agent 三条主线）
+# 应用方向：企业内部工作助手
 
-本仓 **Agent 运行时**（`react_loop` + ToolGuard + Harness + 权限闸门）服务于 GitHub / 行业里的 **三条主流应用方向**，而不是单一窄垂直。
+本仓库的对外产品名为 **企业内部工作助手（work-assistant）**。它服务同一员工身份下的两件办公事，而不是三条并列业务线或通用 Agent 框架。
 
-| 主线 | 典型任务 | 本仓入口 | 评测 / 证据 |
-|------|----------|----------|-------------|
-| **① 写代码 / 执行** | 工具调用、多步推理、Issue 式任务 | `react_loop` · `run_execution_suite.py` · HTTP `app=default` | execution 36 条 agent · HTTP smoke 3 条 |
-| **② 客服 / 自动化** | 政策问答、工作流、可部署 Chat API | `demo_expense_workflow.py` · `server` · `apps/docs_troubleshoot` | docs 黄金集 34 · fault 12 · HTTP smoke |
-| **③ 通用 RAG / 研究** | 检索增强、公开 QA、Deep Research 形 | `demo_rag.py` · `run_public_rag_benchmark.py` | public RAG 分层 |
+| 场景 | 业务问题 | 入口 | 证据重点 |
+|---|---|---|---|
+| **规范咨询**（主场景） | 员工查内部规范、API、部署和故障排查信息 | docs_troubleshoot、python -m react_agent.server | 检索、引用校验、无依据拒答、现场证据 |
+| **报销办理**（第二场景） | 员工提交报销并按政策完成校验、审批和终态确认 | expense、demos/demo_expense_workflow.py | 表单约束、政策决策、人工审批、业务终态 |
 
-**证据化文档排障**（`docs_troubleshoot`）是 **② 客服/知识自动化** 下的 **一个垂直 demo**（引用 + 拒答 + 现场证据），不是全仓唯一产品名。
+## 应用做什么
 
----
+- 让员工用自然语言完成规范查询和报销办理。
+- 通过工具权限、人工审批和轨迹记录控制副作用。
+- 将结果、引用、审批和失败证据交给质量闭环复核。
 
-## ① 写代码 / 执行 Agent
+规范咨询当前保留 34 条黄金集、故障模拟和 Git 文档 held-out 评测入口；这些数字用于验收，不是生产质量承诺。
 
-**主流对标：** OpenHands、SWE-agent、IDE/CLI Agent。
+## 应用不做什么
 
-**本仓有什么：**
+- 不把运行时包装成通用 Agent 平台或独立评测 SaaS。
+- 不宣称生产多租户、长期线上 SLA、自动根因诊断或云 APM。
+- 不把离线黄金集、κ、模型榜或沙箱成功率写成生产业务指标。
 
-- `react_loop` — ReAct + function calling + ToolGuard + duplicate 拦截 + Harness 轨迹
-- 工具：`calculator`、`web_search`、`execute_python`（CONFIRM）、MCP（可选）
-- Execution 任务集：`src/react_agent/eval/execution_dataset.json`（offline_tools + **agent 36 条**）
-- Capability 集：多工具 / 角色 / 推理：`capability_dataset.json`
+## 规划中的独立产品
 
-**怎么跑：**
+原 GitHub 交付线命名为 **受控变更交付（change-delivery）**。它会读取 Issue、影子执行、隔离测试，在人工审批后创建 Draft PR。当前阶段只在文档中独立规划，代码仍留在本仓，不与规范咨询、报销办理并列为主产品场景。
 
-```bash
-python -m react_agent "用 calculator 算 17*19"
-python scripts/eval/execution/run_execution_suite.py              # offline_tools
-python scripts/eval/execution/run_execution_suite.py --modes agent   # 需 API Key
-# HTTP（Pillar ① smoke，需 REACT_AGENT_SERVER_OFFLINE_REACT=1 或 SERVER_LLM=1）
-python scripts/eval/execution/run_execution_http_smoke.py --url http://127.0.0.1:8765
-```
+计划页：docs/change-delivery-plan.md。现有实现说明：docs/features/github-delivery-workflow.md。
 
-**差异化（运行时，非应用）：** 权限闸门、StepWatcher、failure flywheel、Format B 轨迹 — 见 [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)。
+## 跨仓质量配件
 
-**已补充：** [`GITHUB_DELIVERY_WORKFLOW.md`](GITHUB_DELIVERY_WORKFLOW.md) 提供真实 Git 隔离克隆、读改测、影子运行、计划指纹审批、幂等审计、候选提交和可选 Draft PR。独立
-[`agent-delivery-sandbox`](https://github.com/weihuaguo270-ops/agent-delivery-sandbox)
-已完成 24 条合成 Issue 的 Shadow 运行、4 条受控 Draft PR、3 条接受、1 条拒绝及 1 次合并后回滚。
-这是 `external_real_sandbox` 证据，不代表生产流量或真实用户任务。
+~~~
+工作助手或受控变更交付产出轨迹
+  → trace-debugger：规则失败打标、scan/compare、CI
+  → llm-eval-engine：过程/业务证据与失败门，输出 pass/review/hold
+~~~
 
----
+| 仓库 | 角色 | 明确边界 |
+|---|---|---|
+| trace-debugger | 轨迹失败雷达与 CI 钩子 | 不做最终发版裁决 |
+| llm-eval-engine | 发版前自检 | 不负责 Agent 运行时 |
 
-## ② 客服 / 工作流自动化
+两个质量仓保持独立，也可被 change-delivery 编排进 CI；不会合并成一个交付仓。
 
-**主流对标：** Dify 工作流、Zendesk/Fin 类知识客服、内部 Copilot。
+## 项目命名与边界
 
-**本仓有什么：**
+| 中文名 | 英文工作名 | 当前状态 |
+|---|---|---|
+| 企业内部工作助手 | work-assistant | 主产品，规范咨询 + 报销办理 |
+| 受控变更交付 | change-delivery | 规划中的独立产品，暂不拆仓 |
+| 轨迹失败雷达与 CI 钩子 | trace-debugger | 独立质量配件 |
+| 发版前自检 | llm-eval-engine | 独立质量配件 |
 
-- **可部署 HTTP 服务：** `python -m react_agent.server` · Docker · 产品 UI（`/`）
-- **业务工作流 demo：** `demos/demo_expense_workflow.py`（政策检索 + 裁决）→ 演进规格 [`spec/EXPENSE_WORKFLOW_DECISION_SPEC.md`](spec/EXPENSE_WORKFLOW_DECISION_SPEC.md)（Workflow + 决策模型）
-- **垂直知识客服 demo：** `apps/docs_troubleshoot` — 引用 / 拒答 / verify 工具步 / diagnosis
-- **离线 Agent 循环：** `agent_runner`（CI 不耗 Key）
+## 简历项目简介
 
-**怎么跑：**
+企业内部工作助手（work-assistant）工程原型，面向员工规范咨询与报销办理两类办公场景。
+实现证据化文档问答、政策约束下的报销工作流、权限闸门、人工审批和完整 Agent 轨迹。
+通过 trace-debugger 接入规则失败扫描与 CI 回归，通过 llm-eval-engine 汇总过程和业务证据并输出发布前结论。
+当前在合成任务与 external_real_sandbox 中完成可复现实验，支持可部署、可评测的原型叙事。
+证据不等同于生产 SaaS、多租户平台或长期线上 SLA。
 
-```bash
-python demos/demo_expense_workflow.py
-docker compose up --build    # http://127.0.0.1:8765/
+## 运行入口
+
+~~~
+# 规范咨询
+set REACT_AGENT_APP=docs_troubleshoot
 python scripts/eval/docs/run_docs_troubleshoot_eval.py
-```
 
-**docs_troubleshoot 的位置：** 演示 **「有依据才答、没依据拒答」的客服/Runbook 后端**，不是完整 AIOps 平台。
-
-**v0.5 已完成：** `/v1/chat` 多 app（`docs_troubleshoot` | `expense` | `default`）；`GET /v1/info` 列出 applications。
-
-**已完成：** Bearer 鉴权 + Host 头校验（`REACT_AGENT_AUTH_TOKEN` / `REACT_AGENT_HOST_VALIDATION`，默认入口与 stdlib 面共用 `server/auth.py`）。**下一步：** 按 [`EXPENSE_WORKFLOW_DECISION_SPEC.md`](spec/EXPENSE_WORKFLOW_DECISION_SPEC.md) 推进 expense Workflow + 决策节点（M1）；neutral 多 app UI。工程交付流程已经输出结构化审计和告警，但 HTTP 服务全链路 JSON 日志仍需单独补齐。
-
----
-
-## ③ 通用 RAG / 研究 Agent
-
-**主流对标：** LlamaIndex document agent、Deep Research、HotpotQA 类 multi-hop。
-
-**本仓有什么：**
-
-- RAG：`rag.py` · `demo_rag.py` · `REACT_AGENT_RAG_MODE=keyword|semantic`
-- 公开 RAG 分层：HotpotQA-RAG smoke/hard/held_out — `run_public_rag_benchmark.py`
-- 研究形能力：ToT / Planner / Orchestrator（实验轨，见 [`EXPERIMENTAL.md`](EXPERIMENTAL.md)）
-
-**怎么跑：**
-
-```bash
-set REACT_AGENT_EXPERIMENTAL_TOOLS=1
-python demos/demo_rag.py
-python scripts/eval/rag/run_public_rag_benchmark.py
-```
-
-**已完成：** public RAG 子集与 docs 黄金集已并列进 CI（`test` job 内跑 `run_public_rag_benchmark.py` 与四套 docs 评测）。**下一步：** 把 public RAG 的 drop-off 指标纳入发布硬门禁。
-
----
-
-## 默认入口怎么选
-
-| 你想展示… | 默认命令 |
-|-----------|----------|
-| Agent 能调工具、有轨迹 | `python -m react_agent "…"` 或 execution suite |
-| 能部署的 Chat / 知识客服 | `docker compose up` + `/v1/chat` |
-| 检索 + 公开 RAG | `run_public_rag_benchmark.py` / `demo_rag.py` |
-| 垂直 Runbook（窄 demo） | `REACT_AGENT_APP=docs_troubleshoot` |
-
-**仓库默认叙事：** 运行时 + 三条主流应用；**不再**把全仓等同于「证据化文档排障」单一产品。
-
----
-
-## 与跨仓生态
-
-| 仓 | 在三条主线中的作用 |
-|----|-------------------|
-| **react-agent** | 执行运行时 + 三套 eval 证据 |
-| **trace-debugger** | 轨迹 scan / Harness Health（①②③ 共用） |
-| **llm-eval-engine** | Process Reward / 人机校准（①③ 为主） |
-
----
-
-## 文档索引
-
-- 架构：[`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)
-- 评测：[`EVAL_INDEX.md`](EVAL_INDEX.md)
-- 垂直 demo：[`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)
-- 实验：[`EXPERIMENTAL.md`](EXPERIMENTAL.md)
+# 报销办理
+python demos/demo_expense_workflow.py
+python scripts/eval/acceptance/run_expense_business_eval.py --split dev
+~~~
