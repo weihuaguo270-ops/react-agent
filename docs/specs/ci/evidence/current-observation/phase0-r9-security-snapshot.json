@@ -1,8 +1,8 @@
 {
   "schema_version": "ci-r9-security-snapshot/v1",
   "status": "clean",
-  "collected_at": "2026-11-06T12:45:19.150966+00:00",
-  "head_sha": "e8d750faf8a1f883fff5eaf396d8cb67b82e342f",
+  "collected_at": "2026-11-08T14:17:46.225951+00:00",
+  "head_sha": "944574e8e2cdd69192502d799996fb7ab646b858",
   "scope": {
     "workflow_files": [
       ".github/workflows/daily-smoke.yml",

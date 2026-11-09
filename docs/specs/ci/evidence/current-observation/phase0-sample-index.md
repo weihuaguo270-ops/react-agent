@@ -6,6 +6,9 @@ JSON 是权威机器可读记录；本文件只用于逐条浏览。
 
 | PR | 创建时间 UTC | 状态 | 合并 | base SHA | head SHA | 合并提交 | test run IDs | daily-smoke run IDs |
 |---:|---|---|---|---|---|---|---|---|
+| [#205](https://github.com/weihuaguo270-ops/react-agent/pull/205) | 2026-11-08T14:01:20Z | closed | yes | `59003fe3cc3ac10bf0c1ea25ae4fc45c5e0f9661` | `bc6357beb00ee335b6bcf921cb83430e8fcd18ee` | `944574e8e2cdd69192502d799996fb7ab646b858` | 42487723875 | — |
+| [#204](https://github.com/weihuaguo270-ops/react-agent/pull/204) | 2026-11-06T13:35:07Z | closed | yes | `2facfa0baa3084090b262a4d8c7c58f27f9bc606` | `c7b2d70877a88577712920c11cac88813899c677` | `59003fe3cc3ac10bf0c1ea25ae4fc45c5e0f9661` | 42226680101 | — |
+| [#203](https://github.com/weihuaguo270-ops/react-agent/pull/203) | 2026-11-06T12:53:13Z | closed | yes | `e8d750faf8a1f883fff5eaf396d8cb67b82e342f` | `890677929cd02109f40250fb4948cbc6e092e5df` | `2facfa0baa3084090b262a4d8c7c58f27f9bc606` | 42222146974 | — |
 | [#202](https://github.com/weihuaguo270-ops/react-agent/pull/202) | 2026-11-06T12:12:23Z | closed | yes | `c6be917c92e8552145ea36103c730464bb0deddb` | `7f15d20019e01cbefc8ab38c14482531cf8decff` | `e8d750faf8a1f883fff5eaf396d8cb67b82e342f` | 42215887437 | — |
 | [#201](https://github.com/weihuaguo270-ops/react-agent/pull/201) | 2026-11-06T11:34:58Z | closed | yes | `80382b7985063f15e1226017ae451cbef533d769` | `0acf0aff1c2e0297103dd32654d01d324a1f737b` | `c6be917c92e8552145ea36103c730464bb0deddb` | 42211332094 | — |
 | [#200](https://github.com/weihuaguo270-ops/react-agent/pull/200) | 2026-11-06T11:07:54Z | closed | yes | `31d821b11117e76551351fd4c0cc1cce10673435` | `4a5a9343ec91312b80f302d718e39db7b156705d` | `80382b7985063f15e1226017ae451cbef533d769` | 42207930353 | — |
@@ -45,9 +48,9 @@ JSON 是权威机器可读记录；本文件只用于逐条浏览。
 | [#166](https://github.com/weihuaguo270-ops/react-agent/pull/166) | 2026-10-23T11:04:07Z | closed | yes | `cfefbbd1ba511431adb0ef3f5348e9b19e57d786` | `57e9435c6b5ac3b1fef833658da3d853508d7f10` | `4f1e2cc432b8d2d3baf77c45867e83f8436c572d` | 39944961498 | — |
 | [#165](https://github.com/weihuaguo270-ops/react-agent/pull/165) | 2026-10-23T05:48:59Z | closed | yes | `e7c483bd138fcb60422a7400070266f5c53db7df` | `ccd9bda18d2e1be71131e283fcf4841eca69bf26` | `cfefbbd1ba511431adb0ef3f5348e9b19e57d786` | 39907858409 | — |
 | [#164](https://github.com/weihuaguo270-ops/react-agent/pull/164) | 2026-10-22T13:22:26Z | closed | yes | `f6879cf85c1078de47dafc307902b917525c3eda` | `4516abc76fa1d4f4ffb1c2043a5668373fa727dc` | `e7c483bd138fcb60422a7400070266f5c53db7df` | 39812973334 | — |
-| [#163](https://github.com/weihuaguo270-ops/react-agent/pull/163) | 2026-10-22T05:50:32Z | closed | yes | `97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e` | `cf17483d07766350eadf0e8a3a9c42a7b784de81` | `f6879cf85c1078de47dafc307902b917525c3eda` | 39730335380 | — |
-| [#162](https://github.com/weihuaguo270-ops/react-agent/pull/162) | 2026-10-21T10:57:31Z | closed | yes | `bb4465634fcd1d25cfb30f5b67ab9742db9f7880` | `fc785cc629eb0182166b3f52cb15cffce89ae0f3` | `97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e` | 39604075263 | — |
-| [#161](https://github.com/weihuaguo270-ops/react-agent/pull/161) | 2026-10-21T10:57:31Z | closed | yes | `4a7de8fda821e7300d9165a20472f41487240dc5` | `3b2053bf746901d596bc36eb6e12fc8a1fc98a1a` | `bb4465634fcd1d25cfb30f5b67ab9742db9f7880` | 39602521009 | — |
+| [#163](https://github.com/weihuaguo270-ops/react-agent/pull/163) | 2026-10-22T05:50:32Z | closed | yes | `97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e` | `cf17483d07766350eadf0e8a3a9c42a7b784de81` | `f6879cf85c1078de47dafc307902b917525c3eda` | — | — |
+| [#162](https://github.com/weihuaguo270-ops/react-agent/pull/162) | 2026-10-21T10:57:31Z | closed | yes | `bb4465634fcd1d25cfb30f5b67ab9742db9f7880` | `fc785cc629eb0182166b3f52cb15cffce89ae0f3` | `97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e` | — | — |
+| [#161](https://github.com/weihuaguo270-ops/react-agent/pull/161) | 2026-10-21T10:57:31Z | closed | yes | `4a7de8fda821e7300d9165a20472f41487240dc5` | `3b2053bf746901d596bc36eb6e12fc8a1fc98a1a` | `bb4465634fcd1d25cfb30f5b67ab9742db9f7880` | — | — |
 | [#160](https://github.com/weihuaguo270-ops/react-agent/pull/160) | 2026-10-21T05:47:36Z | closed | yes | `041426b58d57cfa61387b268185d9cc209313dc7` | `c08f12de68c5370fc07bfc970e171d89887955c6` | `4a7de8fda821e7300d9165a20472f41487240dc5` | — | — |
 | [#159](https://github.com/weihuaguo270-ops/react-agent/pull/159) | 2026-10-21T05:33:30Z | closed | no | `4a7de8fda821e7300d9165a20472f41487240dc5` | `e8b23d186a63c9fdc1cf7553f834498bc107241d` | `f724d1034a26940ecd2f6a675dda36283d56d69f` | — | — |
 | [#158](https://github.com/weihuaguo270-ops/react-agent/pull/158) | 2026-10-20T05:43:54Z | closed | yes | `4086b84c3a483088168aca4ee584c38f84a2d991` | `c921abeca3e3605655a1d4b63aaa51aa55d44f39` | `041426b58d57cfa61387b268185d9cc209313dc7` | — | — |
@@ -103,14 +106,17 @@ JSON 是权威机器可读记录；本文件只用于逐条浏览。
 | [#108](https://github.com/weihuaguo270-ops/react-agent/pull/108) | 2026-10-01T09:18:04Z | closed | yes | `ca66fd69088c490f6a15bc8caa666dafae4397c9` | `f05b77c44dfb9fc13ea87f113f8085844b45bac5` | `1438197a5616b08b9bbe478becf987a2c8cd28f6` | — | — |
 | [#107](https://github.com/weihuaguo270-ops/react-agent/pull/107) | 2026-10-01T09:08:25Z | closed | yes | `ddb4a2d1c1fc609a85d7d72bf09b27b95c20ddfd` | `8e10d1ae1610b6a3509d7f8802accb07f9682d81` | `ca66fd69088c490f6a15bc8caa666dafae4397c9` | — | — |
 | [#106](https://github.com/weihuaguo270-ops/react-agent/pull/106) | 2026-10-01T06:58:24Z | closed | no | `ddb4a2d1c1fc609a85d7d72bf09b27b95c20ddfd` | `84cabefb10569f1064f5c75e7650366a107f078c` | `19bfdce67658d4a754a49f3b1398f5f6786ca8b7` | — | — |
-| [#105](https://github.com/weihuaguo270-ops/react-agent/pull/105) | 2026-09-30T16:17:27Z | closed | yes | `6af1bb51de9a5ece535e9d4f308ad3a0a4819979` | `6cc1062cff90eb7d2dad7b232f490023f068ef74` | `ddb4a2d1c1fc609a85d7d72bf09b27b95c20ddfd` | — | — |
-| [#104](https://github.com/weihuaguo270-ops/react-agent/pull/104) | 2026-09-30T06:22:26Z | closed | no | `6af1bb51de9a5ece535e9d4f308ad3a0a4819979` | `7465c0d7fd6931d62b7825bfb7065612ebe7214f` | `2c34600db5ce5821d19517afe4d5b990521b6b31` | — | — |
-| [#103](https://github.com/weihuaguo270-ops/react-agent/pull/103) | 2026-09-30T05:12:44Z | closed | yes | `4b5b46cbc2691d74443c1e146fff6961b8d0583b` | `eadc266ca31e573068ff687ceebac7b68ccf9a23` | `6af1bb51de9a5ece535e9d4f308ad3a0a4819979` | — | — |
 
 ## test.yml 与 daily-smoke.yml runs
 
 | run | workflow | event | conclusion | head SHA | PR | failed jobs |
 |---:|---|---|---|---|---|---|
+| [42488073692](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42488073692) | test.yml | push | success | `944574e8e2cdd69192502d799996fb7ab646b858` | - | - |
+| [42487723875](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42487723875) | test.yml | pull_request | success | `bc6357beb00ee335b6bcf921cb83430e8fcd18ee` | #205 | - |
+| [42227370700](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42227370700) | test.yml | push | success | `59003fe3cc3ac10bf0c1ea25ae4fc45c5e0f9661` | - | - |
+| [42226680101](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42226680101) | test.yml | pull_request | success | `c7b2d70877a88577712920c11cac88813899c677` | #204 | - |
+| [42223281257](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42223281257) | test.yml | push | success | `2facfa0baa3084090b262a4d8c7c58f27f9bc606` | - | - |
+| [42222146974](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42222146974) | test.yml | pull_request | success | `890677929cd02109f40250fb4948cbc6e092e5df` | #203 | - |
 | [42216576860](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42216576860) | test.yml | push | success | `e8d750faf8a1f883fff5eaf396d8cb67b82e342f` | - | - |
 | [42215887437](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42215887437) | test.yml | pull_request | success | `7f15d20019e01cbefc8ab38c14482531cf8decff` | #202 | - |
 | [42211850200](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42211850200) | test.yml | push | success | `c6be917c92e8552145ea36103c730464bb0deddb` | - | - |
@@ -205,12 +211,8 @@ JSON 是权威机器可读记录；本文件只用于逐条浏览。
 | [39787576955](https://github.com/weihuaguo270-ops/react-agent/actions/runs/39787576955) | test.yml | pull_request | failure | `6634b896caa7c9c366efc7467d625b81bf3adc4a` | - | PR ready audit, test (3.10), test (3.11) |
 | [39787175414](https://github.com/weihuaguo270-ops/react-agent/actions/runs/39787175414) | test.yml | pull_request | failure | `fed687e3903925597471113801ffc4a12f9f9cb7` | - | PR ready audit, test (3.10), test (3.11) |
 | [39786852097](https://github.com/weihuaguo270-ops/react-agent/actions/runs/39786852097) | test.yml | pull_request | cancelled | `9d68016c886967156fabb2563c66c3471e6cfc12` | - | test (3.10), PR ready audit, test (3.11) |
-| [39786260179](https://github.com/weihuaguo270-ops/react-agent/actions/runs/39786260179) | test.yml | pull_request | failure | `ae3a8bb45c39195d3e29587c6a6ecf6e8ddf3c3e` | - | test (3.11), test (3.10) |
-| [39730335380](https://github.com/weihuaguo270-ops/react-agent/actions/runs/39730335380) | test.yml | pull_request | success | `cf17483d07766350eadf0e8a3a9c42a7b784de81` | #163 | - |
-| [39605016877](https://github.com/weihuaguo270-ops/react-agent/actions/runs/39605016877) | test.yml | workflow_dispatch | success | `97c73014aa4b3787376a9fe07a1a2ec6f2c84a4e` | - | - |
-| [39604075263](https://github.com/weihuaguo270-ops/react-agent/actions/runs/39604075263) | test.yml | pull_request | success | `fc785cc629eb0182166b3f52cb15cffce89ae0f3` | #162 | - |
-| [39604053455](https://github.com/weihuaguo270-ops/react-agent/actions/runs/39604053455) | test.yml | workflow_dispatch | success | `bb4465634fcd1d25cfb30f5b67ab9742db9f7880` | - | - |
-| [39602521009](https://github.com/weihuaguo270-ops/react-agent/actions/runs/39602521009) | test.yml | pull_request | success | `3b2053bf746901d596bc36eb6e12fc8a1fc98a1a` | #161 | - |
+| [42456875992](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42456875992) | daily-smoke.yml | schedule | success | `59003fe3cc3ac10bf0c1ea25ae4fc45c5e0f9661` | - | - |
+| [42348891091](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42348891091) | daily-smoke.yml | schedule | success | `59003fe3cc3ac10bf0c1ea25ae4fc45c5e0f9661` | - | - |
 | [42182937230](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42182937230) | daily-smoke.yml | schedule | success | `753b1252af72e5a717dd42ff02345ec356c80783` | - | - |
 | [41989538637](https://github.com/weihuaguo270-ops/react-agent/actions/runs/41989538637) | daily-smoke.yml | schedule | success | `d43cff29f517ad732fcd37d79da3c8976bff40e9` | - | - |
 | [41791436932](https://github.com/weihuaguo270-ops/react-agent/actions/runs/41791436932) | daily-smoke.yml | schedule | success | `d43cff29f517ad732fcd37d79da3c8976bff40e9` | - | - |
@@ -259,5 +261,3 @@ JSON 是权威机器可读记录；本文件只用于逐条浏览。
 | [36222266928](https://github.com/weihuaguo270-ops/react-agent/actions/runs/36222266928) | daily-smoke.yml | schedule | success | `41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b` | - | - |
 | [36100669927](https://github.com/weihuaguo270-ops/react-agent/actions/runs/36100669927) | daily-smoke.yml | schedule | success | `41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b` | - | - |
 | [35962083677](https://github.com/weihuaguo270-ops/react-agent/actions/runs/35962083677) | daily-smoke.yml | schedule | success | `41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b` | - | - |
-| [35823121406](https://github.com/weihuaguo270-ops/react-agent/actions/runs/35823121406) | daily-smoke.yml | schedule | success | `41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b` | - | - |
-| [35692592204](https://github.com/weihuaguo270-ops/react-agent/actions/runs/35692592204) | daily-smoke.yml | schedule | success | `41fbae58fdc2c4c1a3853bf6b2d1296cfe98116b` | - | - |

@@ -4,17 +4,17 @@
 
 **证据类型：** `current_observation`<br>
 **验收边界：** 采样与静态安全证据不构成阶段通过；阶段状态仅见 `../progress.yaml`。<br>
-**采集时间：** 2026-11-06T12:45:16.896009+00:00<br>
+**采集时间：** 2026-11-08T14:17:44.347578+00:00<br>
 **仓库：** weihuaguo270-ops/react-agent
-**默认分支 SHA：** `e8d750faf8a1f883fff5eaf396d8cb67b82e342f`<br>
+**默认分支 SHA：** `944574e8e2cdd69192502d799996fb7ab646b858`<br>
 **来源：** GitHub Actions、Pull Request、Branch Protection 只读 API 快照。
 
 本报告只记录采集时的事实，不把 Registry v2、路径映射、聚合器或 Branch Protection 迁移解释为已完成。当前观测可刷新；冻结快照和历史失败证据不可覆盖。
 
 ## 样本与方法
 
-- PR 样本：100 条，范围 `2026-09-30T05:12:44Z` 至 `2026-11-06T12:12:23Z`。
-- `test.yml`：100 次，结论统计 `{"success": 79, "failure": 18, "startup_failure": 1, "cancelled": 2}`。
+- PR 样本：100 条，范围 `2026-10-01T06:58:24Z` 至 `2026-11-08T14:01:20Z`。
+- `test.yml`：100 次，结论统计 `{"success": 80, "failure": 17, "startup_failure": 1, "cancelled": 2}`。
 - `daily-smoke.yml`：50 次，结论统计 `{"success": 43, "failure": 7}`。
 - 每个失败、取消、超时或 action-required run 都通过 Jobs API 展开到失败 job/step；分类仅作定位提示，不能替代日志根因。
 
@@ -66,7 +66,7 @@ Branch Protection：strict=True，管理员保护=True，线性历史=True，稳
 
 | Workflow | N | P50 | P95 | 最大 |
 |---|---:|---:|---:|---:|
-| `test.yml` | 100 | 2.46 | 4.97 | 1371.82 |
+| `test.yml` | 100 | 2.37 | 4.97 | 1371.82 |
 | `daily-smoke.yml` | 50 | 2.91 | 5.53 | 9.17 |
 
 这些是从创建到更新时间的墙钟近似值，包含排队，不能直接作为 PR gate 执行时长目标。
