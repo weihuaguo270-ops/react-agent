@@ -13,7 +13,6 @@
           "id": "ci-pr-readiness",
           "path_globs": ["scripts/ci/**", "docs/specs/ci/**", ".github/workflows/**", ".codex/**", "pyproject.toml", "AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "DOCS_REORGANIZATION_SUMMARY.md", "REORGANIZATION_SUMMARY.md", "README.md", "Makefile", "cleanup.ps1", ".gitignore", ".env.example", "llm_config.example.json"],
           "historical_path_globs": ["P5_CHECKLIST.md", "examples/README.md", ".flake8"],
-          "historical_path_globs": ["P5_CHECKLIST.md", "examples/README.md", ".flake8"],
           "exclude_globs": ["docs/specs/ci/evidence/archive/**"],
           "priority": "P0",
           "execution": "automated",
