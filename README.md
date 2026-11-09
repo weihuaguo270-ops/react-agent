@@ -25,9 +25,12 @@
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
+python demos/demo_docs_troubleshoot.py
 python scripts/eval/docs/run_docs_troubleshoot_eval.py
 python -m react_agent.server --port 8765
 ```
+
+演示闭环是：员工提问 → 检索规范 → 带引用回答或无依据拒答 → 说明权限/审批边界 → 落盘并回放轨迹。只读规范咨询不触发人工审批；涉及副作用的修复步骤仍由 `permission_gate` / approval 控制。
 
 ### 报销办理（第二场景）
 

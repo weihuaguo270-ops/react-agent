@@ -9,7 +9,7 @@
     "PROJECT_STATUS_SUMMARY.md": "41cd5a4c60ddfb052515bb7c6e985602d7a998ab80aa1aab7acea1f9def37e05",
     "README.md": "f161abfe33fcafd5628b975645253823d8869b73759a3e8cf9c2ec8c680dc108",
     "ROADMAP.md": "b681b23dcbb3d9170ebbda9ef9e8d1cd5439985033a02a34d4d96f0924008bd7",
-    "STATUS.md": "08297b529af3fe77957fd220ae9ad5ab256869aa848d681452e66aa3408787f1",
+    "STATUS.md": "14aa6dd63d4603045f17eaf54f4c3de2eaef9c6bd75b1b83a17984c7a25133e0",
     "architecture/agent-workflow.md": "eea1433a9068f0c45b43f28633c343dcec464b837153c13020713613b53499ca",
     "architecture/core-architecture.md": "d85a1fa9493b1007fe5b2a0b7f7661163d9da6c0e48757ce06d83cb184176d30",
     "architecture/harness-architecture.md": "b038616805ec677f27225c9ccf31ebc7102d3e3fd68d25178e828c712e653a72",
@@ -34,7 +34,7 @@
     "change-delivery-plan.md": "0d48b1c91f5181edfea3b9975a15a89bc5678397d3c8b3a2927b8aabab1bb28c",
     "daily_smoke/README.md": "aa189023b4daed6b0e3e9321a502a455ea2776d06ce77ea92f1c4fdf79d0124b",
     "daily_smoke/VARIANCE.md": "9f9d32ff8ede65dd7d0d7a5d291f3c42aa7c5882a03b714ec4d598e5910be462",
-    "features/application-direction.md": "3bd77634aa8cd6ec6749f29e7611a5b4131bf284cbb17960c6437494dca6ad54",
+    "features/application-direction.md": "ff258dc8e9fe9408ad6bb6db0b6bcd336ed8f5d2108cf6956aa419be1c796a33",
     "features/deploy.md": "1131f6010a1a168157a7417563c1ea2d0e2564aa3af34d19de59123b090ace9f",
     "features/evidence-docs-troubleshoot.md": "70804b272ef2e6a4ab6918a937634a8338b887524a8fd280d75e9797a27bfd90",
     "features/github-delivery-workflow.md": "b55aada2488a273bd59161001197803b62f850d9c3c6994ec1d2ddd0f5d1b2a8",
@@ -99,6 +99,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-11-09T11:28:48Z",
+  "generated_at": "2026-11-09T14:03:11Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
