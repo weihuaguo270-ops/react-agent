@@ -1,7 +1,6 @@
-"""Offline demo: docs/API troubleshoot capability backend (no API Key)."""
+"""Offline demo for the work-assistant规范咨询闭环 (no API Key)."""
 from __future__ import annotations
 
-import json
 import os
 import sys
 from pathlib import Path
@@ -12,42 +11,38 @@ sys.path.insert(0, str(ROOT / "src"))
 os.environ["REACT_AGENT_APP"] = "docs_troubleshoot"
 os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
 
+from react_agent.apps.docs_troubleshoot.agent_runner import run_docs_agent
 from react_agent.apps.docs_troubleshoot.eval_golden import run_golden_eval
 from react_agent.apps.docs_troubleshoot.index import reset_index
-from react_agent.apps.docs_troubleshoot.policy import enforce_answer_policy, should_refuse_query
-from react_agent.apps.docs_troubleshoot.tools import lookup_api, search_docs, verify_citations_tool
+from react_agent.harness import Replay
+from react_agent.harness.recorder import TRAJECTORY_DIR
+
+
+def _run_case(label: str, query: str) -> None:
+    result = run_docs_agent({"query": query})
+    trajectory_path = Path(TRAJECTORY_DIR) / f"traj_{result.trajectory_id}.json"
+    actions = [step.get("action") for step in result.agent_steps]
+    citations = [item.get("source") for item in result.citations]
+
+    print(f"[{label}] 员工提问: {query}")
+    print(f"  检索/校验动作: {actions or ['refusal_without_retrieval']}")
+    print(f"  refused={result.refused} policy={result.state.get('policy')}")
+    print(f"  citations={citations or []}")
+    print(f"  answer={result.answer[:220]}")
+    print("  权限边界: 规范咨询为只读路径，无需人工审批；副作用修复步骤仍受 permission_gate / approval 控制。")
+    print(f"  trajectory_id={result.trajectory_id} saved={trajectory_path.exists()} path={trajectory_path}")
+
+    if trajectory_path.is_file():
+        print("  replay:")
+        Replay().play(str(trajectory_path))
+    print()
 
 
 def main():
     reset_index()
-    queries = [
-        "缺少 Authorization 返回什么？",
-        "DeepSeek 400 怎么排查？",
-        "我们公司股价明天多少？",
-    ]
-    print("=== Docs/API Troubleshoot Demo (offline) ===\n")
-    for q in queries:
-        print(f"Q: {q}")
-        hits = json.loads(search_docs(q, top_k=2))
-        if not hits.get("results"):
-            hits = json.loads(lookup_api(q, top_k=2))
-        sources = [r["source"] for r in hits.get("results") or []]
-        if sources:
-            draft = (
-                f"根据检索结果：{(hits['results'][0].get('content') or '')[:160]} "
-                f"来源: {sources[0]}"
-            )
-        else:
-            draft = "没有相关文档。"
-        # Out-of-domain heuristic
-        must_refuse = should_refuse_query(q)
-        out = enforce_answer_policy(
-            draft, allowed_sources=sources or None, must_refuse=must_refuse
-        )
-        check = json.loads(verify_citations_tool(out["answer"]))
-        print(f"  refused={out['refused']} policy={out['policy']}")
-        print(f"  answer={out['answer'][:180]}")
-        print(f"  verify={check.get('ok')} reason={check.get('reason')}\n")
+    print("=== 企业内部工作助手：规范咨询闭环（offline） ===\n")
+    _run_case("引用回答", "缺少 Authorization 返回什么？")
+    _run_case("无依据拒答", "我们公司股价明天多少？")
 
     report = run_golden_eval()
     print(

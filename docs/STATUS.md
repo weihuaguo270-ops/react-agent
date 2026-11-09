@@ -8,6 +8,12 @@
 
 对外只能表述为可部署、可评测的工程原型。证据包含合成任务与 external_real_sandbox；不得写成生产 SaaS、多租户平台或长期线上 SLA。
 
+## 规范咨询主线演示
+
+当前主线演示使用 `run_docs_agent()` 串起一条可复现闭环：员工提问 → 检索内部规范 → 带引用回答或无依据拒答 → 说明权限/审批边界 → 轨迹落盘并回放。运行入口为 `python demos/demo_docs_troubleshoot.py`。
+
+规范咨询的正常路径是只读操作，因此不需要人工审批；如果后续产生副作用修复步骤，则仍须经过 `permission_gate` / approval。演示和轨迹是工程原型证据，不代表生产流量或长期线上 SLA。
+
 - 当前收口：统一离线验收入口 `scripts/eval/acceptance/run_portfolio_acceptance.py` 与跨仓证据账本已落地；主线闭环可复现，但 held-out/golden 发布门槛仍未满足，不能宣称生产成熟度。
 
 - 默认入口的安全防线修复（2026-09-30）：容器默认入口是 `react-agent-api`（FastAPI 面），但它读的是从未被文档记录的 `REACT_AGENT_API_KEY`——#97 已把 `DEPLOY.md` 的过时变量名改成 `REACT_AGENT_AUTH_TOKEN`，却漏改了 `fastapi_app` 的读取处，于是**按文档配置等于没配**（鉴权 fail-open），且该面完全没有 Host 头校验，DNS rebinding 防线与 `REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1` 的启动期 fail-closed 都只在 stdlib 面成立。现抽出 `server/auth.py` 的 header 版判据供两面共用（`REACT_AGENT_API_KEY` 保留为 legacy 别名、AUTH_TOKEN 优先），`request_guard` 改为「Host 先于鉴权」并把保护范围对齐文档（除探针外全部），`main()` 补启动期校验与未鉴权暴露告警。配置发现性同步补齐：`.env.example` 增加「服务鉴权与网络暴露」段，`docker-compose.yml` 把两个变量由注释改为直通——此前在 `.env` 里填 token 根本进不了容器。见 [#100](https://github.com/weihuaguo270-ops/react-agent/pull/100)。
