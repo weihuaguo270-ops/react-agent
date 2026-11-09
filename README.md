@@ -1,6 +1,6 @@
 # 企业内部工作助手（work-assistant）
 
-`react-agent` 是企业内部工作助手的过渡仓库：面向需要查规范、处理报销的员工，提供受控 Agent 执行、引用证据、人工审批和完整轨迹。仓库名暂保留为 `react-agent`，对外产品叙事以 **work-assistant** 为准。
+`react-agent` 是企业内部工作助手的过渡仓库：面向需要查规范、处理报销的员工，提供受控 Agent 执行、引用证据、人工审批边界和完整轨迹。仓库名暂保留为 `react-agent`，对外产品叙事以 **work-assistant** 为准。
 
 ## 一句话定位
 
@@ -34,7 +34,7 @@ python -m react_agent.server --port 8765
 
 ### 报销办理（第二场景）
 
-员工提交报销信息，助手按政策、表单和状态机完成校验，必要时进入人工审批，并输出可审计的业务终态。入口与评测：
+员工提交报销信息，助手按政策和表单约束完成校验，必要时标记 `needs_review` 并进入人工复核闸门，同时落盘决策审计和可回放轨迹。当前原型展示的是审批边界与待复核终态，正式 `resolve_review` 审批 API 仍属于后续阶段。入口与评测：
 
 ```bash
 python demos/demo_expense_workflow.py
@@ -95,7 +95,7 @@ python scripts/eval/acceptance/run_portfolio_acceptance.py
 ## 简历项目简介
 
 企业内部工作助手（`work-assistant`）工程原型，面向员工规范咨询与报销办理两类办公场景。
-实现证据化文档问答、政策约束下的报销工作流、权限闸门、人工审批和完整 Agent 轨迹。
+实现证据化文档问答、政策约束下的报销工作流、权限闸门、人工复核边界和完整 Agent 轨迹。
 通过 `trace-debugger` 接入规则失败扫描与 CI 回归，通过 `llm-eval-engine` 汇总过程和业务证据并输出发布前结论。
 在合成任务与 `external_real_sandbox` 中完成可复现实验，验证了应用闭环和质量配件协作。
 当前证据支持可部署、可评测的工程原型，不等同于生产 SaaS、多租户平台或长期线上 SLA。

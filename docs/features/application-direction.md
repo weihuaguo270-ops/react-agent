@@ -5,7 +5,7 @@
 | 场景 | 业务问题 | 入口 | 证据重点 |
 |---|---|---|---|
 | **规范咨询**（主场景） | 员工查内部规范、API、部署和故障排查信息 | docs_troubleshoot、python -m react_agent.server | 检索、引用校验、无依据拒答、现场证据 |
-| **报销办理**（第二场景） | 员工提交报销并按政策完成校验、审批和终态确认 | expense、demos/demo_expense_workflow.py | 表单约束、政策决策、人工审批、业务终态 |
+| **报销办理**（第二场景） | 员工提交报销并按政策完成校验，必要时进入人工复核闸门 | expense、demos/demo_expense_workflow.py | 表单约束、政策决策、`needs_review`、决策审计和轨迹回放 |
 
 ## 应用做什么
 
@@ -21,13 +21,17 @@
 python demos/demo_docs_troubleshoot.py
 ```
 
-规范咨询当前保留 34 条黄金集、故障模拟和 Git 文档 held-out 评测入口；这些数字用于验收，不是生产质量承诺。
+规范咨询当前保留离线验收集、故障模拟和 Git 文档 held-out 评测入口；验收附录记录的历史规模（34 条）只用于验收，不是生产质量承诺。
+
+## 报销办理演示闭环
+
+第二场景由 `expense_claim_review@1` 驱动：政策检索 → 结构化表单校验 → 规则决策 → 必要时输出 `needs_review` 并进入人工复核边界 → 决策审计 → 轨迹落盘与 Harness replay。演示入口为 `python demos/demo_expense_workflow.py`；当前不宣称 `route_review` / `resolve_review` 审批 API 已完成，待审批结果不会被自动改写为批准。
 
 ## 应用不做什么
 
 - 不把运行时包装成通用 Agent 平台或独立评测 SaaS。
 - 不宣称生产多租户、长期线上 SLA、自动根因诊断或云 APM。
-- 不把离线黄金集、κ、模型榜或沙箱成功率写成生产业务指标。
+- 不把离线验收数据、κ、模型榜或沙箱成功率写成生产业务指标。
 
 ## 规划中的独立产品
 
@@ -62,7 +66,7 @@ python demos/demo_docs_troubleshoot.py
 ## 简历项目简介
 
 企业内部工作助手（work-assistant）工程原型，面向员工规范咨询与报销办理两类办公场景。
-实现证据化文档问答、政策约束下的报销工作流、权限闸门、人工审批和完整 Agent 轨迹。
+实现证据化文档问答、政策约束下的报销工作流、权限闸门、人工复核边界和完整 Agent 轨迹。
 通过 trace-debugger 接入规则失败扫描与 CI 回归，通过 llm-eval-engine 汇总过程和业务证据并输出发布前结论。
 当前在合成任务与 external_real_sandbox 中完成可复现实验，支持可部署、可评测的原型叙事。
 证据不等同于生产 SaaS、多租户平台或长期线上 SLA。
