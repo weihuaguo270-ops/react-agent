@@ -168,6 +168,39 @@ def test_runtime_observation_pairs_successful_jobs_from_one_attempt():
     assert result["runtime_improvement"] == 0.8723
 
 
+def test_runtime_comparison_uses_full_matrix_not_expected_policy():
+    selector = {"selected_checks": ["pr-ready", "lint", "security"]}
+    jobs = [
+        {
+            "name": name,
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": f"2026-11-06T10:{minutes:02d}:00Z",
+            "conclusion": "success",
+        }
+        for name, minutes in (
+            ("PR ready audit", 2),
+            ("lint", 1),
+            ("test (3.11)", 5),
+            ("test-windows (3.11)", 6),
+            ("typecheck", 3),
+            ("security", 4),
+            ("docker-smoke", 7),
+        )
+    ]
+
+    result = runtime_observation(
+        selector,
+        jobs,
+        {"id": 45, "run_attempt": 1},
+        expected_checks={"pr-ready", "lint"},
+    )
+
+    assert result["runtime_comparable"] is True
+    assert result["runtime_full_seconds"] == 1680.0
+    assert result["runtime_selected_seconds"] == 420.0
+    assert result["runtime_improvement"] == 0.75
+
+
 def test_runtime_observation_blocks_failed_or_incomplete_jobs():
     selector = {"selected_checks": ["lint"]}
     jobs = [
