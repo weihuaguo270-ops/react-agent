@@ -4,12 +4,12 @@
     "CONTRIBUTING_DOCS.md": "febd85213cbf5e4b9617b45e3f0180456ec17818ed9f42a7997b82a28b92c7f5",
     "EXPERIMENTAL.md": "4f31c3d40fb5fb026955d51b69ece55991f137b02276d3e7410282b346086612",
     "PORTFOLIO_POSITIONING_CHECKLIST.md": "599756a2f6f14c5be040f1c642ef99a48a0418d9aee43cea0fc23ce3f42d12f0",
-    "PRODUCTION_MATURITY.md": "cefc8b7168ad652a6c270a584e23deda0c8185d63f1b6c322ef2f92f2e8b8da1",
+    "PRODUCTION_MATURITY.md": "68b0fc8199a08bcded95413b7419f74fa5ba00f5bcdf38ec0f2fe4652c5799d9",
     "PROJECT_CONTEXT.md": "a0f6d454b0173370061d054a4d532be12b440ae2126a4a1793f19c9b986f7348",
-    "PROJECT_STATUS_SUMMARY.md": "41cd5a4c60ddfb052515bb7c6e985602d7a998ab80aa1aab7acea1f9def37e05",
+    "PROJECT_STATUS_SUMMARY.md": "2bfa8cb00dc147377bc4e756ce5cdaa11d97aafcbe0d2d96e9de3a83ad2705b6",
     "README.md": "f161abfe33fcafd5628b975645253823d8869b73759a3e8cf9c2ec8c680dc108",
     "ROADMAP.md": "b681b23dcbb3d9170ebbda9ef9e8d1cd5439985033a02a34d4d96f0924008bd7",
-    "STATUS.md": "14aa6dd63d4603045f17eaf54f4c3de2eaef9c6bd75b1b83a17984c7a25133e0",
+    "STATUS.md": "bb622aa967a7dda5ede126fec72d81f99fb81b3f8898951f501e008c0265282d",
     "architecture/agent-workflow.md": "eea1433a9068f0c45b43f28633c343dcec464b837153c13020713613b53499ca",
     "architecture/core-architecture.md": "d85a1fa9493b1007fe5b2a0b7f7661163d9da6c0e48757ce06d83cb184176d30",
     "architecture/harness-architecture.md": "b038616805ec677f27225c9ccf31ebc7102d3e3fd68d25178e828c712e653a72",
@@ -34,7 +34,7 @@
     "change-delivery-plan.md": "0d48b1c91f5181edfea3b9975a15a89bc5678397d3c8b3a2927b8aabab1bb28c",
     "daily_smoke/README.md": "aa189023b4daed6b0e3e9321a502a455ea2776d06ce77ea92f1c4fdf79d0124b",
     "daily_smoke/VARIANCE.md": "9f9d32ff8ede65dd7d0d7a5d291f3c42aa7c5882a03b714ec4d598e5910be462",
-    "features/application-direction.md": "ff258dc8e9fe9408ad6bb6db0b6bcd336ed8f5d2108cf6956aa419be1c796a33",
+    "features/application-direction.md": "eea87a2f5c20c9eb282425ebb2692dc3dde6142e783337a3d15476f8da2dc43b",
     "features/deploy.md": "1131f6010a1a168157a7417563c1ea2d0e2564aa3af34d19de59123b090ace9f",
     "features/evidence-docs-troubleshoot.md": "70804b272ef2e6a4ab6918a937634a8338b887524a8fd280d75e9797a27bfd90",
     "features/github-delivery-workflow.md": "b55aada2488a273bd59161001197803b62f850d9c3c6994ec1d2ddd0f5d1b2a8",
@@ -99,6 +99,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-11-09T14:03:11Z",
+  "generated_at": "2026-11-09T15:34:57Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }

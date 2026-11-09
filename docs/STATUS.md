@@ -16,6 +16,12 @@
 
 - 当前收口：统一离线验收入口 `scripts/eval/acceptance/run_portfolio_acceptance.py` 与跨仓证据账本已落地；主线闭环可复现，但 held-out/golden 发布门槛仍未满足，不能宣称生产成熟度。
 
+## 报销办理第二场景演示
+
+`demos/demo_expense_workflow.py` 现在复用正式 `expense_claim_review@1` Workflow，按“政策检索 → 结构化表单校验 → 规则决策 → `needs_review` 人工复核闸门 → 决策审计 → 轨迹落盘与 replay”运行。正常单、硬拒绝和币种不在政策范围的人工复核单都会打印 `claim_valid`、政策版本、决策码、审计记录、轨迹路径和回放结果。
+
+当前可声称的是可审计的 Workflow 决策与人工复核边界；Expense 的 `route_review` / `resolve_review` 审批 API 尚未实现，演示不会把 `needs_review` 自动变成批准。held-out / golden 结果继续只作验收附录，不作为应用主叙事。
+
 - 默认入口的安全防线修复（2026-09-30）：容器默认入口是 `react-agent-api`（FastAPI 面），但它读的是从未被文档记录的 `REACT_AGENT_API_KEY`——#97 已把 `DEPLOY.md` 的过时变量名改成 `REACT_AGENT_AUTH_TOKEN`，却漏改了 `fastapi_app` 的读取处，于是**按文档配置等于没配**（鉴权 fail-open），且该面完全没有 Host 头校验，DNS rebinding 防线与 `REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1` 的启动期 fail-closed 都只在 stdlib 面成立。现抽出 `server/auth.py` 的 header 版判据供两面共用（`REACT_AGENT_API_KEY` 保留为 legacy 别名、AUTH_TOKEN 优先），`request_guard` 改为「Host 先于鉴权」并把保护范围对齐文档（除探针外全部），`main()` 补启动期校验与未鉴权暴露告警。配置发现性同步补齐：`.env.example` 增加「服务鉴权与网络暴露」段，`docker-compose.yml` 把两个变量由注释改为直通——此前在 `.env` 里填 token 根本进不了容器。见 [#100](https://github.com/weihuaguo270-ops/react-agent/pull/100)。
 
 - 默认入口的异步审批链路补齐（2026-09-30）：`GET/POST /v1/approvals` 与响应里的 `awaiting_approval`/`approval_id` 此前只在 stdlib 面成立，文档承诺的「命中 CONFIRM → 落盘待批 → 人工批准 → 带 id 重试放行」在默认入口走不通。根因是审批信号用 ContextVar 传递（闸门写、响应侧读），而 FastAPI 面在 `run_in_threadpool` 之外捕获——跨该边界读永远是 `None`。现把「设置请求上下文 + 捕获审批状态」与对话本身放进同一次线程池调用，`/v1/chat`、`/v1/chat/stream`、`/v1/tasks` 统一走它，并新增两个审批路由（错误码与 stdlib 面逐字对齐：找不到 404，已决议/过期/取值非法 409）。见 [#101](https://github.com/weihuaguo270-ops/react-agent/pull/101)。
