@@ -2,15 +2,15 @@
 
 **状态：** `Blocked`（report-only 聚合器已实现，当前 live observation 只有 4 天）
 
-当前最新观测证据来自 PR #207 当前 head `777c77dd9bc48d95e0ebd38d123cb89e5fc9776a` 上的
-shadow workflow run [42556340139](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42556340139)，
-结构化报告见 [`phase2-shadow-observation-2026-11-09-run-42556340139.json`](phase2-shadow-observation-2026-11-09-run-42556340139.json)。
-本次 run 成功生成 29 个有效样本和 29 个不同的 `head_sha`，其中 5 个有完整
-runtime 对比（中位改善暂未计算，尚不足 10 个）。严格缩小的规则类别仍为 `docs` 与
+当前最新观测证据来自 `main@944574e8e2cdd69192502d799996fb7ab646b858` 上的
+shadow workflow run [42559316934](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42559316934)，
+结构化报告见 [`phase2-shadow-observation-2026-11-09-run-42559316934.json`](phase2-shadow-observation-2026-11-09-run-42559316934.json)。
+本次 run 成功生成 30 个有效样本和 30 个不同的 `head_sha`，其中没有可比较的
+runtime 样本（中位改善暂未计算）。严格缩小的规则类别仍为 `docs` 与
 `docs+docs_corpus_baseline` 两类；报告记录了
 `repository`、`run_id`、`run_url` 和 `collector_head_sha` provenance；没有 invalid sample、
 unmapped path 或 expected-check 漏选，并包含 PR #206、#207、#208 的 report-only artifact。运行
-42510977744、42509905741 及更早运行的结构化报告和原始 workflow artifacts 均保留；完整 excluded run ID 与原因仍以对应 workflow artifact 为准。
+42556340139、42510977744、42509905741 及更早运行的结构化报告和原始 workflow artifacts 均保留；完整 excluded run ID 与原因仍以对应 workflow artifact 为准。
 
 本报告只记录 Phase 2 的当前边界，不把历史 backtest 或单次 PR artifact
 解释为观察窗口通过。`.github/workflows/test.yml` 现在为每个 PR 同时上传：
@@ -34,8 +34,8 @@ attempt 的 job 时间戳生成明确标注的 runtime estimate。下载失败�
 静默删除或当作有效样本。
 
 本次 live aggregate report 的 `conclusion` 仍为 `blocked`：观察窗口只有 4 天，
-已有 29 个不同 `head_sha`，但只有 `docs` 与 `docs+docs_corpus_baseline` 两个严格缩小
-规则类别，可比 runtime 为 5，尚未满足 14 天、3 类缩小规则、10 个 runtime 样本及至少
+已有 30 个不同 `head_sha`，但只有 `docs` 与 `docs+docs_corpus_baseline` 两个严格缩小
+规则类别，可比 runtime 为 0，尚未满足 14 天、3 类缩小规则、10 个 runtime 样本及至少
 20% 中位改善的全部门槛。因此 Phase 2 继续保持 report-only，不授权 subset gate 或
 Branch Protection 变更。
 
