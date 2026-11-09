@@ -1,11 +1,11 @@
 # CI Phase 2 Shadow Observation
 
-**状态：** `Blocked`（report-only 聚合器已实现，当前 live observation 只有 3 天）
+**状态：** `Blocked`（report-only 聚合器已实现，当前 live observation 只有 4 天）
 
-当前最新观测证据来自 PR #207 当前 head `d5f0dc95b252411eb374f929666451fc7373443d` 上的
-shadow workflow run [42515109880](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42515109880)，
-结构化报告见 [`phase2-shadow-observation-2026-11-09-run-42515109880.json`](phase2-shadow-observation-2026-11-09-run-42515109880.json)。
-本次 run 成功生成 27 个有效样本和 27 个不同的 `head_sha`，其中 5 个有完整
+当前最新观测证据来自 PR #207 当前 head `777c77dd9bc48d95e0ebd38d123cb89e5fc9776a` 上的
+shadow workflow run [42556340139](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42556340139)，
+结构化报告见 [`phase2-shadow-observation-2026-11-09-run-42556340139.json`](phase2-shadow-observation-2026-11-09-run-42556340139.json)。
+本次 run 成功生成 29 个有效样本和 29 个不同的 `head_sha`，其中 5 个有完整
 runtime 对比（中位改善暂未计算，尚不足 10 个）。严格缩小的规则类别仍为 `docs` 与
 `docs+docs_corpus_baseline` 两类；报告记录了
 `repository`、`run_id`、`run_url` 和 `collector_head_sha` provenance；没有 invalid sample、
@@ -33,8 +33,8 @@ attempt 的 job 时间戳生成明确标注的 runtime estimate。下载失败�
 缺少 job 或失败 job 都会保留在 `excluded_runs`/`invalid_samples` 中，不能被
 静默删除或当作有效样本。
 
-本次 live aggregate report 的 `conclusion` 仍为 `blocked`：观察窗口只有 3 天，
-已有 27 个不同 `head_sha`，但只有 `docs` 与 `docs+docs_corpus_baseline` 两个严格缩小
+本次 live aggregate report 的 `conclusion` 仍为 `blocked`：观察窗口只有 4 天，
+已有 29 个不同 `head_sha`，但只有 `docs` 与 `docs+docs_corpus_baseline` 两个严格缩小
 规则类别，可比 runtime 为 5，尚未满足 14 天、3 类缩小规则、10 个 runtime 样本及至少
 20% 中位改善的全部门槛。因此 Phase 2 继续保持 report-only，不授权 subset gate 或
 Branch Protection 变更。

@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-08T19:33:44.459079+00:00",
+  "updated_at": "2026-11-09T03:34:22.337131+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -192,16 +192,17 @@
             "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42506093380.json",
             "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42509905741.json",
             "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42510977744.json",
-            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42515109880.json"
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42515109880.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42556340139.json"
           ],
           "status": "blocked",
-          "notes": "Latest provenance-complete report-only run 42515109880 is bound to collector head d5f0dc95b252411eb374f929666451fc7373443d and has 27 valid samples across 27 head SHAs, zero missing expected checks, zero invalid samples, and 5 comparable runtime samples. The three-day window, two strict-subset categories, and fewer than 10 runtime samples keep this item blocked. R9 external-fork isolation is tracked independently by CI-P1-3 and is not a CI-P2-2 observation-window criterion. Earlier runs remain preserved as historical evidence."
+          "notes": "Latest provenance-complete report-only run 42556340139 is bound to collector head 777c77dd9bc48d95e0ebd38d123cb89e5fc9776a and has 29 valid samples across 29 head SHAs, zero missing expected checks, zero invalid samples, and 5 comparable runtime samples. The four-day window, two strict-subset categories, and fewer than 10 runtime samples keep this item blocked. R9 external-fork isolation is tracked independently by CI-P1-3 and is not a CI-P2-2 observation-window criterion. Earlier runs remain preserved as historical evidence."
         }
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "docs/specs/ci/evidence/gates/phase-2-20261108T193344430829Z-d5f0dc95.json",
-        "report_sha256": "8544f104bd85c71da213b101dfc3cbc53334afa994f473447bcd2974e7958d0d",
+        "report": "docs/specs/ci/evidence/gates/phase-2-20261109T033422324091Z-777c77dd.json",
+        "report_sha256": "da0d92504957c6c6d872b4c8a55abdac8815471170a35f4662566f69cdcc0747",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": null
@@ -229,8 +230,8 @@
   "last_gate": {
     "stage": "Phase 2",
     "status": "blocked",
-    "report": "docs/specs/ci/evidence/gates/phase-2-20261108T193344430829Z-d5f0dc95.json",
-    "report_sha256": "8544f104bd85c71da213b101dfc3cbc53334afa994f473447bcd2974e7958d0d",
+    "report": "docs/specs/ci/evidence/gates/phase-2-20261109T033422324091Z-777c77dd.json",
+    "report_sha256": "da0d92504957c6c6d872b4c8a55abdac8815471170a35f4662566f69cdcc0747",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
     "snapshot_id": null
