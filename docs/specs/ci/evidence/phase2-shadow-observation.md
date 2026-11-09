@@ -2,17 +2,17 @@
 
 **状态：** `Blocked`（report-only 聚合器已实现，当前 live observation 只有 4 天）
 
-当前最新观测证据来自 `main@f36ab991f887a05cf434e80ba7684b868482557b` 上的
-shadow workflow run [42580884265](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42580884265)，
-结构化报告见 [`phase2-shadow-observation-2026-11-09-run-42580884265.json`](phase2-shadow-observation-2026-11-09-run-42580884265.json)。
-本次 run 成功生成 36 个有效样本和 36 个不同的 `head_sha`，其中 7 个具有可比较的
+当前最新观测证据来自合并后的 `main@574fb3b9bf8b2c11201c45cbfdaf9ed47f155454` 上的
+shadow workflow run [42588576190](https://github.com/weihuaguo270-ops/react-agent/actions/runs/42588576190)，
+结构化报告见 [`phase2-shadow-observation-2026-11-09-run-42588576190.json`](phase2-shadow-observation-2026-11-09-run-42588576190.json)。
+本次 run 成功生成 37 个有效样本和 37 个不同的 `head_sha`，其中 8 个具有可比较的
 runtime 样本（中位改善在不足 10 个样本前暂不计算）。严格缩小的规则类别仍为 `docs` 与
 `docs+docs_corpus_baseline` 两类；报告记录了
 `repository`、`run_id`、`run_url` 和 `collector_head_sha` provenance；没有 invalid sample、
 unmapped path 或 expected-check 漏选，并包含 PR #206、#207、#208 的 report-only artifact。运行
 42556340139、42510977744、42509905741 及更早运行的结构化报告和原始 workflow artifacts 均保留；完整 excluded run ID 与原因仍以对应 workflow artifact 为准。
 
-运行 42580884265 的新报告、原始 workflow artifact 和此前所有结构化报告均保留。本报告只记录 Phase 2 的当前边界，不把历史 backtest 或单次 PR artifact
+运行 42588576190、42580884265 的新报告、原始 workflow artifact 和此前所有结构化报告均保留。本报告只记录 Phase 2 的当前边界，不把历史 backtest 或单次 PR artifact
 解释为观察窗口通过。`.github/workflows/test.yml` 现在为每个 PR 同时上传：
 
 - `pr-check-scope.json`：Registry selector 的选择结果；
@@ -33,7 +33,7 @@ attempt 的 job 时间戳生成明确标注的 runtime estimate。下载失败�
 缺少 job 或失败 job 都会保留在 `excluded_runs`/`invalid_samples` 中，不能被
 静默删除或当作有效样本。
 
-本次 live aggregate report 的 `conclusion` 仍为 `blocked`：观察窗口只有 4 天，已有 36 个不同 `head_sha`，但只有 `docs` 与 `docs+docs_corpus_baseline` 两个严格缩小规则类别，可比 runtime 为 7，尚未满足 14 天、3 类缩小规则、10 个 runtime 样本及至少 20% 中位改善的全部门槛。因此 Phase 2 继续保持 report-only，不授权 subset gate 或
+本次 live aggregate report 的 `conclusion` 仍为 `blocked`：观察窗口只有 4 天，已有 37 个不同 `head_sha`，但只有 `docs` 与 `docs+docs_corpus_baseline` 两个严格缩小规则类别，可比 runtime 为 8，尚未满足 14 天、3 类缩小规则、10 个 runtime 样本及至少 20% 中位改善的全部门槛。因此 Phase 2 继续保持 report-only，不授权 subset gate 或
 Branch Protection 变更。
 
 Phase 1 的 R9 外部 fork 隔离运行是独立的 `CI-P1-3` 验收项，不属于本观察窗口的
