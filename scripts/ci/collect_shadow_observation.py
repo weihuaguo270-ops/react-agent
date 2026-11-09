@@ -102,8 +102,13 @@ def runtime_observation(
     missing_checks = sorted(expected - discovered)
     incomplete = incomplete or bool(missing_checks)
     full_seconds = sum(item[1] for item in measured)
-    selected_seconds = sum(item[1] for item in measured if item[0] in selected)
-    comparable = not incomplete and full_seconds > 0 and selected < expected
+    selected_runtime_checks = selected & RUNTIME_CHECKS
+    selected_seconds = sum(item[1] for item in measured if item[0] in selected_runtime_checks)
+    # expected_checks is the independent policy used for missed-check
+    # detection. Runtime savings compare the selector against the complete
+    # deterministic job matrix, so a selector may legitimately include more
+    # checks than that policy while still being a strict runtime subset.
+    comparable = not incomplete and full_seconds > 0 and selected_runtime_checks < RUNTIME_CHECKS
     result = {
         "workflow_run_id": run.get("id"),
         "run_attempt": run.get("run_attempt"),
