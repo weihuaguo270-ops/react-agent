@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-09T04:12:12.685931+00:00",
+  "updated_at": "2026-11-09T07:11:58.578855+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -49,9 +49,9 @@
   ],
   "phase0_snapshot_id": "main-c6be917c-20261106-v2",
   "selector_sample_id": "main-8805e5e9-20261030",
-  "selector_backtest_report": "docs/specs/ci/evidence/phase1-selector-backtest-main-8805e5e9-20261106-v2.json",
+  "selector_backtest_report": "docs/specs/ci/evidence/phase1-selector-backtest-main-8805e5e9-20261109.json",
   "selector_rule_labels": "docs/specs/ci/evidence/selector-expected-rules-100-20261106-v2.json",
-  "selector_rule_backtest_report": "docs/specs/ci/evidence/phase1-selector-rule-backtest-main-8805e5e9-20261106-v2.json",
+  "selector_rule_backtest_report": "docs/specs/ci/evidence/phase1-selector-rule-backtest-main-8805e5e9-20261109.json",
   "stages": {
     "Phase 0": {
       "name": "Evidence lifecycle and CI risk baseline",
@@ -100,8 +100,8 @@
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "docs/specs/ci/evidence/gates/phase-0-20261108T142201947494Z-944574e8.json",
-        "report_sha256": "886850975e7eb8923ee49aa554b2c14da49ca4e0e77424fd85ac0c42f690c991",
+        "report": "artifacts/ci/stage-gates/phase-0-20261109T065213493674Z-d5e6a078.json",
+        "report_sha256": "033f29b62a7cc83332be394367b87a0401d2f6ec68019de11da43d9cb452bb33",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": "main-c6be917c-20261106-v2"
@@ -127,14 +127,14 @@
           "title": "Selector backtest replays fixed sample paths and records unmeasured labels honestly",
           "evidence": [
             "docs/specs/ci/evidence/selector-samples/main-8805e5e9-20261030.json",
-            "docs/specs/ci/evidence/phase1-selector-backtest-main-8805e5e9-20261106-v2.json",
+            "docs/specs/ci/evidence/phase1-selector-backtest-main-8805e5e9-20261109.json",
             "scripts/ci/label_expected_rules.py",
             "scripts/ci/rule_level_backtest.py",
             "docs/specs/ci/evidence/selector-expected-rules-100-20261106-v2.json",
-            "docs/specs/ci/evidence/phase1-selector-rule-backtest-main-8805e5e9-20261106-v2.json"
+            "docs/specs/ci/evidence/phase1-selector-rule-backtest-main-8805e5e9-20261109.json"
           ],
           "status": "complete",
-          "notes": "The frozen 100-PR sample has complete independent labels and path mappings: 1,989 mapped paths, 3 explicit historical CI archive exclusions, 0 unmapped paths, and 100/100 comparable rows with 0 missed or false-positive rules. Evidence hashes are newline-canonical and portable across Windows/POSIX checkouts. Historical path classifications are scoped in registry-v2.json and do not assert current-tree presence. The sample is bound to source snapshot main-8805e5e9-20261030; subset-gate eligibility still requires Phase 2 shadow observation."
+          "notes": "The frozen 100-PR sample has complete independent labels and path mappings: 1,989 mapped paths, 3 explicit historical CI archive exclusions, 0 unmapped paths, and 100/100 comparable rows with 0 missed or false-positive rules. The 2026-11-09 reports are regenerated against the current registry after the duplicate-key guard merge; historical reports remain immutable. Evidence hashes are newline-canonical and portable across Windows/POSIX checkouts. Historical path classifications are scoped in registry-v2.json and do not assert current-tree presence. The sample is bound to source snapshot main-8805e5e9-20261030; subset-gate eligibility still requires Phase 2 shadow observation."
         },
         {
           "id": "CI-P1-3",
@@ -154,8 +154,8 @@
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "docs/specs/ci/evidence/gates/phase-1-20261108T184716389857Z-8155d9f6.json",
-        "report_sha256": "20329801b91590031b25ef4d4d53dffdbfd261074ac800b4b463313a4bdedde7",
+        "report": "docs/specs/ci/evidence/gates/phase-1-20261109T071158556906Z-d5e6a078.json",
+        "report_sha256": "e2bd12d5719e361dc96312b787ffae45235f2e2cbbed6efef1490de39bf51112",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": "main-8805e5e9-20261030"
@@ -202,8 +202,8 @@
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "docs/specs/ci/evidence/gates/phase-2-20261109T041212670467Z-f1137950.json",
-        "report_sha256": "4f37f175d0ce7e22d19d8fd969afb781b0b0e8f96f1bced8e122f53c65ab5805",
+        "report": "artifacts/ci/stage-gates/phase-2-20261109T065206461059Z-d5e6a078.json",
+        "report_sha256": "cd17b3efb4f757b4430122f5ebb36719a4ecc0d39480af74824b348f7f9027ed",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": null
@@ -229,12 +229,12 @@
     }
   },
   "last_gate": {
-    "stage": "Phase 2",
+    "stage": "Phase 1",
     "status": "blocked",
-    "report": "docs/specs/ci/evidence/gates/phase-2-20261109T041212670467Z-f1137950.json",
-    "report_sha256": "4f37f175d0ce7e22d19d8fd969afb781b0b0e8f96f1bced8e122f53c65ab5805",
+    "report": "docs/specs/ci/evidence/gates/phase-1-20261109T071158556906Z-d5e6a078.json",
+    "report_sha256": "e2bd12d5719e361dc96312b787ffae45235f2e2cbbed6efef1490de39bf51112",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-    "snapshot_id": null
+    "snapshot_id": "main-8805e5e9-20261030"
   }
 }
