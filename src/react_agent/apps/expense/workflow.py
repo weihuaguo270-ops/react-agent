@@ -18,6 +18,7 @@ from react_agent.workflow.engine import Step, StepKind, WorkflowDef
 from .contracts import PolicyContractError, limits_from_policy, load_policy_facts, validate_claim
 from .domain import ContractError, LegacyClaimAdapter
 from .offline_answer import _DECISION_ZH, decide
+from .review import resolve_review, route_review
 
 EXPENSE_WORKFLOW_NAME = "expense_claim_review@1"
 DEFAULT_PURCHASE_ORDERS = {"PO-100": True, "PO-2026": True}
@@ -287,5 +288,5 @@ def reset_decision_audit() -> None:
 
 __all__ = [
     "EXPENSE_WORKFLOW_NAME", "SimulationEvidenceAdapter", "build_expense_workflow",
-    "reset_decision_audit", "run_expense_workflow",
+    "reset_decision_audit", "resolve_review", "route_review", "run_expense_workflow",
 ]

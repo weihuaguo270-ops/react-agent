@@ -78,6 +78,7 @@ TOOL_PERMISSIONS: dict[str, PermissionLevel] = {
     "run_workflow": PermissionLevel.SAFE,
     # Expense 决策审计只记录已验证的决策，不改变 Claim/Approval 状态。
     "persist_decision": PermissionLevel.NOTIFY,
+    "resolve_review": PermissionLevel.CONFIRM,
     "apply_fix_step": PermissionLevel.CONFIRM,
     # fetch_trace 的 trace_id 会成为文件路径/子进程参数，需要人工确认
     "fetch_trace": PermissionLevel.CONFIRM,

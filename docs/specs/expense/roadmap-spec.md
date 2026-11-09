@@ -26,7 +26,7 @@
 | S2 共享领域契约 | complete | `domain.py`、legacy adapter、契约测试和 candidate runner 已实现；报告在 `artifacts/expense/candidate-s2-20261012/` |
 | S3 决策 Workflow | complete | `expense_claim_review@1` 已接通 HTTP（可选 workflow/legacy 回退）、demo、business evaluation 和 expanded candidate runner；采购/报价事实由可信模拟 adapter 提供，客户端自报验证字段不被信任；S3 smoke 与三组 candidate split 均通过 |
 | S4 Claim 持久化 | not_started | PostgreSQL Claim/version/audit store 与草稿、提交、冻结、查询未实现 |
-| S5 审批闭环 | not_started | Expense 审批 API、`route_review` / `resolve_review`、权限和过期/重放保护未实现 |
+| S5 审批闭环 | prototype_slice | 已实现进程内 Expense `route_review` / `resolve_review`、专用 HTTP resolve 入口、权限闸门、版本/decision_hash/幂等校验和审批审计；PostgreSQL 持久化、过期存储语义与完整 S4→S5 生产链路仍未完成 |
 | S6 人工接管 | not_started | H0–H3 case/event/outbox、分派、认领/SLA、resolve 与 approval 绑定未实现 |
 | S7 表单 UI 与运营视图 | not_started | 独立表单主路径、待审列表和 case 时间线未实现 |
 | S8 验收与可选模型 | not_started | 全链路验收尚未执行；JEV 类模型保持可选，且只能在规则/Workflow/审批门禁后评估 |
@@ -48,7 +48,7 @@ S2 candidate 结果：dev 41 案 39 通过、2 个采购验证 known gap（故 d
 | S2：共享领域契约 | 统一 Claim/version、Decision、ApprovalRecord、AuditEvent、Handoff reason、decision hash、错误码；保留 legacy adapter；实现扩展候选 fixture runner 和 held_out hash 保护 | Decision §6、§8、§10；Form §5、§11、§12 P0；Coverage Matrix | S0、S1 | 契约测试通过；旧入口回归；候选 runner 可执行并区分 pass/known_gap/fail；held_out hash 固定 | complete |
 | S3：决策 Workflow | 将 `decide()` 包装为 `expense_claim_review@1`；以结构化 Claim→Workflow→HTTP/demo 输出作为第一个可运行垂直切片；实现固定节点、失败关闭、轨迹、决策审计适配和幂等重放；建立不依赖 LLM/外部财务系统的核心决策 smoke；对采购/报价证据使用 Workflow 控制的模拟 adapter，不信任客户端自报验证结果 | Decision §5、§6、§10 P2；Policy Boundary 决策规则；Coverage Matrix `W-ADAPTER-*` | S2 | 垂直切片可运行且可回退到 legacy；节点注册/顺序/成功跳过失败轨迹可断言；核心 smoke 覆盖批准、硬拒绝、人工审核、非法 Claim、政策不可用和幂等重放；规则输出与 S1 逐案兼容；未知或不可验证证据不得自动批准；`W-ADAPTER-*` 有测试 | complete |
 | S4：持久化 Claim 生命周期 | 建 PostgreSQL Claim/version/audit store；实现 draft create/read/update、submit、版本冻结、状态迁移和查询；扩展持久化 smoke；Ledger 留作 legacy/eval adapter | Form §5–9、§11、§12 P1；Decision §6.3 | S3 | 重启后可查询的持久化 smoke 通过；提交冻结版本；重复请求幂等；版本冲突无副作用；审计完整 | not_started |
-| S5：审批闭环 | 统一 Expense approval API；实现 `route_review` / `resolve_review`、CONFIRM 权限、Claim version/decision hash 校验、过期/拒绝/重复使用保护；扩展审批状态 smoke；只有合法审批可改变 Claim 状态 | Form §4–8、§11、§12 P2；Decision §6.3 | S4 | approve/reject/escalate、无效凭据、过期、重复使用、hash/version 冲突均有状态与审计断言；审批 smoke 证明未经批准不进入批准终态 | not_started |
+| S5：审批闭环 | 已实现可运行的进程内审批切片：`route_review` / `resolve_review`、CONFIRM 权限、Claim version/decision hash 校验、幂等和 approve/reject/escalate 审计；正式发布仍依赖 S4 Claim 持久化和过期/拒绝凭据治理 | Form §4–8、§11、§12 P2；Decision §6.3 | S4（正式发布） | 原型 smoke 已覆盖 approve/reject/escalate、无效版本/hash、重复决议和审计；PostgreSQL 重启恢复、过期存储和完整 S4→S5 链路仍待补齐 | prototype_slice |
 | S6：人工接管 | 按 H0 reason/routing 契约、H1 case/event/outbox、H2 分派认领/SLA、H3 resolve 与审批绑定执行；扩展 handoff smoke；工单关闭不等于 Claim 批准 | Handoff §5–14；Form 审批入口章节 | S5 | 重复 handoff 去重；case 状态/事件追加；并发认领和升级可验证；handoff smoke 证明 resolve 绑定合法 approval/version/hash 且不会绕过审批 | not_started |
 | S7：表单 UI 与运营视图 | 先交付新建、草稿、编辑、提交、状态和审批结果主路径，再接入 case 时间线、待审列表和状态刷新；建立浏览器 UI smoke；状态文案区分审批、工单关闭和付款 | Form §3、§8、§12 P3；Handoff 运营视图章节 | S4、S5；case 视图依赖 S6 | 浏览器 smoke 完成“新建→保存→编辑→提交→待审→审批结果”；重复提交、网络失败、过期版本、越权状态有处理；无付款成功误导 | not_started |
 | S8：验收与可选模型 | 按单测→dev→golden→held_out→HTTP/UI smoke→仓库回归执行；汇总分阶段 smoke 为发布报告；比较 S1 逐案证据；之后才可评估 JEV 类版本化候选模型 | Decision §8、§10.4–10.6 P5；Form §12 P4；Handoff 各阶段退出标准 | S3–S7 | 规则/审批/审计/人工作业端到端门禁通过；HTTP/UI smoke 与分阶段 smoke 全部通过并保留报告、版本、fixture hash、配置和失败日志；held_out 独立且不调参；候选模型可回退且不改变已冻结规则结果 | not_started |
