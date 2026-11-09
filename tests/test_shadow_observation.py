@@ -231,6 +231,36 @@ def test_runtime_observation_blocks_failed_or_incomplete_jobs():
     assert result["runtime_incomplete"] is True
 
 
+def test_runtime_observation_compares_against_full_matrix_when_policy_is_smaller():
+    selector = {"selected_checks": ["docs-eval", "pr-ready", "lint", "test"]}
+    jobs = [
+        {
+            "name": name,
+            "started_at": "2026-11-06T10:00:00Z",
+            "completed_at": "2026-11-06T10:01:00Z",
+            "conclusion": "success",
+        }
+        for name in (
+            "PR ready audit",
+            "lint",
+            "test (3.10)",
+            "test-windows (3.10)",
+            "typecheck",
+            "security",
+            "docker-smoke",
+        )
+    ]
+
+    result = runtime_observation(
+        selector,
+        jobs,
+        {"id": 45, "run_attempt": 1},
+        expected_checks={"pr-ready"},
+    )
+
+    assert result["runtime_comparable"] is True
+    assert result["runtime_missing_checks"] == []
+
 def test_runtime_observation_rejects_missing_expected_check():
     selector = {"selected_checks": ["lint"]}
     jobs = [
@@ -290,6 +320,23 @@ def test_collect_excludes_artifacts_bound_to_another_head(tmp_path, monkeypatch)
     report = collector.collect("owner/repo", "test.yml", tmp_path / "report.json")
     assert report["sample_count"] == 0
     assert any("same head SHA" in item["reason"] for item in report["excluded_runs"])
+
+
+def test_collect_records_workflow_provenance(tmp_path, monkeypatch):
+    from scripts.ci import collect_shadow_observation as collector
+
+    monkeypatch.setattr(collector, "gh_json", lambda endpoint: {"workflow_runs": []})
+    monkeypatch.setenv("GITHUB_RUN_ID", "42494250302")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
+    monkeypatch.setenv("GITHUB_SERVER_URL", "https://github.example")
+    monkeypatch.setenv("GITHUB_SHA", "A" * 40)
+
+    report = collector.collect("fallback/repo", "test.yml", tmp_path / "report.json")
+
+    assert report["repository"] == "owner/repo"
+    assert report["run_id"] == 42494250302
+    assert report["run_url"] == "https://github.example/owner/repo/actions/runs/42494250302"
+    assert report["collector_head_sha"] == "a" * 40
 
 
 def test_collect_can_use_older_attempt_when_newest_artifact_is_missing(tmp_path, monkeypatch):

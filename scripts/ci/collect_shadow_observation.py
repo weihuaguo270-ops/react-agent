@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -41,6 +43,34 @@ FULL_CHECKS = {
     "docs-eval",
 }
 RUNTIME_CHECKS = FULL_CHECKS - {"docs-eval"}
+
+
+def collector_provenance(repo: str) -> dict[str, Any]:
+    """Return the immutable identity of the workflow run producing the report."""
+    run_id = os.getenv("GITHUB_RUN_ID")
+    server = os.getenv("GITHUB_SERVER_URL", "https://github.com").rstrip("/")
+    repository = os.getenv("GITHUB_REPOSITORY", repo)
+    head_sha = os.getenv("GITHUB_SHA")
+    if not isinstance(head_sha, str) or not re.fullmatch(r"[0-9a-fA-F]{40}", head_sha):
+        try:
+            head_sha = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
+        except (OSError, subprocess.CalledProcessError):
+            head_sha = None
+    if not isinstance(head_sha, str) or not re.fullmatch(r"[0-9a-fA-F]{40}", head_sha):
+        head_sha = None
+    run_number = int(run_id) if isinstance(run_id, str) and run_id.isdigit() else None
+    return {
+        "repository": repository,
+        "run_id": run_number,
+        "run_url": f"{server}/{repository}/actions/runs/{run_number}" if run_number is not None else None,
+        "collector_head_sha": head_sha.lower() if head_sha else None,
+    }
 
 
 def gh_json(endpoint: str) -> Any:
@@ -209,7 +239,7 @@ def collect(repo: str, workflow: str, output: Path, *, limit: int = 100) -> dict
                 excluded.append({"run_id": run_id, "head_sha": head_sha, "reason": str(exc)})
 
     report = aggregate(selectors, expected)
-    report["repository"] = repo
+    report.update(collector_provenance(repo))
     report["workflow"] = workflow
     report["source_run_count"] = len(runs)
     report["excluded_runs"] = excluded

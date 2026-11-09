@@ -4,7 +4,7 @@
   "source_spec": "docs/specs/ci/spec.md",
   "spec_revision": "1.5",
   "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-  "updated_at": "2026-11-08T14:22:01.954331+00:00",
+  "updated_at": "2026-11-09T04:12:12.685931+00:00",
   "superseded_acceptance": [
     {
       "id": "CI-P0-1",
@@ -154,8 +154,8 @@
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "docs/specs/ci/evidence/gates/phase-1-20261106T141443240185Z-59003fe3.json",
-        "report_sha256": "029315f1be3c9443ae4d59ff8ae8b02576dc2c2ab063f999b16ec4e55f98f798",
+        "report": "docs/specs/ci/evidence/gates/phase-1-20261108T184716389857Z-8155d9f6.json",
+        "report_sha256": "20329801b91590031b25ef4d4d53dffdbfd261074ac800b4b463313a4bdedde7",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": "main-8805e5e9-20261030"
@@ -184,16 +184,26 @@
           "title": "The report-only observation window meets the Spec thresholds",
           "evidence": [
             "docs/specs/ci/evidence/phase2-shadow-observation.md",
-            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-06.json"
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-08.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-08-run-42494250302.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42498318135.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42500593569.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42503842381.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42506093380.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42509905741.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42510977744.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42515109880.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42556340139.json",
+            "docs/specs/ci/evidence/phase2-shadow-observation-2026-11-09-run-42559316934.json"
           ],
           "status": "blocked",
-          "notes": "Live report-only run 42224158528 is bound to main 2facfa0baa3084090b262a4d8c7c58f27f9bc606 and has 8 valid samples across 8 head SHAs, zero missing expected checks, and zero invalid samples. The one-day window, one strict-subset category, zero comparable runtime samples, and missing current-head R9 external-fork evidence keep this item blocked."
+          "notes": "Latest provenance-complete report-only run 42559316934 is bound to main 944574e8e2cdd69192502d799996fb7ab646b858 and has 30 valid samples across 30 head SHAs, zero missing expected checks, zero invalid samples, and zero comparable runtime samples. The four-day window, two strict-subset categories, and missing runtime samples keep this item blocked. R9 external-fork isolation is tracked independently by CI-P1-3 and is not a CI-P2-2 observation-window criterion. Earlier runs remain preserved as historical evidence."
         }
       ],
       "last_gate": {
         "status": "blocked",
-        "report": "artifacts/ci/stage-gates/phase-2-20261106T132805675979Z-2facfa0b.json",
-        "report_sha256": "6ecd9a77877dedbb43fb40e683c93a4c3b102d626db97d446b1e25101f8c474e",
+        "report": "docs/specs/ci/evidence/gates/phase-2-20261109T041212670467Z-f1137950.json",
+        "report_sha256": "4f37f175d0ce7e22d19d8fd969afb781b0b0e8f96f1bced8e122f53c65ab5805",
         "spec_revision": "1.5",
         "acceptance_revision": "ci-acceptance/2026-10-30-v2",
         "snapshot_id": null
@@ -219,12 +229,12 @@
     }
   },
   "last_gate": {
-    "stage": "Phase 0",
+    "stage": "Phase 2",
     "status": "blocked",
-    "report": "docs/specs/ci/evidence/gates/phase-0-20261108T142201947494Z-944574e8.json",
-    "report_sha256": "886850975e7eb8923ee49aa554b2c14da49ca4e0e77424fd85ac0c42f690c991",
+    "report": "docs/specs/ci/evidence/gates/phase-2-20261109T041212670467Z-f1137950.json",
+    "report_sha256": "4f37f175d0ce7e22d19d8fd969afb781b0b0e8f96f1bced8e122f53c65ab5805",
     "spec_revision": "1.5",
     "acceptance_revision": "ci-acceptance/2026-10-30-v2",
-    "snapshot_id": "main-c6be917c-20261106-v2"
+    "snapshot_id": null
   }
 }

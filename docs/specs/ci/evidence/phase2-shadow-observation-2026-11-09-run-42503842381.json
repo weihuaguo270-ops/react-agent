@@ -1,0 +1,986 @@
+{
+  "schema_version": "ci-shadow-observation/v1",
+  "mode": "report-only",
+  "generated_at": "2026-11-08T17:13:54.148452+00:00",
+  "window_start": "2026-11-06",
+  "window_end": "2026-11-08",
+  "elapsed_calendar_days": 3,
+  "sample_count": 18,
+  "unique_head_sha_count": 18,
+  "rule_categories_with_strict_subset": [
+    "docs",
+    "docs+docs_corpus_baseline"
+  ],
+  "invalid_samples": [],
+  "excluded_samples": [],
+  "rows": [
+    {
+      "pr": 196,
+      "head_sha": "07a42db203fc9380f42d5e2ce0f2d3d698827212",
+      "base_sha": "753b1252af72e5a717dd42ff02345ec356c80783",
+      "generated_at": "2026-11-06T07:43:22.918740+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 197,
+      "head_sha": "7613f643142c9258cffaef2e6d8b46d85e6f8b7d",
+      "base_sha": "13280a3ea94f456fcb1214f616815d5680aa9c20",
+      "generated_at": "2026-11-06T08:43:31.756850+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 198,
+      "head_sha": "bcd4e927c5e51f35e32ecd9eef6643626881e078",
+      "base_sha": "cf2f6f8c28f13a79a4483c9b5b88b10bc83fe530",
+      "generated_at": "2026-11-06T09:49:26.607013+00:00",
+      "change_class": "docs",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test"
+      ],
+      "expected_checks": [
+        "docs-eval",
+        "pr-ready"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": true,
+      "runtime_improvement": 0.3547
+    },
+    {
+      "pr": 199,
+      "head_sha": "adb45655e87f9e3a36d9124392c0d6e35d6c32d0",
+      "base_sha": "9ba922d1bfe576aa922919fc892e5bd043ea4e2c",
+      "generated_at": "2026-11-06T10:32:45.393786+00:00",
+      "change_class": "cross_cutting+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 200,
+      "head_sha": "4a5a9343ec91312b80f302d718e39db7b156705d",
+      "base_sha": "31d821b11117e76551351fd4c0cc1cce10673435",
+      "generated_at": "2026-11-06T11:08:07.778286+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 201,
+      "head_sha": "0acf0aff1c2e0297103dd32654d01d324a1f737b",
+      "base_sha": "80382b7985063f15e1226017ae451cbef533d769",
+      "generated_at": "2026-11-06T11:35:07.886345+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 202,
+      "head_sha": "7f15d20019e01cbefc8ab38c14482531cf8decff",
+      "base_sha": "c6be917c92e8552145ea36103c730464bb0deddb",
+      "generated_at": "2026-11-06T12:12:33.387999+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 203,
+      "head_sha": "890677929cd02109f40250fb4948cbc6e092e5df",
+      "base_sha": "e8d750faf8a1f883fff5eaf396d8cb67b82e342f",
+      "generated_at": "2026-11-06T13:01:33.568288+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 204,
+      "head_sha": "c7b2d70877a88577712920c11cac88813899c677",
+      "base_sha": "2facfa0baa3084090b262a4d8c7c58f27f9bc606",
+      "generated_at": "2026-11-06T13:35:21.382789+00:00",
+      "change_class": "docs+docs_corpus_baseline",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test"
+      ],
+      "expected_checks": [
+        "docs-eval",
+        "pr-ready"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": true,
+      "runtime_improvement": 0.4024
+    },
+    {
+      "pr": 205,
+      "head_sha": "bc6357beb00ee335b6bcf921cb83430e8fcd18ee",
+      "base_sha": "59003fe3cc3ac10bf0c1ea25ae4fc45c5e0f9661",
+      "generated_at": "2026-11-08T14:01:29.123161+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 206,
+      "head_sha": "7ae227ffde46ff5330c718dd9a52daa60ef7515c",
+      "base_sha": "944574e8e2cdd69192502d799996fb7ab646b858",
+      "generated_at": "2026-11-08T14:32:03.192314+00:00",
+      "change_class": "docs+docs_corpus_baseline",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test"
+      ],
+      "expected_checks": [
+        "docs-eval",
+        "pr-ready"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": true,
+      "runtime_improvement": 0.3957
+    },
+    {
+      "pr": 207,
+      "head_sha": "1e07c2b3d650913d60ed6fd663c373ba1b888cc6",
+      "base_sha": "944574e8e2cdd69192502d799996fb7ab646b858",
+      "generated_at": "2026-11-08T14:54:34.132534+00:00",
+      "change_class": "docs+docs_corpus_baseline",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test"
+      ],
+      "expected_checks": [
+        "docs-eval",
+        "pr-ready"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": true,
+      "runtime_improvement": 0.3607
+    },
+    {
+      "pr": 207,
+      "head_sha": "34dd88a1c9d3f223e6999b97805ae6f462f84048",
+      "base_sha": "944574e8e2cdd69192502d799996fb7ab646b858",
+      "generated_at": "2026-11-08T15:32:03.285228+00:00",
+      "change_class": "docs+docs_corpus_baseline",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test"
+      ],
+      "expected_checks": [
+        "docs-eval",
+        "pr-ready"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": true,
+      "runtime_improvement": 0.3934
+    },
+    {
+      "pr": 207,
+      "head_sha": "fc2dcbea8d0a71fafcfe9c35ae0015693797225a",
+      "base_sha": "944574e8e2cdd69192502d799996fb7ab646b858",
+      "generated_at": "2026-11-08T15:45:22.367188+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 207,
+      "head_sha": "da3fbd312a69bef0fe0e2ce10c566bf0056a5cca",
+      "base_sha": "944574e8e2cdd69192502d799996fb7ab646b858",
+      "generated_at": "2026-11-08T16:26:03.892872+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 207,
+      "head_sha": "a2c9a499dc9e051770c2c027678874137220bf92",
+      "base_sha": "944574e8e2cdd69192502d799996fb7ab646b858",
+      "generated_at": "2026-11-08T16:47:28.173129+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 207,
+      "head_sha": "69bb6e782fad6d54512f0996214b76b5979636f6",
+      "base_sha": "944574e8e2cdd69192502d799996fb7ab646b858",
+      "generated_at": "2026-11-08T17:01:39.536301+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    },
+    {
+      "pr": 207,
+      "head_sha": "8a60422905671f9574bb531d48c92ba86b74edf2",
+      "base_sha": "944574e8e2cdd69192502d799996fb7ab646b858",
+      "generated_at": "2026-11-08T17:10:25.558457+00:00",
+      "change_class": "cross_cutting+docs+docs_corpus_baseline+tests",
+      "selector_status": "mapped",
+      "selected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "expected_checks": [
+        "docker-smoke",
+        "docs-eval",
+        "lint",
+        "pr-ready",
+        "security",
+        "test",
+        "test-windows",
+        "typecheck"
+      ],
+      "missing_checks": [],
+      "unmapped_paths": [],
+      "selected_is_strict_subset": false,
+      "runtime_improvement": null
+    }
+  ],
+  "metrics": {
+    "unmapped_path_count": 0,
+    "missing_expected_checks": [],
+    "comparable_runtime_count": 5,
+    "median_runtime_improvement": null,
+    "criteria": {
+      "observation_days_at_least_14": false,
+      "unique_head_shas_at_least_10": true,
+      "three_shrinking_rule_categories": false,
+      "zero_expected_check_misses": true,
+      "ten_comparable_runtime_shas": false,
+      "median_runtime_improvement_at_least_20_percent": false,
+      "no_invalid_samples": true
+    },
+    "subset_gate_eligible": false
+  },
+  "conclusion": "blocked",
+  "conclusion_boundary": "This report is report-only evidence. It never enables a subset gate or changes Branch Protection.",
+  "repository": "weihuaguo270-ops/react-agent",
+  "run_id": 42503842381,
+  "run_url": "https://github.com/weihuaguo270-ops/react-agent/actions/runs/42503842381",
+  "collector_head_sha": "8a60422905671f9574bb531d48c92ba86b74edf2",
+  "workflow": "test.yml",
+  "source_run_count": 100,
+  "excluded_runs": [
+    {
+      "run_id": 42173514711,
+      "head_sha": "e1d890e94f356daec286026ad4d2527ad0626288",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 42173133785,
+      "head_sha": "7fdf023579b13756310cd0add53193813d60128d",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 42077745109,
+      "head_sha": "200730e6011c58da325321d8249eee4d18f4e4cf",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 42076804105,
+      "head_sha": "df667517ede2f0b5231dbf71d510bd02d968f106",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 42076005836,
+      "head_sha": "a5d866fc16f7181d3ac6079b6f9ab319e4799194",
+      "reason": "Command '['gh', 'run', 'download', '42076005836', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/42076005836']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 42071965405,
+      "head_sha": "7c1034f1596c5af1bdccd391eaf4ae8437d4b259",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 42066116106,
+      "head_sha": "4122309ee484dd022dce78618b9744956fdd8f89",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 42054274257,
+      "head_sha": "e5e7f161555bfcc941ef8ee9fcb7af48bea87f11",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 42032003624,
+      "head_sha": "592444e157e4d751e7b0d3234e81d53a1cd3f5d5",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 42031577184,
+      "head_sha": "5886505fa7fd0aa47c83be2799a7f6f626ca7ed9",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 42001985523,
+      "head_sha": "321efa63d0c5e7a6254366809ed2563dd5f78be8",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 41586080096,
+      "head_sha": "fc86afeea8d93f118084a294ceeb0d2d2d7ae200",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 41425227190,
+      "head_sha": "d68974ccc26e70c2964356cf87faad7b2b0e9e64",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 41397571929,
+      "head_sha": "a1fca67b082fe6e1edf50e505a746eef63319158",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 41394782216,
+      "head_sha": "097a5e954abd4ca9f1650099c2a99af62f496bdf",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 41300707731,
+      "head_sha": "7ac51e0f4bfd3003f4a35f93c31a895b3c764a77",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 41204989496,
+      "head_sha": "cbe31fc2d3f5c98ee134140b36c706f2d7214a5a",
+      "reason": "scope artifact is missing selector or expected-check JSON"
+    },
+    {
+      "run_id": 41194247021,
+      "head_sha": "a0431cb5af5f268ca8f743b784e14a15862316c2",
+      "reason": "Command '['gh', 'run', 'download', '41194247021', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/41194247021']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 41079165414,
+      "head_sha": "3fdb4c3544c70ec5d570b8e856938d7053253a93",
+      "reason": "Command '['gh', 'run', 'download', '41079165414', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/41079165414']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 41042270461,
+      "head_sha": "1f4f47a90de6a4936a8041b95d4071f5cf2d5e34",
+      "reason": "Command '['gh', 'run', 'download', '41042270461', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/41042270461']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40887477623,
+      "head_sha": "544769af769aaaebb407ac24d480cf5732d6692f",
+      "reason": "Command '['gh', 'run', 'download', '40887477623', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40887477623']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40866208956,
+      "head_sha": "66451049eaccc471dfc1e37fd0e6b8f08a47b735",
+      "reason": "Command '['gh', 'run', 'download', '40866208956', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40866208956']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40828232430,
+      "head_sha": "955fc310eeb3ca31ea65fe4fe5f81d2a37acafe2",
+      "reason": "Command '['gh', 'run', 'download', '40828232430', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40828232430']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40826691409,
+      "head_sha": "bcbef1f1601d2685aa576efac2cf512cacb57f34",
+      "reason": "Command '['gh', 'run', 'download', '40826691409', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40826691409']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40807272194,
+      "head_sha": "0bf903f0bf674dab7946f4de1f982658ec06915f",
+      "reason": "Command '['gh', 'run', 'download', '40807272194', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40807272194']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40645434827,
+      "head_sha": "b5c6e51974915d5a29f391767f874ad416ffda31",
+      "reason": "Command '['gh', 'run', 'download', '40645434827', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40645434827']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40634091284,
+      "head_sha": "4e8ca41e0ae8a7c39d5d21056f7c44b00e7ff91b",
+      "reason": "Command '['gh', 'run', 'download', '40634091284', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40634091284']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40633263952,
+      "head_sha": "7b49e0e8b252f7093e5c52e0c2b93ac6c8bb2f74",
+      "reason": "Command '['gh', 'run', 'download', '40633263952', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40633263952']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40458812530,
+      "head_sha": "d7dc5fef5afc1e40f41172ae68d5ba84ea3964a8",
+      "reason": "Command '['gh', 'run', 'download', '40458812530', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40458812530']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40276442687,
+      "head_sha": "e9ad6e87571f1c39ea915696f902024b2f949689",
+      "reason": "Command '['gh', 'run', 'download', '40276442687', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40276442687']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40166820490,
+      "head_sha": "ca91798fffaa73b07a0e415971a2b69427847dc0",
+      "reason": "Command '['gh', 'run', 'download', '40166820490', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40166820490']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40104228926,
+      "head_sha": "3351e63c45fcd76d94012c4cfac747670b14b8d1",
+      "reason": "Command '['gh', 'run', 'download', '40104228926', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40104228926']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40100484418,
+      "head_sha": "d93914808956ec4a6b9a7c24090102c2e7fe5059",
+      "reason": "Command '['gh', 'run', 'download', '40100484418', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40100484418']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40100306083,
+      "head_sha": "62593576865271b0cbec7ef31d8004519550d603",
+      "reason": "Command '['gh', 'run', 'download', '40100306083', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40100306083']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40098766717,
+      "head_sha": "9218bf44743573126f3a207a1719bab4fcd20eff",
+      "reason": "Command '['gh', 'run', 'download', '40098766717', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40098766717']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40097639214,
+      "head_sha": "36a9cd5da05ac3b9ccc62fcdfd0376a27f29c31c",
+      "reason": "Command '['gh', 'run', 'download', '40097639214', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40097639214']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40096098239,
+      "head_sha": "122d432b0930b9fb356ccec3b3ad4fb96b92fe58",
+      "reason": "Command '['gh', 'run', 'download', '40096098239', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40096098239']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40066494131,
+      "head_sha": "4d4a2d8d529873c2eb5213315e5766b1ed6f5c37",
+      "reason": "Command '['gh', 'run', 'download', '40066494131', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40066494131']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 40051138800,
+      "head_sha": "4d35c8d7684cd7d6850bec1678e1d82a14e7a541",
+      "reason": "Command '['gh', 'run', 'download', '40051138800', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/40051138800']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39950707883,
+      "head_sha": "a180cf26b5066384ccfe7ef85e55a3888cec05fd",
+      "reason": "Command '['gh', 'run', 'download', '39950707883', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39950707883']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39944961498,
+      "head_sha": "57e9435c6b5ac3b1fef833658da3d853508d7f10",
+      "reason": "Command '['gh', 'run', 'download', '39944961498', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39944961498']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39907858409,
+      "head_sha": "ccd9bda18d2e1be71131e283fcf4841eca69bf26",
+      "reason": "Command '['gh', 'run', 'download', '39907858409', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39907858409']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39812973334,
+      "head_sha": "4516abc76fa1d4f4ffb1c2043a5668373fa727dc",
+      "reason": "Command '['gh', 'run', 'download', '39812973334', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39812973334']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39810954722,
+      "head_sha": "df36817b3f9247068945c135eb2caebbe297df36",
+      "reason": "Command '['gh', 'run', 'download', '39810954722', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39810954722']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39808522218,
+      "head_sha": "44f7cff03338c77d0aa5095b2a039787603cb80e",
+      "reason": "Command '['gh', 'run', 'download', '39808522218', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39808522218']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39795883690,
+      "head_sha": "a50507639140dd68a4f8f14c6718c77ccda52382",
+      "reason": "Command '['gh', 'run', 'download', '39795883690', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39795883690']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39794956016,
+      "head_sha": "5e372e59f1d51adbbc55645bd8a5113bf91a4270",
+      "reason": "Command '['gh', 'run', 'download', '39794956016', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39794956016']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39792573568,
+      "head_sha": "3b33383b732395ed658144a7c43fab3157a68bee",
+      "reason": "Command '['gh', 'run', 'download', '39792573568', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39792573568']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39791285795,
+      "head_sha": "5e9bdb35755f37de092db226b86a1b91f63d0a02",
+      "reason": "Command '['gh', 'run', 'download', '39791285795', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39791285795']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39790545354,
+      "head_sha": "7e899b3282add41546fb90da1d691a6891633c4b",
+      "reason": "Command '['gh', 'run', 'download', '39790545354', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39790545354']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39789062057,
+      "head_sha": "5e9bdb35755f37de092db226b86a1b91f63d0a02",
+      "reason": "Command '['gh', 'run', 'download', '39789062057', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39789062057']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39788468016,
+      "head_sha": "7e899b3282add41546fb90da1d691a6891633c4b",
+      "reason": "Command '['gh', 'run', 'download', '39788468016', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39788468016']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39787576955,
+      "head_sha": "6634b896caa7c9c366efc7467d625b81bf3adc4a",
+      "reason": "Command '['gh', 'run', 'download', '39787576955', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39787576955']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39787175414,
+      "head_sha": "fed687e3903925597471113801ffc4a12f9f9cb7",
+      "reason": "Command '['gh', 'run', 'download', '39787175414', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39787175414']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39786852097,
+      "head_sha": "9d68016c886967156fabb2563c66c3471e6cfc12",
+      "reason": "Command '['gh', 'run', 'download', '39786852097', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39786852097']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39786260179,
+      "head_sha": "ae3a8bb45c39195d3e29587c6a6ecf6e8ddf3c3e",
+      "reason": "Command '['gh', 'run', 'download', '39786260179', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39786260179']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39730335380,
+      "head_sha": "cf17483d07766350eadf0e8a3a9c42a7b784de81",
+      "reason": "Command '['gh', 'run', 'download', '39730335380', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39730335380']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39604075263,
+      "head_sha": "fc785cc629eb0182166b3f52cb15cffce89ae0f3",
+      "reason": "Command '['gh', 'run', 'download', '39604075263', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39604075263']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39602521009,
+      "head_sha": "3b2053bf746901d596bc36eb6e12fc8a1fc98a1a",
+      "reason": "Command '['gh', 'run', 'download', '39602521009', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39602521009']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39602517169,
+      "head_sha": "3297567fea0c10c764e6fe01de3f0392efde7298",
+      "reason": "Command '['gh', 'run', 'download', '39602517169', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39602517169']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39588383263,
+      "head_sha": "28e1248e151588659d982c7dc95c375b6ebb7d6d",
+      "reason": "Command '['gh', 'run', 'download', '39588383263', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39588383263']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39588383542,
+      "head_sha": "875c00b7f49d13adb5451e76feac253e6da4c75b",
+      "reason": "Command '['gh', 'run', 'download', '39588383542', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39588383542']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39582035222,
+      "head_sha": "e8b23d186a63c9fdc1cf7553f834498bc107241d",
+      "reason": "Command '['gh', 'run', 'download', '39582035222', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39582035222']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39581128752,
+      "head_sha": "68b037e08ef6955f94dbad7d135c845ee9e14df0",
+      "reason": "Command '['gh', 'run', 'download', '39581128752', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39581128752']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39580433261,
+      "head_sha": "abae4d44a35d7527d60afdcb55b651f0a9db3d7b",
+      "reason": "Command '['gh', 'run', 'download', '39580433261', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39580433261']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39552208733,
+      "head_sha": "ba4834545debd56cf16704633f2141e9a325c3bd",
+      "reason": "Command '['gh', 'run', 'download', '39552208733', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39552208733']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39551570176,
+      "head_sha": "c08f12de68c5370fc07bfc970e171d89887955c6",
+      "reason": "Command '['gh', 'run', 'download', '39551570176', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39551570176']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39376461893,
+      "head_sha": "c921abeca3e3605655a1d4b63aaa51aa55d44f39",
+      "reason": "Command '['gh', 'run', 'download', '39376461893', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39376461893']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39271912104,
+      "head_sha": "92c3527d1bd400f68c5badb8b24604eb3b949c1f",
+      "reason": "Command '['gh', 'run', 'download', '39271912104', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39271912104']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39270933205,
+      "head_sha": "d02fba11b51a0fcd002ac7c0a3985316fbeaf4bc",
+      "reason": "Command '['gh', 'run', 'download', '39270933205', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39270933205']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39229492516,
+      "head_sha": "fb6812c79b771e8613054f1c5ceb314dd4fbd4f2",
+      "reason": "Command '['gh', 'run', 'download', '39229492516', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39229492516']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39226805285,
+      "head_sha": "3f33e1d87927aea5099d2f660f32cc928c464adb",
+      "reason": "Command '['gh', 'run', 'download', '39226805285', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39226805285']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39225905785,
+      "head_sha": "78b74d386337a9d74d0398fe886a4295a22c1e3f",
+      "reason": "Command '['gh', 'run', 'download', '39225905785', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39225905785']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39225323517,
+      "head_sha": "0e4d424cea853583fda73e3c514b33bf850c196f",
+      "reason": "Command '['gh', 'run', 'download', '39225323517', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39225323517']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39223114834,
+      "head_sha": "f840b086e7365c9f66ea33128dc70d0bc61b1267",
+      "reason": "Command '['gh', 'run', 'download', '39223114834', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39223114834']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39207750369,
+      "head_sha": "9d3676883b9372cb0b0f8154e6df5b6e9ce4343d",
+      "reason": "Command '['gh', 'run', 'download', '39207750369', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39207750369']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39207246801,
+      "head_sha": "aa1021631ef34dca299a8b9476ac1f5b8210e068",
+      "reason": "Command '['gh', 'run', 'download', '39207246801', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39207246801']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39206689242,
+      "head_sha": "1dd95c79aea7095a1d318f2c1efd04ceb96353de",
+      "reason": "Command '['gh', 'run', 'download', '39206689242', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39206689242']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39205237978,
+      "head_sha": "8b722e573bcf488cc2c78fa66113d48e2930b6cf",
+      "reason": "Command '['gh', 'run', 'download', '39205237978', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39205237978']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39204692861,
+      "head_sha": "a907aab5f08d78a0d5651f1687fe7b0a7dbc6d1b",
+      "reason": "Command '['gh', 'run', 'download', '39204692861', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39204692861']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39204212034,
+      "head_sha": "3eb7ec5e71bb6816d2ddfe9b1209d38b0a9dfcc9",
+      "reason": "Command '['gh', 'run', 'download', '39204212034', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39204212034']' returned non-zero exit status 1."
+    },
+    {
+      "run_id": 39203898820,
+      "head_sha": "12b4c406a37005cf872d352fb25d971cddbea861",
+      "reason": "Command '['gh', 'run', 'download', '39203898820', '--repo', 'weihuaguo270-ops/react-agent', '--name', 'pr-check-scope', '--dir', '/tmp/shadow-download-bcpc83gd/39203898820']' returned non-zero exit status 1."
+    }
+  ],
+  "collected_at": "2026-11-08T17:13:54.148623+00:00"
+}

@@ -19,6 +19,16 @@ ROOT = SCRIPT.parents[4]
 REGISTRY_PATH = ROOT / "docs/specs/registry.yaml"
 
 
+def canonical_bytes(path: Path) -> bytes:
+    """Normalize text newlines before hashing persisted evidence."""
+
+    return path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(canonical_bytes(path)).hexdigest()
+
+
 def repo_path(value: str) -> Path:
     candidate = Path(value)
     if not candidate.is_absolute():
@@ -96,7 +106,7 @@ def status_snapshot(registry: dict[str, Any], direction: str) -> dict[str, Any]:
         if report_path.exists():
             report = {
                 "path": relative_path(report_path),
-                "sha256": hashlib.sha256(report_path.read_bytes()).hexdigest(),
+                "sha256": sha256_file(report_path),
             }
     return {
         "direction": direction,
