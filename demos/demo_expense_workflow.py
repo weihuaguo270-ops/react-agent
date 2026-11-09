@@ -2,8 +2,8 @@
 
 演示现有 ``expense_claim_review@1`` Workflow 的真实路径：政策检索、
 结构化表单校验、规则决策、必要时转人工复核、审计记录和轨迹回放。
-人工审批的 ``resolve_review`` 后置流程仍属于后续阶段；本 Demo 只展示
-Workflow 已经落盘的 ``needs_review`` 闸门，不把它包装成已完成的审批 API。
+复核路由与 ``resolve_review`` 使用独立的 Expense 领域记录；演示用
+``auto_allow`` 仅代表本地已有人确认，生产 HTTP 默认仍走异步人工审批。
 
 用法:
   python demos/demo_expense_workflow.py
@@ -25,6 +25,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from react_agent.rag import RAG
 from react_agent.apps.expense.workflow import EXPENSE_WORKFLOW_NAME
+from react_agent.apps.expense.review import resolve_review, route_review
 from react_agent.harness import Replay
 from react_agent.workflow import run_workflow
 
@@ -95,6 +96,30 @@ def run_claim(claim: dict[str, object], *, label: str, trajectory_dir: Path = DE
     )
 
     audit = result.state.get("decision_audit") or {}
+    routed_claim = result.state.get("claim") or claim
+    if routed_claim.get("claim_id"):
+        review = route_review(
+            routed_claim,
+            result.state.get("decision") or {},
+            request_id=f"demo:{result.run_id}",
+            idempotency_key=f"demo:{claim.get('claim_id') or claim.get('id')}:route",
+        )
+    else:
+        review = {"status": _terminal_state(result), "approval_id": None}
+    if review.get("approval_id"):
+        os.environ.setdefault("REACT_AGENT_APPROVAL_MODE", "auto_allow")
+        resolved = resolve_review(
+            review["approval_id"],
+            decision="approve",
+            approver_id="demo-manager",
+            claim_id=str(review["claim_id"]),
+            expected_version=int(review["claim_version"]),
+            decision_hash=str(review["decision"]["decision_hash"]),
+            request_id=f"demo:{result.run_id}:resolve",
+            idempotency_key=f"demo:{claim.get('claim_id') or claim.get('id')}:resolve",
+            comment="演示审批：材料与政策一致",
+        )
+        review["resolved_status"] = resolved["status"]
     print(f"\n[{label}] 员工提交: {query}")
     print(
         "  表单校验: "
@@ -107,8 +132,9 @@ def run_claim(claim: dict[str, object], *, label: str, trajectory_dir: Path = DE
         f"review_required={decision.get('review_required', False)}"
     )
     if result.state.get("decision_code") == "needs_review":
-        print("  人工审批边界: 已进入人工复核队列；当前原型不自动批准。")
-    print(f"  业务终态（本 Workflow）: {_terminal_state(result)}")
+        print(f"  人工审批: approval_id={review.get('approval_id')} -> {review.get('resolved_status', review['status'])}")
+    print(f"  业务终态（决策 Workflow）: {_terminal_state(result)}")
+    print(f"  Expense 复核终态: {review.get('resolved_status', review['status'])}")
     print(f"  审计记录: {json.dumps(audit, ensure_ascii=False)}")
     print(f"  answer={result.answer}")
     print(f"  trajectory_id={result.run_id} saved={trajectory_path.exists()} path={trajectory_path}")

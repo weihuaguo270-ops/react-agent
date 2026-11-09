@@ -25,7 +25,7 @@ python demos/demo_docs_troubleshoot.py
 
 ## 报销办理演示闭环
 
-第二场景由 `expense_claim_review@1` 驱动：政策检索 → 结构化表单校验 → 规则决策 → 必要时输出 `needs_review` 并进入人工复核边界 → 决策审计 → 轨迹落盘与 Harness replay。演示入口为 `python demos/demo_expense_workflow.py`；当前不宣称 `route_review` / `resolve_review` 审批 API 已完成，待审批结果不会被自动改写为批准。
+第二场景由 `expense_claim_review@1` 驱动：政策检索 → 结构化表单校验 → 规则决策 → `route_review` 分拣 → 必要时进入 `resolve_review` 人工复核 → 审计记录 → 轨迹落盘与 Harness replay。演示入口为 `python demos/demo_expense_workflow.py`。`route_review` 不得直接批准；只有绑定 `claim_id`、版本和 `decision_hash` 且通过权限闸门的 `resolve_review` 才能进入 `approved` / `rejected`，`escalate` 保持非终态。HTTP 入口为 `POST /v1/expense/reviews/{approval_id}/resolve`；通用 `/v1/approvals` 仅兼容 CONFIRM 凭据。
 
 ## 应用不做什么
 

@@ -34,7 +34,7 @@ python -m react_agent.server --port 8765
 
 ### 报销办理（第二场景）
 
-员工提交报销信息，助手按政策和表单约束完成校验，必要时标记 `needs_review` 并进入人工复核闸门，同时落盘决策审计和可回放轨迹。当前原型展示的是审批边界与待复核终态，正式 `resolve_review` 审批 API 仍属于后续阶段。入口与评测：
+员工提交报销信息，助手按政策和表单约束完成校验，必要时由 `route_review` 分拣到人工复核，再由通过权限闸门且绑定单据版本与 `decision_hash` 的 `resolve_review` 完成批准、拒绝或升级，同时落盘审批审计和可回放轨迹。当前是可部署工程原型，不代表生产 SLA。入口与评测：
 
 ```bash
 python demos/demo_expense_workflow.py

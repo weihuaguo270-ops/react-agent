@@ -104,6 +104,20 @@ class ApprovalDecisionRequest(BaseModel):
     approver: str | None = Field(default=None, max_length=200)
 
 
+class ExpenseReviewResolutionRequest(BaseModel):
+    """Expense-domain approval; separate from generic CONFIRM credentials."""
+
+    model_config = ConfigDict(extra="allow")
+
+    decision: str = Field(min_length=1, max_length=20)
+    comment: str = Field(default="", max_length=2000)
+    claim_id: str = Field(min_length=1, max_length=200)
+    expected_version: int = Field(ge=1)
+    decision_hash: str = Field(min_length=10, max_length=200)
+    approver_id: str = Field(min_length=1, max_length=200)
+    idempotency_key: str | None = Field(default=None, max_length=300)
+
+
 def _request_id(value: str | None) -> str:
     return value or str(uuid.uuid4())
 
@@ -489,6 +503,52 @@ def create_app(
             payload["detail"] = record
             return JSONResponse(payload, status_code=status)
         return JSONResponse({"request_id": request_id, "approval": record})
+
+    @api.get("/v1/expense/reviews")
+    async def expense_reviews(
+        x_request_id: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        from react_agent.apps.expense.review import list_reviews
+
+        return {"request_id": _request_id(x_request_id), "reviews": await run_in_threadpool(list_reviews)}
+
+    @api.post("/v1/expense/reviews/{approval_id}/resolve")
+    async def resolve_expense_review(
+        approval_id: str,
+        request: ExpenseReviewResolutionRequest,
+        x_request_id: str | None = Header(default=None),
+        idempotency_header: str | None = Header(default=None, alias="Idempotency-Key"),
+        approval_credential: str | None = Header(default=None, alias="X-Approval-Credential"),
+    ) -> JSONResponse:
+        from react_agent.apps.expense.review import ReviewError, resolve_review
+
+        request_id = _request_id(x_request_id)
+        def execute_resolution() -> dict[str, Any]:
+            from react_agent.safety.permission_gate import set_approval_credential
+
+            # The Expense approval record remains the business record. This
+            # optional generic credential only satisfies the shared CONFIRM gate.
+            set_approval_credential(approval_credential or "")
+            return resolve_review(
+                approval_id,
+                decision=request.decision,
+                approver_id=request.approver_id,
+                claim_id=request.claim_id,
+                expected_version=request.expected_version,
+                decision_hash=request.decision_hash,
+                request_id=request_id,
+                idempotency_key=request.idempotency_key or idempotency_header or "",
+                comment=request.comment,
+            )
+        try:
+            result = await run_in_threadpool(
+                execute_resolution,
+            )
+        except ReviewError as exc:
+            status, payload = error_response(exc.code, str(exc), request_id, exc.status_code)
+            payload["error"]["details"] = exc.details
+            return JSONResponse(payload, status_code=status)
+        return JSONResponse({"request_id": request_id, "review": result})
 
     @api.post("/v1/tasks", response_model=TaskResponse, status_code=202)
     async def submit_task(
