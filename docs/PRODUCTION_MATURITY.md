@@ -1,70 +1,51 @@
 # 生产成熟度
 
-本页记录主场景 **docs_troubleshoot** 和通用运行时各块做到哪一步。学习向原型，**不是**平台 SLA 清单。
+本页记录企业内部工作助手（work-assistant）两个办公场景的工程成熟度。它是可部署、可评测的原型清单，不是生产 SLA 或多租户平台承诺。
 
-主场景说明：[`EVIDENCE_DOCS_TROUBLESHOOT.md`](EVIDENCE_DOCS_TROUBLESHOOT.md)。  
-**评判基准**：主流 **ReAct + 工具 + HTTP**；应用方向见 [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)（编码 · 客服/自动化 · RAG/研究）。  
-**非目标**：多租户平台、自动根因定位、Checkpoint 中断恢复、复杂图编排。
+主场景：规范咨询（docs_troubleshoot）；第二场景：报销办理（expense）。
+独立计划：受控变更交付（change-delivery），见 docs/change-delivery-plan.md。
+非目标：生产 SaaS、多租户平台、长期线上 SLA、自动根因诊断、云 APM。
 
-## 主流对齐 vs 细节优化
-
-| 类型 | 说明 |
-|------|------|
-| **主流对齐** | LLM ReAct、领域工具、RAG、HTTP API/SSE（含答案增量与断连取消）、health/ready、Docker、基础轨迹、离线回归 |
-| **细节优化** | 循环内 duplicate 拦截、收尾步强制作答、ToolGuard、verify_citations 工具步、fix_steps 权限闸门、StepWatcher + failure flywheel |
-| **安全加固** | Bearer 共享密钥鉴权、Host 头校验（防 DNS rebinding）、异步人工审批、SSRF 守卫、路径穿越防护、子进程环境白名单、轨迹脱敏、应用工具作用域隔离 |
-| **待补齐（主流交付）** | HTTP 全链路结构化 JSON 日志、verify_actions 由 Agent 执行（非仅输出字符串）、真实业务任务与人工效率基线 |
-| **本阶段不做** | OAuth 网关、多租户 SLA、Helm 规模化、自动拉线上 Trace |
-
-## 成熟度矩阵
+## 能力状态
 
 | 能力 | 状态 | 说明 |
-|------|------|------|
-| **离线 Agent 循环**（默认） | 已具备 | `agent_runner`：观测选工具 + verify + 轨迹 |
-| **工程任务受控交付** | 外部真实沙箱 | 24 条合成 Issue Shadow、4 条受控 Draft PR、接受/拒绝/合并/回滚和失败回流；无生产流量 |
-| ReAct + Tool Calling（Live） | 已具备 | `react_loop`；`REACT_AGENT_SERVER_LLM=1` |
-| 声明式 Workflow v5（legacy） | 已具备 | `REACT_AGENT_DOCS_ENGINE=workflow` |
-| 权限闸门 deny→ask→allow | 已具备 | 非 OS ACL；fix_steps 可进 `pending_fix_steps` |
-| **异步人工审批（HTTP）** | 已具备 | 默认 `async`：副作用 `CONFIRM` 落盘待批，经 `/v1/approvals` 批准后重试；`CONFIRM_READ` 直接放行；`auto_allow`/`off` 为本地逃生；存储不可写则失败关闭 |
-| ToolGuard 超时/重试/熔断 | 已具备 | 非容器隔离 |
-| 循环内 guardrails | 已具备 | duplicate 拦截、reserve_final、Harness 自修 |
-| Format B 轨迹 + StepWatcher | 已具备 | 可选 failure tag；flywheel 回灌 |
-| **证据化文档问答** | 已具备 | 引用校验 + 无依据拒答；14 篇演示语料 |
-| 黄金集 + 扩展 eval | 已具备 | golden 34 + fault 12 + production 5 + git 5（**验收**） |
-| HTTP `/health` `/ready` + `/v1/chat` | 已具备 | 离线默认可不耗 Key |
-| HTTP `/v1/chat/stream` SSE | 已具备 | 事件词表与 `DEPLOY.md` 一致：`started`/`runtime`/`step`/`tool_call`/`tool_result`/`trajectory`/`approval_required`/`answer_delta`/`answer`/`result`/`error`/`cancelled`/`heartbeat`/`done`；答案增量流式；**客户端断连即取消执行**（步间 + 工具前检查）；两个入口点共用同一套帧格式 |
-| **服务鉴权 / Host 校验** | 已具备 | `REACT_AGENT_AUTH_TOKEN` → 除 `/health`、`/ready`（含 `/v1/` 别名）外全接口要求 Bearer；默认入口（FastAPI）与 stdlib 面共用 `server/auth.py`，`REACT_AGENT_API_KEY` 保留为兼容别名；Host 头校验默认 `loopback` 档，`allowlist` 严格档需配合 `REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1` 且绑定非回环才拒绝启动 |
-| **工具执行面加固** | 已具备 | SSRF 守卫（scheme 白名单 + 解析后 IP + 逐跳重定向复检）、`trace_id` 路径穿越防护、MCP/沙箱子进程环境白名单、轨迹落盘脱敏、app 工具作用域隔离、控制面工具移出模型可见面 |
-| 结构化错误 + request_id | 已具备 | 统一 error envelope |
-| 产品 UI（证据链 + Agent 步） | 已具备 | `GET /` |
-| Docker 单实例交付 | 已具备 | `docs/DEPLOY.md` |
-| **资料 ingest** | 部分 | Git / 目录；OpenAPI 需显式开关 |
-| **现场证据** | 部分 | 调用方传入；不自动抓线上流量 |
-| **结构化 diagnosis** | 部分 | 规则为主；verify_actions 尚未接工具执行 |
-| Bearer API Key（主服务） | 已具备 | `REACT_AGENT_AUTH_TOKEN`：除探针外全接口校验；可选启用，未设置时保持本地开发便利并打印暴露告警。**HTTP JSON 日志仍未做** |
-| HTTP JSON 访问日志 | 主服务未做 | 「独立沙箱控制面已完成 Bearer、request_id、JSON 访问日志和审批审计」这条证据来自 sibling 仓 `agent-delivery-sandbox`（本仓无该实现）；主服务已有 Bearer 与 request_id，JSON 日志尚未并入 |
-| 轨迹级 eval 门禁 | 部分 | capability 支持工具选择/有序工具序列；Expense 校验业务终态并可导出 Episode；尚未统一为所有应用的发布硬门禁 |
-| 多租户 / SLA | 本阶段不做 | — |
+|---|---|---|
+| 离线 Agent 循环 | 已具备 | agent_runner 记录观测、工具选择和轨迹 |
+| ReAct + Tool Calling | 已具备 | react_loop，可按配置接入模型 |
+| 规范咨询 | 已具备 | 引用校验、无依据拒答、现场 evidence、HTTP/Docker 入口 |
+| 报销办理 | 已具备原型 | 政策决策、表单约束、人工审批和业务终态验收 |
+| 权限闸门 | 已具备 | deny → ask → allow，副作用可进入人工审批 |
+| Format B 轨迹与 StepWatcher | 已具备 | 供回归与质量配件消费 |
+| 黄金集与离线评测 | 已具备 | 作为验收证据，不作为产品卖点 |
+| HTTP 服务与 Docker 单实例 | 已具备 | 适合原型部署和复现 |
+| 受控变更交付 | 规划/沙箱证据 | 24 条合成 Issue、4 条受控 Draft PR；未接生产流量 |
+| 多租户 / 长期 SLA | 本阶段不做 | 不对外承诺 |
 
-## 主场景入口
+## 主产品闭环
 
-```bash
-set REACT_AGENT_APP=docs_troubleshoot
-set REACT_AGENT_RAG_MODE=keyword
-python scripts/eval/docs/run_docs_troubleshoot_eval.py      # 默认 agent 路径
-python -m react_agent.server --port 8765                 # 浏览器 http://127.0.0.1:8765/
-# GET  /health  /ready  /v1/info
-# POST /v1/chat  {"message":"..."}   # 离线 Agent 或 REACT_AGENT_SERVER_LLM=1
-# POST /v1/workflows/run             # legacy DAG（可选）
-```
+~~~
+员工请求
+  → 规范咨询或报销办理
+  → 权限 / 人工审批 / 业务终态
+  → Format B 轨迹与验收证据
+~~~
 
-Live LLM：`REACT_AGENT_SERVER_LLM=1`（需 API Key）。Legacy Workflow：`REACT_AGENT_DOCS_ENGINE=workflow`。
+质量闭环由独立仓库完成：
 
-## 对外怎么说
+~~~
+工作助手或 change-delivery 产出轨迹
+  → trace-debugger：失败打标、scan/compare、CI
+  → llm-eval-engine：过程/业务证据与 pass/review/hold
+~~~
 
-- **整体**：与常见 **Runbook / 文档 Copilot Agent** 同构 — ReAct + 领域工具 + HTTP 交付  
-- **细节**：循环内治理（verify 工具步、duplicate 拦截、fix 权限、轨迹飞轮）— 优化 **可跑、可审计、可回灌**，不是换图编排框架  
-- **现在有**：Agent 默认路径、Docker、探针、传入式现场 evidence、结构化 diagnosis（规则）、工具序列评分与 Expense 终态验收、服务 Bearer 鉴权与 Host 校验、异步人工审批、答案流式与断连取消
-- **外部沙箱已有**：24 条合成 Issue -> shadow -> 审批 -> 4 个 Draft PR -> 接受/拒绝/回滚；选定发布集通过、全量实验因拒绝案例保持 hold
-- **还没有**：HTTP 全链路 JSON 日志、verify_actions 真执行、真实历史工单盲测、人工效率基线
-- **P1**：接入真实业务任务及责任人，量化人工与 Agent 对照；再把沙箱鉴权、日志和发布门禁接入目标系统
+## 证据边界
+
+- 当前证据包含合成任务、离线评测和 external_real_sandbox。
+- external_real_sandbox 证明真实 GitHub 写入和 PR 生命周期演练，不证明生产用户、线上容量或企业权限体系。
+- κ、黄金集数量、模型比较和失败门属于验收附录，不应作为主标题。
+
+## 进一步阅读
+
+- 应用方向：docs/features/application-direction.md
+- 受控变更交付计划：docs/change-delivery-plan.md
+- 当前状态：docs/STATUS.md
