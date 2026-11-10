@@ -33,6 +33,7 @@ from react_agent.server.task_manager import TaskManager, task_manager
 
 
 ChatHandler = Callable[[dict[str, Any], str], tuple[int, dict[str, Any]]]
+_EXPENSE_STORES: dict[str, Any] = {}
 
 
 class ChatRequest(BaseModel):
@@ -118,8 +119,33 @@ class ExpenseReviewResolutionRequest(BaseModel):
     idempotency_key: str | None = Field(default=None, max_length=300)
 
 
+class ExpenseClaimCreateRequest(BaseModel):
+    """Formal Claim draft payload; extra fields remain domain-owned."""
+
+    model_config = ConfigDict(extra="allow")
+
+
+class ExpenseClaimUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    expected_version: int = Field(ge=1)
+
+
+class ExpenseClaimSubmitRequest(BaseModel):
+    expected_version: int = Field(ge=1)
+
+
 def _request_id(value: str | None) -> str:
     return value or str(uuid.uuid4())
+
+
+def _expense_store():
+    from react_agent.apps.expense.store import ExpenseClaimStore
+
+    url = os.environ.get("REACT_AGENT_DATABASE_URL") or os.environ.get("REACT_AGENT_POSTGRES_URL") or ""
+    if url not in _EXPENSE_STORES:
+        _EXPENSE_STORES[url] = ExpenseClaimStore(url or None)
+    return _EXPENSE_STORES[url]
 
 
 def _task_payload(record: Any, request_id: str) -> dict[str, Any]:
@@ -549,6 +575,125 @@ def create_app(
             payload["error"]["details"] = exc.details
             return JSONResponse(payload, status_code=status)
         return JSONResponse({"request_id": request_id, "review": result})
+
+    @api.post("/v1/expense/claims", status_code=201)
+    async def create_expense_claim(
+        request: ExpenseClaimCreateRequest,
+        x_request_id: str | None = Header(default=None),
+        actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+        idempotency_header: str | None = Header(default=None, alias="Idempotency-Key"),
+    ) -> JSONResponse:
+        request_id = _request_id(x_request_id)
+        if not actor_id or not actor_id.strip():
+            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            return JSONResponse(payload, status_code=status)
+        if not idempotency_header or not idempotency_header.strip():
+            status, payload = error_response("invalid_request", "Idempotency-Key is required", request_id, 400)
+            return JSONResponse(payload, status_code=status)
+        from react_agent.apps.expense.service import create_claim
+        from react_agent.apps.expense.store import ExpenseStoreError
+
+        try:
+            store = _expense_store()
+            result = await run_in_threadpool(create_claim, store, request.model_dump(exclude_none=True), actor_id=actor_id.strip(), request_id=request_id, idempotency_key=idempotency_header.strip())
+        except (ExpenseStoreError, ValueError) as exc:
+            code = getattr(exc, "code", "storage_unavailable")
+            status_code = getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409)
+            status, payload = error_response(code, str(exc), request_id, status_code)
+            return JSONResponse(payload, status_code=status)
+        return JSONResponse({"request_id": request_id, **result}, status_code=201 if not result.get("idempotent_replay") else 200)
+
+    @api.get("/v1/expense/claims/{claim_id}")
+    async def get_expense_claim(
+        claim_id: str,
+        x_request_id: str | None = Header(default=None),
+        actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        request_id = _request_id(x_request_id)
+        if not actor_id or not actor_id.strip():
+            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            return JSONResponse(payload, status_code=status)
+        from react_agent.apps.expense.service import get_claim
+        from react_agent.apps.expense.store import ExpenseStoreError
+
+        try:
+            result = await run_in_threadpool(get_claim, _expense_store(), claim_id, actor_id=actor_id.strip())
+        except (ExpenseStoreError, ValueError) as exc:
+            status, payload = error_response(getattr(exc, "code", "storage_unavailable"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
+            return JSONResponse(payload, status_code=status)
+        return JSONResponse({"request_id": request_id, **result})
+
+    @api.patch("/v1/expense/claims/{claim_id}")
+    async def update_expense_claim(
+        claim_id: str,
+        request: ExpenseClaimUpdateRequest,
+        x_request_id: str | None = Header(default=None),
+        actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+        idempotency_header: str | None = Header(default=None, alias="Idempotency-Key"),
+    ) -> JSONResponse:
+        request_id = _request_id(x_request_id)
+        if not actor_id or not actor_id.strip():
+            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            return JSONResponse(payload, status_code=status)
+        if not idempotency_header or not idempotency_header.strip():
+            status, payload = error_response("invalid_request", "Idempotency-Key is required", request_id, 400)
+            return JSONResponse(payload, status_code=status)
+        from react_agent.apps.expense.service import update_claim
+        from react_agent.apps.expense.store import ExpenseStoreError
+
+        patch = request.model_dump(exclude_none=True)
+        expected_version = int(patch.pop("expected_version"))
+        try:
+            result = await run_in_threadpool(update_claim, _expense_store(), claim_id, patch, actor_id=actor_id.strip(), expected_version=expected_version, request_id=request_id, idempotency_key=idempotency_header.strip())
+        except (ExpenseStoreError, ValueError) as exc:
+            status, payload = error_response(getattr(exc, "code", "storage_unavailable"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
+            return JSONResponse(payload, status_code=status)
+        return JSONResponse({"request_id": request_id, **result})
+
+    @api.post("/v1/expense/claims/{claim_id}/submit")
+    async def submit_expense_claim(
+        claim_id: str,
+        request: ExpenseClaimSubmitRequest,
+        x_request_id: str | None = Header(default=None),
+        actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+        idempotency_header: str | None = Header(default=None, alias="Idempotency-Key"),
+    ) -> JSONResponse:
+        request_id = _request_id(x_request_id)
+        if not actor_id or not actor_id.strip():
+            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            return JSONResponse(payload, status_code=status)
+        if not idempotency_header or not idempotency_header.strip():
+            status, payload = error_response("invalid_request", "Idempotency-Key is required", request_id, 400)
+            return JSONResponse(payload, status_code=status)
+        from react_agent.apps.expense.service import submit_claim
+        from react_agent.apps.expense.store import ExpenseStoreError
+
+        try:
+            result = await run_in_threadpool(submit_claim, _expense_store(), claim_id, actor_id=actor_id.strip(), expected_version=request.expected_version, request_id=request_id, idempotency_key=idempotency_header.strip())
+        except (ExpenseStoreError, ValueError, RuntimeError) as exc:
+            status, payload = error_response(getattr(exc, "code", "workflow_failed"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
+            return JSONResponse(payload, status_code=status)
+        return JSONResponse({"request_id": request_id, **result})
+
+    @api.get("/v1/expense/claims/{claim_id}/events")
+    async def expense_claim_events(
+        claim_id: str,
+        x_request_id: str | None = Header(default=None),
+        actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        request_id = _request_id(x_request_id)
+        if not actor_id or not actor_id.strip():
+            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            return JSONResponse(payload, status_code=status)
+        from react_agent.apps.expense.service import list_events
+        from react_agent.apps.expense.store import ExpenseStoreError
+
+        try:
+            events = await run_in_threadpool(list_events, _expense_store(), claim_id, actor_id=actor_id.strip())
+        except (ExpenseStoreError, ValueError) as exc:
+            status, payload = error_response(getattr(exc, "code", "storage_unavailable"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
+            return JSONResponse(payload, status_code=status)
+        return JSONResponse({"request_id": request_id, "claim_id": claim_id, "events": events})
 
     @api.post("/v1/tasks", response_model=TaskResponse, status_code=202)
     async def submit_task(
