@@ -11,7 +11,7 @@ react-agent 是企业内部工作助手（work-assistant）的工程原型，面
 | 部分 | 状态 |
 |---|---|
 | 规范咨询 | 已有文档检索、引用校验、拒答策略、现场证据和离线评测入口 |
-| 报销办理 | 已有政策决策、表单约束、`route_review` / `resolve_review` 复核闭环、版本与决策指纹校验、审批审计和轨迹回放原型；正式业务持久化仍待 PostgreSQL 阶段 |
+| 报销办理 | 已有政策决策、表单约束、SQL 持久化的 Claim/version/decision/review 生命周期、`route_review` / `resolve_review` 复核闭环、版本与决策指纹校验、审批审计和轨迹回放原型；PostgreSQL 重启 smoke 已覆盖恢复，仍不代表生产财务系统或 SLA |
 | 受控变更交付 | 规划中的独立产品；现有 GitHub 流程仍作为技术附录保留 |
 | 轨迹与质量 | Format B、Harness、trace-debugger 失败扫描和 llm-eval-engine 发布前自检已形成跨仓闭环 |
 | 生产成熟度 | held-out/golden 和真实业务接入仍有缺口，不能宣称生产成熟度 |

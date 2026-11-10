@@ -18,9 +18,9 @@
 
 ## 报销办理第二场景演示
 
-`demos/demo_expense_workflow.py` 现在复用正式 `expense_claim_review@1` Workflow，按“政策检索 → 结构化表单校验 → 规则决策 → `route_review` 分拣 → 必要时 `resolve_review` 人工复核 → 审计记录 → 轨迹落盘与 replay”运行。正常单、硬拒绝和币种不在政策范围的人工复核单都会打印 `claim_valid`、政策版本、决策码、审批记录、审计记录、轨迹路径和回放结果。
+`demos/demo_expense_workflow.py` 现在复用正式 `expense_claim_review@1` Workflow，按“政策检索 → 结构化表单校验 → 规则决策 → `route_review` 分拣 → 必要时 `resolve_review` 人工复核 → 审计记录 → 轨迹落盘与 replay”运行。正常单、硬拒绝和币种不在政策范围的人工复核单都会打印 `claim_valid`、政策版本、决策码、审批记录、审计记录、轨迹路径和回放结果。正式 Claim、版本、审批和事件由 SQL store 持久化，PostgreSQL 重启 smoke 可复核同一业务终态。
 
-Expense 复核服务目前是可部署原型：`route_review` 只能创建 `under_review` / `escalated` 非终态或自动拒绝，`resolve_review` 才能在权限闸门、单据版本和 `decision_hash` 校验通过后写入批准、拒绝或升级结果。HTTP 入口为 `POST /v1/expense/reviews/{approval_id}/resolve`；通用 `/v1/approvals` 仍只是 CONFIRM 凭据兼容接口。held-out / golden 结果继续只作验收附录，不作为应用主叙事。
+Expense 复核服务目前是可部署原型：`route_review` 只能创建 `under_review` / `escalated` 非终态或自动拒绝，`resolve_review` 才能在权限闸门、单据版本和 `decision_hash` 校验通过后写入批准、拒绝或升级结果。Claim/版本/审批/事件可从 PostgreSQL 重启后恢复，HTTP 入口为 `POST /v1/expense/reviews/{approval_id}/resolve`；通用 `/v1/approvals` 仍只是 CONFIRM 凭据兼容接口。held-out / golden 结果继续只作验收附录，不作为应用主叙事；这不构成生产 SLA、多租户或真实付款能力声明。
 
 - 默认入口的安全防线修复（2026-09-30）：容器默认入口是 `react-agent-api`（FastAPI 面），但它读的是从未被文档记录的 `REACT_AGENT_API_KEY`——#97 已把 `DEPLOY.md` 的过时变量名改成 `REACT_AGENT_AUTH_TOKEN`，却漏改了 `fastapi_app` 的读取处，于是**按文档配置等于没配**（鉴权 fail-open），且该面完全没有 Host 头校验，DNS rebinding 防线与 `REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1` 的启动期 fail-closed 都只在 stdlib 面成立。现抽出 `server/auth.py` 的 header 版判据供两面共用（`REACT_AGENT_API_KEY` 保留为 legacy 别名、AUTH_TOKEN 优先），`request_guard` 改为「Host 先于鉴权」并把保护范围对齐文档（除探针外全部），`main()` 补启动期校验与未鉴权暴露告警。配置发现性同步补齐：`.env.example` 增加「服务鉴权与网络暴露」段，`docker-compose.yml` 把两个变量由注释改为直通——此前在 `.env` 里填 token 根本进不了容器。见 [#100](https://github.com/weihuaguo270-ops/react-agent/pull/100)。
 

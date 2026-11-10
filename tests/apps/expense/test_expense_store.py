@@ -136,3 +136,78 @@ def test_submit_review_and_escalation_remain_non_terminal_approval_states(tmp_pa
     assert escalated["status"] != "approved"
     assert store.get(review_claim["claim_id"], actor_id="employee-1")["decision"]["decision"] == "needs_review"
     store.close()
+
+
+def test_review_resolution_survives_store_restart_and_is_idempotent(tmp_path, monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
+    path = tmp_path / "expense.sqlite"
+    store = ExpenseClaimStore(f"sqlite:///{path}")
+    created = store.create(_claim(currency="EUR"), actor_id="employee-1", request_id="req-1", idempotency_key="create-1")
+    submitted = submit_claim(store, created["claim_id"], actor_id="employee-1", expected_version=1, request_id="req-2", idempotency_key="submit-1")
+    approval_id = submitted["approval_id"]
+    decision_hash = submitted["review"]["decision"]["decision_hash"]
+    store.close()
+
+    reopened = ExpenseClaimStore(f"sqlite:///{path}")
+    pending = reopened.list_reviews(claim_id=created["claim_id"])[0]
+    assert pending["approval_id"] == approval_id
+    assert pending["approval_status"] == "pending"
+    resolved = reopened.resolve_review(
+        approval_id,
+        decision="approve",
+        approver_id="manager-1",
+        claim_id=created["claim_id"],
+        expected_version=1,
+        decision_hash=decision_hash,
+        request_id="req-3",
+        idempotency_key="resolve-1",
+        comment="policy checked",
+    )
+    assert resolved["status"] == "approved"
+    assert resolved["resolution"]["approver_id"] == "manager-1"
+    replay = reopened.resolve_review(
+        approval_id,
+        decision="approve",
+        approver_id="manager-1",
+        claim_id=created["claim_id"],
+        expected_version=1,
+        decision_hash=decision_hash,
+        request_id="req-replay",
+        idempotency_key="resolve-1",
+        comment="policy checked",
+    )
+    assert replay["idempotent_replay"] is True
+    assert reopened.get(created["claim_id"], actor_id="employee-1")["status"] == "approved"
+    assert [event["event_type"] for event in reopened.events(created["claim_id"], actor_id="employee-1")] == [
+        "claim_created", "claim_submitted", "review_routed", "review_resolved",
+    ]
+    reopened.close()
+
+
+def test_review_resolution_rejects_wrong_hash_and_version_without_side_effect(tmp_path, monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_APPROVAL_MODE", "auto_allow")
+    store = ExpenseClaimStore(f"sqlite:///{tmp_path / 'expense.sqlite'}")
+    created = store.create(_claim(currency="EUR"), actor_id="employee-1", request_id="req-1", idempotency_key="create-1")
+    submitted = submit_claim(store, created["claim_id"], actor_id="employee-1", expected_version=1, request_id="req-2", idempotency_key="submit-1")
+    approval_id = submitted["approval_id"]
+    decision_hash = submitted["review"]["decision"]["decision_hash"]
+    before = store.events(created["claim_id"], actor_id="employee-1")
+    for expected_version, supplied_hash, code in [(2, decision_hash, "approval_version_mismatch"), (1, "sha256:" + "0" * 64, "decision_invalid")]:
+        try:
+            store.resolve_review(
+                approval_id,
+                decision="approve",
+                approver_id="manager-1",
+                claim_id=created["claim_id"],
+                expected_version=expected_version,
+                decision_hash=supplied_hash,
+                request_id="req-invalid",
+                idempotency_key=f"resolve-{code}",
+            )
+        except ExpenseStoreError as exc:
+            assert exc.code == code
+        else:
+            raise AssertionError("invalid review resolution must fail")
+    assert store.get(created["claim_id"], actor_id="employee-1")["status"] == "under_review"
+    assert store.events(created["claim_id"], actor_id="employee-1") == before
+    store.close()

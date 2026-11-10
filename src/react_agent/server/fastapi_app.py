@@ -536,7 +536,11 @@ def create_app(
     ) -> dict[str, Any]:
         from react_agent.apps.expense.review import list_reviews
 
-        return {"request_id": _request_id(x_request_id), "reviews": await run_in_threadpool(list_reviews)}
+        try:
+            store = _expense_store()
+        except ValueError:
+            store = None
+        return {"request_id": _request_id(x_request_id), "reviews": await run_in_threadpool(list_reviews, store)}
 
     @api.post("/v1/expense/reviews/{approval_id}/resolve")
     async def resolve_expense_review(
@@ -555,6 +559,10 @@ def create_app(
             # The Expense approval record remains the business record. This
             # optional generic credential only satisfies the shared CONFIRM gate.
             set_approval_credential(approval_credential or "")
+            try:
+                store = _expense_store()
+            except ValueError:
+                store = None
             return resolve_review(
                 approval_id,
                 decision=request.decision,
@@ -565,6 +573,7 @@ def create_app(
                 request_id=request_id,
                 idempotency_key=request.idempotency_key or idempotency_header or "",
                 comment=request.comment,
+                store=store,
             )
         try:
             result = await run_in_threadpool(

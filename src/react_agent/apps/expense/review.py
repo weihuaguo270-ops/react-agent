@@ -90,10 +90,24 @@ def route_review(
     *,
     request_id: str = "",
     idempotency_key: str = "",
+    store: Any | None = None,
 ) -> dict[str, Any]:
     """Route a validated decision without granting human approval."""
     canonical_claim = claim if isinstance(claim, Claim) else Claim.from_dict(claim)
     canonical_decision = _as_decision(decision, canonical_claim)
+    if store is not None:
+        try:
+            return store.route_review(
+                canonical_claim.claim_id,
+                claim_version=canonical_claim.version,
+                decision=canonical_decision.to_dict(),
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+            )
+        except Exception as exc:
+            if hasattr(exc, "code"):
+                raise ReviewError(getattr(exc, "code"), str(exc), status_code=getattr(exc, "status_code", 409)) from exc
+            raise
     code = DecisionCode(canonical_decision.decision)
     idem = idempotency_key or f"review:{canonical_claim.claim_id}:{canonical_claim.version}:{canonical_decision.decision_hash}"
     fingerprint = f"{canonical_claim.claim_id}:{canonical_claim.version}:{canonical_decision.decision_hash}:{code}"
@@ -158,6 +172,7 @@ def resolve_review(
     request_id: str = "",
     idempotency_key: str = "",
     comment: str = "",
+    store: Any | None = None,
 ) -> dict[str, Any]:
     """Apply an authenticated human decision to a pending Expense review."""
     blocked = permission_block_message("resolve_review", {"approval_id": approval_id, "claim_id": claim_id, "decision": str(decision)})
@@ -170,6 +185,23 @@ def resolve_review(
     except ValueError as exc:
         raise ReviewError("invalid_decision", "decision must be approve, reject, or escalate") from exc
     idem = idempotency_key or f"approval:{approval_id}:{expected_version}:{action.value}"
+    if store is not None:
+        try:
+            return store.resolve_review(
+                approval_id,
+                decision=action.value,
+                approver_id=approver_id,
+                claim_id=claim_id,
+                expected_version=expected_version,
+                decision_hash=decision_hash,
+                request_id=request_id,
+                idempotency_key=idem,
+                comment=comment,
+            )
+        except Exception as exc:
+            if hasattr(exc, "code"):
+                raise ReviewError(getattr(exc, "code"), str(exc), status_code=getattr(exc, "status_code", 409)) from exc
+            raise
     with _LOCK:
         record = _REVIEWS.get(approval_id)
         if record is None or not record.get("approval_id"):
@@ -202,7 +234,14 @@ def resolve_review(
         return copy.deepcopy(record)
 
 
-def list_reviews() -> list[dict[str, Any]]:
+def list_reviews(store: Any | None = None) -> list[dict[str, Any]]:
+    if store is not None:
+        try:
+            return store.list_reviews()
+        except Exception as exc:
+            if hasattr(exc, "code"):
+                raise ReviewError(getattr(exc, "code"), str(exc), status_code=getattr(exc, "status_code", 409)) from exc
+            raise
     with _LOCK:
         return [copy.deepcopy(item) for item in _REVIEWS.values() if item.get("approval_id")]
 
