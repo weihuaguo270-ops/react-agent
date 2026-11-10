@@ -46,14 +46,39 @@ def test_expense_claim_http_lifecycle(tmp_path, monkeypatch):
                 headers={"X-Actor-Id": "employee-1", "Idempotency-Key": "submit-1"},
                 json={"expected_version": updated.json()["version"]},
             )
+            approval_id = submitted.json()["approval_id"]
+            decision_hash = submitted.json()["review"]["decision"]["decision_hash"]
+            resolved = await client.post(
+                f"/v1/expense/reviews/{approval_id}/resolve",
+                headers={"X-Request-Id": "resolve-1", "Idempotency-Key": "resolve-1"},
+                json={
+                    "decision": "approve",
+                    "approver_id": "manager-1",
+                    "claim_id": claim_id,
+                    "expected_version": 2,
+                    "decision_hash": decision_hash,
+                    "comment": "reviewed",
+                },
+            )
+            reopened_claim = await client.get(f"/v1/expense/claims/{claim_id}", headers={"X-Actor-Id": "employee-1"})
             events = await client.get(f"/v1/expense/claims/{claim_id}/events", headers={"X-Actor-Id": "employee-1"})
             forbidden = await client.get(f"/v1/expense/claims/{claim_id}", headers={"X-Actor-Id": "employee-2"})
-            return created, submitted, events, forbidden
+            return created, submitted, resolved, reopened_claim, events, forbidden
 
-    created, submitted, events, forbidden = asyncio.run(go())
+    created, submitted, resolved, reopened_claim, events, forbidden = asyncio.run(go())
     assert created.status_code == 201, created.text
     assert submitted.status_code == 200, submitted.text
     assert submitted.json()["status"] == "under_review"
+    assert resolved.status_code == 200, resolved.text
+    assert resolved.json()["review"]["status"] == "approved"
+    assert reopened_claim.json()["status"] == "approved"
     assert events.status_code == 200
-    assert [event["event_type"] for event in events.json()["events"]] == ["claim_created", "claim_updated", "claim_submitted"]
+    assert [event["event_type"] for event in events.json()["events"]] == [
+        "claim_created",
+        "claim_updated",
+        "claim_submitted",
+        "review_routed",
+        "review_resolved",
+    ]
+    assert submitted.json()["approval_id"]
     assert forbidden.status_code == 404

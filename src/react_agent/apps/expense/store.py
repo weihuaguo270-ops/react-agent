@@ -6,7 +6,7 @@ import hashlib
 import json
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Mapping
 
 from sqlalchemy import (
@@ -23,6 +23,8 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.engine import Engine
+
+from .domain import Decision, Handoff
 
 
 def _now() -> str:
@@ -90,6 +92,20 @@ class ExpenseClaimStore:
             Column("created_at", DateTime(timezone=True), nullable=False),
             PrimaryKeyConstraint("claim_id", "version"),
         )
+        self._reviews = Table(
+            "expense_claim_reviews",
+            self._metadata,
+            Column("approval_id", String(128), primary_key=True),
+            Column("claim_id", String(128), nullable=False),
+            Column("claim_version", Integer, nullable=False),
+            Column("approval_status", String(32), nullable=False),
+            Column("claim_status", String(32), nullable=False),
+            Column("decision_json", Text, nullable=False),
+            Column("resolution_json", Text, nullable=True),
+            Column("decision_hash", String(200), nullable=True),
+            Column("created_at", DateTime(timezone=True), nullable=False),
+            Column("updated_at", DateTime(timezone=True), nullable=False),
+        )
         self._events = Table(
             "expense_claim_events",
             self._metadata,
@@ -141,6 +157,62 @@ class ExpenseClaimStore:
             result["workflow"] = dict(workflow)
         return result
 
+    @staticmethod
+    def _review_result(row: Mapping[str, Any], *, events: list[dict[str, Any]], replay: bool = False) -> dict[str, Any]:
+        result = {
+            "claim_id": row["claim_id"],
+            "claim_version": row["claim_version"],
+            "status": row["claim_status"],
+            "approval_id": row["approval_id"],
+            "approval_status": row["approval_status"],
+            "decision": json.loads(row["decision_json"]),
+            "events": events,
+            "idempotent_replay": replay,
+        }
+        if row.get("resolution_json"):
+            result["resolution"] = json.loads(row["resolution_json"])
+        return result
+
+    def _event_rows(self, connection, claim_id: str, *, approval_id: str | None = None) -> list[dict[str, Any]]:
+        statement = select(self._events).where(self._events.c.claim_id == claim_id).order_by(self._events.c.created_at, self._events.c.event_id)
+        rows = connection.execute(statement).mappings().all()
+        events = []
+        for item in rows:
+            metadata = json.loads(item["metadata_json"])
+            if approval_id and metadata.get("approval_id") != approval_id and item["event_type"] in {"review_routed", "review_resolved"}:
+                continue
+            events.append({
+                "event_id": item["event_id"], "claim_id": item["claim_id"],
+                "claim_version": item["claim_version"], "event_type": item["event_type"],
+                "actor_type": item["actor_type"], "actor_id": item["actor_id"],
+                "request_id": item["request_id"], "idempotency_key": item["idempotency_key"],
+                "created_at": item["created_at"].isoformat().replace("+00:00", "Z"),
+                "metadata": metadata,
+            })
+        return events
+
+    @staticmethod
+    def _bind_decision(decision: Mapping[str, Any], *, claim_id: str, claim_version: int) -> dict[str, Any]:
+        data = dict(decision)
+        data.setdefault("claim_id", claim_id)
+        data.setdefault("claim_version", claim_version)
+        data.setdefault("policy_version", "expense-policy-sim-v1")
+        data.setdefault("reasons", ["manual_review"])
+        data.setdefault("decision_source", "rules")
+        data.setdefault("decision_model", "expense-rules-v1")
+        data.setdefault("rule_result", "not_covered")
+        code = str(data.get("decision") or "")
+        if data.get("handoff") is None and (
+            data.get("review_required")
+            or code in {"approve_manager", "approve_finance", "approve_director", "needs_review", "escalated"}
+        ):
+            data["handoff"] = Handoff(
+                reason_code=str((data.get("reasons") or ["manual_review"])[0]),
+                risk_level="medium",
+                amount_band="0-1000",
+            ).to_dict()
+        return Decision.from_dict(data).to_dict()
+
     def _get_claim_row(self, connection, claim_id: str, *, lock: bool = False):
         statement = select(self._claims).where(self._claims.c.claim_id == claim_id)
         if lock and self._engine.dialect.name == "postgresql":
@@ -188,19 +260,44 @@ class ExpenseClaimStore:
         with self._engine.connect() as connection:
             return self._idem(connection, scope, key, payload)
 
-    def _event(self, connection, *, claim_id: str, version: int, event_type: str, actor_type: str, actor_id: str, request_id: str, idempotency_key: str, metadata: Mapping[str, Any]) -> None:
+    def _event(self, connection, *, claim_id: str, version: int, event_type: str, actor_type: str, actor_id: str, request_id: str, idempotency_key: str, metadata: Mapping[str, Any]) -> dict[str, Any]:
+        created_at = self._dt()
+        previous = connection.execute(
+            select(self._events.c.created_at)
+            .where(self._events.c.claim_id == claim_id)
+            .order_by(self._events.c.created_at.desc(), self._events.c.event_id.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+        if previous is not None and previous.tzinfo is None:
+            previous = previous.replace(tzinfo=timezone.utc)
+        if previous is not None and created_at <= previous:
+            created_at = previous + timedelta(microseconds=1)
+        event = {
+            "event_id": "evt_" + uuid.uuid4().hex,
+            "claim_id": claim_id,
+            "claim_version": version,
+            "event_type": event_type,
+            "actor_type": actor_type,
+            "actor_id": actor_id,
+            "request_id": request_id or "expense-s4",
+            "idempotency_key": idempotency_key or "expense-s4",
+            "created_at": created_at,
+            "metadata": dict(metadata),
+        }
         connection.execute(self._events.insert().values(
-            event_id="evt_" + uuid.uuid4().hex,
+            event_id=event["event_id"],
             claim_id=claim_id,
             claim_version=version,
             event_type=event_type,
             actor_type=actor_type,
             actor_id=actor_id,
-            request_id=request_id or "expense-s4",
-            idempotency_key=idempotency_key or "expense-s4",
+            request_id=event["request_id"],
+            idempotency_key=event["idempotency_key"],
             metadata_json=_json(metadata),
-            created_at=self._dt(),
+            created_at=event["created_at"],
         ))
+        event["created_at"] = event["created_at"].isoformat().replace("+00:00", "Z")
+        return event
 
     def create(self, payload: Mapping[str, Any], *, actor_id: str, request_id: str, idempotency_key: str) -> dict[str, Any]:
         requested_claim_id = payload.get("claim_id")
@@ -244,6 +341,7 @@ class ExpenseClaimStore:
         with self._engine.connect() as connection:
             row = self._get_claim_row(connection, claim_id)
             decision_row = None
+            review_row = None
             if row is not None:
                 decision_row = connection.execute(
                     select(self._decisions).where(
@@ -251,12 +349,23 @@ class ExpenseClaimStore:
                         self._decisions.c.version == row["current_version"],
                     )
                 ).mappings().first()
+                review_row = connection.execute(
+                    select(self._reviews).where(
+                        self._reviews.c.claim_id == claim_id,
+                        self._reviews.c.claim_version == row["current_version"],
+                    )
+                ).mappings().first()
         self._check_access(row, actor_id)
-        return self._row_result(
+        result = self._row_result(
             row,
             decision=json.loads(decision_row["decision_json"]) if decision_row else None,
             workflow=json.loads(decision_row["workflow_json"]) if decision_row else None,
         )
+        if review_row is not None:
+            result["review"] = self._review_result(review_row, events=[])
+            result["approval_id"] = review_row["approval_id"]
+            result["approval_status"] = review_row["approval_status"]
+        return result
 
     def update(self, claim_id: str, patch: Mapping[str, Any], *, actor_id: str, expected_version: int, request_id: str, idempotency_key: str) -> dict[str, Any]:
         fingerprint_payload = {"claim_id": claim_id, "actor_id": actor_id, "expected_version": expected_version, "patch": dict(patch)}
@@ -284,6 +393,201 @@ class ExpenseClaimStore:
             self._save_idem(connection, "update", idempotency_key, fingerprint_payload, result)
             return result
 
+    def _route_review_in_transaction(
+        self,
+        connection,
+        *,
+        claim_id: str,
+        claim_version: int,
+        decision: Mapping[str, Any],
+        request_id: str,
+        idempotency_key: str,
+        workflow: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        decision = self._bind_decision(decision, claim_id=claim_id, claim_version=claim_version)
+        code = str(decision["decision"])
+        hard_rejections = {
+            "reject_no_receipt", "reject_over_limit", "reject_missing_purchase_order", "reject_policy",
+        }
+        needs_review = bool(decision.get("review_required")) or code in {
+            "approve_manager", "approve_finance", "approve_director", "needs_review", "escalated",
+        }
+        if code in hard_rejections:
+            status = "rejected"
+            event = self._event(
+                connection, claim_id=claim_id, version=claim_version,
+                event_type="claim_rejected", actor_type="agent", actor_id="expense-router",
+                request_id=request_id, idempotency_key=idempotency_key,
+                metadata={"decision_hash": decision.get("decision_hash"), "decision_code": code},
+            )
+            return {
+                "claim_id": claim_id, "claim_version": claim_version, "status": status,
+                "approval_id": None, "decision": dict(decision), "events": [event],
+            }
+        if not needs_review:
+            event = self._event(
+                connection, claim_id=claim_id, version=claim_version,
+                event_type="decision_routed", actor_type="agent", actor_id="expense-router",
+                request_id=request_id, idempotency_key=idempotency_key,
+                metadata={"decision_hash": decision.get("decision_hash")},
+            )
+            return {
+                "claim_id": claim_id, "claim_version": claim_version, "status": "submitted",
+                "approval_id": None, "decision": dict(decision), "events": [event],
+            }
+
+        existing = connection.execute(
+            select(self._reviews).where(
+                self._reviews.c.claim_id == claim_id,
+                self._reviews.c.claim_version == claim_version,
+            )
+        ).mappings().first()
+        if existing is not None:
+            if existing["decision_json"] != _json(dict(decision)):
+                raise ExpenseStoreError("review_conflict", "claim version already has a different review")
+            return self._review_result(
+                existing,
+                events=self._event_rows(connection, claim_id, approval_id=existing["approval_id"]),
+                replay=True,
+            )
+
+        approval_id = "apr_" + uuid.uuid4().hex
+        status = "escalated" if code == "escalated" else "under_review"
+        now = self._dt()
+        connection.execute(self._reviews.insert().values(
+            approval_id=approval_id,
+            claim_id=claim_id,
+            claim_version=claim_version,
+            approval_status="pending",
+            claim_status=status,
+            decision_json=_json(dict(decision)),
+            resolution_json=None,
+            decision_hash=decision.get("decision_hash"),
+            created_at=now,
+            updated_at=now,
+        ))
+        event = self._event(
+            connection, claim_id=claim_id, version=claim_version,
+            event_type="review_routed", actor_type="agent", actor_id="expense-router",
+            request_id=request_id, idempotency_key=idempotency_key,
+            metadata={
+                "approval_id": approval_id,
+                "decision_hash": decision.get("decision_hash"),
+                "handoff": decision.get("handoff"),
+            },
+        )
+        row = connection.execute(
+            select(self._reviews).where(self._reviews.c.approval_id == approval_id)
+        ).mappings().one()
+        result = self._review_result(row, events=[event])
+        if workflow is not None:
+            result["workflow"] = dict(workflow)
+        return result
+
+    def route_review(
+        self,
+        claim_id: str,
+        *,
+        claim_version: int,
+        decision: Mapping[str, Any],
+        request_id: str = "",
+        idempotency_key: str = "",
+    ) -> dict[str, Any]:
+        payload = {
+            "claim_id": claim_id, "claim_version": claim_version,
+            "decision": dict(decision),
+        }
+        with self._engine.begin() as connection:
+            replay = self._idem(connection, "route_review", idempotency_key, payload)
+            if replay is not None:
+                return replay
+            row = self._get_claim_row(connection, claim_id, lock=True)
+            if row is None:
+                raise ExpenseStoreError("claim_not_found", "expense claim not found", status_code=404)
+            if row["current_version"] != claim_version:
+                raise ExpenseStoreError("claim_version_mismatch", "claim version does not match review")
+            result = self._route_review_in_transaction(
+                connection, claim_id=claim_id, claim_version=claim_version,
+                decision=decision, request_id=request_id,
+                idempotency_key=idempotency_key or "expense-review", workflow=None,
+            )
+            body = json.loads(row["claim_json"])
+            body["status"] = result["status"]
+            connection.execute(update(self._claims).where(self._claims.c.claim_id == claim_id).values(status=result["status"], claim_json=_json(body), updated_at=self._dt()))
+            result["idempotent_replay"] = False
+            self._save_idem(connection, "route_review", idempotency_key, payload, result)
+            return result
+
+    def resolve_review(
+        self,
+        approval_id: str,
+        *,
+        decision: str,
+        approver_id: str,
+        claim_id: str,
+        expected_version: int,
+        decision_hash: str,
+        request_id: str = "",
+        idempotency_key: str = "",
+        comment: str = "",
+    ) -> dict[str, Any]:
+        payload = {
+            "approval_id": approval_id, "claim_id": claim_id,
+            "expected_version": expected_version, "decision_hash": decision_hash,
+            "decision": decision, "approver_id": approver_id, "comment": comment,
+        }
+        with self._engine.begin() as connection:
+            replay = self._idem(connection, "resolve_review", idempotency_key, payload)
+            if replay is not None:
+                return replay
+            review = connection.execute(
+                select(self._reviews).where(self._reviews.c.approval_id == approval_id).with_for_update()
+                if self._engine.dialect.name == "postgresql" else
+                select(self._reviews).where(self._reviews.c.approval_id == approval_id)
+            ).mappings().first()
+            if review is None:
+                raise ExpenseStoreError("claim_not_found", "expense approval not found", status_code=404)
+            if review["claim_id"] != claim_id:
+                raise ExpenseStoreError("forbidden_claim_access", "approval is not bound to this claim", status_code=403)
+            if review["claim_version"] != expected_version:
+                raise ExpenseStoreError("approval_version_mismatch", "approval claim version does not match")
+            if review["decision_hash"] != decision_hash:
+                raise ExpenseStoreError("decision_invalid", "decision_hash does not match the routed decision")
+            if review["approval_status"] != "pending":
+                raise ExpenseStoreError("approval_not_pending", "expense approval has already been resolved")
+            if decision not in {"approve", "reject", "escalate"}:
+                raise ExpenseStoreError("invalid_decision", "decision must be approve, reject, or escalate")
+            status = {"approve": "approved", "reject": "rejected", "escalate": "escalated"}[decision]
+            resolution = {
+                "approval_id": approval_id, "claim_id": claim_id,
+                "claim_version": expected_version, "decision_hash": decision_hash,
+                "decision": decision, "approver_id": approver_id,
+                "comment": comment, "created_at": _now(),
+            }
+            now = self._dt()
+            connection.execute(update(self._reviews).where(self._reviews.c.approval_id == approval_id).values(
+                approval_status="resolved", claim_status=status,
+                resolution_json=_json(resolution), updated_at=now,
+            ))
+            claim = self._get_claim_row(connection, claim_id, lock=True)
+            if claim is None:
+                raise ExpenseStoreError("claim_not_found", "expense claim not found", status_code=404)
+            if claim["current_version"] != expected_version:
+                raise ExpenseStoreError("approval_version_mismatch", "claim version changed before resolution")
+            body = json.loads(claim["claim_json"])
+            body["status"] = status
+            connection.execute(update(self._claims).where(self._claims.c.claim_id == claim_id).values(status=status, claim_json=_json(body), updated_at=now))
+            self._event(
+                connection, claim_id=claim_id, version=expected_version,
+                event_type="review_resolved", actor_type="manager", actor_id=approver_id,
+                request_id=request_id, idempotency_key=idempotency_key or "expense-review",
+                metadata={"approval_id": approval_id, "decision": decision, "decision_hash": decision_hash, "comment": comment},
+            )
+            row = connection.execute(select(self._reviews).where(self._reviews.c.approval_id == approval_id)).mappings().one()
+            result = self._review_result(row, events=self._event_rows(connection, claim_id, approval_id=approval_id))
+            self._save_idem(connection, "resolve_review", idempotency_key, payload, result)
+            return result
+
     def submit(self, claim_id: str, *, actor_id: str, expected_version: int, request_id: str, idempotency_key: str, workflow_runner: Callable[[Mapping[str, Any]], Mapping[str, Any]]) -> dict[str, Any]:
         fingerprint_payload = {"claim_id": claim_id, "actor_id": actor_id, "expected_version": expected_version}
         with self._engine.begin() as connection:
@@ -298,7 +602,13 @@ class ExpenseClaimStore:
                 raise ExpenseStoreError("invalid_state_transition", "claim cannot be submitted from its current state")
             workflow_result = dict(workflow_runner(copy.deepcopy(json.loads(row["claim_json"]))))
             state = dict(workflow_result.get("state") or {})
-            decision = dict(state.get("decision") or {})
+            decision = self._bind_decision(
+                dict(state.get("decision") or {}),
+                claim_id=claim_id,
+                claim_version=expected_version,
+            )
+            state["decision"] = decision
+            workflow_result["state"] = state
             code = str(state.get("decision_code") or decision.get("decision") or "")
             if not state.get("claim_valid", True):
                 status = "needs_correction"
@@ -334,6 +644,19 @@ class ExpenseClaimStore:
             )
             self._event(connection, claim_id=claim_id, version=expected_version, event_type="claim_submitted", actor_type="applicant", actor_id=actor_id, request_id=request_id, idempotency_key=idempotency_key, metadata={"decision_code": code, "decision_hash": decision_hash, "workflow_run_id": workflow_result.get("run_id")})
             result = {"claim": body, "claim_id": claim_id, "version": expected_version, "status": status, "decision": decision, "decision_code": code, "workflow": dict(workflow_result), "idempotent_replay": False}
+            if status != "needs_correction":
+                review_result = self._route_review_in_transaction(
+                    connection,
+                    claim_id=claim_id,
+                    claim_version=expected_version,
+                    decision=decision,
+                    request_id=request_id,
+                    idempotency_key=f"{idempotency_key}:route",
+                    workflow=workflow_result,
+                )
+                result["review"] = review_result
+                result["approval_id"] = review_result.get("approval_id")
+                result["approval_status"] = review_result.get("approval_status")
             self._save_idem(connection, "submit", idempotency_key, fingerprint_payload, result)
             return result
 
@@ -343,6 +666,14 @@ class ExpenseClaimStore:
             self._check_access(row, actor_id)
             rows = connection.execute(select(self._events).where(self._events.c.claim_id == claim_id).order_by(self._events.c.created_at, self._events.c.event_id)).mappings().all()
         return [{"event_id": item["event_id"], "claim_id": item["claim_id"], "claim_version": item["claim_version"], "event_type": item["event_type"], "actor_type": item["actor_type"], "actor_id": item["actor_id"], "request_id": item["request_id"], "idempotency_key": item["idempotency_key"], "created_at": item["created_at"].isoformat().replace("+00:00", "Z"), "metadata": json.loads(item["metadata_json"])} for item in rows]
+
+    def list_reviews(self, *, claim_id: str | None = None) -> list[dict[str, Any]]:
+        with self._engine.connect() as connection:
+            statement = select(self._reviews).order_by(self._reviews.c.created_at, self._reviews.c.approval_id)
+            if claim_id:
+                statement = statement.where(self._reviews.c.claim_id == claim_id)
+            rows = connection.execute(statement).mappings().all()
+            return [self._review_result(row, events=self._event_rows(connection, row["claim_id"], approval_id=row["approval_id"])) for row in rows]
 
     def close(self) -> None:
         self._engine.dispose()
