@@ -94,11 +94,16 @@ python scripts/eval/acceptance/run_portfolio_acceptance.py
 
 ## 简历项目简介
 
-企业内部工作助手（`work-assistant`）工程原型，面向员工规范咨询与报销办理两类办公场景。
-实现证据化文档问答、政策约束下的报销工作流、权限闸门、人工复核边界和完整 Agent 轨迹。
-通过 `trace-debugger` 接入规则失败扫描与 CI 回归，通过 `llm-eval-engine` 汇总过程和业务证据并输出发布前结论。
-在合成任务与 `external_real_sandbox` 中完成可复现实验，验证了应用闭环和质量配件协作。
-当前证据支持可部署、可评测的工程原型，不等同于生产 SaaS、多租户平台或长期线上 SLA。
+企业内部工作助手（`work-assistant`）工程原型，面向需要查内部规范、办理报销的企业员工。
+规范咨询支持员工提问、检索内部文档、带引用回答；证据不足时明确拒答并保留查询轨迹。
+报销办理按政策和表单约束校验，异常或高风险单据进入人工复核，由审批人批准、拒绝或升级。
+副作用操作经过 `permission_gate` / approval，审批绑定单据版本与 `decision_hash`，结果写入审计记录并可回放。
+底层复用 Agent runtime、轨迹和评测闭环，接入 `trace-debugger` 与 `llm-eval-engine` 做发布前验收。
+当前证据来自合成任务与 `external_real_sandbox`，定位为可部署、可评测原型，不承诺生产 SaaS、多租户或长期线上 SLA。
+
+## 演示讲法
+
+先以员工身份提出一个内部规范问题，助手检索可引用的企业文档并返回证据化答案；找不到可靠依据时会拒答。再提交一笔报销，系统按政策和表单校验，必要时由 `route_review` 转入人工审批，审批人通过受保护的 `resolve_review` 批准、拒绝或升级。全程展示权限闸门、版本与决策指纹校验、审计记录和轨迹回放，最后说明 `trace-debugger` 负责失败扫描、`llm-eval-engine` 负责发布前 pass/review/hold，自身仍是可部署工程原型。
 
 ## 进一步阅读
 
