@@ -6,10 +6,12 @@
 
 本文是下一阶段的实现与验收规格，不代表当前项目已经具备内置工单、自动分派、通知或 SLA 管理能力。当前已有的 `approval_id`、待审批记录和人工决议接口仍是轻量审批基础设施；本规格在其上增加工单和运营闭环。
 
+H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配置为 `fixtures/expense/handoff_routing_v1.json`。本轮只提供无副作用的路由计划与静态状态校验，不接入 `route_review`、SQL、HTTP 或真实队列。执行进度统一见 [`roadmap-spec.md`](roadmap-spec.md)，本轮证据见 [`evidence/h0-contract-freeze.md`](evidence/h0-contract-freeze.md)；H0 测试通过不代表 S6 全部完成。
+
 相关规格：
 
-- [`EXPENSE_WORKFLOW_DECISION_SPEC.md`](EXPENSE_WORKFLOW_DECISION_SPEC.md)：规则决策与决策节点；
-- [`EXPENSE_FORM_WORKFLOW_SPEC.md`](EXPENSE_FORM_WORKFLOW_SPEC.md)：表单、claim 生命周期和审批接口。
+- [`workflow-decision-spec.md`](workflow-decision-spec.md)：规则决策与决策节点；
+- [`form-workflow-spec.md`](form-workflow-spec.md)：表单、claim 生命周期和审批接口。
 
 本规格是表单父 Workflow 的后置人工接管子流程。`route_review` 只能把决策 SPEC 输出的结构化 `handoff` 转换为 case；它不得重新解释决策或直接改变 claim 终态。`case.resolve` 只完成工单处理，涉及 claim 批准/拒绝时必须调用并绑定表单 SPEC 的 `/v1/expense/reviews/{approval_id}/resolve` 记录。
 
@@ -113,6 +115,24 @@ Expense claim/version
 
 `reason_code`、`risk_level`、`amount_band` 和 `decision_hash` 必须来自已验证的决策对象；自然语言 `reason` 只用于展示。
 
+### 5.3 H0 受控 reason 与条件映射
+
+| 条件标识（精确匹配） | `reason_code` | v1 责任队列 / 优先级 |
+|---|---|---|
+| `规则未覆盖费用类型` | `policy_not_covered` | `finance_review` / normal |
+| `金额或凭证需要人工核验` | `receipt_manual_verification` | `finance_review` / normal |
+| `需要持久化审批结果` | `approval_record_required` | `finance_review` / normal |
+| `policy_conflict` | `policy_conflict` | `finance_admin` / high |
+| `policy_version_unknown` | `policy_version_unknown` | `expense_operations` / high |
+| `automation_limit_exceeded` | `automation_limit_exceeded` | `finance_admin` / high |
+| `appeal_requested` | `appeal_requested` | `finance_review` / normal |
+| `escalation_requested` | `escalation_requested` | `finance_admin` / high |
+| `dependency_unavailable` | `dependency_unavailable` | `expense_operations` / high |
+
+前三项覆盖当前 Expense Skill 的全部 `human_handoff_conditions`；后六项是 §5.1 触发类型的结构化预留标识，不声称当前 Agent 已产生这些事件。未知条件返回 `unknown_handoff_condition`，不做关键词猜测。`receipt_manual_verification` 在 v1 中同时表示金额或凭证事实需核验；明确超出自动阈值则使用 `automation_limit_exceeded`。
+
+条件映射只是词表，不能单独授权建单。`plan_handoff` 只接收经 `Decision` 校验且绑定 Claim/version/policy/hash 的对象；必须有 `review_required`、`not_covered`、`needs_review` 或 `escalated` 才规划工单。普通正向建议、无需例外的硬拒绝，即使携带 `approval_record_required`，也不创建计划。`handoff.reason_code` 不在受控集合或绑定不全时返回 `invalid_handoff`，不从自由文本补造。现有 S5 的兼容 handoff reason 不在本轮改写；未来接入时须由可信决策适配层显式映射，不允许请求方重写已验证指纹。
+
 ## 6. 工单数据模型
 
 ### 6.1 Case
@@ -148,13 +168,27 @@ Expense claim/version
   "display_name": "财务审核",
   "allowed_roles": ["finance_reviewer", "finance_admin"],
   "priority_order": ["urgent", "high", "normal", "low"],
-  "response_sla_seconds": 14400,
-  "resolution_sla_seconds": 86400,
-  "escalate_to": "finance_admin"
+  "sla": {
+    "sla_policy_version": "expense-sla-v1",
+    "response_sla_seconds": 14400,
+    "resolution_sla_seconds": 86400
+  },
+  "escalate_to": "finance_admin",
+  "available": true
 }
 ```
 
 队列配置属于受控配置，不能由 Agent 在请求参数中自由指定。没有匹配队列时进入 `unrouted` 并升级运营人员，不得默认分派给任意个人。
+
+H0 固定以下队列及处理角色，`escalate_to` 是队列 ID，不是个人或角色 ID。身份认证、组织成员关系和动作授权在 H2/H3 接通；此处角色校验仅定义队列准入，不提供身份凭据，也不授予 Claim 审批权。
+
+| 队列 | 处理角色 `allowed_roles` | 升级目标 |
+|---|---|---|
+| `finance_review` | `finance_reviewer`、`finance_admin` | `finance_admin` |
+| `finance_admin` | `finance_admin` | `expense_operations` |
+| `expense_operations` | `expense_operator` | `finance_admin` |
+
+`applicant` 只代表申请人，不是处理角色；读取范围仍按 §12。未知队列、未定义的规则/升级目标、未知角色或不属于队列的处理角色返回 `queue_not_allowed`。队列不可用返回 `queue_unavailable`，不得绕过准入换一个人。优先级顺序固定为 `urgent, high, normal, low`。
 
 ### 6.3 CaseEvent
 
@@ -192,6 +226,11 @@ unrouted
   -> escalated
   -> cancelled
 
+escalated
+  -> queued          # 明确目标队列后重新排队，再按权限认领
+  -> unrouted        # 升级目标不可用
+  -> cancelled
+
 resolved / rejected / cancelled
   -> terminal
 ```
@@ -203,6 +242,8 @@ resolved / rejected / cancelled
 - `escalated` 必须生成新的升级事件和目标队列，不能只修改展示字段；
 - 终态工单不可重新认领或重复关闭；
 - 所有转移必须检查操作者角色、当前版本和并发版本号。
+
+H0 的 `validate_transition` 只校验上列静态边，未知状态、自转移和所有未列出的边均返回 `invalid_case_transition`。`escalated` 不能直接 `resolved/rejected`；需先回队列、认领并进入处理。角色、并发锁和审批绑定是 H2/H3 的执行约束，静态校验成功不能替代它们。
 
 ## 8. 分派模型
 
@@ -223,6 +264,10 @@ resolved / rejected / cancelled
 
 分派规则必须版本化并记录 `routing_rule_version`。同一 claim 版本重复创建时，规则版本变化不能静默改写既有工单；应通过重新分派事件显式记录。
 
+H0 v1 配置顶层固定为 `routing_rule_version`、`queues`、`rules`，示例版本为 `expense-routing-v1`；规则项为 `{reason_code, queue_id, priority}`，每个 reason 最多一条。`queues` 使用 §6.2 的格式，完整配置见 fixture。缺失或空版本、重复规则/队列及格式错误失败关闭。v1 只按受控 reason 精确匹配，不实现类目、组织、金额或风险多维路由；这些字段继续来自已验证 Decision，不接受自然语言选人。
+
+`plan_handoff` 只返回 `HandoffPlan`：Claim/version/hash、reason/risk/amount、状态、队列、优先级、路由版本及 SLA 快照。无匹配返回 `unrouted/unrouted_case`；目标队列不可用返回 `unrouted/queue_unavailable`；两者 queue/SLA 均为空、优先级 high，不尝试默认分派。H0 不生成告警、截止时间或 case ID，运营升级与重新分派留给 H2。
+
 ### 8.3 认领与转派
 
 - 认领需要目标队列成员角色；使用乐观锁，已被其他人认领时返回 `case_already_claimed`；
@@ -236,6 +281,8 @@ resolved / rejected / cancelled
 ### 9.1 SLA 计时
 
 工单创建时计算 `response_due_at` 和 `resolution_due_at`，使用队列配置和创建时的 SLA 版本。暂停、等待申请人和节假日规则在 MVP 中不改变已记录的原始截止时间；复杂日历另行立项。
+
+H0 冻结 `sla` 对象为 `sla_policy_version`（非空字符串）、`response_sla_seconds` 和 `resolution_sla_seconds`（正整数，拒绝布尔值/字符串，且 response ≤ resolution）。单位为自然经过的秒，示例 `expense-sla-v1` 是模拟配置，不是生产 SLA 承诺。配置无法校验则返回 `sla_policy_unavailable` 并停止规划；实际截止时间计算、超时扫描与升级在 H2 实现。新计划只保存配置快照；规则或 SLA 版本变化不改写已有快照。
 
 ### 9.2 升级规则
 
@@ -272,6 +319,8 @@ resolved / rejected / cancelled
 沿用现有 Bearer 鉴权、`request_id`、结构化错误 envelope 和 `Idempotency-Key`。
 
 Case 幂等键的规范作用域是 `handoff:<claim_id>:<claim_version>:<reason_code>`；同一 claim 版本和触发码必须复用活动 case。它不等同于 claim 写接口、决策子流程或审批决议的幂等键；跨作用域复用时必须重新生成对应键。
+
+H0 用显式传入的既有 case 路由快照验证复用契约：相同作用域且 hash 相同返回原快照及 `case_id`，保留原路由/SLA 版本；任何 Claim、版本、reason 或 hash 不同返回 `idempotency_conflict`。同作用域终态 case 返回 `case_already_exists`，不因重放重新打开；新申请需新 Claim 版本。该纯函数不查询数据库，H1 必须用事务/唯一约束保证实际并发去重，不能把 H0 测试当成持久化或并发证据。以下 HTTP 接口仍为规划。
 
 | 方法 | 路径 | 用途 |
 |------|------|------|
@@ -319,8 +368,8 @@ Case 幂等键的规范作用域是 `handoff:<claim_id>:<claim_version>:<reason_
 | 错误码 | 含义 |
 |--------|------|
 | `case_not_found` | 工单不存在或当前用户无权查看 |
-| `case_already_exists` | 相同 claim 版本和触发指纹已有活动工单 |
-| `idempotency_conflict` | 同一 case 幂等键对应不同 claim、版本或触发码 |
+| `case_already_exists` | 同作用域已有工单且无法复用，例如终态重放；活动工单正常复用返回原 case |
+| `idempotency_conflict` | 同一 case 幂等键或复用快照对应不同 claim、版本、触发码或 decision hash |
 | `case_already_claimed` | 工单已被其他处理人认领 |
 | `case_not_claimable` | 当前状态或角色不能认领 |
 | `invalid_case_transition` | 状态转移不允许 |
@@ -332,6 +381,11 @@ Case 幂等键的规范作用域是 `handoff:<claim_id>:<claim_version>:<reason_
 | `approval_binding_mismatch` | 审批记录与工单决策指纹不一致 |
 | `sla_policy_unavailable` | 无法计算可靠 SLA，进入升级路径 |
 | `notification_pending` | 业务状态已保存，通知进入 outbox 重试 |
+| `invalid_handoff` | Decision 或既有 case 快照无效、缺少绑定或 reason 不受控 |
+| `invalid_routing_config` | 路由配置格式、版本或规则唯一性不合法 |
+| `unknown_handoff_condition` | 条件未在精确映射表中注册 |
+
+H0 只冻结完整错误词表，并使用契约校验相关错误；`notification_pending`、认领/并发/审批错误等不表示相应运行能力已实现。
 
 ## 14. 分阶段任务
 

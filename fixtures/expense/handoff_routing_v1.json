@@ -1,0 +1,55 @@
+{
+  "routing_rule_version": "expense-routing-v1",
+  "queues": [
+    {
+      "queue_id": "finance_review",
+      "display_name": "财务审核",
+      "allowed_roles": ["finance_reviewer", "finance_admin"],
+      "priority_order": ["urgent", "high", "normal", "low"],
+      "sla": {
+        "sla_policy_version": "expense-sla-v1",
+        "response_sla_seconds": 14400,
+        "resolution_sla_seconds": 86400
+      },
+      "escalate_to": "finance_admin",
+      "available": true
+    },
+    {
+      "queue_id": "finance_admin",
+      "display_name": "财务升级审核",
+      "allowed_roles": ["finance_admin"],
+      "priority_order": ["urgent", "high", "normal", "low"],
+      "sla": {
+        "sla_policy_version": "expense-sla-v1",
+        "response_sla_seconds": 7200,
+        "resolution_sla_seconds": 43200
+      },
+      "escalate_to": "expense_operations",
+      "available": true
+    },
+    {
+      "queue_id": "expense_operations",
+      "display_name": "报销运营",
+      "allowed_roles": ["expense_operator"],
+      "priority_order": ["urgent", "high", "normal", "low"],
+      "sla": {
+        "sla_policy_version": "expense-sla-v1",
+        "response_sla_seconds": 3600,
+        "resolution_sla_seconds": 28800
+      },
+      "escalate_to": "finance_admin",
+      "available": true
+    }
+  ],
+  "rules": [
+    {"reason_code": "receipt_manual_verification", "queue_id": "finance_review", "priority": "normal"},
+    {"reason_code": "policy_not_covered", "queue_id": "finance_review", "priority": "normal"},
+    {"reason_code": "policy_conflict", "queue_id": "finance_admin", "priority": "high"},
+    {"reason_code": "policy_version_unknown", "queue_id": "expense_operations", "priority": "high"},
+    {"reason_code": "automation_limit_exceeded", "queue_id": "finance_admin", "priority": "high"},
+    {"reason_code": "appeal_requested", "queue_id": "finance_review", "priority": "normal"},
+    {"reason_code": "escalation_requested", "queue_id": "finance_admin", "priority": "high"},
+    {"reason_code": "dependency_unavailable", "queue_id": "expense_operations", "priority": "high"},
+    {"reason_code": "approval_record_required", "queue_id": "finance_review", "priority": "normal"}
+  ]
+}

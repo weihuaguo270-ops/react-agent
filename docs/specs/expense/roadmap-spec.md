@@ -11,7 +11,7 @@
 | [`EXPENSE_POLICY_BOUNDARY_SPEC.md`](EXPENSE_POLICY_BOUNDARY_SPEC.md) | 规则依据、规则优先级、政策边界和当前实现差距 |
 | [`EXPENSE_WORKFLOW_DECISION_SPEC.md`](EXPENSE_WORKFLOW_DECISION_SPEC.md) | 决策契约、规则决策模型、`expense_claim_review@1` 决策 Workflow、决策评测 |
 | [`EXPENSE_FORM_WORKFLOW_SPEC.md`](EXPENSE_FORM_WORKFLOW_SPEC.md) | Claim 表单 schema/lifecycle、正式审批入口、审批和持久化语义 |
-| [`EXPENSE_HUMAN_HANDOFF_SPEC.md`](EXPENSE_HUMAN_HANDOFF_SPEC.md) | handoff reason、case、队列、认领、SLA 和人工处理流程 |
+| [`EXPENSE_HUMAN_HANDOFF_SPEC.md`](human-handoff-spec.md) | handoff reason、case、队列、认领、SLA 和人工处理流程 |
 
 冲突裁决原则：政策含义以 Policy Boundary 和确认后的政策 fixture 为准；正式 Claim 状态与审批授权以 Form Workflow Spec 为准；决策对象及决策执行以 Decision Spec 为准；case 运营流程以 Human Handoff Spec 为准。总控文档不得覆盖这些定义。
 
@@ -27,7 +27,7 @@
 | S3 决策 Workflow | complete | `expense_claim_review@1` 已接通 HTTP（可选 workflow/legacy 回退）、demo、business evaluation 和 expanded candidate runner；采购/报价事实由可信模拟 adapter 提供，客户端自报验证字段不被信任；S3 smoke 与三组 candidate split 均通过 |
 | S4 Claim 持久化 | complete | SQLAlchemy Claim/version/decision/audit/idempotency store 已接入；SQLite 契约测试和 PostgreSQL Compose 重启 smoke 覆盖创建、版本更新、提交冻结、恢复、幂等和冲突无副作用 |
 | S5 审批闭环 | complete | `route_review` / `resolve_review` 已接入同一 SQL store；审批绑定 Claim 版本与 decision hash，支持 approve/reject/escalate、审计事件、重启恢复和幂等重放；不包含 S6 人工接管队列或 S7 UI |
-| S6 人工接管 | not_started | H0–H3 case/event/outbox、分派、认领/SLA、resolve 与 approval 绑定未实现 |
+| S6 人工接管 | in_progress | H0 reason/条件映射、队列/角色、状态机、错误码、路由/SLA 配置契约已冻结；[H0 契约证据](evidence/h0-contract-freeze.md)。H1–H4 case/event/outbox、分派认领、SLA 扫描、审批绑定、通知与视图未实现 |
 | S7 表单 UI 与运营视图 | not_started | 独立表单主路径、待审列表和 case 时间线未实现 |
 | S8 验收与可选模型 | not_started | 全链路验收尚未执行；JEV 类模型保持可选，且只能在规则/Workflow/审批门禁后评估 |
 
@@ -51,7 +51,7 @@ S2 candidate 结果：dev 41 案 39 通过、2 个采购验证 known gap（故 d
 | S3：决策 Workflow | 将 `decide()` 包装为 `expense_claim_review@1`；以结构化 Claim→Workflow→HTTP/demo 输出作为第一个可运行垂直切片；实现固定节点、失败关闭、轨迹、决策审计适配和幂等重放；建立不依赖 LLM/外部财务系统的核心决策 smoke；对采购/报价证据使用 Workflow 控制的模拟 adapter，不信任客户端自报验证结果 | Decision §5、§6、§10 P2；Policy Boundary 决策规则；Coverage Matrix `W-ADAPTER-*` | S2 | 垂直切片可运行且可回退到 legacy；节点注册/顺序/成功跳过失败轨迹可断言；核心 smoke 覆盖批准、硬拒绝、人工审核、非法 Claim、政策不可用和幂等重放；规则输出与 S1 逐案兼容；未知或不可验证证据不得自动批准；`W-ADAPTER-*` 有测试 | complete |
 | S4：持久化 Claim 生命周期 | 建 PostgreSQL Claim/version/audit store；实现 draft create/read/update、submit、版本冻结、状态迁移和查询；扩展持久化 smoke；Ledger 留作 legacy/eval adapter | Form §5–9、§11、§12 P1；Decision §6.3 | S3 | 重启后可查询的持久化 smoke 通过；提交冻结版本；重复请求幂等；版本冲突无副作用；审计完整 | complete |
 | S5：审批闭环 | 将 `route_review` / `resolve_review` 接到 S4 SQL store；保存 pending review、resolution、审批状态和审计；Claim 版本与 decision hash 必须匹配，审批决议不绕过权限闸门 | Form §4–8、§11、§12 P2；Decision §6.3 | S4 | SQLite 合同、HTTP lifecycle 和 PostgreSQL 重启 smoke 覆盖 approve/reject/escalate、错误版本/hash、重复决议和审计；S6 case/队列与 S7 UI 仍延期 | complete |
-| S6：人工接管 | 按 H0 reason/routing 契约、H1 case/event/outbox、H2 分派认领/SLA、H3 resolve 与审批绑定执行；扩展 handoff smoke；工单关闭不等于 Claim 批准 | Handoff §5–14；Form 审批入口章节 | S5 | 重复 handoff 去重；case 状态/事件追加；并发认领和升级可验证；handoff smoke 证明 resolve 绑定合法 approval/version/hash 且不会绕过审批 | not_started |
+| S6：人工接管 | 按 H0 reason/routing 契约、H1 case/event/outbox、H2 分派认领/SLA、H3 resolve 与审批绑定执行；扩展 handoff smoke；工单关闭不等于 Claim 批准 | Handoff §5–14；Form 审批入口章节 | S5 | 重复 handoff 去重；case 状态/事件追加；并发认领和升级可验证；handoff smoke 证明 resolve 绑定合法 approval/version/hash 且不会绕过审批 | in_progress |
 | S7：表单 UI 与运营视图 | 先交付新建、草稿、编辑、提交、状态和审批结果主路径，再接入 case 时间线、待审列表和状态刷新；建立浏览器 UI smoke；状态文案区分审批、工单关闭和付款 | Form §3、§8、§12 P3；Handoff 运营视图章节 | S4、S5；case 视图依赖 S6 | 浏览器 smoke 完成“新建→保存→编辑→提交→待审→审批结果”；重复提交、网络失败、过期版本、越权状态有处理；无付款成功误导 | not_started |
 | S8：验收与可选模型 | 按单测→dev→golden→held_out→HTTP/UI smoke→仓库回归执行；汇总分阶段 smoke 为发布报告；比较 S1 逐案证据；之后才可评估 JEV 类版本化候选模型 | Decision §8、§10.4–10.6 P5；Form §12 P4；Handoff 各阶段退出标准 | S3–S7 | 规则/审批/审计/人工作业端到端门禁通过；HTTP/UI smoke 与分阶段 smoke 全部通过并保留报告、版本、fixture hash、配置和失败日志；held_out 独立且不调参；候选模型可回退且不改变已冻结规则结果 | not_started |
 
@@ -96,4 +96,4 @@ S0–S8 是跨规格的发布依赖阶段；P0–P5 是决策 Workflow 规格中
 
 ## 5. 下一步
 
-进入 S6：按 `EXPENSE_HUMAN_HANDOFF_SPEC.md` 实现 case/event/outbox、分派认领和 SLA 绑定；保持 S4–S5 的 Claim/审批 SQL 事实来源，交付线、Go 后端、UI 和 `react_loop` 继续冻结。S8 的 held-out/golden、真实业务接入和生产 SLA 仍只作为后续验收边界，不从本轮 smoke 推断。
+S6 本轮仅完成 H0 契约冻结，未接入运行路径。下一小步为 [Human Handoff Spec](human-handoff-spec.md) 的 H1 case/event/outbox 存储与原子去重；分派认领、SLA 扫描和 case resolve 仍按 H2/H3 后置。保持 S4–S5 的 Claim/审批 SQL 事实来源，交付线、Go 后端、UI 和 `react_loop` 继续冻结。S8 的 held-out/golden、真实业务接入和生产 SLA 仍只作为后续验收边界，不从本轮契约测试推断。
