@@ -27,7 +27,7 @@
 | S3 决策 Workflow | complete | `expense_claim_review@1` 已接通 HTTP（可选 workflow/legacy 回退）、demo、business evaluation 和 expanded candidate runner；采购/报价事实由可信模拟 adapter 提供，客户端自报验证字段不被信任；S3 smoke 与三组 candidate split 均通过 |
 | S4 Claim 持久化 | complete | SQLAlchemy Claim/version/decision/audit/idempotency store 已接入；SQLite 契约测试和 PostgreSQL Compose 重启 smoke 覆盖创建、版本更新、提交冻结、恢复、幂等和冲突无副作用 |
 | S5 审批闭环 | complete | `route_review` / `resolve_review` 已接入同一 SQL store；审批绑定 Claim 版本与 decision hash，支持 approve/reject/escalate、审计事件、重启恢复和幂等重放；不包含 S6 人工接管队列或 S7 UI |
-| S6 人工接管 | in_progress | H0 reason/条件映射、队列/角色、状态机、错误码、路由/SLA 配置契约已冻结；[H0 契约证据](evidence/h0-contract-freeze.md)。H1–H4 case/event/outbox、分派认领、SLA 扫描、审批绑定、通知与视图未实现 |
+| S6 人工接管 | in_progress | H0 契约已冻结；[H1 存储验收](evidence/h1-case-storage.md) complete：SQLite/PostgreSQL 合同 41 passed、1 SQLite TRUNCATE skipped，项目 PostgreSQL 实际重启恢复 smoke 通过。H2–H4 分派认领、SLA、case resolve/审批衔接、通知与视图未实现；HTTP/自动建单未接通 |
 | S7 表单 UI 与运营视图 | not_started | 独立表单主路径、待审列表和 case 时间线未实现 |
 | S8 验收与可选模型 | not_started | 全链路验收尚未执行；JEV 类模型保持可选，且只能在规则/Workflow/审批门禁后评估 |
 
@@ -96,4 +96,6 @@ S0–S8 是跨规格的发布依赖阶段；P0–P5 是决策 Workflow 规格中
 
 ## 5. 下一步
 
-S6 本轮仅完成 H0 契约冻结，未接入运行路径。下一小步为 [Human Handoff Spec](human-handoff-spec.md) 的 H1 case/event/outbox 存储与原子去重；分派认领、SLA 扫描和 case resolve 仍按 H2/H3 后置。保持 S4–S5 的 Claim/审批 SQL 事实来源，交付线、Go 后端、UI 和 `react_loop` 继续冻结。S8 的 held-out/golden、真实业务接入和生产 SLA 仍只作为后续验收边界，不从本轮契约测试推断。
+S6 的 H0、H1 已完成。H1 的 `ExpenseCaseStore`、原子 case/event/outbox 写入、唯一约束、数据库事件不可修改和授权查询已通过 SQLite/PostgreSQL 合同；2026-11-12 复用已核实的 `react-agent-postgres-1`，prepare → 实际数据库重启 → finish smoke 通过，case/events/outbox 可恢复，重放不重复、越权失败、Claim/审批不变。未新建容器；隔离测试 schema 已清理，为验收启动的三个容器已恢复原先停止状态。下一阶段需另行限定 H2 范围，本轮不实现认领、分派或 SLA 扫描。
+
+H1 仍是存储接口，未接入 HTTP/现有 `route_review` 自动建单；旧 S5 自由文本 reason 不在本轮重写，未来可信适配必须保持 Decision 指纹一致。分派认领、SLA 扫描和 case resolve 仍按 H2/H3 后置；只有既有合法 Expense 审批才能改变 Claim 批准结果。保持 S4–S5 的 Claim/审批 SQL 事实来源，交付线、Go 后端、UI 和 `react_loop` 继续冻结。S8 的 held-out/golden、真实业务接入和生产 SLA 仍只作为后续验收边界，不从本轮契约测试推断。
