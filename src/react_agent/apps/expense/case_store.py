@@ -1,6 +1,6 @@
 """SQL case/event/outbox storage sharing the formal Claim database.
 
-H2 adds processing locks and SLA operations, never resolution or Claim writes.
+H3 composes case resolution with the existing Expense approval transaction.
 Actors and queue memberships must be supplied by a trusted caller, never headers.
 """
 from __future__ import annotations
@@ -22,6 +22,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from .domain import ContractError, Decision
 from .case_operations import CaseOperations
+from .case_resolution import CaseResolution
 from .sla import utc
 from .handoff import (
     CaseStatus, HandoffError, QueueId, ReasonCode, Role, RoutingConfig, TERMINAL_STATUSES,
@@ -57,7 +58,7 @@ def _token(value: str, name: str, *, limit: int = 200) -> str:
     return value
 
 
-class ExpenseCaseStore(CaseOperations):
+class ExpenseCaseStore(CaseResolution, CaseOperations):
     """Use the Claim store's engine, tables and transaction boundary; SQLite is for tests."""
 
     def __init__(self, claims: ExpenseClaimStore, *, clock: Callable[[], datetime] | None = None,

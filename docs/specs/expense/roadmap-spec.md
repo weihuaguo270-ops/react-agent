@@ -8,9 +8,9 @@
 
 | 来源文档 | 权威范围 |
 |---|---|
-| [`EXPENSE_POLICY_BOUNDARY_SPEC.md`](EXPENSE_POLICY_BOUNDARY_SPEC.md) | 规则依据、规则优先级、政策边界和当前实现差距 |
-| [`EXPENSE_WORKFLOW_DECISION_SPEC.md`](EXPENSE_WORKFLOW_DECISION_SPEC.md) | 决策契约、规则决策模型、`expense_claim_review@1` 决策 Workflow、决策评测 |
-| [`EXPENSE_FORM_WORKFLOW_SPEC.md`](EXPENSE_FORM_WORKFLOW_SPEC.md) | Claim 表单 schema/lifecycle、正式审批入口、审批和持久化语义 |
+| [`EXPENSE_POLICY_BOUNDARY_SPEC.md`](policy-boundary-spec.md) | 规则依据、规则优先级、政策边界和当前实现差距 |
+| [`EXPENSE_WORKFLOW_DECISION_SPEC.md`](workflow-decision-spec.md) | 决策契约、规则决策模型、`expense_claim_review@1` 决策 Workflow、决策评测 |
+| [`EXPENSE_FORM_WORKFLOW_SPEC.md`](form-workflow-spec.md) | Claim 表单 schema/lifecycle、正式审批入口、审批和持久化语义 |
 | [`EXPENSE_HUMAN_HANDOFF_SPEC.md`](human-handoff-spec.md) | handoff reason、case、队列、认领、SLA 和人工处理流程 |
 
 冲突裁决原则：政策含义以 Policy Boundary 和确认后的政策 fixture 为准；正式 Claim 状态与审批授权以 Form Workflow Spec 为准；决策对象及决策执行以 Decision Spec 为准；case 运营流程以 Human Handoff Spec 为准。总控文档不得覆盖这些定义。
@@ -22,12 +22,12 @@
 | 阶段 | 状态 | 当前证据或未完成项 |
 |---|---|---|
 | S0 规格裁决 | complete | 政策边界和主要冲突已在来源规格中裁定；待确认项已转为明确模拟规则或显式延期项 |
-| S1 基线冻结 | complete | [`S1_BASELINE_2026-10-12.md`](../evaluation/expense/S1_BASELINE_2026-10-12.md)：legacy 8 案、Expense 定向测试及 HTTP smoke；demo 环境阻塞如实记录 |
+| S1 基线冻结 | complete | [`S1_BASELINE_2026-10-12.md`](evidence/s1-baseline-20261012.md)：legacy 8 案、Expense 定向测试及 HTTP smoke；demo 环境阻塞如实记录 |
 | S2 共享领域契约 | complete | `domain.py`、legacy adapter、契约测试和 candidate runner 已实现；报告在 `artifacts/expense/candidate-s2-20261012/` |
 | S3 决策 Workflow | complete | `expense_claim_review@1` 已接通 HTTP（可选 workflow/legacy 回退）、demo、business evaluation 和 expanded candidate runner；采购/报价事实由可信模拟 adapter 提供，客户端自报验证字段不被信任；S3 smoke 与三组 candidate split 均通过 |
 | S4 Claim 持久化 | complete | SQLAlchemy Claim/version/decision/audit/idempotency store 已接入；SQLite 契约测试和 PostgreSQL Compose 重启 smoke 覆盖创建、版本更新、提交冻结、恢复、幂等和冲突无副作用 |
 | S5 审批闭环 | complete | `route_review` / `resolve_review` 已接入同一 SQL store；审批绑定 Claim 版本与 decision hash，支持 approve/reject/escalate、审计事件、重启恢复和幂等重放；不包含 S6 人工接管队列或 S7 UI |
-| S6 人工接管 | in_progress | H0、[H1 存储验收](evidence/h1-case-storage.md)、[H2 限定切片](evidence/h2-case-operations.md) complete：H1/H2 SQLite/PostgreSQL 合同 87 passed、1 SQLite TRUNCATE skipped；H2 实际数据库重启验证锁、动作重放与扫描标记恢复，超时不批准。H3 case resolve/审批衔接、H4 通知与视图未实现；HTTP/自动建单未接通 |
+| S6 人工接管 | in_progress | H0、[H1 存储验收](evidence/h1-case-storage.md)、[H2 限定切片](evidence/h2-case-operations.md)、[H3 审批衔接](evidence/h3-case-resolution.md) complete（存储切片）：H3 SQLite/PostgreSQL 各 31 项合同通过；相关存储合同 157 passed、1 SQLite TRUNCATE skipped；实际重启恢复审批结案、纯工单结案和等待补料，重复结案失败关闭。H4 通知与视图未实现；HTTP/自动建单未接通 |
 | S7 表单 UI 与运营视图 | not_started | 独立表单主路径、待审列表和 case 时间线未实现 |
 | S8 验收与可选模型 | not_started | 全链路验收尚未执行；JEV 类模型保持可选，且只能在规则/Workflow/审批门禁后评估 |
 
@@ -98,4 +98,6 @@ S0–S8 是跨规格的发布依赖阶段；P0–P5 是决策 Workflow 规格中
 
 S6 的 H0、H1 及本轮限定 H2 切片已完成，H1 的历史证据保持原样。H2 在 `ExpenseCaseStore` 上实现自认领、释放、转派、升级、冻结截止时间及幂等扫描。2026-11-12 重试 Docker 审批成功，检查全部 11 个容器并核对 Compose 归属后，复用当前项目 PostgreSQL 执行 H1/H2 合同（87 passed、1 skipped）和 H2 实际数据库重启检查；验证并发唯一认领、完整转派审计、锁与扫描标记恢复、重放不重复、超时仅解锁/升级不批准。未新建容器；测试 schema 已清理，为验收启动的三个项目容器已恢复原先停止状态。完整证据见 [H2 验证记录](evidence/h2-case-operations.md)。§9.2“连续两次无人认领”的轮次/重置时钟不在本切片冻结范围内，继续显式延期。
 
-H1/H2 仍是存储接口，未接入 HTTP/现有 `route_review` 自动建单；旧 S5 自由文本 reason 不在本轮重写，未来可信适配必须保持 Decision 指纹一致。H3 case.resolve、H4 通知发送继续后置；只有既有合法 Expense 审批才能改变 Claim 批准结果，关工单不等于批准报销。保持 S4–S5 的 Claim/审批 SQL 事实来源，交付线、Go 后端、UI 和 `react_loop` 继续冻结。S8 的 held-out/golden、真实业务接入和生产 SLA 仍只作为后续验收边界，不从本轮契约测试推断。
+H3 的本轮存储切片已完成：`resolve_case` 绑定既有 approval_id、Claim/version/hash 和 case 版本，经现有 `resolve_review` 与权限闸门，在同一 SQL 事务保存审批、Claim 终态与 case 审计。无审批只能 complete 人工作业、不改 Claim；旧版本、重复 resolve、过期/拒绝/已消费/错绑凭据失败关闭。`start_case`、`request_applicant`、`resume_case` 明确开始、等待及申请人显式补料恢复；恢复仅回 queued，需重新认领，不重跑业务或重算 SLA。验证发现并修复直接 S5 与 H3 并发时的 SQLite 延迟事务缺口；PostgreSQL 统一 Claim→case→review 锁顺序。当前证据见 [H3 验证记录](evidence/h3-case-resolution.md)，不改写 H1/H2 历史结果。
+
+S6 仍为 in_progress。所有 case 能力仍是存储接口，未接 HTTP/现有 `route_review` 自动建单；旧 S5 自由文本 reason 不在本轮重写，未来可信适配必须保持 Decision 指纹一致。H4 通知发送继续后置；只有既有合法 Expense 审批才能改变 Claim 批准结果，关工单不等于批准报销。保持 S4–S5 的 Claim/审批 SQL 事实来源，交付线、Go 后端、UI 和 `react_loop` 继续冻结。S8 的 held-out/golden、真实业务接入和生产 SLA 仍只作为后续验收边界，不从本轮契约测试推断。

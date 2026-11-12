@@ -38,7 +38,7 @@ def current_request_id() -> str:
     return _REQUEST_ID.get()
 
 
-def _async_approval_block(tool_name: str, tool_args: dict, decision) -> Optional[str]:
+def _async_approval_block(tool_name: str, tool_args: dict, decision, *, require_bound_approval=False) -> Optional[str]:
     """异步审批分支：放行有凭据的调用，否则阻塞并登记待批项。"""
     import json as _json
 
@@ -47,13 +47,17 @@ def _async_approval_block(tool_name: str, tool_args: dict, decision) -> Optional
 
     tool_key = f"tool:{tool_name}"
     # 1) 已批准的会话级授权
-    if approvals.session_grant_for(tool_key):
+    if not require_bound_approval and approvals.session_grant_for(tool_key):
         return None
 
     # 2) 本次请求携带的审批凭据
     approval_id = _pending_credential()
     if approval_id:
-        allowed, reason = approvals.consume(approval_id)
+        # Bound credentials stay bound even if presented through a legacy caller.
+        record = approvals.get(approval_id)
+        bound = require_bound_approval or bool(record and record.get("bind_arguments"))
+        allowed, reason = approvals.consume(approval_id, tool=tool_name, arguments=tool_args,
+            require_once=True) if bound else approvals.consume(approval_id)
         if allowed:
             return None
         # 凭据无效：继续走阻塞路径，把原因一并暴露，便于排查
@@ -69,6 +73,7 @@ def _async_approval_block(tool_name: str, tool_args: dict, decision) -> Optional
             reason=decision.reason,
             tool_key=tool_key,
             request_id=current_request_id(),
+            bind_arguments=require_bound_approval,
         )
     except approvals.ApprovalStoreError as exc:
         # 存不下待批项 → 无人能把关 → 拒绝（失败关闭，绝不退化为放行）
@@ -148,7 +153,8 @@ def get_hitl():
     return _HITL
 
 
-def permission_block_message(tool_name: str, tool_args: Optional[dict] = None) -> Optional[str]:
+def permission_block_message(tool_name: str, tool_args: Optional[dict] = None, *,
+                             require_bound_approval: bool = False) -> Optional[str]:
     """若应拦截则返回 error JSON 字符串；放行返回 None。"""
     if not _gate_enabled():
         return None
@@ -199,7 +205,8 @@ def permission_block_message(tool_name: str, tool_args: Optional[dict] = None) -
     # 异步审批（HTTP 场景）：审批建模为状态而非消息，故不需要双向通道。
     # 默认 async：副作用 CONFIRM 真正有人把关。
     if approval_mode() == "async":
-        return _async_approval_block(tool_name, tool_args or {}, decision)
+        return _async_approval_block(tool_name, tool_args or {}, decision,
+            require_bound_approval=require_bound_approval)
 
     # 显式 auto_allow：副作用 CONFIRM 放行；STRICT / SANDBOX_REQUIRED 则拒绝
     strict = (

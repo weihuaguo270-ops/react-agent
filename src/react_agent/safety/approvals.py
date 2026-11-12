@@ -81,6 +81,7 @@ def create_pending(
     tool_key: str = "",
     request_id: str = "",
     ttl_seconds: float = 900.0,
+    bind_arguments: bool = False,
 ) -> dict[str, Any]:
     """登记一个待批项并返回其记录。
 
@@ -93,6 +94,7 @@ def create_pending(
         "tool": tool,
         "tool_key": tool_key or f"tool:{tool}",
         "arguments": arguments,
+        "bind_arguments": bind_arguments,
         "description": description[:400],
         "reason": reason[:400],
         "request_id": request_id,
@@ -175,7 +177,8 @@ def resolve(
     return True, record
 
 
-def consume(approval_id: str) -> tuple[bool, str]:
+def consume(approval_id: str, *, tool: str | None = None,
+            arguments: dict[str, Any] | None = None, require_once: bool = False) -> tuple[bool, str]:
     """尝试用掉一个批准记录。返回 ``(allowed, reason)``。
 
     - 找不到 / 未批准 / 已过期 → 拒绝
@@ -194,10 +197,17 @@ def consume(approval_id: str) -> tuple[bool, str]:
     if status != _STATUS_APPROVED:
         return False, f"approval_{status or 'unknown'}"
     scope = record.get("scope") or "once"
+    bound = require_once or record.get("bind_arguments", False)
+    if bound and scope != "once":
+        return False, "approval_scope_mismatch"
+    if (bound or tool is not None) and (record.get("tool") != tool or record.get("arguments") != arguments):
+        return False, "approval_binding_mismatch"
     if scope == "session":
         if time.time() > float(record.get("grant_expires_at") or 0):
             return False, "approval_expired"
         return True, "session_grant"
+    if time.time() >= float(record.get("expires_at") or 0):
+        return False, "approval_expired"
     # once：标记已用，防止同一 approval_id 被反复消费
     record["consumed_at"] = time.time()
     record["status"] = "consumed"
@@ -217,6 +227,9 @@ def session_grant_for(tool_key: str) -> bool:
         except (OSError, json.JSONDecodeError):
             continue
         if record.get("tool_key") != tool_key:
+            continue
+        if record.get("bind_arguments"):
+            # A request-bound grant must never become a tool-wide legacy grant.
             continue
         if record.get("status") != _STATUS_APPROVED:
             continue
