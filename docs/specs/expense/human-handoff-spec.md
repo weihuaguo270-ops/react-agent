@@ -6,7 +6,7 @@
 
 本文是下一阶段的实现与验收规格，不代表当前项目已经具备内置工单、自动分派、通知或 SLA 管理能力。当前已有的 `approval_id`、待审批记录和人工决议接口仍是轻量审批基础设施；本规格在其上增加工单和运营闭环。
 
-H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配置为 `fixtures/expense/handoff_routing_v1.json`。本轮只提供无副作用的路由计划与静态状态校验，不接入 `route_review`、SQL、HTTP 或真实队列。执行进度统一见 [`roadmap-spec.md`](roadmap-spec.md)，本轮证据见 [`evidence/h0-contract-freeze.md`](evidence/h0-contract-freeze.md)；H0 测试通过不代表 S6 全部完成。
+H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配置为 `fixtures/expense/handoff_routing_v1.json`。H1 增加 `case_store.py` 存储适配器，复用 Claim 数据库与已有审批记录；尚未接入 `route_review`、HTTP 或真实处理队列。执行进度统一见 [`roadmap-spec.md`](roadmap-spec.md)；[H0 契约证据](evidence/h0-contract-freeze.md)与 [H1 存储验收证据](evidence/h1-case-storage.md)分开保存，局部验收不代表 S6 全部完成。
 
 相关规格：
 
@@ -19,14 +19,16 @@ H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配�
 
 当前项目可以：
 
-- 在 `CONFIRM` 操作上创建待审批记录；
-- 返回 `approval_id` 和 `awaiting_approval`；
-- 通过审批接口批准、拒绝或授予一次/会话范围；
-- 使用审批凭据重试原请求，并记录过期、拒绝和重复使用失败。
+- 通过 S4–S5 的同一 SQL store 保存 Claim/version/Decision、待审记录和人工决议；
+- 由正式 Expense `route_review` / `resolve_review` 校验版本和指纹，保留审批与审计；
+- 使用 H0 纯契约规划受控 reason、队列和路由/SLA 快照；
+- 通过 H1 存储适配器创建独立 case ID、查询、追加证据事件并保存 pending outbox；SQLite/PostgreSQL 合同及实际数据库重启恢复已验证。
+
+通用 `/v1/approvals` 继续只是 CONFIRM 凭据兼容口，不替代正式 Expense 审批。H1 不写 Claim 或审批，不提供新的批准入口。
 
 当前项目尚不能：
 
-- 为人工接管创建独立工单 ID；
+- 在现有 HTTP/Agent 主路径自动创建人工接管工单；
 - 根据业务类型、组织或权限自动分派责任队列；
 - 支持认领、转派、暂停、回退和队列负载查询；
 - 发送站内、邮件或消息通知；
@@ -405,6 +407,19 @@ H0 只冻结完整错误词表，并使用契约校验相关错误；`notificati
 - 创建 case 时 `approval_id` 可以为空；case 需要改变 claim 批准结果时，必须绑定表单 SPEC 的合法 `approval_id`，不复制审批凭据逻辑。
 
 退出标准：重启恢复、重复创建复用同一 case、事件不可篡改、越权查询失败。
+
+#### H1 存储接口与验收边界
+
+`ExpenseCaseStore(ExpenseClaimStore(...))` 复用正式 Claim 的 SQLAlchemy engine、metadata 和数据库 URL，不维护另一套审批库。持久化表为 `expense_cases`、`expense_case_events`、`expense_case_outbox`；queue definition 作为建单时的不可变配置快照存入 case，暂不建立可变队列目录。
+
+- `create` 只读取已保存且通过 `Decision` 校验的 Claim/version/hash/handoff，受控路由由服务端提供；不接受自由指定的 reason、队列、处理人或客户端 Decision。申请人限本人，受信财务管理员可建单。
+- PostgreSQL 事务与 Claim 行锁、`(claim_id, claim_version, reason_code)` 唯一约束保证建单去重，case、首事件和 outbox 同时提交或回滚。活动工单重放返回同一 case，保留创建时路由/SLA；hash/approval 绑定冲突拒绝，终态不重开。SQLite 仅用于契约测试，写操作使用 `BEGIN IMMEDIATE`。
+- `get` / `list_cases` / `events` 按申请人归属或受信处理角色与队列成员关系控制读取；不存在与无权限统一 `case_not_found`。`CaseActor` 是可信调用方提供的身份上下文，不是身份认证，不允许直接信任客户端角色或队列 header。财务管理员的审计访问不授予批准权。
+- `append_event` 仅追加 `evidence_recorded` 和不透明凭证引用，不接受任意状态事件或完整凭证正文；调用方负责引用脱敏。case 行锁、事件键和序号唯一约束保证并发追加有序、重放不重复。事件的数据库 trigger 拒绝 UPDATE/DELETE，PostgreSQL 也拒绝 TRUNCATE；不声称能防止数据库管理员删除 schema 或禁用触发器。
+- `approval_id` 可以为空；非空时必须指向已有且 Claim/version/hash 一致的 Expense 审批。H1 不绑定或执行新的审批、不修改 Claim；H3 改批准结果时仍必须经过既有 `resolve_review` 与权限闸门。
+- `outbox` 仅供有权处理者读取 pending 意图，不发送、不标记已送达、不做重试 Worker。无路由时保存运营通知意图，case 仍为 `unrouted`，不默认分派。
+
+当前 S5 的兼容自由文本 handoff reason 不在本轮改写。H1 对它们失败关闭；可信决策适配、HTTP 和自动建单尚未接入，不把合成结构化 Decision 的存储测试描述为完整业务链路。H2 认领/SLA、H3 case.resolve、H4 通知与界面继续后置。
 
 ### H2：分派、认领与升级
 
