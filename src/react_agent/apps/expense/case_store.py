@@ -1,6 +1,6 @@
-"""H1 SQL case/event/outbox storage sharing the formal Claim database.
+"""SQL case/event/outbox storage sharing the formal Claim database.
 
-No assignment, case resolution, notification delivery or Claim writes live here.
+H2 adds processing locks and SLA operations, never resolution or Claim writes.
 Actors and queue memberships must be supplied by a trusted caller, never headers.
 """
 from __future__ import annotations
@@ -11,7 +11,7 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from sqlalchemy import (
     CheckConstraint, Column, DDL, DateTime, ForeignKey, ForeignKeyConstraint,
@@ -21,6 +21,8 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from .domain import ContractError, Decision
+from .case_operations import CaseOperations
+from .sla import utc
 from .handoff import (
     CaseStatus, HandoffError, QueueId, ReasonCode, Role, RoutingConfig, TERMINAL_STATUSES,
     plan_handoff,
@@ -55,10 +57,15 @@ def _token(value: str, name: str, *, limit: int = 200) -> str:
     return value
 
 
-class ExpenseCaseStore:
+class ExpenseCaseStore(CaseOperations):
     """Use the Claim store's engine, tables and transaction boundary; SQLite is for tests."""
 
-    def __init__(self, claims: ExpenseClaimStore):
+    def __init__(self, claims: ExpenseClaimStore, *, clock: Callable[[], datetime] | None = None,
+                 claim_lock_seconds: int = 900):
+        if type(claim_lock_seconds) is not int or not 1 <= claim_lock_seconds <= 86400:
+            raise ExpenseStoreError("invalid_handoff", "claim lock must be between 1 and 86400 seconds", status_code=400)
+        self._clock = clock or (lambda: datetime.now(timezone.utc))
+        self._claim_lock_seconds = claim_lock_seconds
         self._claims_store = claims
         self._engine = claims._engine
         metadata = claims._metadata
@@ -67,6 +74,7 @@ class ExpenseCaseStore:
             self._cases = metadata.tables["expense_cases"]
             self._events = metadata.tables["expense_case_events"]
             self._outbox = metadata.tables["expense_case_outbox"]
+            self._init_operations(metadata)
             metadata.create_all(self._engine, checkfirst=True)
             return
         self._cases = Table(
@@ -127,7 +135,11 @@ class ExpenseCaseStore:
             CheckConstraint("status = 'pending'"),  # H4 must explicitly extend the delivery lifecycle.
         )
         self._install_append_only_ddl()
+        self._init_operations(metadata)
         metadata.create_all(self._engine, checkfirst=True)
+
+    def _now(self):
+        return utc(self._clock())
 
     def _install_append_only_ddl(self):
         # Database enforcement, not merely the absence of Python update/delete methods.
@@ -185,8 +197,7 @@ class ExpenseCaseStore:
             if claim["applicant_id"] == actor.actor_id and not processing:
                 return
         else:
-            snapshot = json.loads(row["snapshot_json"])
-            queue = snapshot.get("queue_definition")
+            queue = json.loads(self._work_state(connection, row)["queue_json"])
             if queue and row["queue_id"] in actor.queue_ids and actor.role in queue["allowed_roles"]:
                 return
             if (row["status"] == "unrouted" and actor.role == Role.EXPENSE_OPERATOR
@@ -194,10 +205,19 @@ class ExpenseCaseStore:
                 return
         raise self._not_found()
 
-    @staticmethod
-    def _case_result(row, *, replay=False):
+    def _case_result(self, connection, row, *, replay=False):
         snapshot = json.loads(row["snapshot_json"])
+        state = self._work_state(connection, row)
+        dates = {key: _timestamp(state[key]) if state[key] else None for key in
+                 ("lock_expires_at", "responded_at", "response_due_at", "resolution_due_at")}
         return {**snapshot, "case_id": row["case_id"], "status": row["status"],
+                "initial_queue_id": snapshot["queue_id"],
+                "initial_routing_rule_version": snapshot["routing_rule_version"],
+                "queue_id": row["queue_id"], "priority": row["priority"],
+                "queue_definition": json.loads(state["queue_json"]), "sla": json.loads(state["sla_json"]),
+                "routing_rule_version": state["routing_rule_version"], "error_code": state["routing_error"],
+                **{key: state[key] for key in ("case_version", "assignee_id", "response_breached",
+                    "resolution_breached", "escalation_level")}, **dates,
                 "approval_id": row["approval_id"], "created_at": _timestamp(row["created_at"]),
                 "source_request_id": row["source_request_id"], "idempotent_replay": replay}
 
@@ -243,7 +263,7 @@ class ExpenseCaseStore:
                 self._cases.c.reason_code == reason,
             )).mappings().first()
             if existing is not None:
-                return self._reuse(existing, decision_hash, approval_id)
+                return self._reuse(connection, existing, decision_hash, approval_id)
             try:
                 plan = plan_handoff(decision, routing)
             except HandoffError as exc:
@@ -254,7 +274,7 @@ class ExpenseCaseStore:
             snapshot.pop("case_id")
             snapshot["idempotency_key"] = plan.idempotency_key
             snapshot["queue_definition"] = next((asdict(q) for q in routing.queues if q.queue_id == plan.queue_id), None)
-            now = datetime.now(timezone.utc)
+            now = self._now()
             case_id = "case_" + uuid.uuid4().hex
             insert = pg_insert if self._engine.dialect.name == "postgresql" else sqlite_insert
             inserted = connection.execute(insert(self._cases).values(
@@ -268,8 +288,9 @@ class ExpenseCaseStore:
                     self._cases.c.claim_id == claim_id, self._cases.c.claim_version == claim_version,
                     self._cases.c.reason_code == plan.reason_code,
                 )).mappings().one()
-                return self._reuse(winner, decision_hash, approval_id)
+                return self._reuse(connection, winner, decision_hash, approval_id)
             row = connection.execute(select(self._cases).where(self._cases.c.case_id == case_id)).mappings().one()
+            self._work_state(connection, row, ensure=True)
             event_id = self._append(connection, row, event_key="case_created", event_type="case_created",
                 actor=actor, request_id=request_id, metadata={"decision_hash": decision_hash,
                     "approval_id": approval_id, "routing_rule_version": plan.routing_rule_version}, created=True)
@@ -279,20 +300,20 @@ class ExpenseCaseStore:
                 target_queue=plan.queue_id or QueueId.EXPENSE_OPERATIONS, status="pending",
                 payload_json=_json({"case_id": case_id, "event_id": event_id}), created_at=now,
             ))
-            return self._case_result(row)
+            return self._case_result(connection, row)
 
-    def _reuse(self, row, decision_hash, approval_id):
+    def _reuse(self, connection, row, decision_hash, approval_id):
         if row["decision_hash"] != decision_hash or row["approval_id"] != approval_id:
             raise ExpenseStoreError("idempotency_conflict", "trigger has a different Decision/approval binding")
         if row["status"] in TERMINAL_STATUSES:
             raise ExpenseStoreError("case_already_exists", "terminal case cannot be reopened")
-        return self._case_result(row, replay=True)
+        return self._case_result(connection, row, replay=True)
 
     def get(self, case_id: str, *, actor: CaseActor) -> dict[str, Any]:
         with self._engine.connect() as connection:
             row = connection.execute(select(self._cases).where(self._cases.c.case_id == case_id)).mappings().first()
             self._authorize(connection, row, actor)
-            return self._case_result(row)
+            return self._case_result(connection, row)
 
     def list_cases(self, *, actor: CaseActor) -> list[dict[str, Any]]:
         with self._engine.connect() as connection:
@@ -312,10 +333,11 @@ class ExpenseCaseStore:
                     self._authorize(connection, row, actor)
                 except ExpenseStoreError:
                     continue
-                results.append(self._case_result(row))
+                results.append(self._case_result(connection, row))
             return results
 
-    def _append(self, connection, row, *, event_key, event_type, actor, request_id, metadata, created=False):
+    def _append(self, connection, row, *, event_key, event_type, actor, request_id, metadata,
+                created=False, from_status=None):
         sequence = connection.execute(select(func.coalesce(func.max(self._events.c.sequence), 0)).where(
             self._events.c.case_id == row["case_id"])).scalar_one() + 1
         event_id = "cev_" + uuid.uuid4().hex
@@ -323,10 +345,10 @@ class ExpenseCaseStore:
             event_id=event_id, case_id=row["case_id"], sequence=sequence, event_key=event_key,
             fingerprint=_fingerprint({"event_type": event_type, "actor_id": actor.actor_id,
                 "actor_type": actor.role, "metadata": metadata}),
-            event_type=event_type, from_status=None if created else row["status"], to_status=row["status"],
+            event_type=event_type, from_status=None if created else (from_status or row["status"]), to_status=row["status"],
             actor_type=actor.role, actor_id=actor.actor_id, queue_id=row["queue_id"],
             claim_version=row["claim_version"], request_id=request_id, metadata_json=_json(metadata),
-            created_at=datetime.now(timezone.utc),
+            created_at=self._now(),
         ))
         return event_id
 
