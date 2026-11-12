@@ -23,7 +23,8 @@ H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配�
 - 由正式 Expense `route_review` / `resolve_review` 校验版本和指纹，保留审批与审计；
 - 使用 H0 纯契约规划受控 reason、队列和路由/SLA 快照；
 - 通过 H1 存储适配器创建独立 case ID、查询、追加证据事件并保存 pending outbox；H1 SQLite/PostgreSQL 合同及实际数据库重启恢复已验证；
-- 通过 H2 存储方法自认领、释放、转派、升级、计算冻结截止时间和按页扫描；H2 的当前验证与阻塞单独记录，不沿用 H1 的 PostgreSQL 通过结论。
+- 通过 H2 存储方法自认领、释放、转派、升级、计算冻结截止时间和按页扫描；H2 的验证单独记录，不沿用 H1 的 PostgreSQL 通过结论；
+- H3 在同一事务中经既有 `resolve_review` 回写 Claim，并提供显式等待补料/恢复存储方法，当前验收见 H3 独立证据。
 
 通用 `/v1/approvals` 继续只是 CONFIRM 凭据兼容口，不替代正式 Expense 审批。H1 不写 Claim 或审批，不提供新的批准入口。
 
@@ -34,7 +35,7 @@ H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配�
 - 在 HTTP/Agent 路径执行认领/转派，或提供暂停、回退和队列负载查询；
 - 发送站内、邮件或消息通知；
 - 提供定时 SLA 调度器、真实超时通知或生产 SLA 保障；
-- 把人工处理结果安全地绑定回 Expense claim 版本。
+- 在 HTTP/Agent 主路径自动接通工单处理与 Expense claim 审批。
 
 ## 3. 目标与非目标
 
@@ -423,7 +424,7 @@ H0 只冻结完整错误词表，并使用契约校验相关错误；`notificati
 - `approval_id` 可以为空；非空时必须指向已有且 Claim/version/hash 一致的 Expense 审批。H1 不绑定或执行新的审批、不修改 Claim；H3 改批准结果时仍必须经过既有 `resolve_review` 与权限闸门。
 - `outbox` 仅供有权处理者读取 pending 意图，不发送、不标记已送达、不做重试 Worker。无路由时保存运营通知意图，case 仍为 `unrouted`，不默认分派。
 
-当前 S5 的兼容自由文本 handoff reason 不在本轮改写。H1 对它们失败关闭；可信决策适配、HTTP 和自动建单尚未接入，不把合成结构化 Decision 的存储测试描述为完整业务链路。H2 的存储操作边界见下文；H3 case.resolve、H4 通知与界面继续后置。
+当前 S5 的兼容自由文本 handoff reason 不在本轮改写。H1 对它们失败关闭；可信决策适配、HTTP 和自动建单尚未接入，不把合成结构化 Decision 的存储测试描述为完整业务链路。H2 的存储操作边界见下文；H3 的独立存储方法见下文；HTTP/自动建单、H4 通知与界面继续后置。
 
 ### H2：分派、认领与升级
 
@@ -447,7 +448,7 @@ H0 只冻结完整错误词表，并使用契约校验相关错误；`notificati
 - `scan_sla` 仅供受信财务管理员维护调用；每页 1–1000 项、按 case ID 游标翻页、每 case 独立事务。响应超时仅记录一次 `sla_response_breached` 与 pending 提醒；认领晚于响应截止仍记违约。解决超时仅触发一次受控队列升级及 `sla_resolution_breached`；同时超时各有一个违约事件、仅一次队列升级。持久标记和事件同事务，重复/并发扫描均不重复升级或通知意图。
 - 扫描遇到 Claim 版本漂移返回冲突，不写旧 case；终态跳过。`needs_applicant` 的恢复由 H3 定义，本轮扫描报告 `invalid_case_transition`，不自动恢复业务处理。§9.2“连续两次无人认领”的轮次/重置时钟尚未冻结，本切片不另加循环计时器，也不以两次处理锁到期代替该规则。
 
-H2 是可部署原型的存储能力，不代表自动建单、定时调度、通知送达或生产 SLA。H3 的 `case.resolve`、H4 通知发送、S7 UI、交付线和 Go 重写均未接入。
+H2 是可部署原型的存储能力，不代表自动建单、定时调度、通知送达或生产 SLA。H3 的独立存储方法见下文；HTTP/自动建单、H4 通知发送、S7 UI、交付线和 Go 重写均未接入。
 
 ### H3：处理结果与审批衔接
 
@@ -457,6 +458,29 @@ H2 是可部署原型的存储能力，不代表自动建单、定时调度、�
 - 仅复用 `/v1/approvals` 的过期、拒绝和一次性凭据语义；Expense 最终审批记录仍由表单 SPEC 的审批入口产生。
 
 退出标准：无合法审批不能进入批准终态；版本替换、重复 resolve 和过期审批全部失败关闭。
+
+#### H3 存储契约与审批边界
+
+本切片提供 `start_case`、`request_applicant`、`resume_case`、`resolve_case`，仅由可信应用调用，不接 HTTP 或 `route_review` 自动建单。`CaseActor` 仍只是可信身份上下文，不提供生产认证或多租户身份系统。
+
+- 处理人先自认领，再以 `start_case` 从 assigned 进入 in_progress。开始、等待、结案均要求队列成员与处理角色、本人有效处理锁和 `expected_case_version`；过期锁拒绝操作，由既有释放/扫描路径解锁，不在失败请求中写状态。
+- `resolve_case` 必传 `approval_id`（可为 null）、`claim_version`、`decision_hash`、`expected_case_version`、`request_id`、`idempotency_key`、非空 `reason` 及 `decision`。`decision` 仅为 `approve/reject/complete`，不是任意 case 状态或 Claim 状态。
+- approve/reject 仅供当前队列的 finance_reviewer/finance_admin 处理人。审批 ID 必须是既有 pending Expense review，匹配 case 与当前 Claim/version/持久化 Decision hash；创建时未绑定的 case 可在结案时绑定已有合法审批，已绑定的 case 不可替换绑定。不会自动创建新审批。`expense_operator` 可完成人工作业，不能批准/拒绝 Claim。
+- 批准/拒绝调用现有 `resolve_review` 权限入口，通过连接适配器复用 S5 的原审批写入逻辑。PostgreSQL 统一 Claim→case→review 锁顺序，Claim、原审批决议、Claim 审计、case 绑定/版本/结案审计和动作记录同一事务提交；任一 SQL 写入失败全部回滚，不维护第二套批准记录。
+- async 权限模式下，H3 要求一次性 CONFIRM 凭据精确绑定 tool、case ID/版本、Claim/version/hash、审批 ID、决议、处理人及意见；不使用工具级 session grant。过期、deny、已消费、绑定不匹配或 session 凭据均拒绝。一次性凭据消费补上批准后的 expires_at 检查。既有 HITL、显式开发 auto_allow/关闭闸门仍遵循原配置，不能将其测试描述为人工授权证据。
+- CONFIRM 文件凭据与 SQL 不是分布式事务：SQL 失败仍保留凭据已消费，业务记录全部回滚，重试需重新人工批准新的凭据；绝不恢复一次性凭据。Expense approval_id 与 CONFIRM credential ID 是两个不同标识。
+- `complete` 只完成人工作业，经 `case.resolve` 权限闸门后进入 case resolved，保留现有可空审批绑定，不修改 Claim 或 Expense 审批。approve/reject 成功后 case 也为 resolved，分别由原审批把 Claim 写成 approved/rejected；case resolved 不代表付款。
+- 所有 resolve 重复调用均失败关闭，包括相同幂等键；不会复用 S5 的成功结果重复关单。终态不可再次 resolve；旧 case 版本、Claim 版本替换或 Decision 指纹变化无业务写入。审计包含原/现审批绑定、Claim 前后状态、实际决议、操作者和 case 版本。
+
+#### needs_applicant 的显式恢复
+
+`request_applicant` 只允许 in_progress→needs_applicant，必须记录原因并清除处理锁；业务处理暂停。等待期间截止时间和违约标记保持原快照，不暂停/重算 SLA。
+
+只有原申请人可通过 `resume_case` 提交不透明 `evidence_ref` 与原因，绑定原 Claim/version/hash 和当前 case 版本，显式 needs_applicant→queued；这是补充核验材料引用，不改变 Claim 核心字段或附件。核心内容变化仍需新 Claim 版本并重新路由，旧 case 拒绝恢复。重复相同补料动作返回原结果，不追加事件。目标队列缺失/不可用则同一事务进入 unrouted 并保留运营 pending 意图。
+
+恢复只重新排队，之后必须重新认领、开始处理和显式结案；不运行决策 Workflow、不修改 Claim 业务状态、不自动审批。转派、认领、扫描、关单均不能把 needs_applicant 隐式恢复；扫描继续报告 invalid_case_transition，不写等待工单。已过期的 SLA 在显式恢复后才由下一次显式扫描按原有规则处理。
+
+当前验收与限制见 [H3 验证记录](evidence/h3-case-resolution.md)。S6 仍为 in_progress，H4、HTTP/自动建单和界面未接入，不宣称生产 SLA。
 
 ### H4：通知与运营视图
 

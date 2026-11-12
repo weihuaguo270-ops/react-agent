@@ -1,8 +1,7 @@
 """Expense review routing and human resolution for the deployable prototype.
 
-The store is intentionally process-local until the PostgreSQL Expense store is
-introduced.  The API and invariants are domain-owned here so the later store
-can replace persistence without changing the approval contract.
+The formal path delegates to the SQL Expense store. The process-local adapter
+remains for legacy/eval callers; both share the permission-gated entrypoint.
 """
 from __future__ import annotations
 
@@ -173,9 +172,15 @@ def resolve_review(
     idempotency_key: str = "",
     comment: str = "",
     store: Any | None = None,
+    case_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Apply an authenticated human decision to a pending Expense review."""
-    blocked = permission_block_message("resolve_review", {"approval_id": approval_id, "claim_id": claim_id, "decision": str(decision)})
+    permission_args: dict[str, Any] = {"approval_id": approval_id, "claim_id": claim_id, "decision": str(decision)}
+    if case_context is not None:
+        permission_args = {**case_context, **permission_args, "claim_version": expected_version,
+            "decision_hash": decision_hash, "approver_id": approver_id, "comment": comment}
+    blocked = permission_block_message("resolve_review", permission_args,
+        require_bound_approval=True) if case_context is not None else permission_block_message("resolve_review", permission_args)
     if blocked:
         raise ReviewError("permission_denied", blocked, status_code=403)
     if not approver_id.strip():

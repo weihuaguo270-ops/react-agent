@@ -97,7 +97,8 @@ class CaseOperations:
         return reason.strip()
 
     def _change(self, connection, row, state, *, actor, request_id, event_type, reason,
-                status=None, queue=None, routing_version=None, state_changes=None, notify=False, event_key=None):
+                status=None, queue=None, routing_version=None, state_changes=None, notify=False, event_key=None,
+                metadata=None):
         before_status, before_queue, before_assignee = row["status"], row["queue_id"], state["assignee_id"]
         before_lock, before_routing = state["lock_expires_at"], state["routing_rule_version"]
         status = status or before_status
@@ -130,7 +131,7 @@ class CaseOperations:
                 "previous_routing_rule_version": before_routing,
                 "previous_case_version": state["case_version"] - 1, "case_version": state["case_version"],
                 "routing_rule_version": state["routing_rule_version"], "error_code": state["routing_error"],
-                "escalation_level": state["escalation_level"]})
+                "escalation_level": state["escalation_level"], **(metadata or {})})
         if notify:
             connection.execute(self._outbox.insert().values(outbox_id="out_" + uuid.uuid4().hex,
                 case_id=row["case_id"], event_id=event_id, notification_type=event_type,
@@ -225,6 +226,8 @@ class CaseOperations:
                 raise ExpenseStoreError("claim_version_mismatch", "Claim version changed")
             if row["status"] in TERMINAL_STATUSES:
                 raise ExpenseStoreError("invalid_case_transition", "terminal case cannot be changed")
+            if row["status"] == "needs_applicant":
+                raise ExpenseStoreError("invalid_case_transition", "waiting case requires explicit applicant resume")
             if live_lock and state["assignee_id"] != actor.actor_id:
                 raise ExpenseStoreError("case_already_claimed", "only the current processor may change this lock")
             if operation == "release" and state["assignee_id"] != actor.actor_id:
