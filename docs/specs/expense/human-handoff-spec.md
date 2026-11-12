@@ -4,9 +4,9 @@
 
 本文定义 `expense` 在表单与审批 Workflow 之后的人工接管扩展：当 Agent 或规则 Workflow 无法安全完成决策时，系统创建可追踪的人工工单，分派到有责任边界的队列，由人工认领、处理、升级并回写业务状态。
 
-本文是下一阶段的实现与验收规格，不代表当前项目已经具备内置工单、自动分派、通知或 SLA 管理能力。当前已有的 `approval_id`、待审批记录和人工决议接口仍是轻量审批基础设施；本规格在其上增加工单和运营闭环。
+本文包含已实现的存储切片与后续验收规格，不代表当前项目已经接通自动建单、真实运营队列、通知或生产 SLA。当前已有的 `approval_id`、待审批记录和人工决议接口仍是轻量审批基础设施；本规格在其上增加工单和运营闭环。
 
-H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配置为 `fixtures/expense/handoff_routing_v1.json`。H1 增加 `case_store.py` 存储适配器，复用 Claim 数据库与已有审批记录；尚未接入 `route_review`、HTTP 或真实处理队列。执行进度统一见 [`roadmap-spec.md`](roadmap-spec.md)；[H0 契约证据](evidence/h0-contract-freeze.md)与 [H1 存储验收证据](evidence/h1-case-storage.md)分开保存，局部验收不代表 S6 全部完成。
+H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配置为 `fixtures/expense/handoff_routing_v1.json`。H1 增加 `case_store.py` 存储适配器，复用 Claim 数据库与已有审批记录；H2 在同一 store 增加认领锁、释放、转派、升级及 SLA 扫描，尚未接入 `route_review`、HTTP 或真实处理队列。执行进度统一见 [`roadmap-spec.md`](roadmap-spec.md)；[H0 契约证据](evidence/h0-contract-freeze.md)、[H1 存储验收证据](evidence/h1-case-storage.md)和 [H2 操作验证记录](evidence/h2-case-operations.md)分开保存，局部验收不代表 S6 全部完成。
 
 相关规格：
 
@@ -22,7 +22,8 @@ H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配�
 - 通过 S4–S5 的同一 SQL store 保存 Claim/version/Decision、待审记录和人工决议；
 - 由正式 Expense `route_review` / `resolve_review` 校验版本和指纹，保留审批与审计；
 - 使用 H0 纯契约规划受控 reason、队列和路由/SLA 快照；
-- 通过 H1 存储适配器创建独立 case ID、查询、追加证据事件并保存 pending outbox；SQLite/PostgreSQL 合同及实际数据库重启恢复已验证。
+- 通过 H1 存储适配器创建独立 case ID、查询、追加证据事件并保存 pending outbox；H1 SQLite/PostgreSQL 合同及实际数据库重启恢复已验证；
+- 通过 H2 存储方法自认领、释放、转派、升级、计算冻结截止时间和按页扫描；H2 的当前验证与阻塞单独记录，不沿用 H1 的 PostgreSQL 通过结论。
 
 通用 `/v1/approvals` 继续只是 CONFIRM 凭据兼容口，不替代正式 Expense 审批。H1 不写 Claim 或审批，不提供新的批准入口。
 
@@ -30,9 +31,9 @@ H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配�
 
 - 在现有 HTTP/Agent 主路径自动创建人工接管工单；
 - 根据业务类型、组织或权限自动分派责任队列；
-- 支持认领、转派、暂停、回退和队列负载查询；
+- 在 HTTP/Agent 路径执行认领/转派，或提供暂停、回退和队列负载查询；
 - 发送站内、邮件或消息通知；
-- 计算 SLA、超时提醒和自动升级；
+- 提供定时 SLA 调度器、真实超时通知或生产 SLA 保障；
 - 把人工处理结果安全地绑定回 Expense claim 版本。
 
 ## 3. 目标与非目标
@@ -153,8 +154,11 @@ Expense claim/version
   "priority": "normal",
   "queue_id": "finance_review",
   "assignee_id": null,
+  "case_version": 1,
+  "lock_expires_at": null,
   "created_at": "2026-10-11T10:00:00Z",
-  "due_at": "2026-10-12T10:00:00Z",
+  "response_due_at": "2026-10-11T14:00:00Z",
+  "resolution_due_at": "2026-10-12T10:00:00Z",
   "escalation_level": 0,
   "routing_rule_version": "expense-routing-v1",
   "source_request_id": "req_01J...",
@@ -260,7 +264,7 @@ H0 的 `validate_transition` 只校验上列静态边，未知状态、自转移
   -> 费用类目/风险映射
   -> 申请人组织映射
   -> 队列可用性检查
-  -> priority + due_at 计算
+  -> priority + response_due_at / resolution_due_at 计算
   -> 创建 queued case
 ```
 
@@ -419,7 +423,7 @@ H0 只冻结完整错误词表，并使用契约校验相关错误；`notificati
 - `approval_id` 可以为空；非空时必须指向已有且 Claim/version/hash 一致的 Expense 审批。H1 不绑定或执行新的审批、不修改 Claim；H3 改批准结果时仍必须经过既有 `resolve_review` 与权限闸门。
 - `outbox` 仅供有权处理者读取 pending 意图，不发送、不标记已送达、不做重试 Worker。无路由时保存运营通知意图，case 仍为 `unrouted`，不默认分派。
 
-当前 S5 的兼容自由文本 handoff reason 不在本轮改写。H1 对它们失败关闭；可信决策适配、HTTP 和自动建单尚未接入，不把合成结构化 Decision 的存储测试描述为完整业务链路。H2 认领/SLA、H3 case.resolve、H4 通知与界面继续后置。
+当前 S5 的兼容自由文本 handoff reason 不在本轮改写。H1 对它们失败关闭；可信决策适配、HTTP 和自动建单尚未接入，不把合成结构化 Decision 的存储测试描述为完整业务链路。H2 的存储操作边界见下文；H3 case.resolve、H4 通知与界面继续后置。
 
 ### H2：分派、认领与升级
 
@@ -428,6 +432,22 @@ H0 只冻结完整错误词表，并使用契约校验相关错误；`notificati
 - 加入无路由和队列不可用的失败关闭路径。
 
 退出标准：并发认领只有一个成功；超时只升级不批准；转派有完整审计。
+
+#### H2 存储方法与时间语义
+
+`ExpenseCaseStore` 提供 `claim_case`、`release_case`、`transfer_case`、`escalate_case` 和 `scan_sla`。身份、角色、队列成员关系及 `RoutingConfig` 必须由可信调用方提供；本轮没有 HTTP/Agent 工具入口或客户端身份认证。财务管理员的全局审计读取权限不授予跨队列认领权。任何方法都不写 Claim、审批记录或批准终态。
+
+- 新增 `expense_case_work` 保存可变处理状态，`expense_case_actions` 保存动作幂等结果；H1 三张表和创建快照保留。新表可追加创建，既有 H1 case 的读操作从创建快照计算默认状态，首次变更在事务内初始化；不重写历史事件。
+- 每次写操作传 `expected_case_version`、`request_id`、`idempotency_key`；PostgreSQL 按 Claim→case 顺序加行锁，SQLite 只用于合同测试并以 `BEGIN IMMEDIATE` 串行写入。case 版本、事件、动作幂等结果和可选 pending outbox 原子提交。版本冲突无写入；同一 case/key 的同一身份与请求返回原结果，换 payload 返回 `idempotency_conflict`，换身份隐藏为 `case_not_found`。转派重放仍校验原队列成员权限。
+- `claim_case` 仅从 queued 自认领，处理角色和目标队列成员关系须同时满足，且复核当前受控队列可用性。接口不接收 `assignee_id`；已有其他人的有效锁时优先返回 `case_already_claimed`。默认锁期 900 秒，可由可信构造参数设置为 1–86400 秒。首认领记录 `responded_at`。
+- `release_case` 仅由原认领人执行并提供原因；到期锁也可由扫描或下一次合法操作释放。锁过期只写 `claim_lock_expired`、清除处理人并回 queued，不自动转派、关闭或批准。不存在背景定时器，调用方须显式执行扫描；时钟仅用于可复现测试，实际使用 UTC。
+- 转派必须有非空原因；目标是受控队列 ID 或当前受控 reason 规则的结果。审计记录操作者、原/新队列、原/新处理人、锁期限、case 版本和路由版本。转派清锁并回 queued；升级按当前队列快照的 `escalate_to` 进入 escalated。queued→queued 的跨队列转派、escalated→escalated 的跨队列升级是带审计的路由变化，不开放通用状态自转移；H0 静态校验器保持不变。escalated 须显式回 queued 后才能认领。
+- 无匹配或不可用队列进入 `unrouted`，清锁、保留错误码并追加高优先级运营 pending outbox 意图，不默认指定个人；assigned/in_progress 经合法 escalated 边再进入 unrouted。恢复路由必须显式转派，扫描不静默改写已有路由。
+- 建单时按创建 SLA 快照计算 `response_due_at`、`resolution_due_at`，转派或配置升级不延长截止时间。原来 unrouted 且无 SLA 的 case 在首次成功路由时冻结 SLA，仍以原始 `created_at` 计时；日期溢出以 `sla_policy_unavailable` 回滚。
+- `scan_sla` 仅供受信财务管理员维护调用；每页 1–1000 项、按 case ID 游标翻页、每 case 独立事务。响应超时仅记录一次 `sla_response_breached` 与 pending 提醒；认领晚于响应截止仍记违约。解决超时仅触发一次受控队列升级及 `sla_resolution_breached`；同时超时各有一个违约事件、仅一次队列升级。持久标记和事件同事务，重复/并发扫描均不重复升级或通知意图。
+- 扫描遇到 Claim 版本漂移返回冲突，不写旧 case；终态跳过。`needs_applicant` 的恢复由 H3 定义，本轮扫描报告 `invalid_case_transition`，不自动恢复业务处理。§9.2“连续两次无人认领”的轮次/重置时钟尚未冻结，本切片不另加循环计时器，也不以两次处理锁到期代替该规则。
+
+H2 是可部署原型的存储能力，不代表自动建单、定时调度、通知送达或生产 SLA。H3 的 `case.resolve`、H4 通知发送、S7 UI、交付线和 Go 重写均未接入。
 
 ### H3：处理结果与审批衔接
 
