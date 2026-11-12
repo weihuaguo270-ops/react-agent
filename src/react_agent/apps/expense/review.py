@@ -175,7 +175,7 @@ def resolve_review(
     case_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Apply an authenticated human decision to a pending Expense review."""
-    permission_args = {"approval_id": approval_id, "claim_id": claim_id, "decision": str(decision)}
+    permission_args: dict[str, Any] = {"approval_id": approval_id, "claim_id": claim_id, "decision": str(decision)}
     if case_context is not None:
         permission_args = {**case_context, **permission_args, "claim_version": expected_version,
             "decision_hash": decision_hash, "approver_id": approver_id, "comment": comment}
