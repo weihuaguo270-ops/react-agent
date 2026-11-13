@@ -63,6 +63,20 @@ def test_expense_claim_http_lifecycle(tmp_path, monkeypatch):
             reopened_claim = await client.get(f"/v1/expense/claims/{claim_id}", headers={"X-Actor-Id": "employee-1"})
             events = await client.get(f"/v1/expense/claims/{claim_id}/events", headers={"X-Actor-Id": "employee-1"})
             forbidden = await client.get(f"/v1/expense/claims/{claim_id}", headers={"X-Actor-Id": "employee-2"})
+            for method, suffix, body in (
+                ("GET", "", None), ("GET", "/events", None),
+                ("PATCH", "", {"expected_version": 2, "amount": 130}),
+                ("POST", "/submit", {"expected_version": 2}),
+            ):
+                for target in (claim_id, "missing-claim"):
+                    hidden = await client.request(
+                        method, f"/v1/expense/claims/{target}{suffix}",
+                        headers={"X-Actor-Id": "employee-2", "Idempotency-Key": f"hidden-{target}-{method}"},
+                        json=body,
+                    )
+                    assert hidden.status_code == 404
+                    assert hidden.json()["error"]["code"] == "not_found"
+                    assert hidden.json()["error"]["message"] == "expense claim not found"
             return created, submitted, resolved, reopened_claim, events, forbidden
 
     created, submitted, resolved, reopened_claim, events, forbidden = asyncio.run(go())
@@ -82,3 +96,21 @@ def test_expense_claim_http_lifecycle(tmp_path, monkeypatch):
     ]
     assert submitted.json()["approval_id"]
     assert forbidden.status_code == 404
+
+
+def test_expense_form_shell_does_not_open_claim_apis(monkeypatch):
+    monkeypatch.setenv("REACT_AGENT_AUTH_TOKEN", "form-shell-test-token")
+    from react_agent.server.fastapi_app import create_app
+    from react_agent.server.static_files import expense_form_ui_html
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app(initialize_runtime=False)), base_url="http://127.0.0.1") as client:
+            shell = await client.get("/expense")
+            assert shell.status_code == 200 and shell.content == expense_form_ui_html()
+            assert shell.headers["cache-control"] == "no-store"
+            assert "text/html" in shell.headers["content-type"]
+            for method, path in (("GET", "/v1/expense/claims/hidden"), ("POST", "/v1/expense/claims"), ("GET", "/v1/expense/cases"), ("GET", "/ui"), ("POST", "/expense")):
+                assert (await client.request(method, path)).status_code == 401
+            assert (await client.get("/expense", headers={"Host": "evil.example"})).status_code == 421
+
+    asyncio.run(go())

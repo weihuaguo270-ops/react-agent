@@ -2,11 +2,11 @@
 
 ## 1. 文档状态
 
-本文定义 `expense` 下一阶段的产品与实现任务：把当前“传入结构化 `claim` 并返回规则决策”的 API 能力，扩展为可校验、可保存、可提交、可人工审批和可审计的表单型 Workflow。
+本文定义 `expense` 的表单与审批契约。S4–S6 已接通 Claim SQL 持久化、审批和人工工单；S7 第一刀增加独立申请人表单，后续运营视图仍未完成。执行进度统一见 [路线图](roadmap-spec.md)。
 
-本文是实现与验收规格，不代表已实现能力，也不构成真实财务合规、付款或生产 SLA 承诺。
+本文同时包含已实现切片与后续验收规格，不能将所有条目视为已完成，也不构成真实财务合规、付款或生产 SLA 承诺。
 
-现状基线与规则决策契约见 [`EXPENSE_WORKFLOW_DECISION_SPEC.md`](EXPENSE_WORKFLOW_DECISION_SPEC.md)。人工接管、工单分派、通知和 SLA 另见 [`EXPENSE_HUMAN_HANDOFF_SPEC.md`](EXPENSE_HUMAN_HANDOFF_SPEC.md)。本规格只增加表单任务和审批生命周期，不改变现有决策码的含义。
+现状基线与规则决策契约见 [决策规格](workflow-decision-spec.md)。人工接管、工单分派、通知和 SLA 另见 [人工接管规格](human-handoff-spec.md)。本规格只增加表单任务和审批生命周期，不改变现有决策码的含义。
 
 本规格是 Expense claim 生命周期的权威规格：表单 Workflow 是父流程，`submit` 后调用决策 SPEC 的 `expense_claim_review@1` 子流程，再由本规格的 `route_review` / `resolve_review` 决定是否创建审批或人工工单并改变 claim 状态。决策子流程不得直接把 claim 写成 `approved`、`rejected` 或 `escalated`。
 
@@ -18,18 +18,18 @@
 
 - `POST /v1/chat` 携带 `app=expense` 和结构化 `claim`；
 - `POST /v1/skills/run` 调用 `expense_claim_review`；
-- 确定性规则决策、政策引用和 `refused` 结果。
+- 确定性规则决策、政策引用和 `refused` 结果；
+- Claim ID、草稿创建/编辑/恢复、提交冻结版本，以及 SQL 持久化的决策、审批和审计记录；PostgreSQL 为正式事实来源，SQLite 仅作契约与 UI smoke；
+- 既有 `resolve_review` 在权限闸门、合法审批、版本与 hash 绑定后批准/拒绝/升级；
+- S7 第一刀独立 `/expense` 申请人表单，支持创建、保存草稿、编辑、提交、刷新审批结果与本人的 Claim 事件。
 
 当前不支持：
 
-- 独立表单 UI；
-- 草稿保存和恢复；
-- 独立的报销任务 ID；
-- `submitted / under_review / approved / rejected` 生命周期；
-- 审批人身份、意见和审批历史持久化；
+- 待审列表、case 时间线和审批台界面；
+- 真实邮件/IM、后台常驻调度与生产身份系统；
 - 付款或外部财务系统写入。
 
-因此，结构化 `claim` 目前只是“表单型重试”的输入形式，不应描述为完整表单提交或审批闭环。
+旧聊天结构化 `claim` 继续是只读兼容输入；正式表单调用 Claim API，不复用聊天或评测看板。
 
 ## 3. 目标与非目标
 
@@ -236,6 +236,15 @@ approved / rejected / cancelled
 - 审批操作必须显示单据版本、决策依据和风险提示；
 - UI 不显示“已付款”或“已入账”，除非未来接入真实外部系统并有独立证据。
 
+### 9.3 S7 第一刀的实际入口与恢复语义
+
+- FastAPI `GET /expense` 提供随包发布、无业务数据的静态外壳，供普通浏览器输入 Bearer token 与 `X-Actor-Id`；Host 校验仍生效。只公开此 GET 外壳，Claim/case API 和其他受保护页面继续走既有鉴权；凭据不进入 URL、localStorage 或 sessionStorage。
+- 页面首次保存调用创建草稿，之后保存调用 PATCH，提交携带当前 `expected_version`。所有写入使用 `Idempotency-Key`；有未保存修改时不能提交。审核中、终态、未知状态、请求进行中及版本冲突后禁用核心字段，前端校验不替代后端。
+- 网络中断、超时或响应无法解析时，在当前页保留原 method/path/payload/幂等键并锁住字段，只允许重试原请求。确认写入成功后的事件读取失败仅提示刷新，不重复写入。刷新或关闭页面会丢失未保存输入与内存重试信息，已知 Claim ID 可重新查询；不宣称跨页面持久化客户端待发请求。
+- 过期版本不自动覆盖，刷新前提示未保存修改将被替换。切换身份清空已展示单据与事件；Claim 详情、事件、编辑和提交的越权与不存在均返回 HTTP 404 `not_found`，不暴露差异。
+- 审批结果读取 Claim 当前 status 与持久化 review/resolution，`approve_*` 只展示为决策建议。审批操作由既有受保护接口执行，页面不提供审批人操作；工单关闭与通知回执不参与推算审批结果。
+- 本切片不实现取消 Claim（已有 HTTP 未提供）、待审列表、工单时间线或审批台。完整 S7 继续未完成，验收见 [S7 第一刀](evidence/s7-claim-form.md)。
+
 ## 10. 持久化与安全边界
 
 - Expense 任务、claim 版本、审批记录和审计事件必须持久化；不能只放进进程内 `ExpenseLedger`。正式业务事实来源统一为 PostgreSQL；`ExpenseLedger` 仅用于离线评测或 legacy adapter。
@@ -326,7 +335,7 @@ approved / rejected / cancelled
 
 在 P4 完成前，对外只能描述为：
 
-> Expense 支持结构化 claim 的离线政策决策和人工审批 Workflow 原型；表单 UI、持久化任务和外部付款不属于当前已实现能力，除非对应里程碑和验收证据已完成。
+> 企业内部工作助手的报销场景支持独立申请人表单、保存和提交报销单、刷新审批结果；Claim/版本/决策/审批/审计由 SQL 持久化，人工审批经既有权限闸门与版本/hash 绑定。待审列表、工单时间线、审批台与 S8 验收尚未完成；这仍是可部署工程原型，不提供外部付款或生产 SLA。
 
 任何“自动报销”“已付款”“财务系统已入账”等表述都需要独立的外部系统集成和验收证据。
 
@@ -334,4 +343,5 @@ approved / rejected / cancelled
 
 | 日期 | 说明 |
 |------|------|
+| 2026-11-13 | S7 第一刀独立表单接通；更正已落地的 S4–S6 持久化/审批边界，保留运营视图和 S8 未完成 |
 | 2026-10-11 | S0 契约统一：表单 Workflow 作为父流程；统一 escalated、审批入口、Claim 归一化、幂等键和 PostgreSQL 事实来源 |

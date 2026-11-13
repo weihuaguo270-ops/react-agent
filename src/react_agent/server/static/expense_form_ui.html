@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>报销办理 · 企业内部工作助手</title>
+<style>
+:root{color-scheme:light;--ink:#173332;--muted:#526c68;--line:#d6e2dd;--paper:#fff;--accent:#186457}
+*{box-sizing:border-box}body{margin:0;background:#f2f5f1;color:var(--ink);font:15px/1.6 system-ui,"Microsoft YaHei",sans-serif}
+main{max-width:1140px;margin:auto;padding:32px 24px 64px}header{margin-bottom:26px}h1{font-size:30px;letter-spacing:-.04em;margin:8px 0}h2{font-size:18px;margin:0 0 16px}p{margin:8px 0}.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--accent)}.muted,small{color:var(--muted)}small{display:block}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:18px;min-width:0}.layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.wide{grid-column:1/-1}
+label{display:block;font-size:13px;font-weight:600;min-width:0}input,select,textarea,button{font:inherit}input,select,textarea{display:block;width:100%;min-width:0;margin-top:6px;border:1px solid #aebfb7;border-radius:7px;padding:10px;color:var(--ink);background:#fff}textarea{min-height:82px;resize:vertical}input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #b8d8cb;outline-offset:2px}input:disabled,select:disabled,textarea:disabled{background:#f1f4f2;color:#556862}
+fieldset{border:0;padding:0;margin:0;min-width:0}legend{font-weight:600;margin-bottom:12px}.category{border-top:1px solid var(--line);margin-top:20px;padding-top:18px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}button{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:10px 16px;border-radius:7px;cursor:pointer;font-weight:600}button.secondary{background:#fff;color:var(--accent)}button:disabled{opacity:.45;cursor:not-allowed}.badge{display:inline-block;padding:5px 12px;border-radius:30px;background:#e5efea;font-weight:700}.badge[data-status="approved"]{background:#d8eee2}.badge[data-status="rejected"]{background:#f9dfd9}
+#feedback{padding:12px 16px;border-radius:8px;background:#e7eee8;white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:18px}#feedback[data-error="true"]{background:#fff0e6;color:#853b22}[hidden]{display:none!important}dl{margin:16px 0}dt{font-size:12px;color:var(--muted);margin-top:12px}dd{margin:2px 0;overflow-wrap:anywhere;white-space:pre-wrap}ol{padding-left:24px;margin-bottom:0}li{padding:8px 0;overflow-wrap:anywhere}li small{white-space:pre-wrap}.boundary{border-top:1px solid var(--line);padding-top:16px;font-size:13px}#claim-meta{overflow-wrap:anywhere}details summary{cursor:pointer;font-weight:600}details .fields{margin-top:16px}
+@media(max-width:760px){main{padding:20px 14px 40px}.layout,.fields{grid-template-columns:minmax(0,1fr)}.card{padding:18px}h1{font-size:26px}.actions button{flex:1 1 130px}.wide{grid-column:auto}}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">WORK ASSISTANT / 报销办理</div><h1>从草稿到审批结果</h1><p class="muted">员工填写自己的报销单，保存后提交审核，随时查询状态与操作记录。</p><small>可部署工程原型 · 政策为项目模拟规则 · 不提供付款或财务入账功能</small></header>
+<section class="card" aria-labelledby="identity-title"><details open><summary id="identity-title">连接身份</summary><div class="fields">
+<label>Bearer token<input id="token" type="password" autocomplete="off" placeholder="服务已启用鉴权时填写"></label>
+<label>员工身份（X-Actor-Id）<input id="actor" autocomplete="off" placeholder="例如 employee-1" required></label>
+</div><small>凭据仅保留在当前页面内存，不写入网址或浏览器存储。身份由可信调用边界提供，此原型不构成生产身份系统。</small></details>
+<div class="fields" style="margin-top:16px"><label class="wide">恢复已有单据<input id="lookup" autocomplete="off" placeholder="粘贴 claim_id"></label></div>
+<div class="actions"><button id="load" class="secondary" type="button">打开单据</button><button id="new" class="secondary" type="button">新建报销单</button></div></section>
+<div id="feedback" role="status" aria-live="polite">填写身份和报销信息后，保存草稿。</div>
+<button id="retry" type="button" hidden>重试原请求</button>
+<div class="layout"><section class="card" aria-labelledby="form-title"><h2 id="form-title">报销信息</h2>
+<p id="claim-meta" class="muted">尚未保存 · 无单据编号</p>
+<form id="claim-form"><fieldset id="core"><div class="fields">
+<label>费用类目<select id="category"><option value="meal">餐饮</option><option value="transport">交通</option><option value="lodging">住宿</option><option value="office_purchase">办公采购</option></select></label>
+<label>金额<input id="amount" type="number" min="0" step="0.01" required></label>
+<label>币种<input id="currency" value="USD" pattern="[A-Za-z]{3}" maxlength="3" required></label>
+<label>发生日期<input id="occurred_on" type="date" required></label>
+<label class="wide">商户<input id="merchant"></label>
+<label class="wide">费用说明<textarea id="description" required></textarea></label>
+<label class="wide">业务用途<textarea id="business_purpose" required></textarea></label>
+<label>是否有凭证<select id="has_receipt"><option value="true">有凭证</option><option value="false">无凭证</option></select></label>
+<label>是否已预审批<select id="pre_approved"><option value="false">否</option><option value="true">是</option></select></label>
+<label class="wide">凭证引用（每行一个）<textarea id="receipt_refs" placeholder="受控凭证引用，不上传附件"></textarea></label>
+</div>
+<fieldset class="category" data-category="meal"><legend>餐饮信息</legend><div class="fields">
+<label>餐饮类型<select id="expense_type"><option value="business_meal">商务餐饮</option><option value="client_meal">客户餐饮</option><option value="employee_meal">员工餐饮</option><option value="entertainment">招待</option></select></label>
+<label>参与人（每行一个）<textarea id="participants" required></textarea></label></div></fieldset>
+<fieldset class="category" data-category="transport" hidden disabled><legend>交通信息</legend><div class="fields">
+<label>交通方式<select id="transport_mode"><option value="taxi">出租车</option><option value="train">火车</option><option value="flight">飞机</option><option value="public_transit">公共交通</option></select></label>
+<label>行程范围<select id="route_scope"><option value="intra_city">市内</option><option value="inter_city">跨城</option></select></label>
+<label>座席<select id="seat_class"><option value="standard">标准</option><option value="second_class">二等座</option><option value="economy">经济舱</option><option value="first_class">一等座</option><option value="business">商务舱</option></select></label>
+</div></fieldset>
+<fieldset class="category" data-category="lodging" hidden disabled><legend>住宿信息</legend><div class="fields">
+<label>城市代码<input id="city_code" placeholder="例如 CN-SH" required></label>
+<label>城市档位<select id="city_tier"><option value="market_high">高价市场</option><option value="market_standard">标准市场</option><option value="market_low">低价市场</option><option value="other">其他</option></select></label>
+<label>入住日期<input id="check_in" type="date" required></label><label>离店日期<input id="check_out" type="date" required></label>
+<label>住宿晚数<input id="nights" type="number" min="1" step="1" required></label>
+</div></fieldset>
+<fieldset class="category" data-category="office_purchase" hidden disabled><legend>采购信息</legend><div class="fields">
+<label>采购单号<input id="purchase_order_id" placeholder="例如 PO-123" required></label><label>物品类型<input id="item_type" required></label>
+</div></fieldset>
+</fieldset><small>前端校验用于提示；字段、政策、权限和状态均以后端校验为准。提交前请先保存最新修改。</small>
+<div class="actions"><button id="save" type="submit">保存草稿</button><button id="submit" type="button" disabled>提交审核</button><button id="refresh" type="button" class="secondary" disabled>刷新状态</button></div></form></section>
+<aside><section class="card" aria-labelledby="result-title"><h2 id="result-title">审批结果</h2><span id="claim-status" class="badge">未创建</span>
+<dl><dt>决策建议（不等于批准）</dt><dd id="decision">尚无决策</dd><dt>审批记录</dt><dd id="resolution">尚无审批结果</dd></dl>
+<p class="boundary">待审、已批准、已拒绝以报销单状态为准。工单关闭或本地通知成功，均不等于批准报销。</p></section>
+<section class="card" aria-labelledby="events-title"><h2 id="events-title">单据操作记录</h2><small>仅展示这张单据的创建、修改、提交与审批记录。</small><ol id="events"><li>暂无记录</li></ol></section></aside></div>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const common = ["category","amount","currency","occurred_on","merchant","description","business_purpose","has_receipt","pre_approved","receipt_refs"];
+const categoryFields = {meal:["expense_type","participants"],transport:["transport_mode","route_scope","seat_class"],lodging:["city_code","city_tier","check_in","check_out","nights"],office_purchase:["purchase_order_id","item_type"]};
+const statusLabels = {draft:"草稿",needs_correction:"待修正",submitted:"已提交",validating:"校验中",under_review:"待审",escalated:"待审 · 已升级",approved:"已批准",rejected:"已拒绝",cancelled:"已取消"};
+const decisionLabels = {approve_manager:"建议主管审核",approve_finance:"建议财务审核",approve_director:"建议负责人审核",needs_review:"需要人工复核",escalated:"需要升级复核",reject_no_receipt:"缺少凭证",reject_over_limit:"超出政策额度",reject_missing_purchase_order:"缺少采购单",reject_policy:"不符合政策"};
+const eventLabels = {claim_created:"创建草稿",claim_updated:"更新草稿",claim_submitted:"提交审核",review_routed:"进入复核",review_resolved:"记录审批结果"};
+let current = null, saved = "", busy = false, stale = false, pending = null;
+function message(text, error=false){$("feedback").textContent=text;$("feedback").dataset.error=String(error);}
+function listValue(id){return $(id).value.split(/\n/).map(s=>s.trim()).filter(Boolean);}
+function payload(){
+  const fields = [...common,...categoryFields[$("category").value]], body = {};
+  for(const id of fields){
+    if(["receipt_refs","participants"].includes(id)) body[id]=listValue(id);
+    else if(["amount","nights"].includes(id)) body[id]=Number($(id).value);
+    else if(["has_receipt","pre_approved"].includes(id)) body[id]=$(id).value==="true";
+    else body[id]=$(id).value.trim();
+  }
+  body.currency=body.currency.toUpperCase();return body;
+}
+function categories(){document.querySelectorAll("[data-category]").forEach(el=>{el.hidden=el.dataset.category!==$("category").value;el.disabled=el.hidden;});}
+function editable(){return !current || ["draft","needs_correction"].includes(current.status);}
+function controls(){
+  const blocked=busy||!!pending, dirty=current && JSON.stringify(payload())!==saved;
+  $("core").disabled=blocked||stale||!editable();
+  $("save").disabled=blocked||stale||!editable();
+  $("submit").disabled=blocked||stale||!current||!editable()||dirty;
+  $("refresh").disabled=blocked||!current;
+  ["new","load","lookup","actor","token"].forEach(id=>$(id).disabled=blocked);
+  $("retry").hidden=!pending||busy;
+}
+function reset(){
+  current=null;saved="";stale=false;$("claim-form").reset();categories();
+  $("claim-meta").textContent="尚未保存 · 无单据编号";$("claim-status").textContent="未创建";$("claim-status").dataset.status="";
+  $("decision").textContent="尚无决策";$("resolution").textContent="尚无审批结果";$("events").replaceChildren();controls();
+}
+function show(data){
+  current=data;stale=false;
+  $("claim-form").reset();
+  const body=data.claim;
+  for(const id of [...common,...Object.values(categoryFields).flat()]){
+    if(body[id]!==undefined) $(id).value=Array.isArray(body[id])?body[id].join("\n"):String(body[id]);
+  }
+  categories();saved=JSON.stringify(payload());$("lookup").value=data.claim_id;
+  $("claim-meta").textContent=`${data.claim_id} · 版本 ${data.version}`;
+  $("claim-status").textContent=statusLabels[data.status]||"未知状态 · 请刷新";$("claim-status").dataset.status=data.status;
+  const decision=data.decision||data.review?.decision;
+  $("decision").textContent=decision?`${decisionLabels[decision.decision]||decision.decision}\n${(decision.reasons||[]).map(r=>r==="rule_matched"?"符合当前模拟规则":r).join("；")}`:"尚无决策";
+  const r=data.review?.resolution;
+  $("resolution").textContent=r?`${{approve:"批准",reject:"拒绝",escalate:"升级"}[r.decision]||r.decision} · ${r.approver_id}\n${r.comment||"无意见"}\n${r.created_at}`:(data.approval_id?`审批编号 ${data.approval_id}\n等待人工审批`:"尚无审批结果");
+  controls();
+}
+async function request(path, method="GET", body, key){
+  const headers={"X-Actor-Id":$("actor").value.trim(),"Accept":"application/json"};
+  if($("token").value.trim()) headers.Authorization="Bearer "+$("token").value.trim();
+  if(body!==undefined) headers["Content-Type"]="application/json";
+  if(key) headers["Idempotency-Key"]=key;
+  const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),15000);
+  try{
+    const response=await fetch(path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal,cache:"no-store"});
+    let data;try{data=await response.json();}catch(e){throw new Error("服务响应无法读取，请重试。");}
+    if(!response.ok){const err=new Error(response.status===404?"not_found：未找到可访问的单据。":`${data.error?.code||response.status}：${data.error?.message||"请求失败"}`);err.status=response.status;throw err;}
+    return data;
+  }finally{clearTimeout(timeout);}
+}
+async function events(){
+  const data=await request(`/v1/expense/claims/${encodeURIComponent(current.claim_id)}/events`);
+  $("events").replaceChildren(...data.events.map(e=>{
+    const li=document.createElement("li"), detail=document.createElement("small");
+    li.textContent=eventLabels[e.event_type]||e.event_type;
+    detail.textContent=`版本 ${e.claim_version} · ${e.actor_id} · ${e.created_at}\n${e.metadata?.comment||""}`;li.append(detail);return li;
+  }));
+}
+function handleError(e){
+  if(e.status===404){reset();message("not_found：未找到可访问的单据。",true);}
+  else if(e.status===409){stale=true;message(e.message+"\n请刷新状态核对最新版本后再操作。当前输入尚未覆盖服务端。",true);}
+  else message(e.status?e.message:"网络或响应异常；操作结果尚未确认。请点击“重试原请求”，避免重复创建或提交。",true);
+}
+async function execute(operation){
+  busy=true;controls();
+  try{
+    const result=await request(operation.path,operation.method,operation.body,operation.key);
+    pending=null;show(result);message(operation.method==="POST"&&operation.path.endsWith("/submit")?"已提交，请以当前审批状态为准。":"草稿已保存。");
+    // The write has succeeded. A separate audit read failure must never turn
+    // the next click into another write or erase the saved Claim.
+    try{await events();}catch(e){if(e.status===404) handleError(e);else message("单据操作已成功，操作记录暂不可用；请刷新状态重试查询。",true);}
+  }catch(e){if(e.status) pending=null;else pending=operation;handleError(e);}
+  finally{busy=false;controls();}
+}
+async function write(submit){
+  if(busy||pending||stale||!editable()) return;
+  if(!$("actor").reportValidity()) return;
+  if(!$("claim-form").reportValidity()) return;
+  $("receipt_refs").setCustomValidity(($("has_receipt").value==="true"&&!listValue("receipt_refs").length)?"有凭证时请填写至少一个凭证引用。":"");
+  if(!$("receipt_refs").reportValidity()) return;
+  if(submit&&(!current||JSON.stringify(payload())!==saved)){message("请先保存草稿中的修改。",true);return;}
+  const base="/v1/expense/claims", path=current?`${base}/${encodeURIComponent(current.claim_id)}`:base;
+  const body=submit?{expected_version:current.version}:payload();
+  if(current&&!submit) body.expected_version=current.version;
+  await execute({path:path+(submit?"/submit":""),method:current&&!submit?"PATCH":"POST",body,key:crypto.randomUUID()});
+}
+async function load(id){
+  if(busy||pending||!$("actor").reportValidity()) return;
+  if(!id.trim()){message("请输入单据编号。",true);return;}
+  if(current&&editable()&&JSON.stringify(payload())!==saved&&!confirm("读取最新单据会替换未保存的修改，继续？")) return;
+  busy=true;controls();
+  try{show(await request(`/v1/expense/claims/${encodeURIComponent(id.trim())}`));$("events").replaceChildren();await events();message("已读取最新单据状态。");}
+  catch(e){if(!e.status){stale=true;message("网络异常，无法确认最新状态；请刷新重试。",true);}else handleError(e);}
+  finally{busy=false;controls();}
+}
+$("claim-form").addEventListener("submit",e=>{e.preventDefault();write(false);});
+$("submit").onclick=()=>write(true);$("retry").onclick=()=>{if(pending&&!busy) execute(pending);};
+$("load").onclick=()=>load($("lookup").value);$("refresh").onclick=()=>load(current.claim_id);
+$("new").onclick=()=>{if(current&&editable()&&JSON.stringify(payload())!==saved&&!confirm("放弃当前未保存的修改，创建新单据？")) return;reset();$("lookup").value="";message("填写报销信息后保存草稿。");};
+$("claim-form").addEventListener("input",()=>{$("receipt_refs").setCustomValidity("");categories();controls();});
+["actor","token"].forEach(id=>$(id).addEventListener("input",()=>{reset();message("身份已更换，请重新打开本人单据或新建草稿。");}));
+reset();
+</script></body></html>

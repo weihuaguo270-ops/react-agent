@@ -41,6 +41,8 @@ python demos/demo_expense_workflow.py
 python scripts/eval/acceptance/run_expense_business_eval.py --split dev
 ```
 
+独立申请人表单由 FastAPI 提供：配置现有 `REACT_AGENT_DATABASE_URL` 后运行 `react-agent-api --host 127.0.0.1 --port 8765`，浏览器打开 `http://127.0.0.1:8765/expense`，填写服务 Bearer token 和员工 `X-Actor-Id`。支持保存草稿、编辑、提交、查询 Claim 事件及刷新审批结果；待审列表、case 时间线和审批台留到下一刀，S7 尚未整体完成。使用与证据见 [S7 第一刀](docs/specs/expense/evidence/s7-claim-form.md)。
+
 两条场景属于同一员工工作助手，不是两个并列产品。底层 `react_loop`、`agent_runner`、ToolGuard、Harness 和服务入口由两个场景复用。
 
 ## 受控变更交付：规划中的独立项目

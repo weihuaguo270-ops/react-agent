@@ -20,8 +20,8 @@ curl -s http://127.0.0.1:8765/v1/chat \
 
 默认容器现在启动 `react-agent-api`（FastAPI + Uvicorn）。原有标准库入口仍可用：
 `react-agent-server --host 0.0.0.0 --port 8765`。设置 `REACT_AGENT_AUTH_TOKEN` 后，
-对话、任务、Workflow 和 Skill 执行接口要求 `Authorization: Bearer <key>`；只有 `/health`、`/ready`
-（含 `/v1/` 别名）两个探针保持公开，`/v1/info` 同样需要凭据，避免暴露服务面细节。
+对话、任务、Workflow、Skill 和报销业务接口要求 `Authorization: Bearer <key>`；`/health`、`/ready`
+（含 `/v1/` 别名）探针及无业务数据的 FastAPI `GET /expense` 表单外壳保持公开，供浏览器输入凭据。Claim/case API 不豁免；`/v1/info` 同样需要凭据，避免暴露服务面细节。
 
 在本地执行 `python -m react_agent.server` 时，安装了 `react-agent[service]` 会默认使用
 FastAPI；只有未安装 service 依赖时才回退到标准库 HTTP。
@@ -29,6 +29,8 @@ FastAPI；只有未安装 service 依赖时才回退到标准库 HTTP。
 **可视化：** 主场景 UI 内置于 HTTP 服务（`/`、`/ui`），展示 Workflow 五步、引用来源、拒答状态、结构化 diagnosis，**不是**泛聊天窗口。实验性 ReAct 轨迹面板见 `python -m react_agent.dashboard.server`（需 Flask + 可选 LLM）。
 
 默认 **offline** 路径，不消耗 LLM API Key。
+
+**报销表单：** FastAPI `/expense` 使用既有 Claim SQL API，需配置 `REACT_AGENT_DATABASE_URL`。输入服务 token 和 `X-Actor-Id` 后可保存、提交并刷新审批结果；标准库服务面不新增此页。范围与恢复限制见 [S7 第一刀证据](../specs/expense/evidence/s7-claim-form.md)。
 
 ## 镜像构建
 
@@ -67,7 +69,7 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 | `REACT_AGENT_SERVER_OFFLINE_REACT` | 未设 | `1` 时 `app=default` 走离线 ReAct smoke（CI/deploy，无 Key） |
 | `DEEPSEEK_API_KEY` | — | live 模式需要 |
 | `REACT_AGENT_DOCS_INGEST_DIRS` | — | 额外语料目录（逗号分隔，可 mount） |
-| `REACT_AGENT_AUTH_TOKEN` | 未设 | 共享密钥；设置后除 `/health`、`/ready` 外**所有接口**要求 `Authorization: Bearer <token>`（或 `X-Api-Key`） |
+| `REACT_AGENT_AUTH_TOKEN` | 未设 | 共享密钥；设置后业务接口要求 `Authorization: Bearer <token>`（或 `X-Api-Key`）；探针及 FastAPI 的无业务数据 `GET /expense` 表单外壳公开，Claim/case API 不豁免 |
 | `REACT_AGENT_API_KEY` | 未设 | **兼容别名**：等价于 `REACT_AGENT_AUTH_TOKEN`，两者同时设置时后者优先。仅供早期 FastAPI 面部署平滑过渡，新部署请只用 `REACT_AGENT_AUTH_TOKEN` |
 | `REACT_AGENT_STRICT_CONFIRM` | 未设 | 在 `auto_allow` 下：`1` 时未注入 HITL 则**拒绝副作用** `CONFIRM`（失败关闭，含 `execute_python`）；`CONFIRM_READ` 仍放行 |
 | `REACT_AGENT_APPROVAL_MODE` | `async` | 默认异步人工审批：副作用 `CONFIRM` 落盘待批并阻塞。本地/CI 逃生：`auto_allow` 或 `off` |
@@ -266,4 +268,4 @@ python scripts/eval/smoke/run_deploy_smoke.py --url http://127.0.0.1:8765
 - 自动拉取线上日志/Trace、SLA 承诺
 - 托管 SaaS
 
-下一阶段见 [`PRODUCTION_MATURITY.md`](PRODUCTION_MATURITY.md) P1（鉴权、结构化日志、配置模板）。
+下一阶段见 [`PRODUCTION_MATURITY.md`](../PRODUCTION_MATURITY.md) P1（鉴权、结构化日志、配置模板）。

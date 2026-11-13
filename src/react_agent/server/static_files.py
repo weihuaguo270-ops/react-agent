@@ -11,3 +11,8 @@ def docs_troubleshoot_ui_html() -> bytes:
         .joinpath("docs_troubleshoot_ui.html")
         .read_bytes()
     )
+
+
+def expense_form_ui_html() -> bytes:
+    """Return the standalone applicant form (no embedded business data)."""
+    return resources.files("react_agent.server.static").joinpath("expense_form_ui.html").read_bytes()

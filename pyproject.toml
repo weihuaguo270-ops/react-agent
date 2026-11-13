@@ -40,6 +40,11 @@ test = [
     "fastapi>=0.115,<1",
     "httpx>=0.27,<1",
 ]
+# Opt-in real-browser smoke; normal offline CI stays browser-independent.
+browser = [
+    "react-agent[test,service]",
+    "playwright>=1.50,<2",
+]
 dev = [
     "react-agent[rag,test,service]",
     "mypy>=1.8",
