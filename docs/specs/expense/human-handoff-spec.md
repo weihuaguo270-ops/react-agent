@@ -4,9 +4,9 @@
 
 本文定义 `expense` 在表单与审批 Workflow 之后的人工接管扩展：当 Agent 或规则 Workflow 无法安全完成决策时，系统创建可追踪的人工工单，分派到有责任边界的队列，由人工认领、处理、升级并回写业务状态。
 
-本文包含已实现的存储切片与后续验收规格，不代表当前项目已经接通自动建单、真实运营队列、通知或生产 SLA。当前已有的 `approval_id`、待审批记录和人工决议接口仍是轻量审批基础设施；本规格在其上增加工单和运营闭环。
+本文包含 H0–H4 存储能力与 S6 HTTP 接线。已接通受控 reason 自动建单和工单 HTTP 操作；这是可部署工程原型，不代表真实运营队列、邮件/IM 送达或生产 SLA。当前已有的 `approval_id`、待审批记录和人工决议接口仍是轻量审批基础设施；本规格在其上增加工单和运营闭环。
 
-H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配置为 `fixtures/expense/handoff_routing_v1.json`。H1 增加 `case_store.py` 存储适配器，复用 Claim 数据库与已有审批记录；H2 在同一 store 增加认领锁、释放、转派、升级及 SLA 扫描，尚未接入 `route_review`、HTTP 或真实处理队列。执行进度统一见 [`roadmap-spec.md`](roadmap-spec.md)；[H0 契约证据](evidence/h0-contract-freeze.md)、[H1 存储验收证据](evidence/h1-case-storage.md)和 [H2 操作验证记录](evidence/h2-case-operations.md)分开保存，局部验收不代表 S6 全部完成。
+H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配置为 `fixtures/expense/handoff_routing_v1.json`。H1–H4 复用 Claim SQL store，提供工单操作、审批绑定、本地通知重试与审计指标；`server/expense_cases.py` 接通 HTTP。执行进度统一见 [`roadmap-spec.md`](roadmap-spec.md)；各批历史证据保留，当前接线验收见 [S6 HTTP handoff](evidence/s6-http-handoff.md)。
 
 相关规格：
 
@@ -25,17 +25,19 @@ H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配�
 - 通过 H1 存储适配器创建独立 case ID、查询、追加证据事件并保存 pending outbox；H1 SQLite/PostgreSQL 合同及实际数据库重启恢复已验证；
 - 通过 H2 存储方法自认领、释放、转派、升级、计算冻结截止时间和按页扫描；H2 的验证单独记录，不沿用 H1 的 PostgreSQL 通过结论；
 - H3 在同一事务中经既有 `resolve_review` 回写 Claim，并提供显式等待补料/恢复存储方法，当前验收见 H3 独立证据。
+- H4 提供有界本地 outbox worker、重试回执和可由审计重建的指标；无常驻调度；
+- S6 将工单创建、查询、认领、释放、转派、升级、开始、补料等待/恢复和 resolve 接入 HTTP；正式 Claim HTTP store 的 `submit` / `route_review` 在同一事务为受控 reason 建单。
 
 通用 `/v1/approvals` 继续只是 CONFIRM 凭据兼容口，不替代正式 Expense 审批。H1 不写 Claim 或审批，不提供新的批准入口。
 
 当前项目尚不能：
 
-- 在现有 HTTP/Agent 主路径自动创建人工接管工单；
-- 根据业务类型、组织或权限自动分派责任队列；
-- 在 HTTP/Agent 路径执行认领/转派，或提供暂停、回退和队列负载查询；
+- 将旧 S5 自由文本 reason 自动转换为受控 reason；旧路径明确 blocked，不重写 Decision 指纹；
+- 根据业务类型、组织或金额进行多维自动分派；v1 只按受控 reason 精确匹配；
+- 提供通用 Agent 人工接管或 S7 队列/表单界面；
 - 发送站内、邮件或消息通知；
 - 提供定时 SLA 调度器、真实超时通知或生产 SLA 保障；
-- 在 HTTP/Agent 主路径自动接通工单处理与 Expense claim 审批。
+- 自动恢复等待补料的业务处理；必须由申请人显式 resume，然后重新认领。
 
 ## 3. 目标与非目标
 
@@ -339,6 +341,9 @@ H0 用显式传入的既有 case 路由快照验证复用契约：相同作用�
 | `POST` | `/v1/expense/cases/{case_id}/transfer` | 转派到受控目标队列 |
 | `POST` | `/v1/expense/cases/{case_id}/resolve` | 提交人工处理结果并绑定审批决议 |
 | `POST` | `/v1/expense/cases/{case_id}/escalate` | 升级到更高队列 |
+| `POST` | `/v1/expense/cases/{case_id}/start` | 认领人显式开始处理 |
+| `POST` | `/v1/expense/cases/{case_id}/needs_applicant` | 请求补料并释放处理锁 |
+| `POST` | `/v1/expense/cases/{case_id}/resume` | 申请人显式补料回 queued，不重跑业务 |
 | `GET` | `/v1/expense/cases/{case_id}/events` | 查询工单审计事件 |
 | `GET` | `/v1/expense/queues` | 查询当前用户有权查看的队列摘要 |
 
@@ -348,6 +353,7 @@ H0 用显式传入的既有 case 路由快照验证复用契约：相同作用�
 {
   "claim_id": "clm_01J...",
   "claim_version": 2,
+  "decision_hash": "sha256:<persisted-decision-hash>",
   "reason_code": "receipt_manual_verification",
   "reason": "凭证需要人工核验",
   "suggested_queue": "finance_review"
@@ -355,6 +361,18 @@ H0 用显式传入的既有 case 路由快照验证复用契约：相同作用�
 ```
 
 `suggested_queue` 只作为规则输入，服务端必须重新校验，不接受 Agent 直接指定处理人。
+
+### 11.1 S6 已实现的 HTTP 契约
+
+这些路由共享 Claim 的服务级 Bearer 鉴权和 `X-Actor-Id` 原型业务身份。Bearer 是否启用沿用现有服务配置（`REACT_AGENT_AUTH_TOKEN`）；它不是用户身份 token。部署者必须在可信调用边界提供 actor ID，不声称生产级身份或多租户系统。
+
+- 服务端从 `REACT_AGENT_EXPENSE_CASE_ACTORS_FILE` 指定的受信 JSON 文件构造 `CaseActor`，文件为 `{actor_id: {role, queue_ids}}`。示例：`{"finance-demo": {"role": "finance_reviewer", "queue_ids": ["finance_review"]}}`。未登记者只获 applicant；未配置目录不授予处理权限；格式/读取失败返回 `identity_unavailable`。客户端 JSON 的 role、queue_ids、assignee_id 等额外字段拒绝，相关 header 不参与授权。成员与队列角色须同时匹配，认领人固定为当前 actor。
+- 路由配置来自受信 `REACT_AGENT_EXPENSE_CASE_ROUTING_FILE`，默认现有 `fixtures/expense/handoff_routing_v1.json`，在 HTTP store 初始化时读取。v1 不使用客户端 suggested_queue 改变队列；reason_code 若提供必须等于持久化 Decision 的受控值。角色目录每请求读取；两文件均为服务器配置，不能由请求指定。
+- 写请求必须有 `Idempotency-Key`；创建按 Claim/version/reason 原子去重，同键不同 payload 冲突。活动工单返回原 case，不重算路由/SLA；终态不重开。创建时省略 approval_id 自动绑定该版本已有 pending 审批，显式 null 保留 H1 无审批建单能力；之后批准/拒绝仍只能绑定合法既有审批。
+- 创建必填 claim_id、claim_version、decision_hash；action 必填 expected_case_version。release/transfer/escalate/needs_applicant/resume 必填非空 reason，transfer 可指定受控 target_queue_id，resume 另需 claim_version、decision_hash、evidence_ref。resolve 的 approval_id 必须显式提供（纯工单 complete 时可为 null），另需 decision、claim_version、decision_hash、expected_case_version、reason。通过已有权限闸门，`X-Approval-Credential` 只满足共享 CONFIRM，不替代 Expense 审批。
+- `/queues` 仅返回当前角色/成员可见队列及审计重建摘要；applicant 返回空队列列表。工单列表只返回有权可见的工单。单条读取/操作的不存在和越权统一返回 404 `case_not_found`，不通过角色/审批错误泄露单据存在。
+- HTTP store 初始化时启用受信 `enable_handoff(routing)`；其他可信应用若复用 SQL `submit` / `route_review`，使用同一显式接线。受控 handoff 的 case/event/outbox 与提交/待审同事务提交或回滚，无路由/不可用队列持久化 unrouted。旧 S5 自由文本 reason 返回 `handoff={status: blocked, error_code: invalid_handoff}`，不建单、不改变其 Decision 指纹和现有 S5 审批语义。
+- 本轮不暴露 outbox worker、SLA scan 的维护 HTTP，也不启动后台常驻调度；仍用已有有界可信应用调用。`resolve_review` 保留正式审批事实来源，case.resolve 只组合现有入口。
 
 `POST /v1/expense/cases/{case_id}/resolve` 的 `decision` 表示工单处理结果；当结果要求 claim `approved` 或 `rejected` 时，请求必须同时提供 `approval_id`、`claim_version`、`decision_hash` 和 `expected_case_version`，并由表单审批入口完成最终授权。没有合法 approval binding 时，case 只能结束为人工处理完成，不能改变 claim 终态。
 
@@ -536,9 +554,9 @@ metrics = cases.metrics(actor=maintenance_actor)
 - 无合法审批绑定时工单不能把 claim 写成 `approved`；
 - 申请人、队列成员和管理员看到的事件范围符合权限边界。
 
-本轮限定 H4 的对外描述为：
+当前 S6 的对外描述为：
 
-> Expense 支持可审计的工单存储、认领与既有审批衔接，新增可重试的本地通知回执和审计重建指标；HTTP/自动建单、真实邮件/IM、界面和生产运营保障尚未接入。
+> 企业内部工作助手的报销场景支持受控 reason 自动建单、HTTP 认领/升级和绑定已有审批的人工处理；可重试本地通知回执与审计指标提供工程验证。旧自由文本 reason 仍 blocked；真实邮件/IM、常驻调度、界面和生产运营保障尚未接入。
 
 不得使用“自动分派已上线”“已通知审批人”“SLA 已保障”或“自动报销已完成”等表述，除非对应外部系统和运行证据已经接入并验证。
 

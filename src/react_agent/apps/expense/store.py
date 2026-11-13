@@ -131,6 +131,39 @@ class ExpenseClaimStore:
             PrimaryKeyConstraint("scope", "idempotency_key"),
         )
         self._metadata.create_all(self._engine, checkfirst=True)
+        self._handoff_cases = None
+        self._handoff_routing = None
+
+    def enable_handoff(self, routing):
+        """Trusted application wiring, outside transactions; legacy callers stay compatible."""
+        from .case_store import ExpenseCaseStore
+
+        if self._handoff_cases is None:
+            self._handoff_cases = ExpenseCaseStore(self)
+        self._handoff_routing = routing
+        return self._handoff_cases
+
+    def _handoff_result(self, connection, result, *, request_id):
+        if self._handoff_cases is None:
+            return result
+        from .case_store import CaseActor
+        from .handoff import ReasonCode
+
+        decision = result["decision"]
+        if result["status"] not in {"under_review", "escalated"}:
+            return result
+        try:
+            ReasonCode((decision.get("handoff") or {}).get("reason_code"))
+        except (ValueError, TypeError):
+            # Preserve S5 compatibility and its immutable Decision fingerprint.
+            # A free-text reason is never promoted into a trusted route.
+            return {**result, "handoff": {"status": "blocked", "error_code": "invalid_handoff"}}
+        claim = self._get_claim_row(connection, result["claim_id"])
+        case = self._handoff_cases._create_in_transaction(connection, result["claim_id"],
+            claim_version=result["claim_version"], decision_hash=decision["decision_hash"],
+            actor=CaseActor(claim["applicant_id"]), routing=self._handoff_routing,
+            request_id=request_id, approval_id=result.get("approval_id"))
+        return {**result, "case_id": case["case_id"], "handoff": case}
 
     @staticmethod
     def _dt(value: str | None = None) -> datetime:
@@ -445,11 +478,14 @@ class ExpenseClaimStore:
         if existing is not None:
             if existing["decision_json"] != _json(dict(decision)):
                 raise ExpenseStoreError("review_conflict", "claim version already has a different review")
-            return self._review_result(
+            result = self._review_result(
                 existing,
                 events=self._event_rows(connection, claim_id, approval_id=existing["approval_id"]),
                 replay=True,
             )
+            if existing["approval_status"] == "pending":
+                result = self._handoff_result(connection, result, request_id=request_id)
+            return result
 
         approval_id = "apr_" + uuid.uuid4().hex
         status = "escalated" if code == "escalated" else "under_review"
@@ -482,7 +518,7 @@ class ExpenseClaimStore:
         result = self._review_result(row, events=[event])
         if workflow is not None:
             result["workflow"] = dict(workflow)
-        return result
+        return self._handoff_result(connection, result, request_id=request_id)
 
     def route_review(
         self,
@@ -498,6 +534,8 @@ class ExpenseClaimStore:
             "decision": dict(decision),
         }
         with self._engine.begin() as connection:
+            if self._engine.dialect.name == "sqlite":
+                connection.exec_driver_sql("BEGIN IMMEDIATE")
             replay = self._idem(connection, "route_review", idempotency_key, payload)
             if replay is not None:
                 return replay
@@ -619,6 +657,8 @@ class ExpenseClaimStore:
     def submit(self, claim_id: str, *, actor_id: str, expected_version: int, request_id: str, idempotency_key: str, workflow_runner: Callable[[Mapping[str, Any]], Mapping[str, Any]]) -> dict[str, Any]:
         fingerprint_payload = {"claim_id": claim_id, "actor_id": actor_id, "expected_version": expected_version}
         with self._engine.begin() as connection:
+            if self._engine.dialect.name == "sqlite":
+                connection.exec_driver_sql("BEGIN IMMEDIATE")
             replay = self._idem(connection, "submit", idempotency_key, fingerprint_payload)
             if replay is not None:
                 return replay
@@ -685,6 +725,10 @@ class ExpenseClaimStore:
                 result["review"] = review_result
                 result["approval_id"] = review_result.get("approval_id")
                 result["approval_status"] = review_result.get("approval_status")
+                if "handoff" in review_result:
+                    result["handoff"] = review_result["handoff"]
+                if "case_id" in review_result:
+                    result["case_id"] = review_result["case_id"]
             self._save_idem(connection, "submit", idempotency_key, fingerprint_payload, result)
             return result
 

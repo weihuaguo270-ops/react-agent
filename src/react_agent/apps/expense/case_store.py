@@ -1,7 +1,8 @@
 """SQL case/event/outbox storage sharing the formal Claim database.
 
 H3 composes case resolution with the existing Expense approval transaction.
-Actors and queue memberships must be supplied by a trusted caller, never headers.
+Processing grants and queue memberships come from trusted application config,
+never client role/membership headers.
 """
 from __future__ import annotations
 
@@ -229,84 +230,115 @@ class ExpenseCaseStore(CaseMetrics, NotificationStorage, CaseResolution, CaseOpe
     def create(
         self, claim_id: str, *, claim_version: int, decision_hash: str, actor: CaseActor,
         routing: RoutingConfig, request_id: str, approval_id: str | None = None,
+        bind_pending_approval: bool = False, reason_code: str | None = None,
+        idempotency_key: str | None = None, request_payload: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Create from the stored Decision, never from a client-authored route/assignee."""
         _token(request_id, "request_id")
         if type(claim_version) is not int or claim_version < 1:
             raise ExpenseStoreError("claim_version_mismatch", "positive Claim version required")
         with self._transaction() as connection:
-            claim = self._claims_store._get_claim_row(connection, claim_id, lock=True)
-            if claim is None or not (actor.role == Role.FINANCE_ADMIN or
-                    (actor.role == Role.APPLICANT and claim["applicant_id"] == actor.actor_id)):
-                raise self._not_found()
-            if claim["current_version"] != claim_version:
-                raise ExpenseStoreError("claim_version_mismatch", "Claim version changed")
-            stored = connection.execute(select(self._claims_store._decisions).where(
-                self._claims_store._decisions.c.claim_id == claim_id,
-                self._claims_store._decisions.c.version == claim_version,
+            result = self._create_in_transaction(connection, claim_id, claim_version=claim_version,
+                decision_hash=decision_hash, actor=actor, routing=routing,
+                request_id=request_id, approval_id=approval_id,
+                bind_pending_approval=bind_pending_approval, reason_code=reason_code)
+            if idempotency_key is not None:
+                _token(idempotency_key, "idempotency_key", limit=180)
+                payload = {"actor_id": actor.actor_id, "role": actor.role, "claim_id": claim_id,
+                    "claim_version": claim_version, "decision_hash": decision_hash,
+                    "approval_id": approval_id, "request": dict(request_payload or {})}
+                replay = self._claims_store._idem(connection, "case_create", idempotency_key, payload)
+                if replay is not None:
+                    return replay
+                self._claims_store._save_idem(connection, "case_create", idempotency_key, payload, result)
+            return result
+
+    def _create_in_transaction(self, connection, claim_id, *, claim_version, decision_hash,
+                               actor, routing, request_id, approval_id=None,
+                               bind_pending_approval=False, reason_code=None):
+        """Compose submit/review routing with case, event and intent atomically."""
+        _token(request_id, "request_id")
+        claim = self._claims_store._get_claim_row(connection, claim_id, lock=True)
+        if claim is None or not (actor.role == Role.FINANCE_ADMIN or
+                (actor.role == Role.APPLICANT and claim["applicant_id"] == actor.actor_id)):
+            raise self._not_found()
+        if claim["current_version"] != claim_version:
+            raise ExpenseStoreError("claim_version_mismatch", "Claim version changed")
+        stored = connection.execute(select(self._claims_store._decisions).where(
+            self._claims_store._decisions.c.claim_id == claim_id,
+            self._claims_store._decisions.c.version == claim_version,
+        )).mappings().first()
+        if stored is None:
+            raise ExpenseStoreError("invalid_handoff", "persisted Decision is required")
+        if stored["decision_hash"] != decision_hash:
+            raise ExpenseStoreError("idempotency_conflict", "Decision fingerprint differs")
+        try:
+            decision = Decision.from_dict(json.loads(stored["decision_json"]))
+            if (decision.claim_id, decision.claim_version, decision.decision_hash) != (claim_id, claim_version, decision_hash):
+                raise ContractError("persisted Decision binding differs")
+            # H0 may reject compatibility/free-text reasons; never rewrite a decision hash.
+            reason = ReasonCode(decision.handoff.reason_code) if decision.handoff else None
+        except (ContractError, ValueError, TypeError) as exc:
+            raise ExpenseStoreError("invalid_handoff", "invalid persisted handoff Decision") from exc
+        if reason_code is not None and reason_code != reason:
+            raise ExpenseStoreError("invalid_handoff", "reason differs from persisted Decision")
+        if approval_id is None and bind_pending_approval:
+            approval_id = connection.execute(select(self._claims_store._reviews.c.approval_id).where(
+                self._claims_store._reviews.c.claim_id == claim_id,
+                self._claims_store._reviews.c.claim_version == claim_version,
+                self._claims_store._reviews.c.decision_hash == decision_hash,
+                self._claims_store._reviews.c.approval_status == "pending",
+            )).scalar_one_or_none()
+        if approval_id is not None:
+            approval = connection.execute(select(self._claims_store._reviews).where(
+                self._claims_store._reviews.c.approval_id == approval_id
             )).mappings().first()
-            if stored is None:
-                raise ExpenseStoreError("invalid_handoff", "persisted Decision is required")
-            if stored["decision_hash"] != decision_hash:
-                raise ExpenseStoreError("idempotency_conflict", "Decision fingerprint differs")
-            try:
-                decision = Decision.from_dict(json.loads(stored["decision_json"]))
-                if (decision.claim_id, decision.claim_version, decision.decision_hash) != (claim_id, claim_version, decision_hash):
-                    raise ContractError("persisted Decision binding differs")
-                # H0 may reject compatibility/free-text reasons; never rewrite a decision hash.
-                reason = ReasonCode(decision.handoff.reason_code) if decision.handoff else None
-            except (ContractError, ValueError, TypeError) as exc:
-                raise ExpenseStoreError("invalid_handoff", "invalid persisted handoff Decision") from exc
-            if approval_id is not None:
-                approval = connection.execute(select(self._claims_store._reviews).where(
-                    self._claims_store._reviews.c.approval_id == approval_id
-                )).mappings().first()
-                if approval is None or (approval["claim_id"], approval["claim_version"], approval["decision_hash"]) != (claim_id, claim_version, decision_hash):
-                    raise ExpenseStoreError("approval_binding_mismatch", "approval does not match Claim/version/hash")
-            existing = connection.execute(select(self._cases).where(
+            if approval is None or (approval["claim_id"], approval["claim_version"], approval["decision_hash"]) != (claim_id, claim_version, decision_hash):
+                raise ExpenseStoreError("approval_binding_mismatch", "approval does not match Claim/version/hash")
+        existing = connection.execute(select(self._cases).where(
+            self._cases.c.claim_id == claim_id, self._cases.c.claim_version == claim_version,
+            self._cases.c.reason_code == reason,
+        )).mappings().first()
+        if existing is not None:
+            return self._reuse(connection, existing, decision_hash, approval_id)
+        try:
+            plan = plan_handoff(decision, routing)
+        except HandoffError as exc:
+            raise ExpenseStoreError(str(exc.code), str(exc)) from exc
+        if plan is None:
+            raise ExpenseStoreError("invalid_handoff", "Decision does not require a case")
+        snapshot = asdict(plan)
+        snapshot.pop("case_id")
+        snapshot["idempotency_key"] = plan.idempotency_key
+        snapshot["queue_definition"] = next((asdict(q) for q in routing.queues if q.queue_id == plan.queue_id), None)
+        now = self._now()
+        case_id = "case_" + uuid.uuid4().hex
+        insert = pg_insert if self._engine.dialect.name == "postgresql" else sqlite_insert
+        inserted = connection.execute(insert(self._cases).values(
+            case_id=case_id, claim_id=claim_id, claim_version=claim_version, decision_hash=decision_hash,
+            reason_code=plan.reason_code, approval_id=approval_id, status=plan.status, queue_id=plan.queue_id,
+            priority=plan.priority, routing_rule_version=plan.routing_rule_version, snapshot_json=_json(snapshot),
+            created_at=now, source_request_id=request_id,
+        ).on_conflict_do_nothing(index_elements=["claim_id", "claim_version", "reason_code"]).returning(self._cases.c.case_id)).scalar_one_or_none()
+        if inserted is None:
+            winner = connection.execute(select(self._cases).where(
                 self._cases.c.claim_id == claim_id, self._cases.c.claim_version == claim_version,
-                self._cases.c.reason_code == reason,
-            )).mappings().first()
-            if existing is not None:
-                return self._reuse(connection, existing, decision_hash, approval_id)
-            try:
-                plan = plan_handoff(decision, routing)
-            except HandoffError as exc:
-                raise ExpenseStoreError(str(exc.code), str(exc)) from exc
-            if plan is None:
-                raise ExpenseStoreError("invalid_handoff", "Decision does not require a case")
-            snapshot = asdict(plan)
-            snapshot.pop("case_id")
-            snapshot["idempotency_key"] = plan.idempotency_key
-            snapshot["queue_definition"] = next((asdict(q) for q in routing.queues if q.queue_id == plan.queue_id), None)
-            now = self._now()
-            case_id = "case_" + uuid.uuid4().hex
-            insert = pg_insert if self._engine.dialect.name == "postgresql" else sqlite_insert
-            inserted = connection.execute(insert(self._cases).values(
-                case_id=case_id, claim_id=claim_id, claim_version=claim_version, decision_hash=decision_hash,
-                reason_code=plan.reason_code, approval_id=approval_id, status=plan.status, queue_id=plan.queue_id,
-                priority=plan.priority, routing_rule_version=plan.routing_rule_version, snapshot_json=_json(snapshot),
-                created_at=now, source_request_id=request_id,
-            ).on_conflict_do_nothing(index_elements=["claim_id", "claim_version", "reason_code"]).returning(self._cases.c.case_id)).scalar_one_or_none()
-            if inserted is None:
-                winner = connection.execute(select(self._cases).where(
-                    self._cases.c.claim_id == claim_id, self._cases.c.claim_version == claim_version,
-                    self._cases.c.reason_code == plan.reason_code,
-                )).mappings().one()
-                return self._reuse(connection, winner, decision_hash, approval_id)
-            row = connection.execute(select(self._cases).where(self._cases.c.case_id == case_id)).mappings().one()
-            self._work_state(connection, row, ensure=True)
-            event_id = self._append(connection, row, event_key="case_created", event_type="case_created",
-                actor=actor, request_id=request_id, metadata={"decision_hash": decision_hash,
-                    "approval_id": approval_id, "routing_rule_version": plan.routing_rule_version,
-                    "claim_id": claim_id, "claim_version": claim_version}, created=True)
-            connection.execute(self._outbox.insert().values(
-                outbox_id="out_" + uuid.uuid4().hex, case_id=case_id, event_id=event_id,
-                notification_type="case_created" if plan.queue_id else "case_unrouted",
-                target_queue=plan.queue_id or QueueId.EXPENSE_OPERATIONS, status="pending",
-                payload_json=_json({"case_id": case_id, "event_id": event_id}), created_at=now,
-            ))
-            return self._case_result(connection, row)
+                self._cases.c.reason_code == plan.reason_code,
+            )).mappings().one()
+            return self._reuse(connection, winner, decision_hash, approval_id)
+        row = connection.execute(select(self._cases).where(self._cases.c.case_id == case_id)).mappings().one()
+        self._work_state(connection, row, ensure=True)
+        event_id = self._append(connection, row, event_key="case_created", event_type="case_created",
+            actor=actor, request_id=request_id, metadata={"decision_hash": decision_hash,
+                "approval_id": approval_id, "routing_rule_version": plan.routing_rule_version,
+                "claim_id": claim_id, "claim_version": claim_version}, created=True)
+        connection.execute(self._outbox.insert().values(
+            outbox_id="out_" + uuid.uuid4().hex, case_id=case_id, event_id=event_id,
+            notification_type="case_created" if plan.queue_id else "case_unrouted",
+            target_queue=plan.queue_id or QueueId.EXPENSE_OPERATIONS, status="pending",
+            payload_json=_json({"case_id": case_id, "event_id": event_id}), created_at=now,
+        ))
+        return self._case_result(connection, row)
 
     def _reuse(self, connection, row, decision_hash, approval_id):
         if row["decision_hash"] != decision_hash or row["approval_id"] != approval_id:
