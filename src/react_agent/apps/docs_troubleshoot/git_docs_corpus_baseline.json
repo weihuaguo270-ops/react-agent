@@ -9,7 +9,7 @@
     "PROJECT_STATUS_SUMMARY.md": "9b4f70d3239af47f3360417376c2443eb637344a118f7541a32b0f22701342c3",
     "README.md": "f161abfe33fcafd5628b975645253823d8869b73759a3e8cf9c2ec8c680dc108",
     "ROADMAP.md": "b681b23dcbb3d9170ebbda9ef9e8d1cd5439985033a02a34d4d96f0924008bd7",
-    "STATUS.md": "4340398748fa07935851c5baaaea76c1fc4b013f3e7ff64906eeb8ec35519d78",
+    "STATUS.md": "8e50ccebffc0ebd7272e85a80b16cfd758cd13dde740971223a331bc15ee745f",
     "architecture/agent-workflow.md": "eea1433a9068f0c45b43f28633c343dcec464b837153c13020713613b53499ca",
     "architecture/core-architecture.md": "d85a1fa9493b1007fe5b2a0b7f7661163d9da6c0e48757ce06d83cb184176d30",
     "architecture/harness-architecture.md": "b038616805ec677f27225c9ccf31ebc7102d3e3fd68d25178e828c712e653a72",
@@ -99,6 +99,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-11-13T04:17:36Z",
+  "generated_at": "2026-11-13T05:40:52Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }

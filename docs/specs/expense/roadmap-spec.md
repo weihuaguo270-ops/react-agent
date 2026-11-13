@@ -27,7 +27,7 @@
 | S3 决策 Workflow | complete | `expense_claim_review@1` 已接通 HTTP（可选 workflow/legacy 回退）、demo、business evaluation 和 expanded candidate runner；采购/报价事实由可信模拟 adapter 提供，客户端自报验证字段不被信任；S3 smoke 与三组 candidate split 均通过 |
 | S4 Claim 持久化 | complete | SQLAlchemy Claim/version/decision/audit/idempotency store 已接入；SQLite 契约测试和 PostgreSQL Compose 重启 smoke 覆盖创建、版本更新、提交冻结、恢复、幂等和冲突无副作用 |
 | S5 审批闭环 | complete | `route_review` / `resolve_review` 已接入同一 SQL store；审批绑定 Claim 版本与 decision hash，支持 approve/reject/escalate、审计事件、重启恢复和幂等重放；不包含 S6 人工接管队列或 S7 UI |
-| S6 人工接管 | in_progress | H0、[H1 存储验收](evidence/h1-case-storage.md)、[H2 限定切片](evidence/h2-case-operations.md)、[H3 审批衔接](evidence/h3-case-resolution.md) complete（存储切片）：H3 SQLite/PostgreSQL 各 31 项合同通过；相关存储合同 157 passed、1 SQLite TRUNCATE skipped；实际重启恢复审批结案、纯工单结案和等待补料，重复结案失败关闭。H4 通知与视图未实现；HTTP/自动建单未接通 |
+| S6 人工接管 | complete | H0–H3 存储/审批绑定、[限定 H4 本地通知](evidence/h4-local-notifications.md)与[S6 HTTP handoff 验收](evidence/s6-http-handoff.md)通过；受控 reason 自动建单，HTTP 认领/升级/resolve 绑定合法审批与版本/hash；旧自由文本 reason blocked。真实邮件/IM、常驻调度、S7 UI 仍冻结 |
 | S7 表单 UI 与运营视图 | not_started | 独立表单主路径、待审列表和 case 时间线未实现 |
 | S8 验收与可选模型 | not_started | 全链路验收尚未执行；JEV 类模型保持可选，且只能在规则/Workflow/审批门禁后评估 |
 
@@ -51,7 +51,7 @@ S2 candidate 结果：dev 41 案 39 通过、2 个采购验证 known gap（故 d
 | S3：决策 Workflow | 将 `decide()` 包装为 `expense_claim_review@1`；以结构化 Claim→Workflow→HTTP/demo 输出作为第一个可运行垂直切片；实现固定节点、失败关闭、轨迹、决策审计适配和幂等重放；建立不依赖 LLM/外部财务系统的核心决策 smoke；对采购/报价证据使用 Workflow 控制的模拟 adapter，不信任客户端自报验证结果 | Decision §5、§6、§10 P2；Policy Boundary 决策规则；Coverage Matrix `W-ADAPTER-*` | S2 | 垂直切片可运行且可回退到 legacy；节点注册/顺序/成功跳过失败轨迹可断言；核心 smoke 覆盖批准、硬拒绝、人工审核、非法 Claim、政策不可用和幂等重放；规则输出与 S1 逐案兼容；未知或不可验证证据不得自动批准；`W-ADAPTER-*` 有测试 | complete |
 | S4：持久化 Claim 生命周期 | 建 PostgreSQL Claim/version/audit store；实现 draft create/read/update、submit、版本冻结、状态迁移和查询；扩展持久化 smoke；Ledger 留作 legacy/eval adapter | Form §5–9、§11、§12 P1；Decision §6.3 | S3 | 重启后可查询的持久化 smoke 通过；提交冻结版本；重复请求幂等；版本冲突无副作用；审计完整 | complete |
 | S5：审批闭环 | 将 `route_review` / `resolve_review` 接到 S4 SQL store；保存 pending review、resolution、审批状态和审计；Claim 版本与 decision hash 必须匹配，审批决议不绕过权限闸门 | Form §4–8、§11、§12 P2；Decision §6.3 | S4 | SQLite 合同、HTTP lifecycle 和 PostgreSQL 重启 smoke 覆盖 approve/reject/escalate、错误版本/hash、重复决议和审计；S6 case/队列与 S7 UI 仍延期 | complete |
-| S6：人工接管 | 按 H0 reason/routing 契约、H1 case/event/outbox、H2 分派认领/SLA、H3 resolve 与审批绑定执行；扩展 handoff smoke；工单关闭不等于 Claim 批准 | Handoff §5–14；Form 审批入口章节 | S5 | 重复 handoff 去重；case 状态/事件追加；并发认领和升级可验证；handoff smoke 证明 resolve 绑定合法 approval/version/hash 且不会绕过审批 | in_progress |
+| S6：人工接管 | 按 H0 reason/routing 契约、H1 case/event/outbox、H2 分派认领/SLA、H3 resolve 与审批绑定执行；扩展 handoff smoke；工单关闭不等于 Claim 批准 | Handoff §5–14；Form 审批入口章节 | S5 | 重复 handoff 去重；case 状态/事件追加；并发认领和升级可验证；handoff smoke 证明 resolve 绑定合法 approval/version/hash 且不会绕过审批 | complete |
 | S7：表单 UI 与运营视图 | 先交付新建、草稿、编辑、提交、状态和审批结果主路径，再接入 case 时间线、待审列表和状态刷新；建立浏览器 UI smoke；状态文案区分审批、工单关闭和付款 | Form §3、§8、§12 P3；Handoff 运营视图章节 | S4、S5；case 视图依赖 S6 | 浏览器 smoke 完成“新建→保存→编辑→提交→待审→审批结果”；重复提交、网络失败、过期版本、越权状态有处理；无付款成功误导 | not_started |
 | S8：验收与可选模型 | 按单测→dev→golden→held_out→HTTP/UI smoke→仓库回归执行；汇总分阶段 smoke 为发布报告；比较 S1 逐案证据；之后才可评估 JEV 类版本化候选模型 | Decision §8、§10.4–10.6 P5；Form §12 P4；Handoff 各阶段退出标准 | S3–S7 | 规则/审批/审计/人工作业端到端门禁通过；HTTP/UI smoke 与分阶段 smoke 全部通过并保留报告、版本、fixture hash、配置和失败日志；held_out 独立且不调参；候选模型可回退且不改变已冻结规则结果 | not_started |
 
@@ -102,4 +102,6 @@ H3 的本轮存储切片已完成：`resolve_case` 绑定既有 approval_id、Cl
 
 2026-11-13 限定 H4 补齐已有 pending outbox 的有界 worker、持久化租约、指数退避重试与可替换本地 adapter。本地回执按 outbox_id 去重，返回 delivery_id/status/error；accepted 不表示用户已读或真实渠道送达。认领、补料请求、SLA 提醒/违约和结案原子写入通知意图；worker 仅追加通知审计和投递状态，不改 Claim/审批结果。队列摘要、非终态待处理量、扫描记录的 SLA breach 和按 distinct Claim/version 定义的人工接管率可从审计导出重建。SQLite/PostgreSQL 合同和实际数据库重启 smoke 已通过，见 [限定 H4 验证记录](evidence/h4-local-notifications.md)。
 
-S6 仍为 in_progress。case 能力与本地 worker 仍是可信存储/应用调用，未接 HTTP/现有 `route_review` 自动建单；旧 S5 自由文本 reason 不在本轮重写，未来可信适配必须保持 Decision 指纹一致。真实邮件/IM、后台调度和 S7 表单/运营 UI 继续后置；只有既有合法 Expense 审批才能改变 Claim 批准结果，通知成功和关工单均不等于批准报销。保持 S4–S5 的 Claim/审批 SQL 事实来源，交付线、Go 后端、UI 和 `react_loop` 继续冻结。S8 的 held-out/golden、真实业务接入和生产 SLA 仍只作为后续验收边界，不从本轮契约测试推断。
+2026-11-13 S6 HTTP 接线验收通过后标为 complete，见 [HTTP handoff 证据](evidence/s6-http-handoff.md)。正式 Claim HTTP store 的 submit / route_review 在同一事务为受控 reason 创建 case/event/outbox；重复 handoff 复用同一活动工单，HTTP 认领、升级、补料恢复和 resolve 复用 H1–H3 存储。CaseActor 由服务端角色/队列目录构造，客户端不能自报处理权限或 assignee。旧 S5 自由文本 reason 明确 blocked、不改 Decision 指纹；此兼容限制不宣称已解决。
+
+S7 与 S8 保持 not_started。本轮不开展 UI、真实邮件/IM、后台常驻调度、多维路由或 §9.2 连续无人认领轮次扩展；限定 H4 的本地回执/审计指标已完成，真实渠道与界面继续后置。保持 S4–S5 的 SQL 事实来源；通知成功和关工单均不等于批准报销。交付线、Go 重写和 react_loop 继续冻结；held-out/golden 和生产 SLA 保持后续验收边界。

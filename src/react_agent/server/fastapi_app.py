@@ -34,6 +34,7 @@ from react_agent.server.task_manager import TaskManager, task_manager
 
 ChatHandler = Callable[[dict[str, Any], str], tuple[int, dict[str, Any]]]
 _EXPENSE_STORES: dict[str, Any] = {}
+_EXPENSE_STORE_LOCK = threading.RLock()
 
 
 class ChatRequest(BaseModel):
@@ -141,11 +142,15 @@ def _request_id(value: str | None) -> str:
 
 def _expense_store():
     from react_agent.apps.expense.store import ExpenseClaimStore
+    from react_agent.server.expense_cases import server_routing
 
     url = os.environ.get("REACT_AGENT_DATABASE_URL") or os.environ.get("REACT_AGENT_POSTGRES_URL") or ""
-    if url not in _EXPENSE_STORES:
-        _EXPENSE_STORES[url] = ExpenseClaimStore(url or None)
-    return _EXPENSE_STORES[url]
+    with _EXPENSE_STORE_LOCK:
+        if url not in _EXPENSE_STORES:
+            store = ExpenseClaimStore(url or None)
+            store.enable_handoff(server_routing())
+            _EXPENSE_STORES[url] = store
+        return _EXPENSE_STORES[url]
 
 
 def _task_payload(record: Any, request_id: str) -> dict[str, Any]:
@@ -345,6 +350,9 @@ def create_app(
         version=package_version(),
         lifespan=lifespan,
     )
+    from react_agent.server.expense_cases import register_case_routes
+
+    register_case_routes(api, _expense_store)
 
     @api.middleware("http")
     async def request_guard(request: Request, call_next):
