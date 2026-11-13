@@ -9,7 +9,7 @@
     "PROJECT_STATUS_SUMMARY.md": "9b4f70d3239af47f3360417376c2443eb637344a118f7541a32b0f22701342c3",
     "README.md": "f161abfe33fcafd5628b975645253823d8869b73759a3e8cf9c2ec8c680dc108",
     "ROADMAP.md": "b681b23dcbb3d9170ebbda9ef9e8d1cd5439985033a02a34d4d96f0924008bd7",
-    "STATUS.md": "8e50ccebffc0ebd7272e85a80b16cfd758cd13dde740971223a331bc15ee745f",
+    "STATUS.md": "00d8dd1bdddb3ce4e12bbe663b8b3366eca8c8c544d1d9f360d7662a852e7e7c",
     "architecture/agent-workflow.md": "eea1433a9068f0c45b43f28633c343dcec464b837153c13020713613b53499ca",
     "architecture/core-architecture.md": "d85a1fa9493b1007fe5b2a0b7f7661163d9da6c0e48757ce06d83cb184176d30",
     "architecture/harness-architecture.md": "b038616805ec677f27225c9ccf31ebc7102d3e3fd68d25178e828c712e653a72",
@@ -35,7 +35,7 @@
     "daily_smoke/README.md": "aa189023b4daed6b0e3e9321a502a455ea2776d06ce77ea92f1c4fdf79d0124b",
     "daily_smoke/VARIANCE.md": "9f9d32ff8ede65dd7d0d7a5d291f3c42aa7c5882a03b714ec4d598e5910be462",
     "features/application-direction.md": "57a05cd450fc8afcebe169d72d3b4c735350cf2d95cee279a35fb352265e8c83",
-    "features/deploy.md": "1131f6010a1a168157a7417563c1ea2d0e2564aa3af34d19de59123b090ace9f",
+    "features/deploy.md": "100af927605307decfffba04ddd27ec360b625cac95a8efc7c5c8a8e34cd01ff",
     "features/evidence-docs-troubleshoot.md": "70804b272ef2e6a4ab6918a937634a8338b887524a8fd280d75e9797a27bfd90",
     "features/github-delivery-workflow.md": "b55aada2488a273bd59161001197803b62f850d9c3c6994ec1d2ddd0f5d1b2a8",
     "features/plugins.md": "2a3893e8ca5772ec47fe00c9705d82a569af8c51c2321019b26f22e6663c784f",
@@ -99,6 +99,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-11-13T05:40:52Z",
+  "generated_at": "2026-11-13T10:46:07Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }

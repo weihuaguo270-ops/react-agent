@@ -34,7 +34,7 @@ H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配�
 
 - 将旧 S5 自由文本 reason 自动转换为受控 reason；旧路径明确 blocked，不重写 Decision 指纹；
 - 根据业务类型、组织或金额进行多维自动分派；v1 只按受控 reason 精确匹配；
-- 提供通用 Agent 人工接管或 S7 队列/表单界面；
+- 提供通用 Agent 人工接管或 S7 队列/审批台界面（独立申请人表单见 [S7 第一刀](evidence/s7-claim-form.md)）；
 - 发送站内、邮件或消息通知；
 - 提供定时 SLA 调度器、真实超时通知或生产 SLA 保障；
 - 自动恢复等待补料的业务处理；必须由申请人显式 resume，然后重新认领。

@@ -28,7 +28,7 @@ from react_agent.server.auth import (
 from react_agent.server.chat_router import handle_chat, list_applications, normalize_app
 from react_agent.server.health import liveness_payload, package_version, readiness_payload
 from react_agent.server.http_util import error_response
-from react_agent.server.static_files import docs_troubleshoot_ui_html
+from react_agent.server.static_files import docs_troubleshoot_ui_html, expense_form_ui_html
 from react_agent.server.task_manager import TaskManager, task_manager
 
 
@@ -138,6 +138,13 @@ class ExpenseClaimSubmitRequest(BaseModel):
 
 def _request_id(value: str | None) -> str:
     return value or str(uuid.uuid4())
+
+
+def _claim_http_error(code: str, message: str, request_id: str, status_code: int):
+    # Missing and unauthorized Claims must have the same public representation.
+    if status_code == 404:
+        code, message = "not_found", "expense claim not found"
+    return error_response(code, message, request_id, status_code)
 
 
 def _expense_store():
@@ -367,7 +374,10 @@ def create_app(
                 421,
             )
             return JSONResponse(payload, status_code=status)
-        if not _authorized(request):
+        # Only this data-free shell is public, so a normal browser can enter a
+        # Bearer credential. All Claim APIs still use the shared auth guard.
+        public_expense_shell = request.method == "GET" and request.url.path == "/expense"
+        if not public_expense_shell and not _authorized(request):
             status, payload = error_response(
                 "unauthorized", "missing or invalid credentials", request_id, 401
             )
@@ -409,6 +419,10 @@ def create_app(
     @api.get("/v1/ui", response_class=Response)
     async def ui() -> Response:
         return Response(docs_troubleshoot_ui_html(), media_type="text/html")
+
+    @api.get("/expense", response_class=Response)
+    async def expense_ui() -> Response:
+        return Response(expense_form_ui_html(), media_type="text/html", headers={"Cache-Control": "no-store"})
 
     @api.get("/health")
     @api.get("/v1/health")
@@ -602,10 +616,10 @@ def create_app(
     ) -> JSONResponse:
         request_id = _request_id(x_request_id)
         if not actor_id or not actor_id.strip():
-            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            status, payload = _claim_http_error("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
             return JSONResponse(payload, status_code=status)
         if not idempotency_header or not idempotency_header.strip():
-            status, payload = error_response("invalid_request", "Idempotency-Key is required", request_id, 400)
+            status, payload = _claim_http_error("invalid_request", "Idempotency-Key is required", request_id, 400)
             return JSONResponse(payload, status_code=status)
         from react_agent.apps.expense.service import create_claim
         from react_agent.apps.expense.store import ExpenseStoreError
@@ -616,7 +630,7 @@ def create_app(
         except (ExpenseStoreError, ValueError) as exc:
             code = getattr(exc, "code", "storage_unavailable")
             status_code = getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409)
-            status, payload = error_response(code, str(exc), request_id, status_code)
+            status, payload = _claim_http_error(code, str(exc), request_id, status_code)
             return JSONResponse(payload, status_code=status)
         return JSONResponse({"request_id": request_id, **result}, status_code=201 if not result.get("idempotent_replay") else 200)
 
@@ -628,7 +642,7 @@ def create_app(
     ) -> JSONResponse:
         request_id = _request_id(x_request_id)
         if not actor_id or not actor_id.strip():
-            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            status, payload = _claim_http_error("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
             return JSONResponse(payload, status_code=status)
         from react_agent.apps.expense.service import get_claim
         from react_agent.apps.expense.store import ExpenseStoreError
@@ -636,7 +650,7 @@ def create_app(
         try:
             result = await run_in_threadpool(get_claim, _expense_store(), claim_id, actor_id=actor_id.strip())
         except (ExpenseStoreError, ValueError) as exc:
-            status, payload = error_response(getattr(exc, "code", "storage_unavailable"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
+            status, payload = _claim_http_error(getattr(exc, "code", "storage_unavailable"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
             return JSONResponse(payload, status_code=status)
         return JSONResponse({"request_id": request_id, **result})
 
@@ -650,10 +664,10 @@ def create_app(
     ) -> JSONResponse:
         request_id = _request_id(x_request_id)
         if not actor_id or not actor_id.strip():
-            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            status, payload = _claim_http_error("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
             return JSONResponse(payload, status_code=status)
         if not idempotency_header or not idempotency_header.strip():
-            status, payload = error_response("invalid_request", "Idempotency-Key is required", request_id, 400)
+            status, payload = _claim_http_error("invalid_request", "Idempotency-Key is required", request_id, 400)
             return JSONResponse(payload, status_code=status)
         from react_agent.apps.expense.service import update_claim
         from react_agent.apps.expense.store import ExpenseStoreError
@@ -663,7 +677,7 @@ def create_app(
         try:
             result = await run_in_threadpool(update_claim, _expense_store(), claim_id, patch, actor_id=actor_id.strip(), expected_version=expected_version, request_id=request_id, idempotency_key=idempotency_header.strip())
         except (ExpenseStoreError, ValueError) as exc:
-            status, payload = error_response(getattr(exc, "code", "storage_unavailable"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
+            status, payload = _claim_http_error(getattr(exc, "code", "storage_unavailable"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
             return JSONResponse(payload, status_code=status)
         return JSONResponse({"request_id": request_id, **result})
 
@@ -677,10 +691,10 @@ def create_app(
     ) -> JSONResponse:
         request_id = _request_id(x_request_id)
         if not actor_id or not actor_id.strip():
-            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            status, payload = _claim_http_error("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
             return JSONResponse(payload, status_code=status)
         if not idempotency_header or not idempotency_header.strip():
-            status, payload = error_response("invalid_request", "Idempotency-Key is required", request_id, 400)
+            status, payload = _claim_http_error("invalid_request", "Idempotency-Key is required", request_id, 400)
             return JSONResponse(payload, status_code=status)
         from react_agent.apps.expense.service import submit_claim
         from react_agent.apps.expense.store import ExpenseStoreError
@@ -688,7 +702,7 @@ def create_app(
         try:
             result = await run_in_threadpool(submit_claim, _expense_store(), claim_id, actor_id=actor_id.strip(), expected_version=request.expected_version, request_id=request_id, idempotency_key=idempotency_header.strip())
         except (ExpenseStoreError, ValueError, RuntimeError) as exc:
-            status, payload = error_response(getattr(exc, "code", "workflow_failed"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
+            status, payload = _claim_http_error(getattr(exc, "code", "workflow_failed"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
             return JSONResponse(payload, status_code=status)
         return JSONResponse({"request_id": request_id, **result})
 
@@ -700,7 +714,7 @@ def create_app(
     ) -> JSONResponse:
         request_id = _request_id(x_request_id)
         if not actor_id or not actor_id.strip():
-            status, payload = error_response("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
+            status, payload = _claim_http_error("forbidden_claim_access", "X-Actor-Id is required", request_id, 403)
             return JSONResponse(payload, status_code=status)
         from react_agent.apps.expense.service import list_events
         from react_agent.apps.expense.store import ExpenseStoreError
@@ -708,7 +722,7 @@ def create_app(
         try:
             events = await run_in_threadpool(list_events, _expense_store(), claim_id, actor_id=actor_id.strip())
         except (ExpenseStoreError, ValueError) as exc:
-            status, payload = error_response(getattr(exc, "code", "storage_unavailable"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
+            status, payload = _claim_http_error(getattr(exc, "code", "storage_unavailable"), str(exc), request_id, getattr(exc, "status_code", 503 if isinstance(exc, ValueError) else 409))
             return JSONResponse(payload, status_code=status)
         return JSONResponse({"request_id": request_id, "claim_id": claim_id, "events": events})
 
