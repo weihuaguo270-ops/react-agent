@@ -14,6 +14,7 @@ from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, I
 
 from .handoff import HandoffError, QueueId, Role, SLAPolicy, TERMINAL_STATUSES, validate_transition
 from .sla import deadlines, utc
+from .notifications import notification_kind
 from .store import ExpenseStoreError, _fingerprint, _json
 
 
@@ -134,7 +135,7 @@ class CaseOperations:
                 "escalation_level": state["escalation_level"], **(metadata or {})})
         if notify:
             connection.execute(self._outbox.insert().values(outbox_id="out_" + uuid.uuid4().hex,
-                case_id=row["case_id"], event_id=event_id, notification_type=event_type,
+                case_id=row["case_id"], event_id=event_id, notification_type=notification_kind(event_type),
                 target_queue=row["queue_id"] or QueueId.EXPENSE_OPERATIONS, status="pending",
                 payload_json=_json({"case_id": row["case_id"], "event_id": event_id}), created_at=self._now()))
 
@@ -247,7 +248,7 @@ class CaseOperations:
                         event_type="case_claimed", reason="queue member claimed case", status="assigned",
                         queue=asdict(live_queue), routing_version=routing.routing_rule_version,
                         state_changes={"assignee_id": actor.actor_id, "lock_expires_at": now + timedelta(seconds=self._claim_lock_seconds),
-                            "responded_at": state["responded_at"] or now})
+                            "responded_at": state["responded_at"] or now}, notify=True)
             elif operation == "release":
                 if state["assignee_id"] != actor.actor_id:
                     # An expired lease was just released above; do not produce another event.
@@ -290,7 +291,7 @@ class CaseOperations:
         return self._act(case_id, operation="escalate", actor=actor, expected_case_version=expected_case_version,
             request_id=request_id, idempotency_key=idempotency_key, routing=routing, reason=reason)
 
-    def scan_sla(self, *, actor, routing, request_id, limit=100, after_case_id=None):
+    def scan_sla(self, *, actor, routing, request_id, limit=100, after_case_id=None, warning_before_seconds=0):
         """One bounded page, per-case transactions; trusted finance-admin maintenance only.
 
         Breach markers and events commit together. Repeating/concurrent scans never
@@ -302,6 +303,8 @@ class CaseOperations:
             raise ExpenseStoreError("queue_not_allowed", "trusted maintenance role required", status_code=403)
         if type(limit) is not int or not 1 <= limit <= 1000:
             raise ExpenseStoreError("invalid_handoff", "scan limit must be between 1 and 1000", status_code=400)
+        if type(warning_before_seconds) is not int or not 0 <= warning_before_seconds <= 86400:
+            raise ExpenseStoreError("invalid_handoff", "warning window must be 0..86400 seconds", status_code=400)
         with self._engine.connect() as connection:
             stmt = select(self._cases.c.case_id).where(self._cases.c.status.not_in(TERMINAL_STATUSES))
             if after_case_id:
@@ -346,7 +349,21 @@ class CaseOperations:
                             self._change(connection, row, state, actor=actor, request_id=request_id,
                                 event_type=f"sla_{kind}_breached", reason=f"{kind} SLA breached",
                                 state_changes={f"{kind}_breached": True}, event_key=f"sla:{kind}",
-                                notify=kind == "response")
+                                notify=True)
+                if warning_before_seconds:
+                    for kind in ("response", "resolution"):
+                        due = state[f"{kind}_due_at"]
+                        if (due is None or state[f"{kind}_breached"] or
+                                (kind == "response" and state["responded_at"] is not None) or
+                                not now < utc(due) <= now + timedelta(seconds=warning_before_seconds)):
+                            continue
+                        key = f"sla:warning:{kind}"
+                        existing = connection.execute(select(self._events.c.event_id).where(
+                            self._events.c.case_id == case_id, self._events.c.event_key == key)).first()
+                        if not existing:
+                            self._change(connection, row, state, actor=actor, request_id=request_id,
+                                event_type=f"sla_{kind}_warning", reason=f"{kind} SLA approaching",
+                                event_key=key, notify=True, metadata={"warning_before_seconds": warning_before_seconds})
                 if version != state["case_version"]:
                     changed.append(self._case_result(connection, row))
         return {"cases": changed, "conflicts": conflicts,

@@ -23,6 +23,8 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from .domain import ContractError, Decision
 from .case_operations import CaseOperations
 from .case_resolution import CaseResolution
+from .notifications import NotificationStorage
+from .case_metrics import CaseMetrics
 from .sla import utc
 from .handoff import (
     CaseStatus, HandoffError, QueueId, ReasonCode, Role, RoutingConfig, TERMINAL_STATUSES,
@@ -58,7 +60,7 @@ def _token(value: str, name: str, *, limit: int = 200) -> str:
     return value
 
 
-class ExpenseCaseStore(CaseResolution, CaseOperations):
+class ExpenseCaseStore(CaseMetrics, NotificationStorage, CaseResolution, CaseOperations):
     """Use the Claim store's engine, tables and transaction boundary; SQLite is for tests."""
 
     def __init__(self, claims: ExpenseClaimStore, *, clock: Callable[[], datetime] | None = None,
@@ -76,6 +78,7 @@ class ExpenseCaseStore(CaseResolution, CaseOperations):
             self._events = metadata.tables["expense_case_events"]
             self._outbox = metadata.tables["expense_case_outbox"]
             self._init_operations(metadata)
+            self._init_notifications(metadata)
             metadata.create_all(self._engine, checkfirst=True)
             return
         self._cases = Table(
@@ -133,10 +136,11 @@ class ExpenseCaseStore(CaseResolution, CaseOperations):
             Column("status", String(32), nullable=False),
             Column("payload_json", Text, nullable=False),
             Column("created_at", DateTime(timezone=True), nullable=False),
-            CheckConstraint("status = 'pending'"),  # H4 must explicitly extend the delivery lifecycle.
+            CheckConstraint("status = 'pending'"),  # Immutable intent; delivery lifecycle lives separately.
         )
         self._install_append_only_ddl()
         self._init_operations(metadata)
+        self._init_notifications(metadata)
         metadata.create_all(self._engine, checkfirst=True)
 
     def _now(self):
@@ -294,7 +298,8 @@ class ExpenseCaseStore(CaseResolution, CaseOperations):
             self._work_state(connection, row, ensure=True)
             event_id = self._append(connection, row, event_key="case_created", event_type="case_created",
                 actor=actor, request_id=request_id, metadata={"decision_hash": decision_hash,
-                    "approval_id": approval_id, "routing_rule_version": plan.routing_rule_version}, created=True)
+                    "approval_id": approval_id, "routing_rule_version": plan.routing_rule_version,
+                    "claim_id": claim_id, "claim_version": claim_version}, created=True)
             connection.execute(self._outbox.insert().values(
                 outbox_id="out_" + uuid.uuid4().hex, case_id=case_id, event_id=event_id,
                 notification_type="case_created" if plan.queue_id else "case_unrouted",
@@ -396,7 +401,7 @@ class ExpenseCaseStore(CaseResolution, CaseOperations):
                 self._events.c.case_id == case_id).order_by(self._events.c.sequence)).mappings()]
 
     def outbox(self, case_id: str, *, actor: CaseActor) -> list[dict[str, Any]]:
-        """Read pending notification intents for authorized processors; never send or mark sent."""
+        """Read original pending intents; delivery progress is deliberately separate."""
         with self._engine.connect() as connection:
             row = connection.execute(select(self._cases).where(self._cases.c.case_id == case_id)).mappings().first()
             self._authorize(connection, row, actor, processing=True)

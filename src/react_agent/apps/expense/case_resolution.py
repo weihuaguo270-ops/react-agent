@@ -109,7 +109,8 @@ class CaseResolution:
                 self._change(connection, row, state, actor=actor, request_id=request_id,
                     event_type="case_started" if operation == "start" else "case_needs_applicant",
                     reason=reason, status="in_progress" if operation == "start" else "needs_applicant",
-                    state_changes={} if operation == "start" else {"assignee_id": None, "lock_expires_at": None})
+                    state_changes={} if operation == "start" else {"assignee_id": None, "lock_expires_at": None},
+                    notify=operation == "wait")
             result = self._case_result(connection, row)
             self._save_case_action(connection, row, state, actor=actor, key=idempotency_key,
                 fingerprint=fingerprint, result=result)
@@ -200,6 +201,7 @@ class CaseResolution:
                     raise ExpenseStoreError("permission_denied", blocked, status_code=403)
             self._change(connection, row, state, actor=actor, request_id=request_id,
                 event_type="case_resolved", reason=reason, status="resolved",
+                notify=True,
                 state_changes={"assignee_id": None, "lock_expires_at": None},
                 metadata={"decision": decision, "approval_id": approval_id, "previous_approval_id": previous_approval,
                     "claim_version": claim_version, "decision_hash": decision_hash,

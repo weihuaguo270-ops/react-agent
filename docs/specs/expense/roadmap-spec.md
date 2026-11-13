@@ -100,4 +100,6 @@ S6 的 H0、H1 及本轮限定 H2 切片已完成，H1 的历史证据保持原�
 
 H3 的本轮存储切片已完成：`resolve_case` 绑定既有 approval_id、Claim/version/hash 和 case 版本，经现有 `resolve_review` 与权限闸门，在同一 SQL 事务保存审批、Claim 终态与 case 审计。无审批只能 complete 人工作业、不改 Claim；旧版本、重复 resolve、过期/拒绝/已消费/错绑凭据失败关闭。`start_case`、`request_applicant`、`resume_case` 明确开始、等待及申请人显式补料恢复；恢复仅回 queued，需重新认领，不重跑业务或重算 SLA。验证发现并修复直接 S5 与 H3 并发时的 SQLite 延迟事务缺口；PostgreSQL 统一 Claim→case→review 锁顺序。当前证据见 [H3 验证记录](evidence/h3-case-resolution.md)，不改写 H1/H2 历史结果。
 
-S6 仍为 in_progress。所有 case 能力仍是存储接口，未接 HTTP/现有 `route_review` 自动建单；旧 S5 自由文本 reason 不在本轮重写，未来可信适配必须保持 Decision 指纹一致。H4 通知发送继续后置；只有既有合法 Expense 审批才能改变 Claim 批准结果，关工单不等于批准报销。保持 S4–S5 的 Claim/审批 SQL 事实来源，交付线、Go 后端、UI 和 `react_loop` 继续冻结。S8 的 held-out/golden、真实业务接入和生产 SLA 仍只作为后续验收边界，不从本轮契约测试推断。
+2026-11-13 限定 H4 补齐已有 pending outbox 的有界 worker、持久化租约、指数退避重试与可替换本地 adapter。本地回执按 outbox_id 去重，返回 delivery_id/status/error；accepted 不表示用户已读或真实渠道送达。认领、补料请求、SLA 提醒/违约和结案原子写入通知意图；worker 仅追加通知审计和投递状态，不改 Claim/审批结果。队列摘要、非终态待处理量、扫描记录的 SLA breach 和按 distinct Claim/version 定义的人工接管率可从审计导出重建。SQLite/PostgreSQL 合同和实际数据库重启 smoke 已通过，见 [限定 H4 验证记录](evidence/h4-local-notifications.md)。
+
+S6 仍为 in_progress。case 能力与本地 worker 仍是可信存储/应用调用，未接 HTTP/现有 `route_review` 自动建单；旧 S5 自由文本 reason 不在本轮重写，未来可信适配必须保持 Decision 指纹一致。真实邮件/IM、后台调度和 S7 表单/运营 UI 继续后置；只有既有合法 Expense 审批才能改变 Claim 批准结果，通知成功和关工单均不等于批准报销。保持 S4–S5 的 Claim/审批 SQL 事实来源，交付线、Go 后端、UI 和 `react_loop` 继续冻结。S8 的 held-out/golden、真实业务接入和生产 SLA 仍只作为后续验收边界，不从本轮契约测试推断。
