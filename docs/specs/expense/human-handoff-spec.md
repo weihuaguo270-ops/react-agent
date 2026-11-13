@@ -480,16 +480,34 @@ H2 是可部署原型的存储能力，不代表自动建单、定时调度、�
 
 恢复只重新排队，之后必须重新认领、开始处理和显式结案；不运行决策 Workflow、不修改 Claim 业务状态、不自动审批。转派、认领、扫描、关单均不能把 needs_applicant 隐式恢复；扫描继续报告 invalid_case_transition，不写等待工单。已过期的 SLA 在显式恢复后才由下一次显式扫描按原有规则处理。
 
-当前验收与限制见 [H3 验证记录](evidence/h3-case-resolution.md)。S6 仍为 in_progress，H4、HTTP/自动建单和界面未接入，不宣称生产 SLA。
+H3 验收见 [H3 验证记录](evidence/h3-case-resolution.md)，限定 H4 见下文与 [H4 验证记录](evidence/h4-local-notifications.md)。S6 仍为 in_progress，HTTP/自动建单和界面未接入，不宣称生产 SLA。
 
 ### H4：通知与运营视图
 
-- 实现 outbox worker 和重试策略；
-- 增加队列摘要、待处理量、SLA breach 和人工接管率指标；
-- 接入一个可替换的本地通知 adapter；
-- UI 展示申请人的状态、审批意见和时间线。
+- 本轮限定为持久化 outbox worker、重试、可替换的本地通知 adapter，以及可从审计重建的指标；HTTP、自动建单、真实邮件/IM 和 S7 UI 不在范围内。
+- 原始 pending 意图保留不改写；新增投递状态表管理 processing lease、attempt、retry_wait / accepted。每次领取、过期恢复和结果追加到不可变 case event；领取和结果分别提交，adapter 调用不持有业务事务。仅受信 finance_admin 可运行 worker 和导出全局指标审计。
+- 重试采用有上限的指数退避时间、不自动丢弃意图；崩溃后的租约到期可重领。outbox_id 是稳定 adapter 幂等键。数据库结果提交前崩溃可能重复调用，语义为至少一次；本地 adapter 用唯一键保存持久化本地回执并去重，不声称跨外部系统恰好一次。
+- adapter 必须返回 delivery_id（失败时可空）、accepted / failed 状态与机器错误码。accepted 只表示本地 adapter 接受，不表示用户已读、真实通知、审批成功或 SLA 保障。异常只保存脱敏错误码，不保存异常正文。
+- 复用 case_created、case_claimed→case_assigned、case_needs_applicant→needs_applicant、sla_*_warning→sla_warning、sla_*_breached→sla_breached、case_resolved 意图；既有转派/升级/unrouted 意图继续保留。收件目标绑定来源事件：队列、认领人、申请人，结案同时包含业务观察队列；不读取当前认领人替换历史收件目标。
+- scan_sla 可显式设置 warning_before_seconds（默认 0，关闭提前提醒），只在截止前窗口记录每类一次 warning 与意图；重复扫描不重复。截止时间、审批和 needs_applicant 恢复规则不变。
+- 指标只读审计事件：队列按最新业务事件归属，待处理量为非终态 case 数（含 needs_applicant / unrouted），SLA breach 为已扫描记录的 distinct case/类型，不能推断尚未扫描的超时。人工接管率分子为有 case_created 的 distinct Claim/version，分母为有 claim_submitted 的 distinct Claim/version；多个 reason 不重复计数。旧审计缺少 Claim 关联或分子缺失提交证据时返回 unavailable，不猜测成功率。通知审计不改业务指标。
 
-退出标准：通知失败不丢业务事件；队列和 SLA 指标可由审计事件重建；UI 不将通知成功显示为审批成功。
+退出标准：通知失败/重试/崩溃恢复不丢业务事件、不改审批；并发领取与稳定幂等键可验证；队列、SLA 和人工接管率可由导出的审计重建。该限定切片不代表整个 S6 或 UI 完成。
+
+本地调用入口（可信应用调用，不接受客户端自报角色）：
+
+```python
+from react_agent.apps.expense.notifications import LocalNotificationAdapter, OutboxWorker
+
+# cases 为既有 ExpenseCaseStore；maintenance_actor 来自可信身份上下文。
+worker = OutboxWorker(cases, LocalNotificationAdapter(cases), actor=maintenance_actor)
+worker.run_once(limit=100)  # 有界调用；无自动调度、HTTP 或外部网络通知。
+audit = cases.metrics_audit(actor=maintenance_actor)
+metrics = cases.metrics(actor=maintenance_actor)
+# rebuild_metrics(audit) 可独立离线重建同一指标，无需查询 case/work/decision 表。
+```
+
+`outbox()` 返回原始 pending 意图；`delivery_status()` 单独返回投递进度。新增两张 H4 表可附加到现有 H1–H3 schema，不删除旧意图。已有 pending 意图可被消费，历史上未建 outbox 的动作不回填、不改写旧审计。失败无限保留供重试，退避默认 5 秒起、最长 3600 秒；没有后台常驻调度、保留期限或生产吞吐承诺。租约与时间依赖调用方受信时钟，adapter 应有有限执行时间，租约过期的旧结果不能覆盖新结果。
 
 ## 15. 文件级实施清单
 
@@ -518,9 +536,9 @@ H2 是可部署原型的存储能力，不代表自动建单、定时调度、�
 - 无合法审批绑定时工单不能把 claim 写成 `approved`；
 - 申请人、队列成员和管理员看到的事件范围符合权限边界。
 
-在 H4 完成并有独立验收证据前，对外只能描述为：
+本轮限定 H4 的对外描述为：
 
-> Expense 支持结构化决策、人工审批状态和可审计的人工接管原型；内置工单分派、通知、SLA 和生产运营队列尚未完成。
+> Expense 支持可审计的工单存储、认领与既有审批衔接，新增可重试的本地通知回执和审计重建指标；HTTP/自动建单、真实邮件/IM、界面和生产运营保障尚未接入。
 
 不得使用“自动分派已上线”“已通知审批人”“SLA 已保障”或“自动报销已完成”等表述，除非对应外部系统和运行证据已经接入并验证。
 
