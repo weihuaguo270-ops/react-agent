@@ -29,7 +29,7 @@
 | S5 审批闭环 | complete | `route_review` / `resolve_review` 已接入同一 SQL store；审批绑定 Claim 版本与 decision hash，支持 approve/reject/escalate、审计事件、重启恢复和幂等重放；不包含 S6 人工接管队列或 S7 UI |
 | S6 人工接管 | complete | H0–H3 存储/审批绑定、[限定 H4 本地通知](evidence/h4-local-notifications.md)与[S6 HTTP handoff 验收](evidence/s6-http-handoff.md)通过；受控 reason 自动建单，HTTP 认领/升级/resolve 绑定合法审批与版本/hash；旧自由文本 reason blocked。真实邮件/IM、常驻调度仍冻结，S7 另行推进 |
 | S7 表单 UI 与运营视图 | complete | 第一刀 [申请人表单](evidence/s7-claim-form.md) 与第二刀 [运营视图](evidence/s7-ops-views.md)：`/expense` 含同一单 case 时间线；`/expense/ops` 待审列表与审批台；浏览器 smoke 覆盖时间线、待审、并发认领和绑定审批 resolve。真实邮件/IM、常驻调度与 S8 仍冻结 |
-| S8 验收与可选模型 | in_progress | 第一刀 [smoke 汇总](evidence/s8-acceptance-aggregate.md) 为 `hold`；第二刀 [扩展 candidate](evidence/s8-candidate-eval.md) 已复跑；第三刀 [PostgreSQL 物理重启](evidence/s8-postgres-restart.md) 在现有项目容器复跑 Claim/case 均通过；JEV 未做，S8 未 complete、不可发布 |
+| S8 验收与可选模型 | complete | 第四刀 [最终汇总](evidence/s8-final-acceptance.md)：前三刀必需项均有本阶段复跑证据，S8 标为 **原型验收 complete**；`release_ready=false`，**不是生产可发布**。JEV / 真实邮件 IM / 常驻调度 / 交付线 / Go / `react_loop` 仍跳过冻结 |
 
 S2 candidate 结果：dev 41 案 39 通过、2 个采购验证 known gap（故 dev 命令为非零）；golden 12/12；held_out 16/16。held_out manifest hash 为 `f8801e86298c59260b8d510df9c965f953bcbc5430672fefdbb50b523457da36`。这些是离线候选规则/契约结果，不代表 Workflow、数据库、审批、人工作业或生产能力。
 
@@ -53,7 +53,7 @@ S2 candidate 结果：dev 41 案 39 通过、2 个采购验证 known gap（故 d
 | S5：审批闭环 | 将 `route_review` / `resolve_review` 接到 S4 SQL store；保存 pending review、resolution、审批状态和审计；Claim 版本与 decision hash 必须匹配，审批决议不绕过权限闸门 | Form §4–8、§11、§12 P2；Decision §6.3 | S4 | SQLite 合同、HTTP lifecycle 和 PostgreSQL 重启 smoke 覆盖 approve/reject/escalate、错误版本/hash、重复决议和审计；S5 不包含 S6 case/队列与 S7 UI | complete |
 | S6：人工接管 | 按 H0 reason/routing 契约、H1 case/event/outbox、H2 分派认领/SLA、H3 resolve 与审批绑定执行；扩展 handoff smoke；工单关闭不等于 Claim 批准 | Handoff §5–14；Form 审批入口章节 | S5 | 重复 handoff 去重；case 状态/事件追加；并发认领和升级可验证；handoff smoke 证明 resolve 绑定合法 approval/version/hash 且不会绕过审批 | complete |
 | S7：表单 UI 与运营视图 | 先交付新建、草稿、编辑、提交、状态和审批结果主路径，再接入 case 时间线、待审列表和状态刷新；建立浏览器 UI smoke；状态文案区分审批、工单关闭和付款 | Form §3、§8、§12 P3；Handoff 运营视图章节 | S4、S5；case 视图依赖 S6 | 浏览器 smoke 完成“新建→保存→编辑→提交→待审→审批结果”；重复提交、网络失败、过期版本、越权状态有处理；无付款成功误导 | complete |
-| S8：验收与可选模型 | 按单测→dev→golden→held_out→HTTP/UI smoke→仓库回归执行；汇总分阶段 smoke 为发布报告；比较 S1 逐案证据；之后才可评估 JEV 类版本化候选模型 | Decision §8、§10.4–10.6 P5；Form §12 P4；Handoff 各阶段退出标准 | S3–S7 | 规则/审批/审计/人工作业端到端门禁通过；HTTP/UI smoke 与分阶段 smoke 全部通过并保留报告、版本、fixture hash、配置和失败日志；held_out 独立且不调参；候选模型可回退且不改变已冻结规则结果 | in_progress |
+| S8：验收与可选模型 | 按单测→dev→golden→held_out→HTTP/UI smoke→仓库回归执行；汇总分阶段 smoke 为发布报告；比较 S1 逐案证据；之后才可评估 JEV 类版本化候选模型 | Decision §8、§10.4–10.6 P5；Form §12 P4；Handoff 各阶段退出标准 | S3–S7 | 规则/审批/审计/人工作业端到端门禁通过；HTTP/UI smoke 与分阶段 smoke 全部通过并保留报告、版本、fixture hash、配置和失败日志；held_out 独立且不调参；候选模型可回退且不改变已冻结规则结果 | complete（原型验收；非生产发布） |
 
 ### 3.1 分阶段 Expense smoke 任务与验收成果
 
@@ -112,6 +112,8 @@ H3 的本轮存储切片已完成：`resolve_case` 绑定既有 approval_id、Cl
 
 2026-11-14 S8 第二刀在当前 HEAD 复跑扩展 candidate（入口 `run_expense_candidate_eval.py`；`held_out` 带 `--allow-held-out`），报告见 [S8 candidate 验收](evidence/s8-candidate-eval.md)。本批次为 dev 41/41、golden 12/12、held_out 16/16（exit 0，无 `known_gap`）；held_out manifest hash 仍为 `f8801e86298c59260b8d510df9c965f953bcbc5430672fefdbb50b523457da36`。不得用 S1 八案或 S3 历史 41/12/16 代替本批次。即使全过，S8 仍为 in_progress、**不可发布**。
 
-2026-11-14 S8 第三刀复跑既有 PostgreSQL 物理重启 smoke，报告见 [S8 Postgres 重启](evidence/s8-postgres-restart.md)。复用已核实的 `react-agent-postgres-1`，不新建容器；Claim 与 case 均为 prepare → 外部重启 → finish，case 使用隔离 schema 并在结束后清零；项目容器恢复原先停止状态。即使全过，S8 仍为 in_progress、**不可发布**；JEV、真实邮件/IM、常驻调度、交付线、Go 与 `react_loop` 继续冻结。关工单或本地通知成功仍不等于批准报销。
+2026-11-14 S8 第三刀复跑既有 PostgreSQL 物理重启 smoke，报告见 [S8 Postgres 重启](evidence/s8-postgres-restart.md)。复用已核实的 `react-agent-postgres-1`，不新建容器；Claim 与 case 均为 prepare → 外部重启 → finish，case 使用隔离 schema 并在结束后清零；项目容器恢复原先停止状态。
 
-本轮不开展真实邮件/IM、后台常驻调度、多维路由或 §9.2 连续无人认领轮次扩展。保持 S4–S5 的 SQL 事实来源；通知成功和关工单均不等于批准报销。交付线、Go 重写和 react_loop 继续冻结；生产 SLA 保持后续验收边界。
+2026-11-14 S8 第四刀不再重跑，只汇总前三刀证据，见 [S8 最终汇总](evidence/s8-final-acceptance.md)。必需项均有本阶段复跑证据，跳过项（JEV、真实邮件/IM、常驻调度、交付线、Go、`react_loop`）仍记为跳过。**S8 标为 complete（原型验收完成）**；**不是可以发布到生产**。关工单或本地通知成功仍不等于批准报销。
+
+本轮不开展真实邮件/IM、后台常驻调度、多维路由或 §9.2 连续无人认领轮次扩展。保持 S4–S5 的 SQL 事实来源；通知成功和关工单均不等于批准报销。交付线、Go 重写和 react_loop 继续冻结；生产 SLA 与可选 JEV 评估保持后续边界。
