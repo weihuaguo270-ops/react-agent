@@ -41,7 +41,7 @@ python demos/demo_expense_workflow.py
 python scripts/eval/acceptance/run_expense_business_eval.py --split dev
 ```
 
-独立申请人表单与运营台由 FastAPI 提供：配置现有 `REACT_AGENT_DATABASE_URL`（处理人另配 `REACT_AGENT_EXPENSE_CASE_ACTORS_FILE`）后运行 `react-agent-api --host 127.0.0.1 --port 8765`。浏览器打开 `http://127.0.0.1:8765/expense` 可保存草稿、提交、刷新审批结果与同一单工单时间线；打开 `/expense/ops` 可查看有权待审队列并认领/转派/绑定审批结案。S7 已完成，证据见 [第一刀](docs/specs/expense/evidence/s7-claim-form.md) 与 [运营视图](docs/specs/expense/evidence/s7-ops-views.md)。
+独立申请人表单与运营台由 FastAPI 提供：配置现有 `REACT_AGENT_DATABASE_URL`（处理人另配 `REACT_AGENT_EXPENSE_CASE_ACTORS_FILE`）后运行 `react-agent-api --host 127.0.0.1 --port 8765`。浏览器打开 `http://127.0.0.1:8765/expense` 可保存草稿、提交、刷新审批结果与同一单工单时间线；打开 `/expense/ops` 可查看有权待审队列并认领/转派/绑定审批结案。S7 已完成；S8 第一刀仅汇总可复跑 smoke 且结果为 hold，不可发布，见 [S8 汇总](docs/specs/expense/evidence/s8-acceptance-aggregate.md)。
 
 两条场景属于同一员工工作助手，不是两个并列产品。底层 `react_loop`、`agent_runner`、ToolGuard、Harness 和服务入口由两个场景复用。
 
