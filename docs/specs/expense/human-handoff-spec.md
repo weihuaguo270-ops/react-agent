@@ -34,7 +34,7 @@ H0 契约实现为 `src/react_agent/apps/expense/handoff.py`，受控模拟配�
 
 - 将旧 S5 自由文本 reason 自动转换为受控 reason；旧路径明确 blocked，不重写 Decision 指纹；
 - 根据业务类型、组织或金额进行多维自动分派；v1 只按受控 reason 精确匹配；
-- 提供通用 Agent 人工接管或 S7 队列/审批台界面（独立申请人表单见 [S7 第一刀](evidence/s7-claim-form.md)）；
+- 提供通用 Agent 人工接管以外的生产运营系统（S7 静态运营视图见 [运营视图证据](evidence/s7-ops-views.md)）；
 - 发送站内、邮件或消息通知；
 - 提供定时 SLA 调度器、真实超时通知或生产 SLA 保障；
 - 自动恢复等待补料的业务处理；必须由申请人显式 resume，然后重新认领。
@@ -554,9 +554,9 @@ metrics = cases.metrics(actor=maintenance_actor)
 - 无合法审批绑定时工单不能把 claim 写成 `approved`；
 - 申请人、队列成员和管理员看到的事件范围符合权限边界。
 
-当前 S6 的对外描述为：
+当前 S6–S7 的对外描述为：
 
-> 企业内部工作助手的报销场景支持受控 reason 自动建单、HTTP 认领/升级和绑定已有审批的人工处理；可重试本地通知回执与审计指标提供工程验证。旧自由文本 reason 仍 blocked；真实邮件/IM、常驻调度、界面和生产运营保障尚未接入。
+> 企业内部工作助手的报销场景支持受控 reason 自动建单、HTTP 认领/升级和绑定已有审批的人工处理，以及静态待审列表/审批台与申请人 case 时间线；可重试本地通知回执与审计指标提供工程验证。旧自由文本 reason 仍 blocked；真实邮件/IM、常驻调度和生产运营保障尚未接入。
 
 不得使用“自动分派已上线”“已通知审批人”“SLA 已保障”或“自动报销已完成”等表述，除非对应外部系统和运行证据已经接入并验证。
 
@@ -564,4 +564,5 @@ metrics = cases.metrics(actor=maintenance_actor)
 
 | 日期 | 说明 |
 |------|------|
+| 2026-11-14 | S7 运营视图接通静态 `/expense/ops` 与申请人 case 时间线；真实邮件/IM 与常驻调度仍冻结 |
 | 2026-10-11 | S0 契约统一：人工接管作为表单父 Workflow 的子流程；统一 escalated、approval 绑定、决策到 reason code 映射和 case 幂等键 |

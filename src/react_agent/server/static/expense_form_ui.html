@@ -61,6 +61,11 @@ fieldset{border:0;padding:0;margin:0;min-width:0}legend{font-weight:600;margin-b
 <aside><section class="card" aria-labelledby="result-title"><h2 id="result-title">审批结果</h2><span id="claim-status" class="badge">未创建</span>
 <dl><dt>决策建议（不等于批准）</dt><dd id="decision">尚无决策</dd><dt>审批记录</dt><dd id="resolution">尚无审批结果</dd></dl>
 <p class="boundary">待审、已批准、已拒绝以报销单状态为准。工单关闭或本地通知成功，均不等于批准报销。</p></section>
+<section class="card" aria-labelledby="case-title"><h2 id="case-title">同一单工单时间线</h2>
+<span id="case-status" class="badge">暂无工单</span>
+<p id="case-meta" class="muted">提交进入人工复核后，才会出现同一单的工单状态。</p>
+<small>工单状态与审批结果分开展示；关工单不等于批准报销，也不表示付款或入账完成。</small>
+<ol id="case-events"><li>暂无关联工单</li></ol></section>
 <section class="card" aria-labelledby="events-title"><h2 id="events-title">单据操作记录</h2><small>仅展示这张单据的创建、修改、提交与审批记录。</small><ol id="events"><li>暂无记录</li></ol></section></aside></div>
 </main>
 <script>
@@ -69,8 +74,10 @@ const $ = id => document.getElementById(id);
 const common = ["category","amount","currency","occurred_on","merchant","description","business_purpose","has_receipt","pre_approved","receipt_refs"];
 const categoryFields = {meal:["expense_type","participants"],transport:["transport_mode","route_scope","seat_class"],lodging:["city_code","city_tier","check_in","check_out","nights"],office_purchase:["purchase_order_id","item_type"]};
 const statusLabels = {draft:"草稿",needs_correction:"待修正",submitted:"已提交",validating:"校验中",under_review:"待审",escalated:"待审 · 已升级",approved:"已批准",rejected:"已拒绝",cancelled:"已取消"};
+const caseStatusLabels = {queued:"工单排队中",assigned:"工单已认领",in_progress:"工单处理中",needs_applicant:"待申请人补料",escalated:"工单已升级",unrouted:"工单未路由",resolved:"工单已关闭"};
 const decisionLabels = {approve_manager:"建议主管审核",approve_finance:"建议财务审核",approve_director:"建议负责人审核",needs_review:"需要人工复核",escalated:"需要升级复核",reject_no_receipt:"缺少凭证",reject_over_limit:"超出政策额度",reject_missing_purchase_order:"缺少采购单",reject_policy:"不符合政策"};
 const eventLabels = {claim_created:"创建草稿",claim_updated:"更新草稿",claim_submitted:"提交审核",review_routed:"进入复核",review_resolved:"记录审批结果"};
+const caseEventLabels = {case_created:"创建工单",case_claimed:"认领工单",case_released:"释放认领",case_started:"开始处理",case_transferred:"转派队列",case_escalated:"升级队列",case_needs_applicant:"请求补料",case_resumed:"补料回队",case_resolved:"关闭工单",case_unrouted:"进入未路由",claim_lock_expired:"认领锁过期",evidence_recorded:"记录证据引用"};
 let current = null, saved = "", busy = false, stale = false, pending = null;
 function message(text, error=false){$("feedback").textContent=text;$("feedback").dataset.error=String(error);}
 function listValue(id){return $(id).value.split(/\n/).map(s=>s.trim()).filter(Boolean);}
@@ -95,10 +102,15 @@ function controls(){
   ["new","load","lookup","actor","token"].forEach(id=>$(id).disabled=blocked);
   $("retry").hidden=!pending||busy;
 }
+function clearCase(){
+  $("case-status").textContent="暂无工单";$("case-status").dataset.status="";
+  $("case-meta").textContent="提交进入人工复核后，才会出现同一单的工单状态。";
+  $("case-events").replaceChildren(Object.assign(document.createElement("li"),{textContent:"暂无关联工单"}));
+}
 function reset(){
   current=null;saved="";stale=false;$("claim-form").reset();categories();
   $("claim-meta").textContent="尚未保存 · 无单据编号";$("claim-status").textContent="未创建";$("claim-status").dataset.status="";
-  $("decision").textContent="尚无决策";$("resolution").textContent="尚无审批结果";$("events").replaceChildren();controls();
+  $("decision").textContent="尚无决策";$("resolution").textContent="尚无审批结果";$("events").replaceChildren();clearCase();controls();
 }
 function show(data){
   current=data;stale=false;
@@ -137,6 +149,30 @@ async function events(){
     detail.textContent=`版本 ${e.claim_version} · ${e.actor_id} · ${e.created_at}\n${e.metadata?.comment||""}`;li.append(detail);return li;
   }));
 }
+async function caseTimeline(){
+  clearCase();
+  if(!current) return;
+  const listed=await request("/v1/expense/cases");
+  const matched=(listed.cases||[]).filter(c=>c.claim_id===current.claim_id)
+    .sort((a,b)=>a.claim_version-b.claim_version||String(a.created_at).localeCompare(String(b.created_at)));
+  const active=matched.filter(c=>c.claim_version===current.version).at(-1)||matched.at(-1);
+  if(!active) return;
+  $("case-status").textContent=caseStatusLabels[active.status]||("工单状态 · "+active.status);
+  $("case-status").dataset.status=active.status;
+  $("case-meta").textContent=`${active.case_id} · 队列 ${active.queue_id||"无"} · case 版本 ${active.case_version}`+(active.status==="resolved"?" · 工单已关闭（不等于批准报销）":"");
+  const timeline=await request(`/v1/expense/cases/${encodeURIComponent(active.case_id)}/events`);
+  const items=(timeline.events||[]).map(e=>{
+    const li=document.createElement("li"), detail=document.createElement("small");
+    li.textContent=caseEventLabels[e.event_type]||e.event_type;
+    detail.textContent=`${e.from_status||"—"} → ${e.to_status||"—"} · ${e.actor_id} · ${e.created_at}\n${e.metadata?.reason||""}`;
+    li.append(detail);return li;
+  });
+  $("case-events").replaceChildren(...(items.length?items:[Object.assign(document.createElement("li"),{textContent:"暂无工单事件"})]));
+}
+async function refreshSidePanels(){
+  try{await events();}catch(e){if(e.status===404) throw e; message("单据操作已成功，操作记录暂不可用；请刷新状态重试查询。",true);}
+  try{await caseTimeline();}catch(e){if(e.status===404) throw e; message("单据状态已刷新，工单时间线暂不可用；请刷新状态重试查询。",true);}
+}
 function handleError(e){
   if(e.status===404){reset();message("not_found：未找到可访问的单据。",true);}
   else if(e.status===409){stale=true;message(e.message+"\n请刷新状态核对最新版本后再操作。当前输入尚未覆盖服务端。",true);}
@@ -147,9 +183,9 @@ async function execute(operation){
   try{
     const result=await request(operation.path,operation.method,operation.body,operation.key);
     pending=null;show(result);message(operation.method==="POST"&&operation.path.endsWith("/submit")?"已提交，请以当前审批状态为准。":"草稿已保存。");
-    // The write has succeeded. A separate audit read failure must never turn
+    // The write has succeeded. A separate audit/case read failure must never turn
     // the next click into another write or erase the saved Claim.
-    try{await events();}catch(e){if(e.status===404) handleError(e);else message("单据操作已成功，操作记录暂不可用；请刷新状态重试查询。",true);}
+    try{await refreshSidePanels();}catch(e){if(e.status===404) handleError(e);}
   }catch(e){if(e.status) pending=null;else pending=operation;handleError(e);}
   finally{busy=false;controls();}
 }
@@ -170,7 +206,7 @@ async function load(id){
   if(!id.trim()){message("请输入单据编号。",true);return;}
   if(current&&editable()&&JSON.stringify(payload())!==saved&&!confirm("读取最新单据会替换未保存的修改，继续？")) return;
   busy=true;controls();
-  try{show(await request(`/v1/expense/claims/${encodeURIComponent(id.trim())}`));$("events").replaceChildren();await events();message("已读取最新单据状态。");}
+  try{show(await request(`/v1/expense/claims/${encodeURIComponent(id.trim())}`));$("events").replaceChildren();clearCase();await refreshSidePanels();message("已读取最新单据与同一单工单状态。");}
   catch(e){if(!e.status){stale=true;message("网络异常，无法确认最新状态；请刷新重试。",true);}else handleError(e);}
   finally{busy=false;controls();}
 }

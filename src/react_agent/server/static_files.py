@@ -16,3 +16,8 @@ def docs_troubleshoot_ui_html() -> bytes:
 def expense_form_ui_html() -> bytes:
     """Return the standalone applicant form (no embedded business data)."""
     return resources.files("react_agent.server.static").joinpath("expense_form_ui.html").read_bytes()
+
+
+def expense_ops_ui_html() -> bytes:
+    """Return the queue pending list and approval desk shell (no embedded business data)."""
+    return resources.files("react_agent.server.static").joinpath("expense_ops_ui.html").read_bytes()

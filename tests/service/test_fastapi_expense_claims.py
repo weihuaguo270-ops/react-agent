@@ -101,7 +101,7 @@ def test_expense_claim_http_lifecycle(tmp_path, monkeypatch):
 def test_expense_form_shell_does_not_open_claim_apis(monkeypatch):
     monkeypatch.setenv("REACT_AGENT_AUTH_TOKEN", "form-shell-test-token")
     from react_agent.server.fastapi_app import create_app
-    from react_agent.server.static_files import expense_form_ui_html
+    from react_agent.server.static_files import expense_form_ui_html, expense_ops_ui_html
 
     async def go():
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app(initialize_runtime=False)), base_url="http://127.0.0.1") as client:
@@ -109,8 +109,12 @@ def test_expense_form_shell_does_not_open_claim_apis(monkeypatch):
             assert shell.status_code == 200 and shell.content == expense_form_ui_html()
             assert shell.headers["cache-control"] == "no-store"
             assert "text/html" in shell.headers["content-type"]
-            for method, path in (("GET", "/v1/expense/claims/hidden"), ("POST", "/v1/expense/claims"), ("GET", "/v1/expense/cases"), ("GET", "/ui"), ("POST", "/expense")):
+            ops = await client.get("/expense/ops")
+            assert ops.status_code == 200 and ops.content == expense_ops_ui_html()
+            assert ops.headers["cache-control"] == "no-store"
+            for method, path in (("GET", "/v1/expense/claims/hidden"), ("POST", "/v1/expense/claims"), ("GET", "/v1/expense/cases"), ("GET", "/ui"), ("POST", "/expense"), ("POST", "/expense/ops")):
                 assert (await client.request(method, path)).status_code == 401
             assert (await client.get("/expense", headers={"Host": "evil.example"})).status_code == 421
+            assert (await client.get("/expense/ops", headers={"Host": "evil.example"})).status_code == 421
 
     asyncio.run(go())
