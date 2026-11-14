@@ -3,7 +3,7 @@
 本页记录企业内部工作助手（work-assistant）两个办公场景的工程成熟度。它是可部署、可评测的原型清单，不是生产 SLA 或多租户平台承诺。
 
 主场景：规范咨询（docs_troubleshoot）；第二场景：报销办理（expense）。
-独立计划：受控变更交付（change-delivery），见 docs/change-delivery-plan.md。
+独立仓：受控变更交付（change-delivery）https://github.com/weihuaguo270-ops/change-delivery ；本仓残页 docs/change-delivery-plan.md。
 非目标：生产 SaaS、多租户平台、长期线上 SLA、自动根因诊断、云 APM。
 
 ## 能力状态

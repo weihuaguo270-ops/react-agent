@@ -4,7 +4,7 @@
 
 对外产品名是企业内部工作助手（work-assistant），主场景为规范咨询（docs_troubleshoot），第二场景为报销办理（expense）。两者属于同一员工工作助手，不是两个并列产品。
 
-原 GitHub 交付线已降为规划中的独立产品受控变更交付（change-delivery）；当前只保留文档计划，不拆仓、不迁移代码。trace-debugger 是轨迹失败雷达与 CI 钩子，llm-eval-engine 是发版前自检并输出 pass/review/hold。
+受控变更交付（change-delivery）已独立立项：https://github.com/weihuaguo270-ops/change-delivery ；本仓只保留文档残页与历史附录，不迁移代码。trace-debugger 是轨迹失败雷达与 CI 钩子，llm-eval-engine 是发版前自检并输出 pass/review/hold。
 
 对外只能表述为可部署、可评测的工程原型。证据包含合成任务与 external_real_sandbox；不得写成生产 SaaS、多租户平台或长期线上 SLA。
 

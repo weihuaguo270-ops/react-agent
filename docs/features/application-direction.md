@@ -33,11 +33,11 @@ python demos/demo_docs_troubleshoot.py
 - 不宣称生产多租户、长期线上 SLA、自动根因诊断或云 APM。
 - 不把离线验收数据、κ、模型榜或沙箱成功率写成生产业务指标。
 
-## 规划中的独立产品
+## 独立产品（已立项）
 
-原 GitHub 交付线命名为 **受控变更交付（change-delivery）**。它会读取 Issue、影子执行、隔离测试，在人工审批后创建 Draft PR。当前阶段只在文档中独立规划，代码仍留在本仓，不与规范咨询、报销办理并列为主产品场景。
+原 GitHub 交付线命名为 **受控变更交付（change-delivery）**。它会读取 Issue、影子执行、隔离测试，在人工审批（钉死 `plan_sha256`）后创建 Draft PR。已独立立项于 https://github.com/weihuaguo270-ops/change-delivery ；不与规范咨询、报销办理并列为本仓主产品场景，**不从本仓迁代码**。
 
-计划页：docs/change-delivery-plan.md。现有实现说明：docs/features/github-delivery-workflow.md。
+本仓计划残页：docs/change-delivery-plan.md。历史实现附录：docs/features/github-delivery-workflow.md。
 
 ## 跨仓质量配件
 
@@ -59,7 +59,7 @@ python demos/demo_docs_troubleshoot.py
 | 中文名 | 英文工作名 | 当前状态 |
 |---|---|---|
 | 企业内部工作助手 | work-assistant | 主产品，规范咨询 + 报销办理 |
-| 受控变更交付 | change-delivery | 规划中的独立产品，暂不拆仓 |
+| 受控变更交付 | change-delivery | 已独立立项（change-delivery 仓）；本仓不迁码 |
 | 轨迹失败雷达与 CI 钩子 | trace-debugger | 独立质量配件 |
 | 发版前自检 | llm-eval-engine | 独立质量配件 |
 
