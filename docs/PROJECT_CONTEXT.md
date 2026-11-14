@@ -22,4 +22,4 @@
   → llm-eval-engine：过程/业务证据与 pass/review/hold
 ~~~
 
-change-delivery 是规划中的独立产品；当前只保留文档边界，不迁移代码。
+change-delivery 已独立立项（https://github.com/weihuaguo270-ops/change-delivery）；本仓只保留文档边界与历史附录，不迁移代码。

@@ -12,7 +12,7 @@ react-agent 是企业内部工作助手（work-assistant）的工程原型，面
 |---|---|
 | 规范咨询 | 已有文档检索、引用校验、拒答策略、现场证据和离线评测入口 |
 | 报销办理 | S0–S8 原型验收已 complete：政策决策、表单/运营台、SQL 持久化 Claim/审批/工单、扩展 candidate held_out/golden、PostgreSQL 物理重启均有本阶段证据；仍不代表生产财务系统或 SLA |
-| 受控变更交付 | 规划中的独立产品；现有 GitHub 流程仍作为技术附录保留 |
+| 受控变更交付 | 已独立立项（change-delivery 仓）；本仓 GitHub 流程仍作技术附录，不迁码 |
 | 轨迹与质量 | Format B、Harness、trace-debugger 失败扫描和 llm-eval-engine 发布前自检已形成跨仓闭环 |
 | 生产成熟度 | 原型验收不等于生产可发布；真实业务接入、付款入账与生产 SLA 仍有缺口，不能宣称生产成熟度 |
 

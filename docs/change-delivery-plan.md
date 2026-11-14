@@ -20,8 +20,8 @@ Issue / 任务单
 ## 复用 react-agent 的能力
 
 - 复用 Agent 循环、ToolGuard、权限判定、轨迹契约、Harness、任务验收和审批接口。
-- 不复制权限、轨迹和审批实现；未来独立产品通过稳定接口或共享包调用。
-- 当前代码仍在 react-agent，本阶段不新建仓库、不迁移实现。
+- 不复制权限、轨迹和审批实现；独立产品通过稳定接口或共享包对齐契约。
+- **已独立立项**：https://github.com/weihuaguo270-ops/change-delivery（P0 过关；P1 口径已冻结）。本仓保留历史实现与附录，**不向新仓迁代码、不搬循环或仓库结构**。
 
 ## Go 后端后置条件
 
@@ -42,4 +42,5 @@ trace-debugger 负责便宜、确定性的失败信号；llm-eval-engine 负责�
 
 ## 当前状态
 
-本页是规划和边界说明。现有 GitHub 交付实现详见 features/github-delivery-workflow.md，沙箱证据仍标记为 external_real_sandbox，不等同生产系统。
+产品范围与阶段以独立仓为准：https://github.com/weihuaguo270-ops/change-delivery/blob/main/docs/SCOPE.md 。  
+本页保留工作助手侧边界说明；现有 GitHub 交付实现详见 features/github-delivery-workflow.md，沙箱证据仍标记为 external_real_sandbox，不等同生产系统，也不等于新仓已交付能力。
