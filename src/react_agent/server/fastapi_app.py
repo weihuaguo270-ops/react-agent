@@ -28,7 +28,7 @@ from react_agent.server.auth import (
 from react_agent.server.chat_router import handle_chat, list_applications, normalize_app
 from react_agent.server.health import liveness_payload, package_version, readiness_payload
 from react_agent.server.http_util import error_response
-from react_agent.server.static_files import docs_troubleshoot_ui_html, expense_form_ui_html
+from react_agent.server.static_files import docs_troubleshoot_ui_html, expense_form_ui_html, expense_ops_ui_html
 from react_agent.server.task_manager import TaskManager, task_manager
 
 
@@ -374,9 +374,9 @@ def create_app(
                 421,
             )
             return JSONResponse(payload, status_code=status)
-        # Only this data-free shell is public, so a normal browser can enter a
-        # Bearer credential. All Claim APIs still use the shared auth guard.
-        public_expense_shell = request.method == "GET" and request.url.path == "/expense"
+        # Only these data-free shells are public, so a normal browser can enter a
+        # Bearer credential. Claim/case APIs still use the shared auth guard.
+        public_expense_shell = request.method == "GET" and request.url.path in {"/expense", "/expense/ops"}
         if not public_expense_shell and not _authorized(request):
             status, payload = error_response(
                 "unauthorized", "missing or invalid credentials", request_id, 401
@@ -423,6 +423,10 @@ def create_app(
     @api.get("/expense", response_class=Response)
     async def expense_ui() -> Response:
         return Response(expense_form_ui_html(), media_type="text/html", headers={"Cache-Control": "no-store"})
+
+    @api.get("/expense/ops", response_class=Response)
+    async def expense_ops_ui() -> Response:
+        return Response(expense_ops_ui_html(), media_type="text/html", headers={"Cache-Control": "no-store"})
 
     @api.get("/health")
     @api.get("/v1/health")

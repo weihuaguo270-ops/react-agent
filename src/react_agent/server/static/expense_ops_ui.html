@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>报销运营台 · 企业内部工作助手</title>
+<style>
+:root{color-scheme:light;--ink:#173332;--muted:#526c68;--line:#d6e2dd;--paper:#fff;--accent:#186457}
+*{box-sizing:border-box}body{margin:0;background:#f2f5f1;color:var(--ink);font:15px/1.6 system-ui,"Microsoft YaHei",sans-serif}
+main{max-width:1180px;margin:auto;padding:32px 24px 64px}header{margin-bottom:26px}h1{font-size:30px;letter-spacing:-.04em;margin:8px 0}h2{font-size:18px;margin:0 0 16px}p{margin:8px 0}.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--accent)}.muted,small{color:var(--muted)}small{display:block}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:18px;min-width:0}.layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.wide{grid-column:1/-1}
+label{display:block;font-size:13px;font-weight:600;min-width:0}input,select,textarea,button{font:inherit}input,select,textarea{display:block;width:100%;min-width:0;margin-top:6px;border:1px solid #aebfb7;border-radius:7px;padding:10px;color:var(--ink);background:#fff}textarea{min-height:72px;resize:vertical}input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #b8d8cb;outline-offset:2px}input:disabled,select:disabled,textarea:disabled,button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}button{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:10px 16px;border-radius:7px;cursor:pointer;font-weight:600}button.secondary{background:#fff;color:var(--accent)}.badge{display:inline-block;padding:5px 12px;border-radius:30px;background:#e5efea;font-weight:700}
+#feedback{padding:12px 16px;border-radius:8px;background:#e7eee8;white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:18px}#feedback[data-error="true"]{background:#fff0e6;color:#853b22}[hidden]{display:none!important}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}th{color:var(--muted);font-weight:600}tr[data-selected="true"]{background:#eaf4f0}button.linkish{background:none;border:0;color:var(--accent);padding:0;font-weight:600;cursor:pointer}
+dl{margin:12px 0}dt{font-size:12px;color:var(--muted);margin-top:10px}dd{margin:2px 0;overflow-wrap:anywhere;white-space:pre-wrap}ol{padding-left:24px;margin:0}li{padding:8px 0;overflow-wrap:anywhere}li small{white-space:pre-wrap}.boundary{border-top:1px solid var(--line);padding-top:16px;font-size:13px}details summary{cursor:pointer;font-weight:600}details .fields{margin-top:16px}
+@media(max-width:860px){main{padding:20px 14px 40px}.layout,.fields{grid-template-columns:minmax(0,1fr)}.card{padding:18px}h1{font-size:26px}.actions button{flex:1 1 130px}}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">WORK ASSISTANT / 报销运营</div><h1>待审队列与审批台</h1>
+<p class="muted">只展示当前身份有权查看的队列与工单。批准/拒绝必须绑定合法审批、版本与 hash；无审批只能结束人工作业。</p>
+<small>可部署工程原型 · 关工单或本地通知成功不等于批准报销 · 不提供付款或入账完成状态</small></header>
+<section class="card" aria-labelledby="identity-title"><details open><summary id="identity-title">连接身份</summary><div class="fields">
+<label>Bearer token<input id="token" type="password" autocomplete="off" placeholder="服务已启用鉴权时填写"></label>
+<label>处理人身份（X-Actor-Id）<input id="actor" autocomplete="off" placeholder="例如 finance-demo" required></label>
+</div><small>角色与队列成员由服务端受信目录构造 CaseActor；页面不能指定处理人或伪造角色。凭据只留在当前页内存。</small></details>
+<div class="actions"><button id="refresh-all" class="secondary" type="button">刷新队列与待审</button>
+<a class="muted" href="/expense" style="align-self:center">返回申请人表单</a></div></section>
+<div id="feedback" role="status" aria-live="polite">填写处理人身份后刷新待审列表。</div>
+<div class="layout">
+<section class="card" aria-labelledby="queues-title"><h2 id="queues-title">有权队列</h2>
+<div id="queues"><p class="muted">尚未加载</p></div>
+<h2 style="margin-top:24px">待审工单</h2>
+<small>列表仅含当前角色可见队列中的工单；越权与不存在统一按 case_not_found 隐藏。</small>
+<div id="cases" style="margin-top:12px;overflow:auto"><p class="muted">尚未加载</p></div></section>
+<section class="card" aria-labelledby="desk-title"><h2 id="desk-title">审批台</h2>
+<p id="case-empty" class="muted">从左侧选择工单后，可认领、释放、转派、升级或提交处理结果。</p>
+<div id="desk" hidden>
+<span id="case-status" class="badge">—</span>
+<p id="case-meta" class="muted"></p>
+<dl>
+<dt>报销单 / 审批绑定</dt><dd id="binding">—</dd>
+<dt>处理人 / 锁</dt><dd id="assignee">—</dd>
+</dl>
+<div class="actions">
+<button id="claim" type="button">认领</button>
+<button id="start" type="button" class="secondary">开始处理</button>
+<button id="release" type="button" class="secondary">释放</button>
+<button id="transfer" type="button" class="secondary">转派</button>
+<button id="escalate" type="button" class="secondary">升级</button>
+</div>
+<div class="fields" style="margin-top:12px">
+<label>操作原因<textarea id="reason" placeholder="释放 / 转派 / 升级 / 结案必填"></textarea></label>
+<label>转派目标队列（受控 queue_id）<input id="target-queue" list="queue-options" autocomplete="off" placeholder="例如 finance_admin"><datalist id="queue-options"></datalist></label>
+</div>
+<h2 style="margin-top:22px">处理结果</h2>
+<small>批准/拒绝会改变报销单终态，必须带合法 approval_id、claim_version 与 decision_hash。选择「仅结束人工作业」时 approval_id 显式为空，不能改 Claim 终态。</small>
+<div class="fields" style="margin-top:12px">
+<label>工单处理决定<select id="decision"><option value="approve">批准报销单（绑定审批）</option><option value="reject">拒绝报销单（绑定审批）</option><option value="complete">仅结束人工作业</option></select></label>
+<label>approval_id<input id="approval-id" autocomplete="off"></label>
+<label>claim_version<input id="claim-version" type="number" min="1" step="1"></label>
+<label>decision_hash<input id="decision-hash" autocomplete="off"></label>
+<label class="wide">结案原因<textarea id="resolve-reason" required></textarea></label>
+</div>
+<div class="actions"><button id="resolve" type="button">提交处理结果</button><button id="reload-case" type="button" class="secondary">刷新本单</button></div>
+<p class="boundary">审批结果与工单关闭文案分开：工单已关闭 ≠ 已批准；本页不展示付款或入账完成。</p>
+<h2 style="margin-top:22px">工单时间线</h2>
+<ol id="case-events"><li>暂无事件</li></ol>
+</div></section>
+</div>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const caseStatusLabels = {queued:"排队待审",assigned:"已认领",in_progress:"处理中",needs_applicant:"待申请人补料",escalated:"已升级",unrouted:"未路由",resolved:"工单已关闭"};
+const caseEventLabels = {case_created:"创建工单",case_claimed:"认领工单",case_released:"释放认领",case_started:"开始处理",case_transferred:"转派队列",case_escalated:"升级队列",case_needs_applicant:"请求补料",case_resumed:"补料回队",case_resolved:"关闭工单",case_unrouted:"进入未路由",claim_lock_expired:"认领锁过期",evidence_recorded:"记录证据引用"};
+let busy = false, selected = null, queues = [];
+function message(text, error=false){$("feedback").textContent=text;$("feedback").dataset.error=String(error);}
+function controls(){
+  ["refresh-all","actor","token","claim","start","release","transfer","escalate","resolve","reload-case","reason","target-queue","decision","approval-id","claim-version","decision-hash","resolve-reason"].forEach(id=>{
+    const el=$(id); if(el) el.disabled=busy;
+  });
+  const open=selected&&!["resolved"].includes(selected.status);
+  ["claim","start","release","transfer","escalate","resolve"].forEach(id=>$(id).disabled=busy||!open);
+}
+async function request(path, method="GET", body, key){
+  const headers={"X-Actor-Id":$("actor").value.trim(),"Accept":"application/json"};
+  if($("token").value.trim()) headers.Authorization="Bearer "+$("token").value.trim();
+  if(body!==undefined) headers["Content-Type"]="application/json";
+  if(key) headers["Idempotency-Key"]=key;
+  const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),15000);
+  try{
+    const response=await fetch(path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal,cache:"no-store"});
+    let data;try{data=await response.json();}catch(e){throw new Error("服务响应无法读取，请重试。");}
+    if(!response.ok){
+      const code=data.error?.code||String(response.status);
+      const err=new Error(code==="case_not_found"?"case_not_found：未找到可访问的工单。":`${code}：${data.error?.message||"请求失败"}`);
+      err.status=response.status;err.code=code;throw err;
+    }
+    return data;
+  }finally{clearTimeout(timeout);}
+}
+function renderQueues(items){
+  queues=items||[];
+  if(!queues.length){$("queues").innerHTML='<p class="muted">当前身份无可见队列（申请人或未登记处理人返回空列表）。</p>';return;}
+  const table=document.createElement("table");
+  table.innerHTML="<thead><tr><th>队列</th><th>待处理</th><th>合计</th></tr></thead>";
+  const body=document.createElement("tbody");
+  for(const q of queues){
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${q.display_name||q.queue_id}<br><small>${q.queue_id}</small></td><td>${q.summary?.pending??0}</td><td>${q.summary?.total_cases??0}</td>`;
+    body.append(tr);
+  }
+  table.append(body);$("queues").replaceChildren(table);
+  const list=$("queue-options"), keep=$("target-queue").value, seen=new Set();
+  list.replaceChildren();
+  for(const q of queues){
+    if(seen.has(q.queue_id)) continue;
+    seen.add(q.queue_id);
+    list.append(new Option(q.display_name||q.queue_id,q.queue_id));
+  }
+  if(selected?.queue_definition?.escalate_to && !seen.has(selected.queue_definition.escalate_to)){
+    list.append(new Option(selected.queue_definition.escalate_to, selected.queue_definition.escalate_to));
+  }
+  $("target-queue").value=keep;
+}
+function renderCases(items){
+  const pending=(items||[]).filter(c=>c.status!=="resolved");
+  if(!pending.length){$("cases").innerHTML='<p class="muted">有权队列中暂无待审工单。</p>';return;}
+  const table=document.createElement("table");
+  table.innerHTML="<thead><tr><th>工单</th><th>状态</th><th>队列</th><th></th></tr></thead>";
+  const body=document.createElement("tbody");
+  for(const c of pending){
+    const tr=document.createElement("tr");
+    if(selected&&selected.case_id===c.case_id) tr.dataset.selected="true";
+    const open=document.createElement("button");
+    open.type="button";open.className="linkish";open.textContent="打开";
+    open.onclick=()=>selectCase(c.case_id);
+    tr.innerHTML=`<td>${c.case_id}<br><small>${c.claim_id} · v${c.claim_version}</small></td><td>${caseStatusLabels[c.status]||c.status}</td><td>${c.queue_id||"—"}</td>`;
+    const td=document.createElement("td");td.append(open);tr.append(td);body.append(tr);
+  }
+  table.append(body);$("cases").replaceChildren(table);
+}
+function fillResolveDefaults(caseData){
+  $("approval-id").value=caseData.approval_id||"";
+  $("claim-version").value=String(caseData.claim_version||"");
+  $("decision-hash").value=caseData.decision_hash||"";
+  if($("decision").value==="complete") $("approval-id").value="";
+}
+function showCase(caseData, events){
+  selected=caseData;
+  $("case-empty").hidden=true;$("desk").hidden=false;
+  $("case-status").textContent=caseStatusLabels[caseData.status]||caseData.status;
+  $("case-status").dataset.status=caseData.status;
+  $("case-meta").textContent=`${caseData.case_id} · case 版本 ${caseData.case_version}`+(caseData.status==="resolved"?" · 工单已关闭（不等于批准报销）":"");
+  $("binding").textContent=`claim ${caseData.claim_id} · 版本 ${caseData.claim_version}\napproval ${caseData.approval_id||"（无审批绑定）"}\nhash ${caseData.decision_hash}`;
+  $("assignee").textContent=caseData.assignee_id?`${caseData.assignee_id}\n锁至 ${caseData.lock_expires_at||"—"}`:"未认领";
+  fillResolveDefaults(caseData);
+  const items=(events||[]).map(e=>{
+    const li=document.createElement("li"), detail=document.createElement("small");
+    li.textContent=caseEventLabels[e.event_type]||e.event_type;
+    detail.textContent=`${e.from_status||"—"} → ${e.to_status||"—"} · ${e.actor_id} · ${e.created_at}\n${e.metadata?.reason||""}`;
+    li.append(detail);return li;
+  });
+  $("case-events").replaceChildren(...(items.length?items:[Object.assign(document.createElement("li"),{textContent:"暂无事件"})]));
+  controls();
+}
+async function selectCase(caseId){
+  if(busy||!$("actor").reportValidity()) return;
+  busy=true;controls();
+  try{
+    const detail=await request(`/v1/expense/cases/${encodeURIComponent(caseId)}`);
+    const timeline=await request(`/v1/expense/cases/${encodeURIComponent(caseId)}/events`);
+    showCase(detail.case, timeline.events);
+    message("已打开工单。审批结果与工单关闭请分别核对。");
+    await refreshLists(false);
+  }catch(e){selected=null;$("desk").hidden=true;$("case-empty").hidden=false;message(e.message||String(e),true);}
+  finally{busy=false;controls();}
+}
+async function refreshLists(announce=true){
+  if(!$("actor").reportValidity()) return;
+  const [queueData, caseData]=await Promise.all([request("/v1/expense/queues"), request("/v1/expense/cases")]);
+  renderQueues(queueData.queues);
+  renderCases(caseData.cases);
+  if(announce) message(`已刷新：可见队列 ${queueData.queues?.length||0}，工单 ${caseData.cases?.length||0}。`);
+}
+async function refreshAll(){
+  if(busy||!$("actor").reportValidity()) return;
+  busy=true;controls();
+  try{
+    await refreshLists(true);
+    if(selected){
+      const detail=await request(`/v1/expense/cases/${encodeURIComponent(selected.case_id)}`);
+      const timeline=await request(`/v1/expense/cases/${encodeURIComponent(selected.case_id)}/events`);
+      showCase(detail.case, timeline.events);
+    }
+  }catch(e){message(e.message||String(e),true);}
+  finally{busy=false;controls();}
+}
+async function loadEvents(caseId){
+  try{
+    return (await request(`/v1/expense/cases/${encodeURIComponent(caseId)}/events`)).events||[];
+  }catch(e){
+    // After transfer/escalate the actor may lose queue visibility; hide like case_not_found.
+    if(e.code==="case_not_found") return null;
+    throw e;
+  }
+}
+async function act(action, extra={}){
+  if(busy||!selected||!$("actor").reportValidity()) return;
+  const reason=$("reason").value.trim();
+  if(["release","transfer","escalate"].includes(action)&&!reason){message("该操作需要填写原因。",true);return;}
+  if(action==="transfer"&&!$("target-queue").value){message("转派需要选择受控目标队列。",true);return;}
+  busy=true;controls();
+  try{
+    const body={expected_case_version:selected.case_version, ...extra};
+    if(["release","transfer","escalate"].includes(action)) body.reason=reason;
+    if(action==="transfer") body.target_queue_id=$("target-queue").value;
+    const result=await request(`/v1/expense/cases/${encodeURIComponent(selected.case_id)}/${action}`,"POST",body,crypto.randomUUID());
+    const events=await loadEvents(selected.case_id);
+    showCase(result.case, events||[]);
+    if(events===null){
+      $("case-events").replaceChildren(Object.assign(document.createElement("li"),{textContent:"工单已离开当前可见队列；时间线按 case_not_found 隐藏。"}));
+    }
+    try{await refreshLists(false);}catch(e){/* list refresh is best-effort after a successful write */}
+    message(action==="claim"?"认领成功。":action==="release"?"已释放认领，工单回到排队。":action==="transfer"?"已转派到目标队列。":action==="escalate"?"已升级队列。":"操作已完成。");
+  }catch(e){message(e.message||String(e),true);}
+  finally{busy=false;controls();}
+}
+async function resolveCase(){
+  if(busy||!selected||!$("actor").reportValidity()) return;
+  const decision=$("decision").value;
+  const reason=$("resolve-reason").value.trim();
+  if(!reason){message("结案原因不能为空。",true);return;}
+  const approvalRaw=$("approval-id").value.trim();
+  const approval_id=decision==="complete"?null:(approvalRaw||null);
+  if(decision!=="complete"&&!approval_id){message("批准/拒绝必须填写合法 approval_id。",true);return;}
+  busy=true;controls();
+  try{
+    const body={
+      decision,
+      approval_id,
+      claim_version:Number($("claim-version").value),
+      decision_hash:$("decision-hash").value.trim(),
+      expected_case_version:selected.case_version,
+      reason
+    };
+    const result=await request(`/v1/expense/cases/${encodeURIComponent(selected.case_id)}/resolve`,"POST",body,crypto.randomUUID());
+    const events=await loadEvents(selected.case_id);
+    showCase(result.case, events||[]);
+    try{await refreshLists(false);}catch(e){/* best-effort */}
+    message(decision==="complete"?"人工作业已结束；报销单终态未因此改变。":decision==="approve"?"已提交批准处理结果；请以报销单审批状态为准。":"已提交拒绝处理结果；请以报销单审批状态为准。");
+  }catch(e){message(e.message||String(e),true);}
+  finally{busy=false;controls();}
+}
+$("refresh-all").onclick=()=>refreshAll();
+$("reload-case").onclick=()=>selected&&selectCase(selected.case_id);
+$("claim").onclick=()=>act("claim");
+$("start").onclick=()=>act("start");
+$("release").onclick=()=>act("release");
+$("transfer").onclick=()=>act("transfer");
+$("escalate").onclick=()=>act("escalate");
+$("resolve").onclick=()=>resolveCase();
+$("decision").onchange=()=>{if($("decision").value==="complete") $("approval-id").value=""; else if(selected&&selected.approval_id) $("approval-id").value=selected.approval_id;};
+["actor","token"].forEach(id=>$(id).addEventListener("input",()=>{
+  selected=null;$("desk").hidden=true;$("case-empty").hidden=false;
+  $("queues").innerHTML='<p class="muted">身份已更换，请重新刷新。</p>';
+  $("cases").innerHTML='<p class="muted">身份已更换，请重新刷新。</p>';
+  message("身份已更换，请刷新有权队列与待审列表。");
+}));
+controls();
+</script></body></html>

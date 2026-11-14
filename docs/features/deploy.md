@@ -21,7 +21,7 @@ curl -s http://127.0.0.1:8765/v1/chat \
 默认容器现在启动 `react-agent-api`（FastAPI + Uvicorn）。原有标准库入口仍可用：
 `react-agent-server --host 0.0.0.0 --port 8765`。设置 `REACT_AGENT_AUTH_TOKEN` 后，
 对话、任务、Workflow、Skill 和报销业务接口要求 `Authorization: Bearer <key>`；`/health`、`/ready`
-（含 `/v1/` 别名）探针及无业务数据的 FastAPI `GET /expense` 表单外壳保持公开，供浏览器输入凭据。Claim/case API 不豁免；`/v1/info` 同样需要凭据，避免暴露服务面细节。
+（含 `/v1/` 别名）探针及无业务数据的 FastAPI `GET /expense`、`GET /expense/ops` 外壳保持公开，供浏览器输入凭据。Claim/case API 不豁免；`/v1/info` 同样需要凭据，避免暴露服务面细节。
 
 在本地执行 `python -m react_agent.server` 时，安装了 `react-agent[service]` 会默认使用
 FastAPI；只有未安装 service 依赖时才回退到标准库 HTTP。
@@ -30,7 +30,7 @@ FastAPI；只有未安装 service 依赖时才回退到标准库 HTTP。
 
 默认 **offline** 路径，不消耗 LLM API Key。
 
-**报销表单：** FastAPI `/expense` 使用既有 Claim SQL API，需配置 `REACT_AGENT_DATABASE_URL`。输入服务 token 和 `X-Actor-Id` 后可保存、提交并刷新审批结果；标准库服务面不新增此页。范围与恢复限制见 [S7 第一刀证据](../specs/expense/evidence/s7-claim-form.md)。
+**报销表单与运营台：** FastAPI `/expense` 与 `/expense/ops` 使用既有 Claim/case SQL API，需配置 `REACT_AGENT_DATABASE_URL`；处理人另配 `REACT_AGENT_EXPENSE_CASE_ACTORS_FILE`。输入服务 token 和 `X-Actor-Id` 后可保存/提交、刷新审批与工单时间线，或在运营台认领/转派/绑定审批结案；标准库服务面不新增此页。范围见 [S7 第一刀](../specs/expense/evidence/s7-claim-form.md) 与 [运营视图](../specs/expense/evidence/s7-ops-views.md)。
 
 ## 镜像构建
 
@@ -69,7 +69,7 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 | `REACT_AGENT_SERVER_OFFLINE_REACT` | 未设 | `1` 时 `app=default` 走离线 ReAct smoke（CI/deploy，无 Key） |
 | `DEEPSEEK_API_KEY` | — | live 模式需要 |
 | `REACT_AGENT_DOCS_INGEST_DIRS` | — | 额外语料目录（逗号分隔，可 mount） |
-| `REACT_AGENT_AUTH_TOKEN` | 未设 | 共享密钥；设置后业务接口要求 `Authorization: Bearer <token>`（或 `X-Api-Key`）；探针及 FastAPI 的无业务数据 `GET /expense` 表单外壳公开，Claim/case API 不豁免 |
+| `REACT_AGENT_AUTH_TOKEN` | 未设 | 共享密钥；设置后业务接口要求 `Authorization: Bearer <token>`（或 `X-Api-Key`）；探针及 FastAPI 的无业务数据 `GET /expense`、`GET /expense/ops` 外壳公开，Claim/case API 不豁免 |
 | `REACT_AGENT_API_KEY` | 未设 | **兼容别名**：等价于 `REACT_AGENT_AUTH_TOKEN`，两者同时设置时后者优先。仅供早期 FastAPI 面部署平滑过渡，新部署请只用 `REACT_AGENT_AUTH_TOKEN` |
 | `REACT_AGENT_STRICT_CONFIRM` | 未设 | 在 `auto_allow` 下：`1` 时未注入 HITL 则**拒绝副作用** `CONFIRM`（失败关闭，含 `execute_python`）；`CONFIRM_READ` 仍放行 |
 | `REACT_AGENT_APPROVAL_MODE` | `async` | 默认异步人工审批：副作用 `CONFIRM` 落盘待批并阻塞。本地/CI 逃生：`auto_allow` 或 `off` |
