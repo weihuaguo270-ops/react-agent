@@ -45,25 +45,21 @@ python scripts/eval/acceptance/run_expense_business_eval.py --split dev
 
 两条场景属于同一员工工作助手，不是两个并列产品。底层 `react_loop`、`agent_runner`、ToolGuard、Harness 和服务入口由两个场景复用。
 
-## 受控变更交付：规划中的独立项目
-
-原 GitHub 交付能力将独立命名为 **受控变更交付（`change-delivery`）**。它负责读取 Issue、影子执行、隔离测试，并在人工审批后创建 Draft PR。当前阶段只保留在文档中，不拆 Git 仓库、不迁移代码、不与两个主场景并列宣传。
-
-详见 [`docs/change-delivery-plan.md`](docs/change-delivery-plan.md) 和技术附录 [`docs/features/github-delivery-workflow.md`](docs/features/github-delivery-workflow.md)。
+`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线，也不再迁移代码；历史说明见 [`docs/change-delivery-plan.md`](docs/change-delivery-plan.md) 与附录 [`docs/features/github-delivery-workflow.md`](docs/features/github-delivery-workflow.md)。
 
 ## 跨仓质量闭环
 
-工作助手或未来的 `change-delivery` 产出轨迹后，质量配件按固定顺序消费：
+工作助手产出轨迹后，质量配件按固定顺序消费：
 
 ```text
-工作助手或受控变更交付产出轨迹
+工作助手产出轨迹
   → trace-debugger：规则失败打标、scan/compare、CI
   → llm-eval-engine：过程/业务证据与失败门，输出 pass/review/hold
 ```
 
 - [`trace-debugger`](https://github.com/weihuaguo270-ops/trace-debugger)：轨迹失败雷达与 CI 钩子，提供便宜、可解释、可回归的失败证据，不做最终发版裁决。
 - [`llm-eval-engine`](https://github.com/weihuaguo270-ops/llm-eval-engine)：发版前自检，汇总过程、业务、失败门和性能证据，输出 `pass` / `review` / `hold`。
-- 两个质量仓保持独立，也可被 `change-delivery` 编排进 CI；不会合并成一个交付仓。
+- 两个质量仓保持独立，不会合并成一个交付仓。
 
 共享轨迹契约见 [`schemas/harness_trajectory.schema.json`](schemas/harness_trajectory.schema.json)。
 
@@ -90,13 +86,12 @@ python scripts/eval/acceptance/run_portfolio_acceptance.py
 | 名称 | 角色 | 边界 |
 |---|---|---|
 | 企业内部智能工作助手 / `work-assistant` | 仓库名与英文工作名 | 规范咨询 + 报销办理 |
-| 受控变更交付 / `change-delivery` | 规划中的独立产品 | Issue → 影子执行 → 人工审批 → Draft PR |
 | `trace-debugger` | 质量配件 | 失败信号、规则回归、CI，不做最终裁决 |
 | `llm-eval-engine` | 质量配件 | 发版前自检，输出 `pass/review/hold` |
 
 仓库地址为 `https://github.com/weihuaguo270-ops/work-assistant`（原 `react-agent`）。Python 分发名 `react-agent`、包名 `react_agent`、`react-agent-*` 命令、`REACT_AGENT_*` 环境变量和既有 schema ID 保持兼容；本地目录可继续使用 `react-agent`。
 
-S0–S8 已完成原型验收，后续以现有能力演示与材料整理为主，不再新增验收切片；交付线与评测仓的范围保持独立。
+S0–S8 已完成原型验收，后续以现有能力演示与材料整理为主，不再新增验收切片；评测仓保持独立。
 
 ## 简历项目简介
 
@@ -115,7 +110,6 @@ S0–S8 已完成原型验收，后续以现有能力演示与材料整理为主
 
 - 当前状态：[`docs/STATUS.md`](docs/STATUS.md)
 - 应用方向：[`docs/features/application-direction.md`](docs/features/application-direction.md)
-- 变更交付计划：[`docs/change-delivery-plan.md`](docs/change-delivery-plan.md)
 - 口径检查清单：[`docs/PORTFOLIO_POSITIONING_CHECKLIST.md`](docs/PORTFOLIO_POSITIONING_CHECKLIST.md)
 - 架构：[`docs/architecture/core-architecture.md`](docs/architecture/core-architecture.md)
 - 生产边界：[`docs/PRODUCTION_MATURITY.md`](docs/PRODUCTION_MATURITY.md)

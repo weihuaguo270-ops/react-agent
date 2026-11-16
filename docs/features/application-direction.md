@@ -1,6 +1,6 @@
 # 应用方向：企业内部智能工作助手
 
-本仓库的对外产品名为 **企业内部智能工作助手（work-assistant）**，仓库名与英文工作名统一为 work-assistant。它服务同一员工身份下的两件办公事，而不是三条并列业务线或通用 Agent 框架。
+本仓库的对外产品名为 **企业内部智能工作助手（work-assistant）**，仓库名与英文工作名统一为 work-assistant。它服务同一员工身份下的两件办公事，而不是并列多业务线或通用 Agent 框架。
 
 | 场景 | 业务问题 | 入口 | 证据重点 |
 |---|---|---|---|
@@ -33,16 +33,12 @@ python demos/demo_docs_troubleshoot.py
 - 不宣称生产多租户、长期线上 SLA、自动根因诊断或云 APM。
 - 不把离线验收数据、κ、模型榜或沙箱成功率写成生产业务指标。
 
-## 独立产品（已立项）
-
-原 GitHub 交付线命名为 **受控变更交付（change-delivery）**。它会读取 Issue、影子执行、隔离测试，在人工审批（钉死 `plan_sha256`）后创建 Draft PR。已独立立项于 https://github.com/weihuaguo270-ops/change-delivery ；不与规范咨询、报销办理并列为本仓主产品场景，**不从本仓迁代码**。
-
-本仓计划残页：docs/change-delivery-plan.md。历史实现附录：docs/features/github-delivery-workflow.md。
+`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线，也不再迁移代码；历史说明见 docs/change-delivery-plan.md 与 docs/features/github-delivery-workflow.md。
 
 ## 跨仓质量配件
 
 ~~~
-工作助手或受控变更交付产出轨迹
+工作助手产出轨迹
   → trace-debugger：规则失败打标、scan/compare、CI
   → llm-eval-engine：过程/业务证据与失败门，输出 pass/review/hold
 ~~~
@@ -52,14 +48,13 @@ python demos/demo_docs_troubleshoot.py
 | trace-debugger | 轨迹失败雷达与 CI 钩子 | 不做最终发版裁决 |
 | llm-eval-engine | 发版前自检 | 不负责 Agent 运行时 |
 
-两个质量仓保持独立，也可被 change-delivery 编排进 CI；不会合并成一个交付仓。
+两个质量仓保持独立，不会合并成一个交付仓。
 
 ## 项目命名与边界
 
 | 中文名 | 英文工作名 | 当前状态 |
 |---|---|---|
 | 企业内部智能工作助手 | work-assistant | 仓库名与英文工作名，规范咨询 + 报销办理 |
-| 受控变更交付 | change-delivery | 已独立立项（change-delivery 仓）；本仓不迁码 |
 | 轨迹失败雷达与 CI 钩子 | trace-debugger | 独立质量配件 |
 | 发版前自检 | llm-eval-engine | 独立质量配件 |
 

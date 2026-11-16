@@ -7,17 +7,16 @@
 - 项目首页：../README.md
 - 当前状态：STATUS.md
 - 应用方向：features/application-direction.md
-- 受控变更交付：已独立立项 https://github.com/weihuaguo270-ops/change-delivery ；本仓残页 change-delivery-plan.md
 - 对外口径检查：PORTFOLIO_POSITIONING_CHECKLIST.md
 
 ## 按主题
 
-### 应用与交付
+### 应用与部署
 
 - features/application-direction.md：两个办公场景和边界
 - features/evidence-docs-troubleshoot.md：规范咨询实现说明
-- features/github-delivery-workflow.md：change-delivery 技术附录
-- change-delivery-plan.md：独立仓指针与本仓残页- features/deploy.md：原型部署
+- features/deploy.md：原型部署
+- change-delivery-plan.md、features/github-delivery-workflow.md：历史附录（`change-delivery` 已独立且已停止，不再作为本仓业务线）
 
 ### 架构与运行时
 
@@ -37,7 +36,7 @@
 ## 跨仓闭环
 
 ~~~
-工作助手或 change-delivery 产出轨迹
+工作助手产出轨迹
   → trace-debugger：失败打标、scan/compare、CI
   → llm-eval-engine：过程/业务证据与 pass/review/hold
 ~~~

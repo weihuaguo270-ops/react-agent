@@ -1,8 +1,8 @@
-# 受控变更交付（change-delivery）技术附录
+# 受控变更交付（change-delivery）技术附录（历史）
 
-> 本文记录当前仍位于 react-agent 的历史实现细节。产品边界以独立仓 https://github.com/weihuaguo270-ops/change-delivery 为准；本仓残页见 ../change-delivery-plan.md。不向新仓迁移代码。
+> `change-delivery` 已独立且已停止，不再作为本仓业务线，也不再迁移代码。本文仅保留仍位于本仓的历史实现细节；边界说明见 ../change-delivery-plan.md。本仓对外场景只保留规范咨询与报销办理。
 
-这条流程补齐的是 Agent 应用研发的写侧业务闭环：从可追溯任务进入隔离验证，经过人工审批，再生成候选提交或 Draft PR。评测引擎和轨迹分析仍是发布门禁，不再充当业务产品本身。
+以下记录的是历史写侧流程：从可追溯任务进入隔离验证，经过人工审批，再生成候选提交或 Draft PR。评测引擎和轨迹分析仍是发布门禁，不是本仓业务产品本身。
 
 ## 流程
 
