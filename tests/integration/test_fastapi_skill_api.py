@@ -32,7 +32,6 @@ async def test_fastapi_skill_discovery_context_route_and_safe_run():
         assert {item["name"] for item in catalog["skills"]} == {
             "docs_troubleshoot",
             "expense_claim_review",
-            "github_delivery",
         }
         assert all("instructions" not in item for item in catalog["skills"])
 
@@ -68,15 +67,6 @@ async def test_fastapi_skill_discovery_context_route_and_safe_run():
         assert run_response.status_code == 200
         assert (
             run_response.json()["output"]["decision"] == "reject_no_receipt"
-        )
-
-        blocked_response = await client.post(
-            "/v1/skills/run", json={"name": "github_delivery", "payload": {}}
-        )
-        assert blocked_response.status_code == 403
-        assert (
-            blocked_response.json()["error"]["code"]
-            == "skill_requires_controlled_caller"
         )
 
 

@@ -1,19 +1,12 @@
-"""P1: SoftwareTask / GitHub Delivery default-wire the failure-regression gate."""
+"""P1: SoftwareTask / failure-regression gate contracts (delivery workflow removed)."""
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-from react_agent.apps.github_delivery import (
-    DeliveryTask,
-    GitHubDeliveryWorkflow,
-    Replacement,
-    WorkflowConfig,
-)
 from react_agent.eval.failure_regression_gate import (
     attach_software_task_gate,
     build_repair_feedback,
@@ -24,123 +17,6 @@ from react_agent.eval.failure_regression_gate import (
     run_gate_with_optional_repair,
     siblings_available,
 )
-
-
-def _git(repo: Path, *args: str) -> None:
-    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
-
-
-def _repository(tmp_path: Path) -> Path:
-    repo = tmp_path / "service"
-    repo.mkdir()
-    _git(repo, "init")
-    _git(repo, "config", "user.name", "test")
-    _git(repo, "config", "user.email", "test@example.com")
-    (repo / "service.py").write_text("VALUE = 1\n", encoding="utf-8")
-    (repo / "test_service.py").write_text(
-        "from service import VALUE\n\ndef test_value():\n    assert VALUE == 2\n",
-        encoding="utf-8",
-    )
-    _git(repo, "add", ".")
-    _git(repo, "commit", "-m", "fixture")
-    return repo
-
-
-def _task(repo: Path) -> DeliveryTask:
-    return DeliveryTask(
-        task_id="issue-gate-1",
-        repository=str(repo),
-        issue_url="local://issues/gate-1",
-        split="held_out",
-        replacements=(Replacement("service.py", "VALUE = 1", "VALUE = 2"),),
-        test_command=("python", "-m", "pytest", "-q"),
-        acceptance_criteria=("tests pass", "base branch remains unchanged"),
-    )
-
-
-def test_workflow_config_enables_gate_by_default():
-    config = WorkflowConfig(Path("artifacts"))
-    assert config.failure_regression_gate is True
-    assert config.failure_regression_require_siblings is True
-
-
-def test_delivery_fail_closed_when_siblings_missing(tmp_path, monkeypatch):
-    repo = _repository(tmp_path)
-    monkeypatch.setattr(
-        "react_agent.eval.failure_regression_gate.siblings_available",
-        lambda: (False, ["trace-debugger", "llm-eval-engine"]),
-    )
-    workflow = GitHubDeliveryWorkflow(
-        WorkflowConfig(tmp_path / "artifacts", failure_regression_gate=True)
-    )
-    report = workflow.run(_task(repo), idempotency_key="gate-missing")
-    assert report["status"] == "failure_regression_unavailable"
-    assert report["passed"] is False
-    assert report["failure_regression"]["available"] is False
-    assert report["failure_regression"]["release_decision"] == "hold"
-    codes = {item["code"] for item in report["alerts"]}
-    assert "failure_regression_unavailable" in codes
-
-
-def test_delivery_holds_when_gate_returns_hold(tmp_path, monkeypatch):
-    repo = _repository(tmp_path)
-
-    def fake_gate(*_args, **_kwargs):
-        return {
-            "schema_version": "failure-regression-gate/v1",
-            "available": True,
-            "release_decision": "hold",
-            "failure_gate_decision": "hold",
-            "hard_failures": ["injected hold"],
-            "review_reasons": [],
-        }
-
-    monkeypatch.setattr(
-        "react_agent.eval.failure_regression_gate.evaluate_failure_regression_gate",
-        fake_gate,
-    )
-    workflow = GitHubDeliveryWorkflow(
-        WorkflowConfig(tmp_path / "artifacts", failure_regression_gate=True)
-    )
-    report = workflow.run(_task(repo), idempotency_key="gate-hold")
-    assert report["status"] == "failure_regression_hold"
-    assert report["passed"] is False
-    assert report["test_result"]["passed"] is True
-    assert report["failure_regression"]["release_decision"] == "hold"
-
-
-def test_delivery_passes_when_gate_passes(tmp_path, monkeypatch):
-    repo = _repository(tmp_path)
-
-    def fake_gate(episodes, **kwargs):
-        out = Path(kwargs["out_dir"])
-        out.mkdir(parents=True, exist_ok=True)
-        report = {
-            "schema_version": "failure-regression-gate/v1",
-            "available": True,
-            "release_decision": "pass",
-            "failure_gate_decision": "pass",
-            "hard_failures": [],
-            "review_reasons": [],
-            "artifacts": {"release": str(out / "release.json")},
-        }
-        (out / "pipeline_report.json").write_text(
-            json.dumps(report), encoding="utf-8"
-        )
-        return report
-
-    monkeypatch.setattr(
-        "react_agent.eval.failure_regression_gate.evaluate_failure_regression_gate",
-        fake_gate,
-    )
-    workflow = GitHubDeliveryWorkflow(
-        WorkflowConfig(tmp_path / "artifacts", failure_regression_gate=True)
-    )
-    report = workflow.run(_task(repo), idempotency_key="gate-pass")
-    assert report["status"] == "shadow_passed"
-    assert report["passed"] is True
-    assert report["failure_regression"]["release_decision"] == "pass"
-    assert any(step["action"]["name"] == "failure_regression_gate" for step in report["episode"]["trajectory"]["steps"])
 
 
 def test_attach_software_task_gate_blocks_succeeded_on_hold(tmp_path):
@@ -222,36 +98,6 @@ def test_gate_module_pass_with_siblings(tmp_path):
     assert report["release_decision"] == "pass"
     assert report["failure_gate_decision"] == "pass"
     assert gate_blocks_success(report) is False
-
-
-def test_hold_marks_reverify_required(tmp_path, monkeypatch):
-    repo = _repository(tmp_path)
-
-    def fake_gate(*_a, **_k):
-        return {
-            "schema_version": "failure-regression-gate/v1",
-            "available": True,
-            "release_decision": "hold",
-            "failure_gate_decision": "hold",
-            "hard_failures": ["hold"],
-            "review_reasons": [],
-        }
-
-    monkeypatch.setattr(
-        "react_agent.eval.failure_regression_gate.evaluate_failure_regression_gate",
-        fake_gate,
-    )
-    # Bypass mark path inside delivery by using real mark via unpatched helper:
-    # Delivery calls evaluate then mark_reverify_required from the live module.
-    workflow = GitHubDeliveryWorkflow(
-        WorkflowConfig(tmp_path / "artifacts", failure_regression_gate=True)
-    )
-    report = workflow.run(_task(repo), idempotency_key="hold-reverify-mark")
-    assert report["status"] == "failure_regression_hold"
-    reverify = report["failure_regression"]["reverify"]
-    assert reverify["required"] is True
-    assert reverify["improved_to_pass"] is False
-    assert "reverify_from" in reverify["blocked"] or "parent_run" in reverify
 
 
 def test_forced_reverify_blocks_without_improvement(tmp_path):
@@ -405,111 +251,6 @@ def test_run_gate_with_optional_repair_then_reverify(tmp_path):
     assert gate_blocks_success(report) is False
 
 
-def test_delivery_reverify_from_parent_hold(tmp_path, monkeypatch):
-    repo = _repository(tmp_path)
-    parent = tmp_path / "parent-hold"
-    parent.mkdir()
-    (parent / "release.json").write_text(
-        json.dumps({"decision": "hold"}), encoding="utf-8"
-    )
-
-    def fake_forced(episodes, **kwargs):
-        assert Path(kwargs["parent_run_dir"]) == parent.resolve()
-        return {
-            "available": True,
-            "release_decision": "pass",
-            "failure_gate_decision": "pass",
-            "hard_failures": [],
-            "reverify": {
-                "required": True,
-                "improved_to_pass": True,
-                "parent_release_decision": "hold",
-                "current_release_decision": "pass",
-            },
-        }
-
-    monkeypatch.setattr(
-        "react_agent.eval.failure_regression_gate.evaluate_forced_reverify",
-        fake_forced,
-    )
-    workflow = GitHubDeliveryWorkflow(
-        WorkflowConfig(tmp_path / "artifacts", failure_regression_gate=True)
-    )
-    report = workflow.run(
-        _task(repo),
-        idempotency_key="reverify-ok",
-        reverify_from=parent,
-    )
-    assert report["status"] == "shadow_passed"
-    assert report["failure_regression"]["reverify"]["improved_to_pass"] is True
-
-
-def test_delivery_repair_loop_on_test_failure(tmp_path, monkeypatch):
-    repo = _repository(tmp_path)
-    # Bad replacement that fails tests initially — RepairLoop will fix VALUE.
-    task = DeliveryTask(
-        task_id="issue-repair-1",
-        repository=str(repo),
-        issue_url="local://issues/repair-1",
-        split="held_out",
-        replacements=(Replacement("service.py", "VALUE = 1", "VALUE = 9"),),
-        test_command=("python", "-m", "pytest", "-q"),
-        acceptance_criteria=("tests pass",),
-        allowed_paths=("service.py",),
-    )
-
-    class Loop:
-        planner = staticmethod(
-            lambda _ctx: {
-                "replacements": [
-                    {"path": "service.py", "old": "VALUE = 1", "new": "VALUE = 2"}
-                ]
-            }
-        )
-        executor = object()  # replaced by delivery binding
-        config = None
-        observer = None
-
-    monkeypatch.setattr(
-        "react_agent.eval.failure_regression_gate.evaluate_failure_regression_gate",
-        lambda *a, **k: {
-            "available": True,
-            "release_decision": "pass",
-            "failure_gate_decision": "pass",
-            "hard_failures": [],
-            "reverify": None,
-        },
-    )
-    workflow = GitHubDeliveryWorkflow(
-        WorkflowConfig(
-            tmp_path / "artifacts",
-            failure_regression_gate=True,
-            repair_loop=Loop(),
-            failure_regression_auto_repair=True,
-        )
-    )
-    report = workflow.run(task, idempotency_key="repair-then-pass")
-    assert report["status"] == "shadow_passed", json.dumps(
-        {
-            "status": report.get("status"),
-            "error": report.get("error"),
-            "repair": report.get("repair"),
-            "steps": report.get("steps"),
-            "test_result": {
-                key: value
-                for key, value in (report.get("test_result") or {}).items()
-                if key not in {"stdout", "stderr"}
-            },
-            "stdout_tail": (report.get("test_result") or {}).get("stdout", "")[-1500:],
-            "stderr_tail": (report.get("test_result") or {}).get("stderr", "")[-800:],
-        },
-        ensure_ascii=False,
-        default=str,
-    )
-    assert report["repair"]["status"] == "succeeded"
-    assert report["test_result"]["passed"] is True
-
-
 def test_build_repair_feedback_packages_findings_for_planner():
     feedback = build_repair_feedback(
         release_decision="hold",
@@ -536,72 +277,6 @@ def test_build_repair_feedback_packages_findings_for_planner():
     assert feedback["planner_safe"]["finding_summaries"] == ["web_search timed out"]
     assert feedback["planner_safe"]["triggered_rules"] == ["empty_final_answer"]
     assert feedback["planner_safe"]["hard_failures"] == ["business state mismatch"]
-
-
-def test_delivery_repair_receives_repair_feedback(tmp_path, monkeypatch):
-    repo = _repository(tmp_path)
-    seen = {}
-
-    class Loop:
-        @staticmethod
-        def planner(ctx):
-            seen["repair_feedback"] = ctx.get("repair_feedback")
-            return {
-                "replacements": [
-                    {"path": "service.py", "old": "VALUE = 1", "new": "VALUE = 2"}
-                ]
-            }
-
-        executor = object()
-        config = None
-        observer = None
-
-    monkeypatch.setattr(
-        "react_agent.eval.failure_regression_gate.evaluate_failure_regression_gate",
-        lambda *a, **k: {
-            "available": True,
-            "release_decision": "hold",
-            "failure_gate_decision": "hold",
-            "hard_failures": ["gate hold"],
-            "repair_feedback": {
-                "schema_version": "repair-feedback/v1",
-                "planner_safe": {
-                    "hard_failures": ["gate hold"],
-                    "finding_summaries": ["timeout"],
-                    "targets": ["trajectory_heuristics"],
-                },
-            },
-            "reverify": None,
-        },
-    )
-    monkeypatch.setattr(
-        "react_agent.eval.failure_regression_gate.evaluate_forced_reverify",
-        lambda *a, **k: {
-            "available": True,
-            "release_decision": "pass",
-            "failure_gate_decision": "pass",
-            "hard_failures": [],
-            "reverify": {
-                "required": True,
-                "improved_to_pass": True,
-                "parent_release_decision": "hold",
-                "current_release_decision": "pass",
-            },
-        },
-    )
-    # First gate hold with tests already passing triggers repair_loop_after_hold.
-    task = _task(repo)
-    workflow = GitHubDeliveryWorkflow(
-        WorkflowConfig(
-            tmp_path / "artifacts",
-            failure_regression_gate=True,
-            repair_loop=Loop(),
-            failure_regression_auto_repair=True,
-        )
-    )
-    report = workflow.run(task, idempotency_key="feedback-to-repair")
-    assert seen["repair_feedback"]["hard_failures"] == ["gate hold"]
-    assert report["status"] == "shadow_passed"
 
 
 @pytest.mark.skipif(not siblings_available()[0], reason="siblings not installed")

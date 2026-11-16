@@ -24,7 +24,6 @@ class ContractCase:
 DEFAULT_ROUTE_CASES = (
     RouteCase("API 401 如何排障", "docs_troubleshoot"),
     RouteCase("请检查这个报销单", "expense_claim_review", {"claim": {"category": "餐饮", "amount": 80, "has_receipt": True}}),
-    RouteCase("", "github_delivery", {"repository": "repo", "replacements": [{}], "test_command": ["python", "-m", "pytest"], "acceptance_criteria": ["tests"]}),
     RouteCase("写一首诗", "", None),
 )
 

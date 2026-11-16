@@ -692,46 +692,7 @@ def test_valid_trace_id_still_resolves():
     assert _safe_trace_id("trace_abc-123.4") == "trace_abc-123.4"
 
 
-# ── 9. git origin 校验 ──
-
-
-MALICIOUS_ORIGINS = [
-    "https://github.com@127.0.0.1:8765/x.git",
-    "https://github.com@attacker.tld/x.git",
-    "https://github.com.attacker.tld/x.git",
-    "ssh://git@github.com.attacker.tld/x.git",
-    "git://evil.tld/x.git",
-    "http://github.com/x.git",
-    "file:///etc/passwd",
-    "ext::sh -c whoami",
-    "",
-]
-
-
-@pytest.mark.parametrize("origin", MALICIOUS_ORIGINS)
-def test_non_github_origin_rejected(origin):
-    from react_agent.apps.github_delivery import _require_github_origin
-
-    with pytest.raises(ValueError):
-        _require_github_origin(origin)
-
-
-@pytest.mark.parametrize(
-    "origin",
-    [
-        "https://github.com/owner/repo.git",
-        "https://www.github.com/owner/repo.git",
-        "git@github.com:owner/repo.git",
-        "ssh://git@github.com/owner/repo.git",
-    ],
-)
-def test_legit_github_origin_accepted(origin):
-    from react_agent.apps.github_delivery import _require_github_origin
-
-    assert _require_github_origin(origin) in {"github.com", "www.github.com"}
-
-
-# ── 10. 脱敏 ──
+# ── 9. 脱敏 ──
 
 
 def test_redact_arguments_masks_sensitive_keys():

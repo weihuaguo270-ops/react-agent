@@ -27,9 +27,6 @@
 | [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) | 项目定位、对外口径与边界 | — | 背景总览 |
 | [flywheel_closed_loop_20260716.md](./reports/flywheel_closed_loop_20260716.md) | 同批 100 条改前/改后 | **llm_offtrack 6→1** | [snapshots/…](./snapshots/flywheel_closed_loop_20260716.json) |
 | 公开 RAG 子集（分层 v2） | HotpotQA-RAG smoke/hard/held_out | `scripts/eval/rag/run_public_rag_benchmark.py` | `public_rag_benchmark_subset.json` |
-| GitHub 公开只读业务证据 | 仓库契约 + 当前公开 Issue | `scripts/eval/acceptance/run_github_business_tasks.py --repository <owner/repo>` | 2026-08-20 的两份快照**未随 main 归档**（只存在于侧分支 `backup/pre-split-wip`） |
-| GitHub 公开只读交付样本 | agent-delivery-sandbox 公开 Issue（10 条） | 采集发生在 sibling 仓 `agent-delivery-sandbox` 侧 | 同上，未随 main 归档 |
-
 当前 `capability_dataset.json` 已扩至 **24** 条（原 18 + 新 6）。全量重跑：
 
 ```bash

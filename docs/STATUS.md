@@ -6,7 +6,7 @@
 
 2026-11-16：S0–S8 工程原型验收已收口，不再新增验收切片。本轮只统一仓库与工作名并维护必要引用；Python 包、命令、环境变量和 schema ID 保持兼容，不改评测仓。
 
-`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线，也不再迁移代码；本仓仅保留历史文档附录。trace-debugger 是轨迹失败雷达与 CI 钩子，llm-eval-engine 是发版前自检并输出 pass/review/hold。
+`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线；本仓已移除其文档附录与运行入口。trace-debugger 是轨迹失败雷达与 CI 钩子，llm-eval-engine 是发版前自检并输出 pass/review/hold。
 
 对外只能表述为可部署、可评测的工程原型。证据包含合成任务与 external_real_sandbox；不得写成生产 SaaS、多租户平台或长期线上 SLA。
 

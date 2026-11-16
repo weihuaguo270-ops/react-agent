@@ -1,1 +1,0 @@
-"""GitHub delivery application tests."""

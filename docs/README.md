@@ -16,8 +16,6 @@
 - features/application-direction.md：两个办公场景和边界
 - features/evidence-docs-troubleshoot.md：规范咨询实现说明
 - features/deploy.md：原型部署
-- change-delivery-plan.md、features/github-delivery-workflow.md：历史附录（`change-delivery` 已独立且已停止，不再作为本仓业务线）
-
 ### 架构与运行时
 
 - architecture/core-architecture.md

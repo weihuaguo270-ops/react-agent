@@ -49,12 +49,6 @@
       "pytest_paths": ["tests/apps/expense/"]
     },
     {
-      "id": "github-app",
-      "paths": ["src/react_agent/apps/github/**", "tests/apps/github/**", "tests/test_github_delivery_workflow.py"],
-      "checks": ["lint", "test", "security"],
-      "pytest_paths": ["tests/apps/github/", "tests/test_github_delivery_workflow.py"]
-    },
-    {
       "id": "workflow-config",
       "paths": [".github/workflows/**"],
       "checks": ["pr-ready", "lint", "test", "test-windows", "typecheck", "security", "docker-smoke", "docs-eval"],
