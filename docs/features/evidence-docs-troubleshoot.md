@@ -109,10 +109,12 @@ Workflow 版本演进：`docs_troubleshoot` v3+ 在保留引用 / 拒答 policy 
 | **现在** | pass_rate、by_tag、引用命中、拒答正确 | `golden.json` 34 条 + leakage guards |
 | **仿真故障** | 答案 + `diagnosis` + 根因/禁词指标 | `fault_cases.json` 12 条 · `run_fault_eval.py` |
 | **生产盲测** | 仅外部 ingest 语料可答 | `production_cases.json` 5 条 · `run_production_eval.py` |
-| **下一阶** | 根因命中率、错误建议率、证据充分率 | 真实 / 仿真历史故障盲测集（held_out 冻结） |
+| **指标草案（非当前必做）** | 根因命中率、错误建议率、证据充分率 | 真实 / 仿真历史故障盲测集（held_out 冻结）；与已放弃的跨仓发布门槛「3 个项目、30 条真实任务、10 条独立 held-out」分开记录 |
 | **运营** | 平均解决时间、正确升级率 | 脱敏工单回放（需单独治理） |
 
 黄金集仍作 **回归门禁**；新指标在新数据集上分栏报告，不与 keyword 命中率混谈。
+
+跨仓发布门槛「3 个项目、30 条真实任务、10 条独立 held-out」已于 2026-11-16 放弃，不在本页继续作为必做项。本页已有的 golden、故障、生产盲测和 Git 文档 held-out 入口继续作为规范咨询原型证据。不再把「尚未达到该门槛，下一步必须补齐跨仓账本 golden 或 held-out」写成当前目标，也不为 llm-eval-engine 或 trace-debugger 规划补齐该门槛。这些入口仍是工程原型证据，不写成生产成熟度。
 
 ## 与运行时其他能力的关系
 
