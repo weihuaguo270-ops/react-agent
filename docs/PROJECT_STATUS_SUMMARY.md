@@ -12,9 +12,10 @@ work-assistant 是企业内部智能工作助手的工程原型，面向同一�
 |---|---|
 | 规范咨询 | 已有文档检索、引用校验、拒答策略、现场证据和离线评测入口 |
 | 报销办理 | S0–S8 原型验收已 complete：政策决策、表单/运营台、SQL 持久化 Claim/审批/工单、扩展 candidate held_out/golden、PostgreSQL 物理重启均有本阶段证据；仍不代表生产财务系统或 SLA |
-| 受控变更交付 | 已独立立项（change-delivery 仓）；本仓 GitHub 流程仍作技术附录，不迁码 |
 | 轨迹与质量 | Format B、Harness、trace-debugger 失败扫描和 llm-eval-engine 发布前自检已形成跨仓闭环 |
 | 生产成熟度 | 原型验收不等于生产可发布；真实业务接入、付款入账与生产 SLA 仍有缺口，不能宣称生产成熟度 |
+
+`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线，也不再迁移代码。
 
 ## 证据边界
 
@@ -25,7 +26,7 @@ work-assistant 是企业内部智能工作助手的工程原型，面向同一�
 ## 跨仓职责
 
 ~~~
-工作助手或 change-delivery 产出轨迹
+工作助手产出轨迹
   → trace-debugger：失败打标、scan/compare、CI
   → llm-eval-engine：过程/业务证据与 pass/review/hold
 ~~~
@@ -33,5 +34,4 @@ work-assistant 是企业内部智能工作助手的工程原型，面向同一�
 ## 仍需补齐
 
 - 真实业务责任人、长期运行和人工效率基线；
-- 多租户、企业权限、线上告警和回滚体系；
-- change-delivery 的独立服务边界与后端部署条件。
+- 多租户、企业权限、线上告警和回滚体系。

@@ -3,7 +3,7 @@
 本页记录企业内部智能工作助手（work-assistant）两个办公场景的工程成熟度。它是可部署、可评测的原型清单，不是生产 SLA 或多租户平台承诺。
 
 主场景：规范咨询（docs_troubleshoot）；第二场景：报销办理（expense）。
-独立仓：受控变更交付（change-delivery）https://github.com/weihuaguo270-ops/change-delivery ；本仓残页 docs/change-delivery-plan.md。
+`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线，也不再迁移代码；历史说明见 docs/change-delivery-plan.md。
 非目标：生产 SaaS、多租户平台、长期线上 SLA、自动根因诊断、云 APM。
 
 ## 能力状态
@@ -18,7 +18,6 @@
 | Format B 轨迹与 StepWatcher | 已具备 | 供回归与质量配件消费 |
 | 黄金集与离线评测 | 已具备 | 作为验收证据，不作为产品卖点 |
 | HTTP 服务与 Docker 单实例 | 已具备 | 适合原型部署和复现 |
-| 受控变更交付 | 规划/沙箱证据 | 24 条合成 Issue、4 条受控 Draft PR；未接生产流量 |
 | 多租户 / 长期 SLA | 本阶段不做 | 不对外承诺 |
 
 ## 主产品闭环
@@ -33,7 +32,7 @@
 质量闭环由独立仓库完成：
 
 ~~~
-工作助手或 change-delivery 产出轨迹
+工作助手产出轨迹
   → trace-debugger：失败打标、scan/compare、CI
   → llm-eval-engine：过程/业务证据与 pass/review/hold
 ~~~
@@ -47,5 +46,4 @@
 ## 进一步阅读
 
 - 应用方向：docs/features/application-direction.md
-- 受控变更交付计划：docs/change-delivery-plan.md
 - 当前状态：docs/STATUS.md

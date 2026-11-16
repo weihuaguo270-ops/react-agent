@@ -4,9 +4,9 @@
 
 对外产品名是企业内部智能工作助手（work-assistant），仓库名与英文工作名统一为 work-assistant。主场景为规范咨询（docs_troubleshoot），第二场景为报销办理（expense）；两者属于同一员工工作助手，不是两个并列产品。
 
-2026-11-16：S0–S8 工程原型验收已收口，不再新增验收切片。本轮只统一仓库与工作名并维护必要引用；Python 包、命令、环境变量和 schema ID 保持兼容，不拆交付线、不迁代码、不改评测仓。
+2026-11-16：S0–S8 工程原型验收已收口，不再新增验收切片。本轮只统一仓库与工作名并维护必要引用；Python 包、命令、环境变量和 schema ID 保持兼容，不改评测仓。
 
-受控变更交付（change-delivery）已独立立项：https://github.com/weihuaguo270-ops/change-delivery ；本仓只保留文档残页与历史附录，不迁移代码。trace-debugger 是轨迹失败雷达与 CI 钩子，llm-eval-engine 是发版前自检并输出 pass/review/hold。
+`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线，也不再迁移代码；本仓仅保留历史文档附录。trace-debugger 是轨迹失败雷达与 CI 钩子，llm-eval-engine 是发版前自检并输出 pass/review/hold。
 
 对外只能表述为可部署、可评测的工程原型。证据包含合成任务与 external_real_sandbox；不得写成生产 SaaS、多租户平台或长期线上 SLA。
 
@@ -28,7 +28,7 @@ S6 新增 `/v1/expense/cases` 和 `/v1/expense/queues`：受控 reason 在正式
 
 S7 已 complete：独立 `/expense` 申请人表单（含同一单 case 时间线）与 `/expense/ops` 待审列表/审批台，只接线既有 Claim/cases/queues/resolve；Bearer 与 `X-Actor-Id` 沿用原型身份，CaseActor 由服务端构造。列表仅有权队列，越权统一 `case_not_found`；批准/拒绝绑定合法审批、版本与 hash，无审批只能结束人工作业。浏览器 smoke 见 [第一刀](specs/expense/evidence/s7-claim-form.md) 与 [运营视图](specs/expense/evidence/s7-ops-views.md)。
 
-S8 已 **complete（原型验收）**，见 [最终汇总](specs/expense/evidence/s8-final-acceptance.md)（索引第一刀 [smoke](specs/expense/evidence/s8-acceptance-aggregate.md)、第二刀 [candidate](specs/expense/evidence/s8-candidate-eval.md)、第三刀 [Postgres 重启](specs/expense/evidence/s8-postgres-restart.md)）。这是原型验收完成，**不是可以发布到生产**。JEV 未评估；真实邮件/IM、后台常驻调度、交付线、Go 重写和 react_loop 继续冻结。关工单或本地通知成功仍不等于批准报销。
+S8 已 **complete（原型验收）**，见 [最终汇总](specs/expense/evidence/s8-final-acceptance.md)（索引第一刀 [smoke](specs/expense/evidence/s8-acceptance-aggregate.md)、第二刀 [candidate](specs/expense/evidence/s8-candidate-eval.md)、第三刀 [Postgres 重启](specs/expense/evidence/s8-postgres-restart.md)）。这是原型验收完成，**不是可以发布到生产**。JEV 未评估；真实邮件/IM、后台常驻调度、Go 重写和 react_loop 继续冻结。关工单或本地通知成功仍不等于批准报销。
 
 - 默认入口的安全防线修复（2026-09-30）：容器默认入口是 `react-agent-api`（FastAPI 面），但它读的是从未被文档记录的 `REACT_AGENT_API_KEY`——#97 已把 `DEPLOY.md` 的过时变量名改成 `REACT_AGENT_AUTH_TOKEN`，却漏改了 `fastapi_app` 的读取处，于是**按文档配置等于没配**（鉴权 fail-open），且该面完全没有 Host 头校验，DNS rebinding 防线与 `REACT_AGENT_REQUIRE_HOST_ALLOWLIST=1` 的启动期 fail-closed 都只在 stdlib 面成立。现抽出 `server/auth.py` 的 header 版判据供两面共用（`REACT_AGENT_API_KEY` 保留为 legacy 别名、AUTH_TOKEN 优先），`request_guard` 改为「Host 先于鉴权」并把保护范围对齐文档（除探针外全部），`main()` 补启动期校验与未鉴权暴露告警。配置发现性同步补齐：`.env.example` 增加「服务鉴权与网络暴露」段，`docker-compose.yml` 把两个变量由注释改为直通——此前在 `.env` 里填 token 根本进不了容器。见 [#100](https://github.com/weihuaguo270-ops/react-agent/pull/100)。
 
