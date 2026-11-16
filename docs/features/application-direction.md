@@ -33,7 +33,7 @@ python demos/demo_docs_troubleshoot.py
 - 不宣称生产多租户、长期线上 SLA、自动根因诊断或云 APM。
 - 不把离线验收数据、κ、模型榜或沙箱成功率写成生产业务指标。
 
-`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线，也不再迁移代码；历史说明见 docs/change-delivery-plan.md 与 docs/features/github-delivery-workflow.md。
+`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线；本仓已移除其文档附录与运行入口。
 
 ## 跨仓质量配件
 

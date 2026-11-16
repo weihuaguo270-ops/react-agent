@@ -11,7 +11,6 @@ from react_agent.skills import (
     get_skill,
     list_business_boundaries,
     list_skills,
-    run_skill,
 )
 
 
@@ -34,9 +33,26 @@ def test_boundary_rejects_forbidden_explicit_action():
 
 
 def test_non_agent_boundary_rejects_agent_caller():
-    result = run_skill("github_delivery", {"_caller": "agent"})
-    assert result.ok is False
-    assert result.checks == {"business_boundary": False}
+    boundary = BusinessBoundary(
+        name="controlled_write",
+        version="1",
+        scenario="controlled",
+        purpose="controlled write skill",
+        workflow="controlled@1",
+        risk_level="external_write",
+        agent_callable=False,
+        owner="platform",
+        allowed_tools=(),
+        required_steps=("prepare",),
+        required_inputs=("payload",),
+        required_outputs=("status",),
+        success_conditions=("approved",),
+        human_handoff_conditions=("needs approval",),
+        forbidden_actions=("write_main_branch",),
+    )
+    assert "not callable by the Agent runtime" in " ".join(
+        boundary.validate_request({"_caller": "agent"})
+    )
 
 
 def test_boundary_definition_requires_steps_and_success_conditions():

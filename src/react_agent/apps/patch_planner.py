@@ -1,11 +1,19 @@
-"""将 Agent 的结构化补丁计划转换为受控交付替换。"""
+"""将 Agent 的结构化补丁计划转换为受控文本替换。"""
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .github_delivery import Replacement
+
+@dataclass(frozen=True)
+class Replacement:
+    """一次受控的精确文本替换，不支持模糊匹配。"""
+
+    path: str
+    old: str
+    new: str
 
 
 class PatchPlanError(ValueError):
@@ -38,4 +46,4 @@ def parse_patch_plan(payload: Mapping[str, Any], *, allowed_paths: Sequence[str]
     return tuple(result)
 
 
-__all__ = ["PatchPlanError", "parse_patch_plan"]
+__all__ = ["PatchPlanError", "Replacement", "parse_patch_plan"]

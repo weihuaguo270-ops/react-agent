@@ -45,7 +45,7 @@ python scripts/eval/acceptance/run_expense_business_eval.py --split dev
 
 两条场景属于同一员工工作助手，不是两个并列产品。底层 `react_loop`、`agent_runner`、ToolGuard、Harness 和服务入口由两个场景复用。
 
-`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线，也不再迁移代码；历史说明见 [`docs/change-delivery-plan.md`](docs/change-delivery-plan.md) 与附录 [`docs/features/github-delivery-workflow.md`](docs/features/github-delivery-workflow.md)。
+`change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线；本仓已移除其文档附录、demo、Skill 与专用测试入口。
 
 ## 跨仓质量闭环
 
