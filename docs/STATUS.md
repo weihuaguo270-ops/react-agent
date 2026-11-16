@@ -2,7 +2,9 @@
 
 ## 产品定位与边界
 
-对外产品名是企业内部工作助手（work-assistant），主场景为规范咨询（docs_troubleshoot），第二场景为报销办理（expense）。两者属于同一员工工作助手，不是两个并列产品。
+对外产品名是企业内部智能工作助手（work-assistant），仓库名与英文工作名统一为 work-assistant。主场景为规范咨询（docs_troubleshoot），第二场景为报销办理（expense）；两者属于同一员工工作助手，不是两个并列产品。
+
+2026-11-16：S0–S8 工程原型验收已收口，不再新增验收切片。本轮只统一仓库与工作名并维护必要引用；Python 包、命令、环境变量和 schema ID 保持兼容，不拆交付线、不迁代码、不改评测仓。
 
 受控变更交付（change-delivery）已独立立项：https://github.com/weihuaguo270-ops/change-delivery ；本仓只保留文档残页与历史附录，不迁移代码。trace-debugger 是轨迹失败雷达与 CI 钩子，llm-eval-engine 是发版前自检并输出 pass/review/hold。
 

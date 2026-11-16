@@ -1,6 +1,8 @@
 # 项目背景与对外边界
 
-本仓库承载企业内部工作助手（work-assistant）的工程原型。主场景是规范咨询（docs_troubleshoot），第二场景是报销办理（expense）；两者属于同一员工工作助手。
+本仓库承载企业内部智能工作助手（work-assistant）的工程原型。仓库名与英文工作名统一为 work-assistant；Python 分发名 react-agent、包名 react_agent、命令和环境变量保留兼容名称。主场景是规范咨询（docs_troubleshoot），第二场景是报销办理（expense）；两者属于同一员工工作助手。
+
+S0–S8 已按现有证据完成原型验收，当前不新增验收切片；不拆交付线、不迁代码、不改评测仓，也不由此推断生产可发布。
 
 ## 对外口径
 

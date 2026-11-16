@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "react-agent"
 version = "0.9.0"
-description = "Agent 运行时 + 三类主流应用（编码/执行 · 客服/自动化 · RAG/研究）"
+description = "企业内部智能工作助手（work-assistant）：规范咨询与报销办理工程原型"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

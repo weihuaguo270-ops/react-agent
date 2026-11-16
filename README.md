@@ -1,10 +1,10 @@
-# 企业内部工作助手（work-assistant）
+# 企业内部智能工作助手（work-assistant）
 
-`react-agent` 是企业内部工作助手的过渡仓库：面向需要查规范、处理报销的员工，提供受控 Agent 执行、引用证据、人工审批边界和完整轨迹。仓库名暂保留为 `react-agent`，对外产品叙事以 **work-assistant** 为准。
+`work-assistant` 是企业内部智能工作助手：面向需要查规范、处理报销的员工，提供受控 Agent 执行、引用证据、人工审批边界和完整轨迹。仓库名与英文工作名统一为 **work-assistant**。
 
 ## 一句话定位
 
-企业内部工作助手帮助员工完成两件办公事：**规范咨询**（`docs_troubleshoot`）和**报销办理**（`expense`）。运行时、权限闸门、轨迹和评测是实现这些应用的工程能力，不是单独对外销售的通用 Agent 框架。
+企业内部智能工作助手帮助员工完成两件办公事：**规范咨询**（`docs_troubleshoot`）和**报销办理**（`expense`）。运行时、权限闸门、轨迹和评测是实现这些应用的工程能力，不是单独对外销售的通用 Agent 框架。
 
 ## 做什么 / 不做什么
 
@@ -89,14 +89,18 @@ python scripts/eval/acceptance/run_portfolio_acceptance.py
 
 | 名称 | 角色 | 边界 |
 |---|---|---|
-| 企业内部工作助手 / `work-assistant` | 对外主产品 | 规范咨询 + 报销办理 |
+| 企业内部智能工作助手 / `work-assistant` | 仓库名与英文工作名 | 规范咨询 + 报销办理 |
 | 受控变更交付 / `change-delivery` | 规划中的独立产品 | Issue → 影子执行 → 人工审批 → Draft PR |
 | `trace-debugger` | 质量配件 | 失败信号、规则回归、CI，不做最终裁决 |
 | `llm-eval-engine` | 质量配件 | 发版前自检，输出 `pass/review/hold` |
 
+仓库地址为 `https://github.com/weihuaguo270-ops/work-assistant`（原 `react-agent`）。Python 分发名 `react-agent`、包名 `react_agent`、`react-agent-*` 命令、`REACT_AGENT_*` 环境变量和既有 schema ID 保持兼容；本地目录可继续使用 `react-agent`。
+
+S0–S8 已完成原型验收，后续以现有能力演示与材料整理为主，不再新增验收切片；交付线与评测仓的范围保持独立。
+
 ## 简历项目简介
 
-企业内部工作助手（`work-assistant`）工程原型，面向需要查内部规范、办理报销的企业员工。
+企业内部智能工作助手（`work-assistant`）工程原型，面向需要查内部规范、办理报销的企业员工。
 规范咨询支持员工提问、检索内部文档、带引用回答；证据不足时明确拒答并保留查询轨迹。
 报销办理按政策和表单约束校验，异常或高风险单据进入人工复核，由审批人批准、拒绝或升级。
 副作用操作经过 `permission_gate` / approval，审批绑定单据版本与 `decision_hash`，结果写入审计记录并可回放。

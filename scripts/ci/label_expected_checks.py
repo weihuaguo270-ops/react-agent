@@ -13,7 +13,7 @@ from select_pr_checks import load_registry, select_checks
 
 
 ROOT = Path(__file__).resolve().parents[2]
-REPO = "weihuaguo270-ops/react-agent"
+REPO = "weihuaguo270-ops/work-assistant"
 DEFAULT_SAMPLE = ROOT / "docs/specs/ci/evidence/phase0-baseline.json"
 DEFAULT_OUTPUT = ROOT / "docs/specs/ci/evidence/selector-expected-checks-100.json"
 
