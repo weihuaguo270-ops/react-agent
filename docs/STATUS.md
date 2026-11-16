@@ -6,6 +6,8 @@
 
 2026-11-16：S0–S8 工程原型验收已收口，不再新增验收切片。本轮只统一仓库与工作名并维护必要引用；Python 包、命令、环境变量和 schema ID 保持兼容，不改评测仓。
 
+2026-11-16：已放弃发布门槛「3 个项目、30 条真实任务、10 条独立 held-out」。不再把补齐跨仓账本 golden、补齐 held-out，或把这条门槛当作当前 P0 或下一阶段必做事。现有离线评测、golden/故障/生产盲测入口、轨迹与质量配件闭环保留为原型评估证据和验收附录。这条门槛会卷到独立质量仓 llm-eval-engine 与 trace-debugger；本仓不再为这两个评测仓规划补齐，也不把它们改写成简历上的第三项。简历简介仍只描述工作助手，库存预占留在另仓。工作助手仍是可部署、可评测的工程原型；放弃该门槛不表示现有评测已达到生产成熟度。
+
 `change-delivery`（受控变更交付）已独立且已停止，不再作为本仓业务线；本仓已移除其文档附录与运行入口。trace-debugger 是轨迹失败雷达与 CI 钩子，llm-eval-engine 是发版前自检并输出 pass/review/hold。
 
 对外只能表述为可部署、可评测的工程原型。证据包含合成任务与 external_real_sandbox；不得写成生产 SaaS、多租户平台或长期线上 SLA。
@@ -16,7 +18,7 @@
 
 规范咨询的正常路径是只读操作，因此不需要人工审批；如果后续产生副作用修复步骤，则仍须经过 `permission_gate` / approval。演示和轨迹是工程原型证据，不代表生产流量或长期线上 SLA。
 
-- 当前收口：统一离线验收入口 `scripts/eval/acceptance/run_portfolio_acceptance.py` 与跨仓证据账本已落地；主线闭环可复现，但 held-out/golden 发布门槛仍未满足，不能宣称生产成熟度。
+- 当前收口：统一离线验收入口 `scripts/eval/acceptance/run_portfolio_acceptance.py` 与跨仓证据账本已落地，主线闭环可复现，现有离线验收保留为原型证据。「3 个项目、30 条真实任务、10 条独立 held-out」发布门槛已放弃，不再作为未完成的发布目标。放弃该门槛后仍不能宣称生产成熟度。
 
 ## 报销办理第二场景演示
 
@@ -95,12 +97,12 @@ S8 已 **complete（原型验收）**，见 [最终汇总](specs/expense/evidenc
 - 第一阶段账本校验：`python scripts/validate_eval_dataset_ledger.py` 已验证 60 条来源记录（真实 3、合成 24、规则回归 29、契约样例 4）；所有来源均逐条登记，`verified` 仅在重新运行验收后回填
 - 规则回归验证：trace-debugger 黄金集 `42 passed`，已通过工作区可写临时目录补跑此前失败初始化的 10 条 step-watcher 用例；29 条规则回归已回填 verified
 - 第一阶段验收状态：已正式闭环（账本来源校验、规则回归补跑和结果回填均完成）
-- 第二阶段：跨仓库账本记录 6 条 verified 任务、无待补名额、golden 0 条。无真实来源的旧占位项已移入 placeholder_history，不计入任务数量；不再限制 Pydantic/HTTPX 各 3 条。
+- 第二阶段记录（历史）：跨仓库账本 6 条 verified 任务、无待补名额、golden 0 条。无真实来源的旧占位项已移入 placeholder_history，不计入任务数量；不再限制 Pydantic/HTTPX 各 3 条。golden 仍为 0 保留为历史事实，不再作为当前发布目标。
 - 本轮新增：Werkzeug issue #3127 / PR #3129，无参数 WWW-Authenticate 尾随空格缺陷；独立虚拟环境离线运行，before/after 各重复两次，原始日志、退出码、轨迹及源码归档均已保存并校验 SHA256。
 - 新任务验证是上游缺陷可复现性验证，不代表 Agent 解题成绩；隐藏测试位于仓库快照之外，真正 Agent 运行时仍须只挂载代码快照。
 - 证据校验：`python scripts/validate_cross_repo_evidence.py`；账本：[`cross_repo_task_candidates.json`](../eval/cross_repo_task_candidates.json)。校验通过已有任务不表示 6 条批次已齐备。
-- 6 条任务已完成来源固化、before/after 重复执行、独立 hidden acceptance 和 SHA256 证据校验；下一步是审查多样性与隔离独立性，再决定 golden。
-- 数据集缺口：尚未达到 3 个项目、30 条真实任务和 10 条独立 held-out 真实任务的发布门槛
+- 6 条任务已完成来源固化、before/after 重复执行、独立 hidden acceptance 和 SHA256 证据校验。当时拟再审查多样性与隔离独立性并决定 golden；该后续已随发布门槛放弃，不再是当前必做事。
+- 历史记录：跨仓账本当时未达到 3 个项目、30 条真实任务和 10 条独立 held-out 真实任务。该发布门槛已放弃，上述缺口不再写成待补齐目标。
 
 - v5 终态审计（2026-09-20）：四条均由预算护栏停止，显式 submit 0/4，隐藏验收 2/4，实测 token 均未超过 64k。撤回“及时提交已验证有效”的结论；详见 [审计更正](../eval/blind_pilot_v1/V5_TERMINATION_AUDIT.md)。
 
