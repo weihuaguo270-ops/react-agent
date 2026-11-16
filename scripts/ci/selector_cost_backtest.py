@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SAMPLE = ROOT / "docs/specs/ci/evidence/phase0-baseline.json"
 DEFAULT_LABELS = ROOT / "docs/specs/ci/evidence/selector-expected-checks-100.json"
 DEFAULT_OUTPUT = ROOT / "docs/specs/ci/evidence/selector-cost-backtest-labelled.json"
-REPO = "weihuaguo270-ops/react-agent"
+REPO = "weihuaguo270-ops/work-assistant"
 
 JOB_TO_CHECK = {
     "PR ready audit": "pr-ready",

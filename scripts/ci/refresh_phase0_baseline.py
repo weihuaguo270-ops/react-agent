@@ -24,7 +24,7 @@ else:
     from audit_workflow_security import render as render_security_audit
 
 ROOT = Path(__file__).resolve().parents[2]
-REPO = "weihuaguo270-ops/react-agent"
+REPO = "weihuaguo270-ops/work-assistant"
 EVIDENCE = ROOT / "docs/specs/ci/evidence"
 SPEC_REVISION = "1.5"
 SNAPSHOT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$")

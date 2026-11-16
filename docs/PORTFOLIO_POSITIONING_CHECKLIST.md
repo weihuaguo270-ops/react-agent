@@ -4,9 +4,9 @@
 
 - [ ] 外人能说出使用者：企业内部员工。
 - [ ] 外人能说出两件事：规范咨询、报销办理。
-- [ ] work-assistant 是主产品名；react-agent 只是过渡仓库名。
+- [ ] 仓库名与英文工作名统一为 work-assistant，中文名为企业内部智能工作助手；Python 包、命令和环境变量保留兼容名称。
 - [ ] 没有把“三大业务线”或“通用 Agent 框架”放在首页主标题。
-- [ ] change-delivery 被描述为规划中的独立项目，不与两个主场景并列。
+- [ ] change-delivery 被描述为独立项目，本仓保留历史附录，不与两个主场景并列。
 - [ ] trace-debugger 被描述为轨迹失败雷达与 CI 钩子。
 - [ ] llm-eval-engine 被描述为发版前自检，输出 pass/review/hold。
 - [ ] 闭环顺序是：产出轨迹 → trace-debugger → llm-eval-engine。

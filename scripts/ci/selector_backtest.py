@@ -16,7 +16,7 @@ else:
     from hash_utils import sha256_file
     from registry_v2 import ROOT, select, validate_registry
 
-REPO = "weihuaguo270-ops/react-agent"
+REPO = "weihuaguo270-ops/work-assistant"
 SAMPLE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$")
 
 

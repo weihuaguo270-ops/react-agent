@@ -23,7 +23,7 @@ if __package__:
 else:  # pragma: no cover - exercised when invoked as a file from the workflow
     from aggregate_shadow_observation import aggregate
 
-DEFAULT_REPO = "weihuaguo270-ops/react-agent"
+DEFAULT_REPO = "weihuaguo270-ops/work-assistant"
 DEFAULT_WORKFLOW = "test.yml"
 CHECKS = {
     "PR ready audit": "pr-ready",

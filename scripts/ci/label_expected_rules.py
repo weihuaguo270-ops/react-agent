@@ -142,7 +142,7 @@ def build(sample: dict, sample_path: Path) -> dict:
     return {
         "schema_version": "ci-selector-expected-rules/v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "repository": "weihuaguo270-ops/react-agent",
+        "repository": "weihuaguo270-ops/work-assistant",
         "sample_id": sample.get("sample_id"),
         "source_sha": sample.get("source_sha"),
         "source_sample": sample_path.relative_to(ROOT).as_posix(),

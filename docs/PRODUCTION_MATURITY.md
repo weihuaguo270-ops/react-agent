@@ -1,6 +1,6 @@
 # 生产成熟度
 
-本页记录企业内部工作助手（work-assistant）两个办公场景的工程成熟度。它是可部署、可评测的原型清单，不是生产 SLA 或多租户平台承诺。
+本页记录企业内部智能工作助手（work-assistant）两个办公场景的工程成熟度。它是可部署、可评测的原型清单，不是生产 SLA 或多租户平台承诺。
 
 主场景：规范咨询（docs_troubleshoot）；第二场景：报销办理（expense）。
 独立仓：受控变更交付（change-delivery）https://github.com/weihuaguo270-ops/change-delivery ；本仓残页 docs/change-delivery-plan.md。
