@@ -64,8 +64,13 @@ def synthesize_draft(
         sections.append(f"【现场证据】{field_summary}")
 
     for r in hits:
-        src = str(r.get("source") or "unknown")
-        label = src.split("/")[-1]
+        src = str(r.get("url") or r.get("source") or "unknown")
+        if src.startswith("http://") or src.startswith("https://"):
+            label = src
+            display = str(r.get("title") or src.rsplit("/", 1)[-1] or src)
+        else:
+            label = src.split("/")[-1]
+            display = label
         content = str(r.get("content") or "")
         sents = extract_relevant_sentences(content, query, limit=3)
         if not sents:
@@ -74,7 +79,7 @@ def synthesize_draft(
             sources.append(label)
             seen_labels.add(label)
         bullet = "；".join(sents)
-        sections.append(f"【文档要点·{label}】{bullet}")
+        sections.append(f"【文档要点·{display}】{bullet}")
 
     if not sections:
         return "", []

@@ -123,11 +123,20 @@ def build_draft_from_hits(
         seen.add(key)
         uniq.append(r)
 
-    if _ARCH_META.search(query) and not any(
-        source_matches(str(r.get("source") or "").lower(), "core_architecture")
-        or source_matches(str(r.get("source") or "").lower(), "evidence_docs_troubleshoot")
-        or source_matches(str(r.get("source") or "").lower(), "docs_troubleshoot_eval")
-        for r in uniq
+    from react_agent.apps.docs_troubleshoot.docs_sources import (
+        SOURCE_CORPUS,
+        resolve_docs_sources,
+    )
+
+    if (
+        SOURCE_CORPUS in resolve_docs_sources()
+        and _ARCH_META.search(query)
+        and not any(
+            source_matches(str(r.get("source") or "").lower(), "core_architecture")
+            or source_matches(str(r.get("source") or "").lower(), "evidence_docs_troubleshoot")
+            or source_matches(str(r.get("source") or "").lower(), "docs_troubleshoot_eval")
+            for r in uniq
+        )
     ):
         from react_agent.apps.docs_troubleshoot.index import get_index
 

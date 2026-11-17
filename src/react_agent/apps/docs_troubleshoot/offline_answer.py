@@ -12,21 +12,40 @@ def answer_offline(query: str, **state: Any) -> dict[str, Any]:
     os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
     # 声明本次请求的 app 作用域，而不是把 app 工具永久并入全局注册表
     set_request_app("docs_troubleshoot")
+    from react_agent.apps.docs_troubleshoot.docs_sources import (
+        reset_docs_sources,
+        resolve_docs_sources,
+        set_docs_sources,
+    )
     from react_agent.apps.docs_troubleshoot.index import reset_index
     from react_agent.apps.docs_troubleshoot.agent_runner import run_docs
 
-    reset_index()
-    initial = {"query": query, **state}
-    result = run_docs(initial)
-    out = {
-        "ok": result.ok,
-        "answer": result.answer,
-        "refused": bool(result.refused),
-        "citations": result.citations or [],
-        "diagnosis": result.diagnosis or {},
-        "policy": result.state.get("policy"),
-        "trajectory_id": result.trajectory_id,
-        "engine": os.environ.get("REACT_AGENT_DOCS_ENGINE", "agent"),
-        "agent_steps": result.agent_steps,
-    }
-    return out
+    sources = resolve_docs_sources(state.get("docs_sources"))
+    token = set_docs_sources(sources)
+    try:
+        reset_index()
+        initial = {"query": query, **state, "docs_sources": sources}
+        result = run_docs(initial)
+        search_meta = result.state.get("search_hits") or {}
+        if isinstance(search_meta, str):
+            search_meta = {}
+        out = {
+            "ok": result.ok,
+            "answer": result.answer,
+            "refused": bool(result.refused),
+            "citations": result.citations or [],
+            "diagnosis": result.diagnosis or {},
+            "policy": result.state.get("policy"),
+            "trajectory_id": result.trajectory_id,
+            "engine": os.environ.get("REACT_AGENT_DOCS_ENGINE", "agent"),
+            "agent_steps": result.agent_steps,
+            "docs_sources": sources,
+            "retrieval_process": list(
+                search_meta.get("retrieval_process")
+                or result.state.get("retrieval_process")
+                or []
+            ),
+        }
+        return out
+    finally:
+        reset_docs_sources(token)

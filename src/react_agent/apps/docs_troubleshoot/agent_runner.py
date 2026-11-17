@@ -185,9 +185,17 @@ def decide_next_tool(state: dict[str, Any], called: set[str]) -> Optional[tuple[
             {"headers_json": raw},
         )
 
-    if _needs_internal_retrieval(state) and "search_docs" not in called:
+    from react_agent.apps.docs_troubleshoot.docs_sources import (
+        SOURCE_CLAUDE_OFFICIAL,
+        resolve_docs_sources,
+    )
+
+    needs_search = _needs_internal_retrieval(state) or (
+        SOURCE_CLAUDE_OFFICIAL in resolve_docs_sources(state.get("docs_sources"))
+    )
+    if needs_search and "search_docs" not in called:
         return (
-            "Retrieve internal runbook/docs before stating any fact.",
+            "Retrieve configured docs sources (corpus and/or Claude official) before stating any fact.",
             "search_docs",
             {"query": query, "top_k": 3},
         )
@@ -224,10 +232,20 @@ def run_docs_agent(initial: Optional[dict[str, Any]] = None) -> AgentRunResult:
     # 应用作用域：只影响本次调用的工具视图，不改动全局注册表
     set_request_app("docs_troubleshoot")
 
+    from react_agent.apps.docs_troubleshoot.docs_sources import (
+        reset_docs_sources,
+        resolve_docs_sources,
+        set_docs_sources,
+    )
+
     state: dict[str, Any] = dict(initial or {})
     query = str(state.get("query") or "").strip()
     if not query:
         return AgentRunResult(ok=False, answer="query is required", refused=True, state=state)
+
+    sources = resolve_docs_sources(state.get("docs_sources"))
+    state["docs_sources"] = sources
+    sources_token = set_docs_sources(sources)
 
     start_trajectory(query, "offline-agent", get_system_prompt(query))
     called: set[str] = set()
@@ -235,117 +253,138 @@ def run_docs_agent(initial: Optional[dict[str, Any]] = None) -> AgentRunResult:
     step_num = 0
     max_tool_steps = int(os.environ.get("REACT_AGENT_DOCS_AGENT_MAX_STEPS", "12"))
 
-    if should_refuse_query(query):
-        state["need_refuse"] = True
-        state["draft"] = "依据不足，无法给出确定结论。"
-        state["allowed_sources"] = []
-    else:
-        state["evidence_bundle"] = collect_evidence_bundle(state)
-        while step_num < max_tool_steps:
-            nxt = decide_next_tool(state, called)
-            if nxt is None:
-                break
-            thought, tool, args = nxt
-            step_num += 1
-            obs = _run_tool(tool, args)
-            called.add(tool)
-            _record_step(step_num, thought, tool, args, obs)
-            agent_steps.append(
-                {"step": step_num, "thought": thought, "action": tool, "args": args}
-            )
-
-            if tool == "search_docs":
-                _merge_search(state, "search_hits", obs)
-            elif tool == "lookup_api":
-                _merge_search(state, "api_hits", obs)
-            elif tool.startswith("parse_") or tool == "fetch_trace":
-                state["evidence_bundle"] = collect_evidence_bundle(state)
-            elif tool == "probe_service_health":
-                try:
-                    state["health_probe"] = json.loads(obs)
-                except json.JSONDecodeError:
-                    state["health_probe"] = obs
-
-        draft_out = build_draft_from_hits(
-            query,
-            state.get("search_hits"),
-            state.get("api_hits"),
-            evidence_bundle=state.get("evidence_bundle"),
-        )
-        state.update(draft_out)
-
-        # Agent must verify citations before release (same contract as LLM react_loop prompt).
-        step_num += 1
-        draft = str(state.get("draft") or "")
-        allowed = ",".join(state.get("allowed_sources") or [])
-        verify_obs = _run_tool(
-            "verify_citations",
-            {"answer": draft, "allowed_sources": allowed},
-        )
-        _record_step(
-            step_num,
-            "Verify draft cites corpus sources; refuse if verification fails.",
-            "verify_citations",
-            {"answer": draft[:200], "allowed_sources": allowed[:120]},
-            verify_obs,
-        )
-        agent_steps.append(
-            {
-                "step": step_num,
-                "thought": "citation verification gate",
-                "action": "verify_citations",
-            }
-        )
-        try:
-            check = json.loads(verify_obs)
-        except json.JSONDecodeError:
-            check = {"ok": False}
-        if not check.get("ok") and not state.get("need_refuse"):
+    try:
+        if should_refuse_query(query):
             state["need_refuse"] = True
-            if "依据不足" not in draft:
-                state["draft"] = (
-                    "依据不足，无法给出确定结论。"
-                    "请补充报错原文、相关配置，或先检索文档后再答。"
+            state["draft"] = "依据不足，无法给出确定结论。"
+            state["allowed_sources"] = []
+        else:
+            state["evidence_bundle"] = collect_evidence_bundle(state)
+            while step_num < max_tool_steps:
+                nxt = decide_next_tool(state, called)
+                if nxt is None:
+                    break
+                thought, tool, args = nxt
+                step_num += 1
+                obs = _run_tool(tool, args)
+                called.add(tool)
+                _record_step(step_num, thought, tool, args, obs)
+                agent_steps.append(
+                    {"step": step_num, "thought": thought, "action": tool, "args": args}
                 )
 
-    from react_agent.apps.docs_troubleshoot.policy import enforce_answer_policy
-    from react_agent.apps.docs_troubleshoot.diagnosis import build_diagnosis
-    from react_agent.apps.docs_troubleshoot.draft import as_results
+                if tool == "search_docs":
+                    _merge_search(state, "search_hits", obs)
+                    hits = state.get("search_hits") or {}
+                    if isinstance(hits, dict):
+                        state["retrieval_process"] = list(hits.get("retrieval_process") or [])
+                elif tool == "lookup_api":
+                    _merge_search(state, "api_hits", obs)
+                elif tool.startswith("parse_") or tool == "fetch_trace":
+                    state["evidence_bundle"] = collect_evidence_bundle(state)
+                elif tool == "probe_service_health":
+                    try:
+                        state["health_probe"] = json.loads(obs)
+                    except json.JSONDecodeError:
+                        state["health_probe"] = obs
 
-    policy_out = enforce_answer_policy(
-        str(state.get("draft") or ""),
-        allowed_sources=state.get("allowed_sources") or None,
-        must_refuse=bool(state.get("need_refuse")),
-    )
-    state["answer"] = policy_out["answer"]
-    state["refused"] = policy_out.get("refused", False)
-    state["citations"] = policy_out.get("citations") or []
-    state["policy"] = policy_out.get("policy")
+            draft_out = build_draft_from_hits(
+                query,
+                state.get("search_hits"),
+                state.get("api_hits"),
+                evidence_bundle=state.get("evidence_bundle"),
+            )
+            # Surface official-docs failure explicitly (do not look like a silent corpus miss).
+            search_hits = state.get("search_hits") or {}
+            if (
+                isinstance(search_hits, dict)
+                and not search_hits.get("ok")
+                and search_hits.get("message", "").startswith("claude_official")
+                and draft_out.get("need_refuse")
+            ):
+                hint = search_hits.get("hint") or search_hits.get("error") or ""
+                draft_out["draft"] = (
+                    "依据不足，无法给出确定结论。"
+                    f" Claude 官方文档检索失败：{hint}"
+                    if hint
+                    else "依据不足，无法给出确定结论。Claude 官方文档检索失败。"
+                )
+            state.update(draft_out)
 
-    hits = as_results(state.get("search_hits")) + as_results(state.get("api_hits"))
-    diagnosis = build_diagnosis(
-        query=query,
-        evidence_bundle=state.get("evidence_bundle") or {},
-        draft=str(state.get("answer") or ""),
-        ranked_sources=list(state.get("ranked_sources") or []),
-        refused=bool(state.get("refused")),
-        retrieval_hits=hits,
-    )
+            # Agent must verify citations before release (same contract as LLM react_loop prompt).
+            step_num += 1
+            draft = str(state.get("draft") or "")
+            allowed = ",".join(state.get("allowed_sources") or [])
+            verify_obs = _run_tool(
+                "verify_citations",
+                {"answer": draft, "allowed_sources": allowed},
+            )
+            _record_step(
+                step_num,
+                "Verify draft cites corpus sources; refuse if verification fails.",
+                "verify_citations",
+                {"answer": draft[:200], "allowed_sources": allowed[:120]},
+                verify_obs,
+            )
+            agent_steps.append(
+                {
+                    "step": step_num,
+                    "thought": "citation verification gate",
+                    "action": "verify_citations",
+                }
+            )
+            try:
+                check = json.loads(verify_obs)
+            except json.JSONDecodeError:
+                check = {"ok": False}
+            if not check.get("ok") and not state.get("need_refuse"):
+                state["need_refuse"] = True
+                if "依据不足" not in draft:
+                    state["draft"] = (
+                        "依据不足，无法给出确定结论。"
+                        "请补充报错原文、相关配置，或先检索文档后再答。"
+                    )
 
-    traj = current_trajectory()
-    trajectory_id = traj.session_id if traj else ""
-    finish_trajectory(str(state.get("answer") or ""))
+        from react_agent.apps.docs_troubleshoot.policy import enforce_answer_policy
+        from react_agent.apps.docs_troubleshoot.diagnosis import build_diagnosis
+        from react_agent.apps.docs_troubleshoot.draft import as_results
 
-    return AgentRunResult(
-        ok=True,
-        answer=str(state.get("answer") or ""),
-        refused=bool(state.get("refused")),
-        citations=list(state.get("citations") or []),
-        diagnosis=diagnosis,
-        state=state,
-        trajectory_id=trajectory_id,
-        agent_steps=agent_steps,
-    )
+        policy_out = enforce_answer_policy(
+            str(state.get("draft") or ""),
+            allowed_sources=state.get("allowed_sources") or None,
+            must_refuse=bool(state.get("need_refuse")),
+        )
+        state["answer"] = policy_out["answer"]
+        state["refused"] = policy_out.get("refused", False)
+        state["citations"] = policy_out.get("citations") or []
+        state["policy"] = policy_out.get("policy")
+
+        hits = as_results(state.get("search_hits")) + as_results(state.get("api_hits"))
+        diagnosis = build_diagnosis(
+            query=query,
+            evidence_bundle=state.get("evidence_bundle") or {},
+            draft=str(state.get("answer") or ""),
+            ranked_sources=list(state.get("ranked_sources") or []),
+            refused=bool(state.get("refused")),
+            retrieval_hits=hits,
+        )
+
+        traj = current_trajectory()
+        trajectory_id = traj.session_id if traj else ""
+        finish_trajectory(str(state.get("answer") or ""))
+
+        return AgentRunResult(
+            ok=True,
+            answer=str(state.get("answer") or ""),
+            refused=bool(state.get("refused")),
+            citations=list(state.get("citations") or []),
+            diagnosis=diagnosis,
+            state=state,
+            trajectory_id=trajectory_id,
+            agent_steps=agent_steps,
+        )
+    finally:
+        reset_docs_sources(sources_token)
 
 
 def run_docs(initial: Optional[dict[str, Any]] = None) -> AgentRunResult:

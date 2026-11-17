@@ -1,0 +1,15 @@
+# Anthropic Developer Documentation (test fixture — not a full mirror)
+
+## English
+
+### Docs home
+
+- [Documentation](https://platform.claude.com/docs/en/home.md)
+
+### Messages
+
+- [Messages API](https://platform.claude.com/docs/en/api/messages.md) - Create a Message with the Messages API
+- [Streaming Messages](https://platform.claude.com/docs/en/api/streaming.md) - Stream responses from the Messages API
+- [Tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview.md) - Tool use with Claude
+- [Authentication](https://platform.claude.com/docs/en/manage-claude/authentication.md) - API keys and authentication
+- [Rate limits](https://platform.claude.com/docs/en/api/rate-limits.md) - Request rate limits and retry guidance

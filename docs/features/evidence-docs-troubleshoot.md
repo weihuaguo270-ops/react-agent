@@ -42,6 +42,9 @@ Core 里检索、工具调用、权限闸门、Harness 轨迹本来就在——�
 
 - 当前语料为 **14 篇** 内置 md；排序含针对固定问法的 domain boost。
 - 在黄金集上表现好，**不能**等同证明对真实企业文档库、OpenAPI 全量或多版本混部有效。
+- **可选资料源：Claude 官方开发者文档**（`platform.claude.com`）。查询时先读 [`/llms.txt`](https://platform.claude.com/llms.txt) 按标题/摘要选题，再按需拉正文；引用必须是官方原文 URL。也可参考 [`/docs/mcp`](https://platform.claude.com/docs/mcp)。**不把官方文档全文写入仓库或提交缓存**；本地仅允许短时缓存（标注来源与获取时间）。
+- 资料源由 `REACT_AGENT_DOCS_SOURCES` 或请求体 `docs_sources` 控制：`corpus`（默认，评测不变）、`claude_official`、或两者叠加。仅启用官方源且在线失败时，**明确报错/拒答**，不会默默改走内置语料却仍显示「Claude 官方文档」。
+- 本能力是额外资料源，**不是**企业内部规范库；界面与文档须写明查阅的是 Claude 官方文档。
 
 ### 未接入 / 未自动采集的现场证据
 

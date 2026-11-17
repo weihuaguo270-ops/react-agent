@@ -42,28 +42,47 @@ _SOURCE_PATTERNS = (
     re.compile(r"\[source\s*:\s*[^\]]+\]", re.I),
     re.compile(r"\(source:\s*[^)]+\)", re.I),
     re.compile(r"根据\s+\S+\.(md|json|ya?ml)", re.I),
+    re.compile(r"https?://platform\.claude\.com/\S+", re.I),
 )
+
+_OFFICIAL_URL_RE = re.compile(r"https?://platform\.claude\.com/[^\s,，\]\)\"']+", re.I)
+_FILE_SOURCE_RE = re.compile(r"([a-zA-Z0-9_\-./]+\.(?:md|json|ya?ml|txt))", re.I)
+
+
+def _normalize_claimed_source(raw: str) -> str:
+    text = (raw or "").strip().rstrip(".,;；。")
+    if _OFFICIAL_URL_RE.fullmatch(text) or text.startswith("https://platform.claude.com/"):
+        return text
+    m = _FILE_SOURCE_RE.search(text)
+    if m:
+        return m.group(1).split("/")[-1]
+    return text
 
 
 def extract_claimed_sources(answer: str) -> list[str]:
-    """Extract sources from explicit citation markers (not every filename in text)."""
+    """Extract sources from explicit citation markers (filenames or official URLs)."""
     found: list[str] = []
     patterns = (
         re.compile(
             r"(?:来源|根据|\[source|source)\s*[:：\]]?\s*"
-            r"([a-zA-Z0-9_\-./]+\.(?:md|json|ya?ml|txt))",
+            r"(https?://platform\.claude\.com/[^\s,，\]\)]+|"
+            r"[a-zA-Z0-9_\-./]+\.(?:md|json|ya?ml|txt))",
             re.I,
         ),
         re.compile(r"根据\s+([a-zA-Z0-9_\-./]+\.(?:md|json|ya?ml|txt))", re.I),
     )
     for pat in patterns:
         for m in pat.finditer(answer or ""):
-            found.append(m.group(1).split("/")[-1])
+            found.append(_normalize_claimed_source(m.group(1)))
     tail = re.search(r"来源\s*[:：]\s*(.+?)\s*$", answer or "", re.I | re.M)
     if tail:
         for part in re.split(r"[,，]", tail.group(1)):
             part = part.strip()
-            m2 = re.search(r"([a-zA-Z0-9_\-./]+\.(?:md|json|ya?ml|txt))", part, re.I)
+            url = _OFFICIAL_URL_RE.search(part)
+            if url:
+                found.append(_normalize_claimed_source(url.group(0)))
+                continue
+            m2 = _FILE_SOURCE_RE.search(part)
             if m2:
                 found.append(m2.group(1).split("/")[-1])
     return list(dict.fromkeys(found))
@@ -96,8 +115,17 @@ def verify_citations(
             "hint": REFUSE_TEMPLATE,
         }
     if allowed_sources is not None:
-        allowed = {s.split("/")[-1] for s in allowed_sources}
-        missing = [c for c in claimed if c not in allowed]
+        allowed: set[str] = set()
+        for s in allowed_sources:
+            raw = str(s or "").strip()
+            if not raw:
+                continue
+            allowed.add(raw)
+            if raw.startswith("http://") or raw.startswith("https://"):
+                allowed.add(raw.rstrip("/"))
+            else:
+                allowed.add(raw.split("/")[-1])
+        missing = [c for c in claimed if c not in allowed and c.rstrip("/") not in allowed]
         if claimed and missing:
             return {
                 "ok": False,
@@ -123,8 +151,15 @@ def enforce_answer_policy(
 ) -> dict[str, Any]:
     """Apply refuse-if-uncited (or force refuse) policy to a draft answer."""
     if must_refuse:
+        text = (answer or "").strip()
+        # Keep an explicit upstream refuse reason (e.g. Claude official fetch failure).
+        refuse_answer = (
+            text
+            if text.startswith("依据不足")
+            else REFUSE_TEMPLATE
+        )
         return {
-            "answer": REFUSE_TEMPLATE,
+            "answer": refuse_answer,
             "refused": True,
             "policy": "forced_refuse",
             "citations": [],
@@ -138,7 +173,12 @@ def enforce_answer_policy(
             "citations": [],
             "check": check,
         }
-    cites = [{"source": s, "snippet": ""} for s in check["claimed_sources"]]
+    cites = []
+    for s in check["claimed_sources"]:
+        item: dict[str, Any] = {"source": s, "snippet": ""}
+        if str(s).startswith("http://") or str(s).startswith("https://"):
+            item["url"] = s
+        cites.append(item)
     return {
         "answer": answer,
         "refused": False,

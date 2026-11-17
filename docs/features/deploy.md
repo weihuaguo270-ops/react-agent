@@ -69,6 +69,9 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 | `REACT_AGENT_SERVER_OFFLINE_REACT` | 未设 | `1` 时 `app=default` 走离线 ReAct smoke（CI/deploy，无 Key） |
 | `DEEPSEEK_API_KEY` | — | live 模式需要 |
 | `REACT_AGENT_DOCS_INGEST_DIRS` | — | 额外语料目录（逗号分隔，可 mount） |
+| `REACT_AGENT_DOCS_SOURCES` | `corpus` | 规范咨询资料源：`corpus` / `claude_official` / 逗号叠加；请求体 `docs_sources` 可覆盖 |
+| `REACT_AGENT_CLAUDE_DOCS_CACHE_DIR` | 运行时数据目录下 `claude-docs-cache/` | Claude 官方文档短时缓存（勿入库） |
+| `REACT_AGENT_CLAUDE_DOCS_CACHE_TTL` | `900` | 官方文档缓存秒数；`0` 禁用缓存 |
 | `REACT_AGENT_AUTH_TOKEN` | 未设 | 共享密钥；设置后业务接口要求 `Authorization: Bearer <token>`（或 `X-Api-Key`）；探针及 FastAPI 的无业务数据 `GET /expense`、`GET /expense/ops` 外壳公开，Claim/case API 不豁免 |
 | `REACT_AGENT_API_KEY` | 未设 | **兼容别名**：等价于 `REACT_AGENT_AUTH_TOKEN`，两者同时设置时后者优先。仅供早期 FastAPI 面部署平滑过渡，新部署请只用 `REACT_AGENT_AUTH_TOKEN` |
 | `REACT_AGENT_STRICT_CONFIRM` | 未设 | 在 `auto_allow` 下：`1` 时未注入 HITL 则**拒绝副作用** `CONFIRM`（失败关闭，含 `execute_python`）；`CONFIRM_READ` 仍放行 |

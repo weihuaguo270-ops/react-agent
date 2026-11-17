@@ -43,6 +43,10 @@ src/react_agent/eval/reports/eval_20260713_*.json
 .tmp/
 artifacts/
 
+# Ephemeral Claude official docs cache (must never be committed)
+**/claude-docs-cache/
+.claude-docs-cache/
+
 # Blind-pilot 运行数据：**刻意不提交**。
 #
 # inputs/ 每个任务含 problem.md（盲测的问题陈述）与整份 baseline repo 克隆；
