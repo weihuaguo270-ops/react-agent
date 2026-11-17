@@ -82,13 +82,15 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
     out = answer_offline(message, **extra)
     sources = [c.get("source", "") for c in (out.get("citations") or []) if c.get("source")]
     citations = out.get("citations") or [{"source": s} for s in sources[:3]]
-    # Prefer clickable URLs when citation source is already an http(s) link.
+    # Prefer clickable URLs; label text-only bookmark citations for the UI.
     enriched = []
     for c in citations:
         item = dict(c) if isinstance(c, dict) else {"source": str(c)}
         src = str(item.get("source") or "")
         if not item.get("url") and (src.startswith("http://") or src.startswith("https://")):
             item["url"] = src
+        if not item.get("title") and src.startswith("bookmark_") and src.endswith(".md"):
+            item["title"] = "个人收藏"
         enriched.append(item)
     tid = out.get("trajectory_id") or trajectory_id or f"offline-{request_id[:8]}"
     return 200, {

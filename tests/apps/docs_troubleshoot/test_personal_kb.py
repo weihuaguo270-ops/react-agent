@@ -248,6 +248,49 @@ def test_empty_personal_kb_refuses_without_corpus(personal_tmp):
     assert "builtin corpus" not in process.lower()
 
 
+def test_unrelated_query_with_bookmarks_refuses_without_corpus(personal_tmp):
+    """Library has bookmarks, but the question does not match — refuse, no corpus."""
+    from react_agent.apps.docs_troubleshoot.offline_answer import answer_offline
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        ingest_bookmark,
+        list_bookmarks,
+        search_personal,
+    )
+    from react_agent.tools import enable_app_tools
+
+    enable_app_tools()
+    ingest_bookmark(
+        "employee-d",
+        text="差旅餐补上限 80 元，需保留发票原件。",
+        generator=lambda body, **kw: {
+            "title": "差旅餐补",
+            "summary": "餐补上限 80 元，保留发票。",
+            "keywords": ["差旅", "餐补", "发票", "80"],
+            "draft": True,
+        },
+    )
+    assert len(list_bookmarks("employee-d")) == 1
+    # Corpus-flavored question that the builtin 14 docs would answer with 401.
+    miss = search_personal("employee-d", "缺少 Authorization 返回什么？")
+    assert miss.get("ok") is False
+    assert miss.get("message") == "no_hits"
+
+    out = answer_offline(
+        "缺少 Authorization 返回什么？",
+        docs_sources="personal",
+        actor_id="employee-d",
+    )
+    assert out["refused"] is True
+    assert "个人库中没有足够依据" in out["answer"]
+    # Must not silently answer from builtin corpus (api_auth.md → 401).
+    assert "401" not in out["answer"]
+    assert "unauthorized" not in out["answer"].lower()
+    process = json.dumps(out.get("retrieval_process") or [], ensure_ascii=False)
+    assert "bookmark_search" in process or "personal" in process.lower()
+    assert "builtin corpus" not in process.lower()
+    assert out.get("docs_sources") == ["personal"]
+
+
 def test_ask_after_ingest_returns_citations(personal_tmp):
     from react_agent.apps.docs_troubleshoot.offline_answer import answer_offline
     from react_agent.apps.docs_troubleshoot.personal_kb import ingest_bookmark

@@ -770,7 +770,8 @@ def search_personal(
         content = summary
         if body and body not in content:
             content = f"{summary}\n\n{body[:600]}" if summary else body[:800]
-        cite_source = url or f"bookmark:{item.get('id')}"
+        # Filename-like label so citation policy accepts text-only bookmarks.
+        cite_source = url or f"bookmark_{item.get('id') or 'x'}.md"
         results.append(
             {
                 "source": cite_source,
