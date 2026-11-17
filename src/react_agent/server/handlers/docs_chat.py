@@ -64,6 +64,8 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
         extra["log_excerpt"] = body.get("log_excerpt")
     if body.get("trace_context") is not None:
         extra["trace_context"] = body.get("trace_context")
+    if body.get("docs_sources") is not None:
+        extra["docs_sources"] = body.get("docs_sources")
 
     out = answer_offline(message, **extra)
     sources = [c.get("source", "") for c in (out.get("citations") or []) if c.get("source")]
@@ -80,4 +82,6 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
         "engine": out.get("engine") or "agent",
         "agent_steps": out.get("agent_steps") or [],
         "session_id": body.get("session_id") or "",
+        "docs_sources": out.get("docs_sources") or [],
+        "retrieval_process": out.get("retrieval_process") or [],
     }

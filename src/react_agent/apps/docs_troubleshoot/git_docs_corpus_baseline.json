@@ -34,8 +34,8 @@
     "daily_smoke/README.md": "aa189023b4daed6b0e3e9321a502a455ea2776d06ce77ea92f1c4fdf79d0124b",
     "daily_smoke/VARIANCE.md": "9f9d32ff8ede65dd7d0d7a5d291f3c42aa7c5882a03b714ec4d598e5910be462",
     "features/application-direction.md": "bd601d41b33d62aa0463306aedf7df948281f8188f2ae49407cbfc5a29ac9aab",
-    "features/deploy.md": "5e84df6a2ea29f9c69c7efdb9aa0070ad544e269d228ae0dfd21a97f7fbd0011",
-    "features/evidence-docs-troubleshoot.md": "9362210927f4a44f87aeb297ba45ab5a490675c98db67c63133863596a50777f",
+    "features/deploy.md": "b5366e8d91d8d473767238e76dd6cb693f8b0e0d22eb8013a48d19840a7949a5",
+    "features/evidence-docs-troubleshoot.md": "97a6bbb7d97f3bd6a2a466a1b19ee369328250ba6549590a50ce3ac29ed094fe",
     "features/plugins.md": "2a3893e8ca5772ec47fe00c9705d82a569af8c51c2321019b26f22e6663c784f",
     "features/portability.md": "d0c37400b27755966ea78457d5675aa691a74ea19a7720fe823dc37d36f1bb4f",
     "features/sandbox-security.md": "fff4d505b75557505b1367f9fd7dcb32128d48c226b3838dac0405dd906003b5",
@@ -97,6 +97,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-11-17T06:15:06Z",
+  "generated_at": "2026-11-17T10:35:13Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }

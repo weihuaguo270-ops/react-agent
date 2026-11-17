@@ -61,11 +61,12 @@ summary{cursor:pointer;color:var(--muted);font-size:12px}
   <header>
     <div class="brand">
       <h1>规范咨询</h1>
-      <p>不是泛聊天：答案必须能引用文档，没依据就拒答；可附带 HTTP 错误 / 日志 / Trace 作为现场证据，输出结构化 diagnosis。</p>
+      <p>不是泛聊天：答案必须能引用文档，没依据就拒答。资料源可选<strong>内置演示语料</strong>或<strong>Claude 官方开发者文档</strong>（platform.claude.com，现查现引）；不是企业内部规范库。可附带 HTTP 错误 / 日志 / Trace 作为现场证据。</p>
     </div>
     <div class="badges" id="badges">
       <span class="badge" id="badge-version">v-</span>
       <span class="badge" id="badge-mode">offline</span>
+      <span class="badge" id="badge-sources">资料源: corpus</span>
       <span class="badge">引用 / 拒答</span>
       <span class="badge">diagnosis</span>
     </div>
@@ -83,6 +84,12 @@ summary{cursor:pointer;color:var(--muted);font-size:12px}
     <div class="panel">
       <h2>提问与现场证据</h2>
       <div class="chips" id="presets"></div>
+      <label for="docs_sources">资料源</label>
+      <select id="docs_sources">
+        <option value="corpus">内置演示语料（评测默认）</option>
+        <option value="claude_official">Claude 官方文档（platform.claude.com）</option>
+        <option value="corpus,claude_official">内置语料 + Claude 官方文档</option>
+      </select>
       <label for="question">问题</label>
       <textarea id="question" placeholder="例如：缺少 Authorization 返回什么？"></textarea>
       <details>
@@ -114,6 +121,14 @@ summary{cursor:pointer;color:var(--muted);font-size:12px}
       <div class="section">
         <div class="section-title">引用来源</div>
         <div class="cite-list" id="citations"><span class="empty">暂无引用</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">检索过程</div>
+        <div id="retrieval-process"><div class="empty">启用 Claude 官方文档时，显示索引筛选与拉页步骤</div></div>
+      </div>
+      <div class="section">
+        <div class="section-title">诊断（diagnosis）</div>
+        <div id="diagnosis"><div class="empty">无 diagnosis 或未传入现场证据</div></div>
       </div>
       <div class="section">
         <div class="section-title">Agent 工具步</div>
@@ -165,12 +180,15 @@ function parseJsonField(id){
 
 function clearForm(){
   ["question","error_response","log_excerpt","trace_context"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("docs_sources").value="corpus";
   document.getElementById("answer").textContent="输入问题后，这里展示带引用约束的答案，或拒答说明。";
   document.getElementById("citations").innerHTML='<span class="empty">暂无引用</span>';
+  document.getElementById("retrieval-process").innerHTML='<div class="empty">启用 Claude 官方文档时，显示索引筛选与拉页步骤</div>';
   document.getElementById("diagnosis").innerHTML='<div class="empty">无 diagnosis 或未传入现场证据</div>';
   document.getElementById("agent-steps").innerHTML='<div class="empty">离线 Agent 循环：search → verify_citations → …</div>';
   document.getElementById("status").className="status";
   document.getElementById("meta").textContent="";
+  document.getElementById("badge-sources").textContent="资料源: corpus";
 }
 
 function renderAgentSteps(steps, engine){
@@ -180,6 +198,28 @@ function renderAgentSteps(steps, engine){
   return steps.map(s=>`<div class="card"><h3>Step ${esc(s.step)} · ${esc(s.action||"")}</h3><div class="sub">${esc(s.thought||"")}</div></div>`).join("");
 }
 
+function renderCitations(cites){
+  if(!cites||!cites.length) return '<span class="empty">无引用（可能已拒答）</span>';
+  return cites.map(c=>{
+    const src=c.source||c.url||c;
+    const url=c.url||(/^https?:\/\//i.test(String(src))?src:"");
+    const title=c.title?esc(c.title)+" · ":"";
+    if(url){
+      return `<a class="cite" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${title}${esc(url)}</a>`;
+    }
+    return `<span class="cite">${title}${esc(src)}</span>`;
+  }).join("");
+}
+
+function renderRetrievalProcess(steps, sources){
+  const label=(sources||[]).join(", ")||"corpus";
+  if(!steps||!steps.length){
+    return `<div class="empty">资料源: ${esc(label)} · 无额外检索过程</div>`;
+  }
+  return steps.map(s=>`<div class="card"><h3>${esc(s.step||s.phase||"step")}</h3><div class="sub">${esc(s.detail||s.message||JSON.stringify(s))}</div></div>`).join("");
+}
+
+function renderDiagnosis(d){
   if(!d||!Object.keys(d).length){
     return '<div class="empty">无 diagnosis 或未传入现场证据</div>';
   }
@@ -213,7 +253,10 @@ async function ask(){
   const btn=document.getElementById("ask-btn");
   btn.disabled=true; btn.textContent="查询中…";
   try{
-    const body={message:document.getElementById("question").value.trim()};
+    const body={
+      message:document.getElementById("question").value.trim(),
+      docs_sources:document.getElementById("docs_sources").value
+    };
     const er=parseJsonField("error_response"); if(er!==undefined) body.error_response=er;
     const log=document.getElementById("log_excerpt").value.trim(); if(log) body.log_excerpt=log;
     const tr=parseJsonField("trace_context"); if(tr!==undefined) body.trace_context=tr;
@@ -224,17 +267,19 @@ async function ask(){
     const refused=!!data.refused;
     const st=document.getElementById("status");
     st.className="status "+(refused?"refused":"answered");
-    st.textContent=refused?"依据不足 · 已拒答":"已回答 · 引用策略通过";
+    const srcLabel=(data.docs_sources||[]).join(", ")||body.docs_sources;
+    st.textContent=refused
+      ?("依据不足 · 已拒答 · 资料源: "+srcLabel)
+      :("已回答 · 引用策略通过 · 资料源: "+srcLabel);
     document.getElementById("answer").textContent=data.answer||"";
     document.getElementById("meta").innerHTML=
-      `request_id: ${esc(data.request_id||"")} · mode: ${esc(data.mode||"")} · trajectory: ${esc(data.trajectory_id||"")}`;
-    const cites=data.citations||[];
-    document.getElementById("citations").innerHTML=cites.length
-      ? cites.map(c=>`<span class="cite">${esc(c.source||c)}</span>`).join("")
-      : '<span class="empty">无引用（可能已拒答）</span>';
+      `request_id: ${esc(data.request_id||"")} · mode: ${esc(data.mode||"")} · trajectory: ${esc(data.trajectory_id||"")} · sources: ${esc(srcLabel)}`;
+    document.getElementById("citations").innerHTML=renderCitations(data.citations||[]);
+    document.getElementById("retrieval-process").innerHTML=renderRetrievalProcess(data.retrieval_process||[], data.docs_sources||[]);
     document.getElementById("diagnosis").innerHTML=renderDiagnosis(data.diagnosis||{});
     document.getElementById("agent-steps").innerHTML=renderAgentSteps(data.agent_steps||[], data.engine);
     document.getElementById("badge-mode").textContent=data.mode||"offline";
+    document.getElementById("badge-sources").textContent="资料源: "+srcLabel;
   }catch(e){
     document.getElementById("status").className="status refused";
     document.getElementById("status").style.display="block";

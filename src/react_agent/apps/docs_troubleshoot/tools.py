@@ -31,28 +31,115 @@ def _load_index():
 
 
 def search_docs(query: str, top_k: int = 3) -> str:
-    """Search internal docs/runbooks for troubleshooting context."""
-    rag = _load_index()
-    hits = rag.query(query, top_k=top_k)
-    if not hits:
-        return json.dumps(
-            {"ok": False, "message": "no_hits", "results": []},
-            ensure_ascii=False,
-        )
-    results = [
-        {
-            "source": h.get("source", ""),
-            "score": h.get("score"),
-            "content": h.get("content", "")[:800],
-        }
-        for h in hits
+    """Search configured docs sources (builtin corpus and/or Claude official)."""
+    from react_agent.apps.docs_troubleshoot.docs_sources import (
+        SOURCE_CLAUDE_OFFICIAL,
+        SOURCE_CORPUS,
+        resolve_docs_sources,
+        source_display_label,
+    )
+
+    sources = resolve_docs_sources()
+    results: list[dict[str, Any]] = []
+    process: list[dict[str, str]] = [
+        {"step": "docs_sources", "detail": source_display_label(sources)}
     ]
-    return json.dumps({"ok": True, "results": results}, ensure_ascii=False)
+    errors: list[str] = []
+
+    if SOURCE_CLAUDE_OFFICIAL in sources:
+        from react_agent.apps.docs_troubleshoot.claude_docs import search_claude_official
+
+        claude_out = search_claude_official(query, top_k=top_k)
+        process.extend(claude_out.get("retrieval_process") or [])
+        if claude_out.get("ok"):
+            results.extend(claude_out.get("results") or [])
+        else:
+            err = str(claude_out.get("error") or claude_out.get("message") or "claude_failed")
+            errors.append(err)
+            # Official-only: never silently substitute the synthetic corpus.
+            if SOURCE_CORPUS not in sources:
+                return json.dumps(
+                    {
+                        "ok": False,
+                        "message": claude_out.get("message") or "claude_official_unavailable",
+                        "error": err,
+                        "hint": claude_out.get("hint")
+                        or "Claude 官方文档不可用；未改用内置演示语料。",
+                        "results": [],
+                        "docs_sources": sources,
+                        "retrieval_process": process,
+                    },
+                    ensure_ascii=False,
+                )
+            process.append(
+                {
+                    "step": "claude_official_degraded",
+                    "detail": f"官方文档失败，降级到内置语料（已标明）: {err}",
+                }
+            )
+
+    if SOURCE_CORPUS in sources:
+        rag = _load_index()
+        hits = rag.query(query, top_k=top_k)
+        process.append(
+            {
+                "step": "corpus_search",
+                "detail": f"builtin corpus hits={len(hits)}",
+            }
+        )
+        for h in hits:
+            results.append(
+                {
+                    "source": h.get("source", ""),
+                    "score": h.get("score"),
+                    "content": h.get("content", "")[:800],
+                    "docs_source": SOURCE_CORPUS,
+                }
+            )
+
+    if not results:
+        payload = {
+            "ok": False,
+            "message": "no_hits",
+            "results": [],
+            "docs_sources": sources,
+            "retrieval_process": process,
+        }
+        if errors:
+            payload["error"] = "; ".join(errors)
+        return json.dumps(payload, ensure_ascii=False)
+
+    return json.dumps(
+        {
+            "ok": True,
+            "results": results[: max(top_k * 2, top_k)],
+            "docs_sources": sources,
+            "retrieval_process": process,
+            "errors": errors,
+        },
+        ensure_ascii=False,
+    )
 
 
 def lookup_api(topic: str, top_k: int = 3) -> str:
     """Lookup API reference sections (auth, endpoints, error codes)."""
     import re
+
+    from react_agent.apps.docs_troubleshoot.docs_sources import (
+        SOURCE_CORPUS,
+        resolve_docs_sources,
+    )
+
+    # Corpus-backed API lookup only when builtin corpus is enabled.
+    if SOURCE_CORPUS not in resolve_docs_sources():
+        return json.dumps(
+            {
+                "ok": True,
+                "results": [],
+                "message": "lookup_api_skipped_non_corpus_sources",
+            },
+            ensure_ascii=False,
+        )
 
     if re.search(
         r"Core|自建|架构|黄金集|对外名称|难度分层|held_out|docs_troubleshoot_eval|"
@@ -76,6 +163,7 @@ def lookup_api(topic: str, top_k: int = 3) -> str:
             "source": h.get("source", ""),
             "score": h.get("score"),
             "content": h.get("content", "")[:800],
+            "docs_source": SOURCE_CORPUS,
         }
         for h in use
     ]
@@ -133,7 +221,11 @@ SEARCH_DOCS_DEF: dict[str, Any] = {
     "type": "function",
     "function": {
         "name": "search_docs",
-        "description": "检索内部文档与排障 Runbook。回答事实前必须先检索。",
+        "description": (
+            "检索规范咨询资料源：默认内置演示语料；"
+            "也可按配置检索 Claude 官方开发者文档 (platform.claude.com)。"
+            "回答事实前必须先检索。"
+        ),
         "parameters": {
             "type": "object",
             "properties": {
