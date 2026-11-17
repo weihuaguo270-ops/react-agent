@@ -521,6 +521,7 @@ def create_app(
         return JSONResponse(payload, status_code=status)
 
     @api.get("/v1/docs/personal/sources")
+    @api.get("/v1/docs/personal/bookmarks")
     async def personal_kb_sources(
         x_request_id: str | None = Header(default=None),
         x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
@@ -530,6 +531,33 @@ def create_app(
         request_id = _request_id(x_request_id)
         status, payload = await run_in_threadpool(
             handle_personal_sources, request_id, actor_id=x_actor_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
+    @api.patch("/v1/docs/personal/bookmarks/{bookmark_id}")
+    @api.post("/v1/docs/personal/bookmarks/{bookmark_id}")
+    async def personal_kb_update(
+        bookmark_id: str,
+        request: Request,
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_update
+
+        request_id = _request_id(x_request_id)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        status, payload = await run_in_threadpool(
+            handle_personal_update,
+            bookmark_id,
+            body,
+            request_id,
+            actor_id=x_actor_id,
         )
         payload.setdefault("request_id", request_id)
         return JSONResponse(payload, status_code=status)

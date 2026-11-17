@@ -1,4 +1,4 @@
-"""Personal knowledge base: ingest, actor isolation, refuse, illegal URL (offline)."""
+"""Personal knowledge base bookmarks: ingest, edit, merge, search, isolation."""
 from __future__ import annotations
 
 import json
@@ -28,72 +28,195 @@ def personal_tmp(tmp_path, monkeypatch):
 
 
 def _fixture_fetcher(url: str):
-    raw = FIXTURE_HTML.read_bytes()
-    return True, url, raw
+    return True, url, FIXTURE_HTML.read_bytes()
 
 
-def test_ingest_text_lists_source_and_survives_reload(personal_tmp):
+def test_ingest_creates_editable_bookmark_draft(personal_tmp):
     from react_agent.apps.docs_troubleshoot.personal_kb import (
         clear_actor_cache,
-        get_actor_rag,
-        ingest_text,
-        list_sources,
+        ingest_bookmark,
+        list_bookmarks,
+        save_bookmark,
     )
 
-    out = ingest_text(
+    out = ingest_bookmark(
         "employee-a",
-        "个人备忘：429 时按 Retry-After 退避。单用户每分钟不超过 60 次。",
-        title="限流备忘",
+        text=(
+            "安装指南：先安装依赖，再执行 migrate，最后启动服务。"
+            "复习要点：依赖、migrate、启动。"
+        ),
+        requirement="重点摘安装步骤",
     )
     assert out["ok"] is True
-    assert out["chunk_count"] >= 1
-    sources = list_sources("employee-a")
-    assert len(sources) == 1
-    assert sources[0]["title"] == "限流备忘"
-    assert sources[0]["chunk_count"] >= 1
+    assert out["merged"] is False
+    bm = out["bookmark"]
+    assert bm["title"]
+    assert bm["summary"]
+    assert bm["keywords"]
+    assert "安装" in bm["summary"] or any("安装" in k for k in bm["keywords"])
+    assert bm.get("draft") is True
 
-    clear_actor_cache("employee-a")
-    rag = get_actor_rag("employee-a")
-    assert len(rag.chunks) >= 1
-    assert list_sources("employee-a")[0]["title"] == "限流备忘"
+    listed = list_bookmarks("employee-a")
+    assert len(listed) == 1
+    saved = save_bookmark(
+        "employee-a",
+        bm["id"],
+        title="我的安装收藏",
+        summary="自定义摘要：先装依赖再 migrate。",
+        keywords=["安装", "migrate", "启动"],
+    )
+    assert saved["ok"] is True
+    assert saved["bookmark"]["title"] == "我的安装收藏"
+    assert saved["bookmark"]["draft"] is False
+
+    clear_actor_cache()
+    again = list_bookmarks("employee-a")
+    assert again[0]["title"] == "我的安装收藏"
+    assert "自定义摘要" in again[0]["summary"]
+    assert "migrate" in again[0]["keywords"]
 
 
-def test_ingest_url_uses_fixture_not_network(personal_tmp):
-    from react_agent.apps.docs_troubleshoot.personal_kb import ingest_url, list_sources
+def test_ingest_url_fixture_and_same_url_merges(personal_tmp):
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        ingest_bookmark,
+        list_bookmarks,
+    )
 
     url = "https://example.com/personal-note"
-    out = ingest_url("employee-a", url, fetcher=_fixture_fetcher, resolve=False)
-    assert out["ok"] is True
-    assert out["chunk_count"] >= 1
-    src = list_sources("employee-a")[0]
-    assert src["url"] == url
-    assert "限流" in src["title"] or "笔记" in src["title"]
+    first = ingest_bookmark(
+        "employee-a",
+        url=url,
+        fetcher=_fixture_fetcher,
+        resolve=False,
+        requirement="摘要适合复习",
+    )
+    assert first["ok"] is True
+    assert first["merged"] is False
+    assert first["bookmark"]["url"] == url
+    assert first["bookmark"]["keywords"]
+
+    second = ingest_bookmark(
+        "employee-a",
+        url=url,
+        text="更新正文：429 时按 Retry-After 退避，并记录冷却窗口。",
+        requirement="摘要适合复习",
+        resolve=False,
+    )
+    assert second["ok"] is True
+    assert second["merged"] is True
+    assert second["merge_reason"] == "same_url"
+    assert len(list_bookmarks("employee-a")) == 1
+    assert "429" in list_bookmarks("employee-a")[0]["summary"] or "429" in (
+        " ".join(list_bookmarks("employee-a")[0]["keywords"])
+    )
+
+
+def test_keyword_overlap_merges_without_url(personal_tmp):
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        draft_bookmark_fields,
+        ingest_bookmark,
+        list_bookmarks,
+        should_merge_by_keywords,
+    )
+
+    assert should_merge_by_keywords(
+        ["安装", "migrate", "启动", "依赖"],
+        ["安装", "migrate", "启动", "回滚"],
+    )
+    assert not should_merge_by_keywords(["安装", "依赖"], ["报销", "发票"])
+
+    first = ingest_bookmark(
+        "employee-a",
+        text="部署手册：安装依赖后执行 migrate，再启动服务。",
+        generator=lambda body, **kw: {
+            "title": "部署手册",
+            "summary": "安装依赖；migrate；启动",
+            "keywords": ["安装", "migrate", "启动", "依赖"],
+            "draft": True,
+        },
+    )
+    second = ingest_bookmark(
+        "employee-a",
+        text="补充：安装失败时检查依赖版本，再重跑 migrate 并启动。",
+        generator=lambda body, **kw: {
+            "title": "部署补充",
+            "summary": "安装失败排查",
+            "keywords": ["安装", "migrate", "启动", "版本"],
+            "draft": True,
+        },
+    )
+    assert second["merged"] is True
+    assert second["merge_reason"] == "keyword_overlap"
+    assert len(list_bookmarks("employee-a")) == 1
+    # Offline draft helper still usable without LLM.
+    draft = draft_bookmark_fields("首段内容。第二段。", title_hint="", requirement="")
+    assert draft["title"] and draft["summary"] and draft["keywords"] is not None
+
+
+def test_search_by_keywords_and_url(personal_tmp):
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        ingest_bookmark,
+        search_personal,
+    )
+
+    ingest_bookmark(
+        "employee-c",
+        url="https://example.com/rate-limit-note",
+        text="当上游返回 429 时，客户端应指数退避重试，并优先尊重 Retry-After。",
+        generator=lambda body, **kw: {
+            "title": "限流笔记",
+            "summary": "429 时指数退避并尊重 Retry-After。",
+            "keywords": ["429", "Retry-After", "限流", "退避"],
+            "draft": True,
+        },
+        resolve=False,
+    )
+    by_kw = search_personal("employee-c", "429 退避")
+    assert by_kw["ok"] is True
+    assert by_kw["results"][0]["title"] == "限流笔记"
+    by_url = search_personal("employee-c", "https://example.com/rate-limit-note")
+    assert by_url["ok"] is True
+    assert by_url["results"][0]["url"] == "https://example.com/rate-limit-note"
 
 
 def test_actor_isolation(personal_tmp):
     from react_agent.apps.docs_troubleshoot.personal_kb import (
-        ingest_text,
-        list_sources,
+        ingest_bookmark,
+        list_bookmarks,
         search_personal,
     )
 
-    ingest_text("alice", "Alice 私有笔记：密钥轮换周期是 90 天。", title="alice-note")
-    ingest_text("bob", "Bob 私有笔记：差旅餐补上限 80 元。", title="bob-note")
-
-    assert list_sources("alice")[0]["title"] == "alice-note"
-    assert list_sources("bob")[0]["title"] == "bob-note"
-
-    alice_hits = search_personal("alice", "密钥轮换")
-    bob_hits = search_personal("bob", "密钥轮换")
-    assert alice_hits["ok"] is True
-    assert any("90" in (r.get("content") or "") for r in alice_hits["results"])
-    assert bob_hits.get("ok") is False or not any(
-        "90" in (r.get("content") or "") for r in bob_hits.get("results") or []
+    ingest_bookmark(
+        "alice",
+        text="Alice 私有：密钥轮换周期 90 天。",
+        generator=lambda body, **kw: {
+            "title": "alice-note",
+            "summary": "密钥轮换 90 天",
+            "keywords": ["密钥", "轮换", "90"],
+            "draft": True,
+        },
     )
+    ingest_bookmark(
+        "bob",
+        text="Bob 私有：差旅餐补上限 80 元。",
+        generator=lambda body, **kw: {
+            "title": "bob-note",
+            "summary": "餐补 80",
+            "keywords": ["差旅", "餐补", "80"],
+            "draft": True,
+        },
+    )
+    assert list_bookmarks("alice")[0]["title"] == "alice-note"
+    assert list_bookmarks("bob")[0]["title"] == "bob-note"
+    assert search_personal("alice", "密钥轮换")["ok"] is True
+    assert search_personal("bob", "密钥轮换").get("ok") is False
 
 
 def test_illegal_urls_rejected(personal_tmp):
-    from react_agent.apps.docs_troubleshoot.personal_kb import ingest_url, list_sources
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        ingest_bookmark,
+        list_bookmarks,
+    )
 
     for bad in (
         "file:///etc/passwd",
@@ -101,10 +224,10 @@ def test_illegal_urls_rejected(personal_tmp):
         "http://127.0.0.1/x",
         "http://192.168.1.10/internal",
     ):
-        out = ingest_url("employee-a", bad, resolve=False)
+        out = ingest_bookmark("employee-a", url=bad, resolve=False)
         assert out["ok"] is False
         assert out.get("error") == "invalid_url"
-    assert list_sources("employee-a") == []
+    assert list_bookmarks("employee-a") == []
 
 
 def test_empty_personal_kb_refuses_without_corpus(personal_tmp):
@@ -119,7 +242,6 @@ def test_empty_personal_kb_refuses_without_corpus(personal_tmp):
     )
     assert out["refused"] is True
     assert "个人库中没有足够依据" in out["answer"]
-    # Must not answer from the 14 builtin corpus articles.
     assert "401" not in out["answer"] or "个人库" in out["answer"]
     process = json.dumps(out.get("retrieval_process") or [], ensure_ascii=False)
     assert "personal" in process.lower() or "个人" in process
@@ -128,16 +250,21 @@ def test_empty_personal_kb_refuses_without_corpus(personal_tmp):
 
 def test_ask_after_ingest_returns_citations(personal_tmp):
     from react_agent.apps.docs_troubleshoot.offline_answer import answer_offline
-    from react_agent.apps.docs_troubleshoot.personal_kb import ingest_text
+    from react_agent.apps.docs_troubleshoot.personal_kb import ingest_bookmark
     from react_agent.tools import enable_app_tools
 
     enable_app_tools()
-    ingest_text(
+    ingest_bookmark(
         "employee-c",
-        "当上游返回 429 时，客户端应指数退避重试，并优先尊重 Retry-After 响应头。"
-        "单用户突发流量不超过每分钟 60 次。",
-        title="限流笔记",
-        source_url="https://example.com/rate-limit-note",
+        url="https://example.com/rate-limit-note",
+        text="当上游返回 429 时，客户端应指数退避重试，并优先尊重 Retry-After 响应头。",
+        generator=lambda body, **kw: {
+            "title": "限流笔记",
+            "summary": "429 时指数退避并尊重 Retry-After。",
+            "keywords": ["429", "Retry-After", "限流"],
+            "draft": True,
+        },
+        resolve=False,
     )
     out = answer_offline(
         "429 时应该怎么处理？",
@@ -152,10 +279,9 @@ def test_ask_after_ingest_returns_citations(personal_tmp):
         str(c.get("url") or c.get("source") or "") for c in cites if isinstance(c, dict)
     )
     assert "https://example.com/rate-limit-note" in joined
-    assert out.get("docs_sources") == ["personal"]
 
 
-def test_http_ingest_and_sources_endpoints(personal_tmp):
+def test_http_bookmark_endpoints(personal_tmp):
     from http.server import ThreadingHTTPServer
     import threading
     import time
@@ -186,7 +312,7 @@ def test_http_ingest_and_sources_endpoints(personal_tmp):
             data=json.dumps(
                 {
                     "text": "HTTP 投递：幂等键 Idempotency-Key 用于避免重复扣款。",
-                    "title": "幂等备忘",
+                    "requirement": "摘要适合复习",
                 }
             ).encode("utf-8"),
             headers={"Content-Type": "application/json", "X-Actor-Id": "http-user"},
@@ -195,25 +321,43 @@ def test_http_ingest_and_sources_endpoints(personal_tmp):
         with urllib.request.urlopen(req, timeout=5) as resp:
             body = json.loads(resp.read().decode("utf-8"))
         assert body.get("ok") is True
-        assert body.get("chunk_count", 0) >= 1
+        bm = body.get("bookmark") or {}
+        assert bm.get("id")
+        assert bm.get("summary")
+        assert bm.get("keywords") is not None
 
         list_req = urllib.request.Request(
-            f"http://127.0.0.1:{port}/v1/docs/personal/sources",
+            f"http://127.0.0.1:{port}/v1/docs/personal/bookmarks",
             headers={"X-Actor-Id": "http-user"},
             method="GET",
         )
         with urllib.request.urlopen(list_req, timeout=5) as resp:
             listed = json.loads(resp.read().decode("utf-8"))
-        assert listed.get("source_count") == 1
-        assert listed["sources"][0]["title"] == "幂等备忘"
+        assert listed.get("bookmark_count") == 1
+
+        upd = urllib.request.Request(
+            f"http://127.0.0.1:{port}/v1/docs/personal/bookmarks/{bm['id']}",
+            data=json.dumps(
+                {
+                    "title": "幂等收藏",
+                    "summary": "编辑后的摘要",
+                    "keywords": ["幂等", "Idempotency-Key"],
+                }
+            ).encode("utf-8"),
+            headers={"Content-Type": "application/json", "X-Actor-Id": "http-user"},
+            method="POST",
+        )
+        with urllib.request.urlopen(upd, timeout=5) as resp:
+            saved = json.loads(resp.read().decode("utf-8"))
+        assert saved["bookmark"]["title"] == "幂等收藏"
 
         other = urllib.request.Request(
-            f"http://127.0.0.1:{port}/v1/docs/personal/sources",
+            f"http://127.0.0.1:{port}/v1/docs/personal/bookmarks",
             headers={"X-Actor-Id": "other-user"},
             method="GET",
         )
         with urllib.request.urlopen(other, timeout=5) as resp:
             other_body = json.loads(resp.read().decode("utf-8"))
-        assert other_body.get("source_count") == 0
+        assert other_body.get("bookmark_count") == 0
     finally:
         httpd.shutdown()

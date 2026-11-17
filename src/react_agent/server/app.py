@@ -293,7 +293,7 @@ class AgentHandler(BaseHTTPRequestHandler):
                 },
             )
             return
-        if path == "/v1/docs/personal/sources":
+        if path in ("/v1/docs/personal/sources", "/v1/docs/personal/bookmarks"):
             from react_agent.server.handlers.personal_kb import handle_personal_sources
 
             status, payload = handle_personal_sources(
@@ -350,6 +350,18 @@ class AgentHandler(BaseHTTPRequestHandler):
 
                 status, payload = handle_personal_ingest(
                     body, request_id, actor_id=self.headers.get("X-Actor-Id")
+                )
+                self._send(status, payload)
+                return
+            if path.startswith("/v1/docs/personal/bookmarks/"):
+                from react_agent.server.handlers.personal_kb import handle_personal_update
+
+                bookmark_id = path.rsplit("/", 1)[-1]
+                status, payload = handle_personal_update(
+                    bookmark_id,
+                    body,
+                    request_id,
+                    actor_id=self.headers.get("X-Actor-Id"),
                 )
                 self._send(status, payload)
                 return
@@ -442,7 +454,8 @@ def serve(host: str = "127.0.0.1", port: int = 8765):
     if gate_warning:
         print(gate_warning)
     print("[server] POST /v1/chat  app=default|docs_troubleshoot|expense")
-    print("[server] POST /v1/docs/personal/ingest  GET /v1/docs/personal/sources")
+    print("[server] POST /v1/docs/personal/ingest  GET /v1/docs/personal/bookmarks")
+    print("[server] POST /v1/docs/personal/bookmarks/{id}  update title/summary/keywords")
     print("[server] POST/GET /v1/chat/stream  text/event-stream progress")
     print("[server] GET /v1/info  /health /ready  /  /ui")
     print("[server] REACT_AGENT_SERVER_LLM=1 for app=default (general ReAct)")

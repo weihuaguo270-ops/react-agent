@@ -1,13 +1,18 @@
-"""Per-actor personal knowledge base (UI path; isolated from builtin corpus).
+"""Per-actor personal knowledge base as editable bookmarks (收藏).
 
-Persistence lives under the platform data directory (see ``runtime_dir``),
-never inside the git tree. Ingest and search are scoped by actor id.
+Primary unit is one bookmark: title, summary, keywords (shown under the title),
+optional source URL, and retained body text for citations. Retrieval prefers
+keywords / URL / title / summary — not chunk lists as the UX object.
+
+Persistence lives under ``runtime_dir`` (never in the git tree).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import threading
+import uuid
 from contextvars import ContextVar, Token
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,23 +20,66 @@ from typing import Any, Callable, Optional
 from urllib.parse import urlparse
 
 from react_agent.paths import runtime_dir
-from react_agent.rag import RAG
 from react_agent.safety.net_guard import open_validated, validate_url
 
 MAX_TEXT_CHARS = 100_000
 MAX_FETCH_BYTES = 200_000
 FETCH_TIMEOUT = 10.0
 MAX_ACTOR_LEN = 64
+MAX_SUMMARY_CHARS = 800
+MAX_KEYWORDS = 12
+# Merge when keyword sets overlap strongly (no clustering).
+KEYWORD_MERGE_JACCARD = 0.5
+KEYWORD_MERGE_MIN_INTERSECTION = 2
 
 _actor_override: ContextVar[str | None] = ContextVar(
     "docs_troubleshoot_actor_id", default=None
 )
 _LOCKS: dict[str, threading.RLock] = {}
 _LOCKS_GUARD = threading.Lock()
-_RAG_CACHE: dict[str, RAG] = {}
-
 
 Fetcher = Callable[[str], tuple[bool, str, bytes]]
+BookmarkGenerator = Callable[..., dict[str, Any]]
+
+_STOPWORDS = frozenset(
+    {
+        "的",
+        "了",
+        "和",
+        "是",
+        "在",
+        "与",
+        "及",
+        "或",
+        "等",
+        "对",
+        "为",
+        "有",
+        "把",
+        "被",
+        "从",
+        "到",
+        "一个",
+        "以及",
+        "可以",
+        "进行",
+        "使用",
+        "如果",
+        "以及",
+        "the",
+        "and",
+        "for",
+        "with",
+        "this",
+        "that",
+        "from",
+        "into",
+        "your",
+        "are",
+        "was",
+        "were",
+    }
+)
 
 
 def set_actor_id(actor_id: str | None) -> Token:
@@ -91,64 +139,121 @@ def _lock_for(actor_id: str) -> threading.RLock:
         return lock
 
 
-def _sources_path(actor_id: str) -> Path:
+def _bookmarks_path(actor_id: str) -> Path:
+    return actor_dir(actor_id) / "bookmarks.json"
+
+
+def _legacy_sources_path(actor_id: str) -> Path:
     return actor_dir(actor_id) / "sources.json"
 
 
-def _index_path(actor_id: str) -> Path:
-    return actor_dir(actor_id) / "index_cache.json"
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _load_sources(actor_id: str) -> list[dict[str, Any]]:
-    path = _sources_path(actor_id)
-    if not path.is_file():
-        return []
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return []
-    return data if isinstance(data, list) else []
-
-
-def _save_sources(actor_id: str, sources: list[dict[str, Any]]) -> None:
-    path = _sources_path(actor_id)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(sources, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
-
-
-def get_actor_rag(actor_id: str) -> RAG:
-    """Load (or create) the durable RAG index for one actor."""
-    import os
-
-    os.environ.setdefault("REACT_AGENT_RAG_MODE", "keyword")
-    safe = normalize_actor_id(actor_id)
-    cached = _RAG_CACHE.get(safe)
-    if cached is not None:
-        return cached
-    with _lock_for(safe):
-        cached = _RAG_CACHE.get(safe)
-        if cached is not None:
-            return cached
-        rag = RAG(save_path=str(_index_path(safe)))
-        _RAG_CACHE[safe] = rag
-        return rag
+def _public_bookmark(record: dict[str, Any]) -> dict[str, Any]:
+    """Return UI-safe bookmark fields (body truncated in list views)."""
+    return {
+        "id": record.get("id") or "",
+        "title": record.get("title") or "",
+        "summary": record.get("summary") or "",
+        "keywords": list(record.get("keywords") or []),
+        "url": record.get("url") or "",
+        "requirement": record.get("requirement") or "",
+        "kind": record.get("kind") or "text",
+        "draft": bool(record.get("draft")),
+        "ingested_at": record.get("ingested_at") or "",
+        "updated_at": record.get("updated_at") or "",
+        "merged_from": record.get("merged_from") or "",
+        "char_count": int(record.get("char_count") or 0),
+    }
 
 
 def clear_actor_cache(actor_id: str | None = None) -> None:
-    """Drop in-process RAG cache (tests / reset)."""
-    with _LOCKS_GUARD:
-        if actor_id is None:
-            _RAG_CACHE.clear()
-            return
-        _RAG_CACHE.pop(normalize_actor_id(actor_id), None)
+    """Compatibility no-op for tests that cleared the old RAG cache."""
+    return None
 
 
+def _load_bookmarks(actor_id: str) -> list[dict[str, Any]]:
+    path = _bookmarks_path(actor_id)
+    if path.is_file():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                return data
+        except (json.JSONDecodeError, OSError):
+            pass
+    # One-shot migrate from #240 sources.json + index if present.
+    legacy = _legacy_sources_path(actor_id)
+    if legacy.is_file():
+        try:
+            raw = json.loads(legacy.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            raw = []
+        migrated: list[dict[str, Any]] = []
+        if isinstance(raw, list):
+            for item in raw:
+                if not isinstance(item, dict):
+                    continue
+                body = str(item.get("body") or item.get("content") or "")
+                title = str(item.get("title") or "未命名收藏")
+                url = str(item.get("url") or "")
+                fields = draft_bookmark_fields(body or title, title_hint=title, requirement="")
+                migrated.append(
+                    {
+                        "id": str(item.get("id") or item.get("source_id") or _new_id()),
+                        "title": fields["title"],
+                        "summary": fields["summary"],
+                        "keywords": fields["keywords"],
+                        "url": url,
+                        "body": body,
+                        "requirement": "",
+                        "kind": item.get("kind") or ("url" if url else "text"),
+                        "draft": True,
+                        "ingested_at": item.get("ingested_at") or _now(),
+                        "updated_at": item.get("ingested_at") or _now(),
+                        "char_count": len(body),
+                        "merged_from": "",
+                    }
+                )
+        if migrated:
+            _save_bookmarks(actor_id, migrated)
+            return migrated
+    return []
+
+
+def _save_bookmarks(actor_id: str, bookmarks: list[dict[str, Any]]) -> None:
+    path = _bookmarks_path(actor_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(bookmarks, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
+def list_bookmarks(actor_id: str) -> list[dict[str, Any]]:
+    """List bookmarks for an actor (newest first)."""
+    items = _load_bookmarks(actor_id)
+    return [_public_bookmark(b) for b in reversed(items)]
+
+
+# Back-compat alias used by older handlers/tests.
 def list_sources(actor_id: str) -> list[dict[str, Any]]:
-    """List ingested sources for an actor (newest first)."""
-    sources = _load_sources(actor_id)
-    return list(reversed(sources))
+    return list_bookmarks(actor_id)
+
+
+def get_bookmark(actor_id: str, bookmark_id: str) -> dict[str, Any] | None:
+    """Return one bookmark including full body for citation / edit."""
+    safe = normalize_actor_id(actor_id)
+    for item in _load_bookmarks(safe):
+        if str(item.get("id")) == str(bookmark_id):
+            out = _public_bookmark(item)
+            out["body"] = item.get("body") or ""
+            return out
+    return None
+
+
+def _new_id() -> str:
+    return f"bk_{uuid.uuid4().hex[:12]}"
 
 
 def _strip_html(raw: str) -> tuple[str, str]:
@@ -196,21 +301,337 @@ def validate_ingest_url(url: str, *, resolve: bool = True) -> tuple[bool, str]:
     return validate_url(raw, resolve=resolve)
 
 
-def _remove_source_chunks(rag: RAG, source_key: str) -> None:
-    if not rag.chunks:
-        return
-    kept_chunks: list[str] = []
-    kept_sources: list[str] = []
-    kept_vecs: list = []
-    for chunk, src, vec in zip(rag.chunks, rag.sources, rag.vecs or []):
-        if str(src) == source_key:
+def _tokenize(text: str) -> list[str]:
+    """Lightweight tokens: English words + Chinese bigrams + digits."""
+    raw = (text or "").lower()
+    words = re.findall(r"[a-z0-9][a-z0-9\-_]{1,}", raw)
+    zh = re.findall(r"[\u4e00-\u9fff]+", text or "")
+    grams: list[str] = []
+    for run in zh:
+        if len(run) == 1:
+            grams.append(run)
+        else:
+            grams.extend(run[i : i + 2] for i in range(len(run) - 1))
+    out: list[str] = []
+    for t in words + grams:
+        if t in _STOPWORDS or len(t) < 2:
             continue
-        kept_chunks.append(chunk)
-        kept_sources.append(src)
-        kept_vecs.append(vec)
-    rag.chunks = kept_chunks
-    rag.sources = kept_sources
-    rag.vecs = kept_vecs
+        if t not in out:
+            out.append(t)
+    return out
+
+
+def _normalize_keywords(raw: Any) -> list[str]:
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        parts = re.split(r"[,，、;\s]+", raw)
+    elif isinstance(raw, (list, tuple)):
+        parts = [str(x) for x in raw]
+    else:
+        parts = [str(raw)]
+    out: list[str] = []
+    for p in parts:
+        p = p.strip()
+        if not p or p in out:
+            continue
+        out.append(p[:40])
+        if len(out) >= MAX_KEYWORDS:
+            break
+    return out
+
+
+def draft_bookmark_fields(
+    body: str,
+    *,
+    title_hint: str = "",
+    requirement: str = "",
+) -> dict[str, Any]:
+    """Offline draft generator: editable title / summary / keywords (no LLM).
+
+    Uses title hint + first paragraphs; if ``requirement`` mentions focus words
+    (e.g. 安装 / 复习), prefer matching sentences in the summary.
+    """
+    text = (body or "").strip()
+    title = (title_hint or "").strip()
+    if not title:
+        first_line = next((ln.strip() for ln in text.splitlines() if ln.strip()), "")
+        title = first_line[:60] if first_line else "未命名收藏"
+    title = title[:120]
+
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    sentences = re.split(r"(?<=[。！？.!?])\s*", text)
+    sentences = [s.strip() for s in sentences if s.strip()]
+    req = (requirement or "").strip()
+    picked: list[str] = []
+    if req:
+        req_tokens = _tokenize(req)
+        scored = []
+        for s in sentences:
+            score = sum(1 for t in req_tokens if t in s.lower() or t in s)
+            if score:
+                scored.append((score, s))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        picked = [s for _, s in scored[:3]]
+    if not picked:
+        if paragraphs:
+            picked = paragraphs[:2]
+        else:
+            picked = sentences[:3] or ([text[:MAX_SUMMARY_CHARS]] if text else [])
+    summary = " ".join(picked).strip()
+    if len(summary) > MAX_SUMMARY_CHARS:
+        summary = summary[: MAX_SUMMARY_CHARS - 1].rstrip() + "…"
+    if req and summary and req not in summary:
+        summary = f"【按要求「{req[:40]}」整理】{summary}"
+    if not summary:
+        summary = "（草稿）正文较短，请直接编辑摘要。"
+
+    pool = " ".join([title, summary, req, text[:2000]])
+    counts: dict[str, int] = {}
+    for tok in _tokenize(pool):
+        counts[tok] = counts.get(tok, 0) + 1
+    # Prefer requirement tokens and longer tokens.
+    ranked = sorted(
+        counts.items(),
+        key=lambda kv: (kv[0] in _tokenize(req), len(kv[0]) >= 2, kv[1], len(kv[0])),
+        reverse=True,
+    )
+    keywords = [k for k, _ in ranked[:MAX_KEYWORDS]]
+    if not keywords and title:
+        keywords = _tokenize(title)[:6]
+
+    return {
+        "title": title,
+        "summary": summary,
+        "keywords": keywords,
+        "draft": True,
+    }
+
+
+def keyword_jaccard(a: list[str], b: list[str]) -> float:
+    sa = {x.lower() for x in a if x}
+    sb = {x.lower() for x in b if x}
+    if not sa or not sb:
+        return 0.0
+    inter = len(sa & sb)
+    union = len(sa | sb)
+    return inter / union if union else 0.0
+
+
+def keyword_intersection_size(a: list[str], b: list[str]) -> int:
+    sa = {x.lower() for x in a if x}
+    sb = {x.lower() for x in b if x}
+    return len(sa & sb)
+
+
+def should_merge_by_keywords(a: list[str], b: list[str]) -> bool:
+    """Clear rule: Jaccard ≥ 0.5 and shared keywords ≥ 2 → merge candidates."""
+    return (
+        keyword_jaccard(a, b) >= KEYWORD_MERGE_JACCARD
+        and keyword_intersection_size(a, b) >= KEYWORD_MERGE_MIN_INTERSECTION
+    )
+
+
+def _find_by_url(bookmarks: list[dict[str, Any]], url: str) -> dict[str, Any] | None:
+    target = (url or "").strip()
+    if not target:
+        return None
+    for item in bookmarks:
+        if str(item.get("url") or "").strip() == target:
+            return item
+    return None
+
+
+def _find_keyword_overlap(
+    bookmarks: list[dict[str, Any]], keywords: list[str]
+) -> dict[str, Any] | None:
+    best = None
+    best_score = 0.0
+    for item in bookmarks:
+        existing = list(item.get("keywords") or [])
+        if not should_merge_by_keywords(existing, keywords):
+            continue
+        score = keyword_jaccard(existing, keywords)
+        if score > best_score:
+            best_score = score
+            best = item
+    return best
+
+
+def _merge_keywords(*groups: list[str]) -> list[str]:
+    out: list[str] = []
+    for group in groups:
+        for k in group:
+            k = str(k).strip()
+            if k and k not in out:
+                out.append(k)
+            if len(out) >= MAX_KEYWORDS:
+                return out
+    return out
+
+
+def save_bookmark(
+    actor_id: str,
+    bookmark_id: str,
+    *,
+    title: str | None = None,
+    summary: str | None = None,
+    keywords: Any = None,
+) -> dict[str, Any]:
+    """Update editable fields on an existing bookmark."""
+    safe = normalize_actor_id(actor_id)
+    with _lock_for(safe):
+        items = _load_bookmarks(safe)
+        target = None
+        for item in items:
+            if str(item.get("id")) == str(bookmark_id):
+                target = item
+                break
+        if target is None:
+            return {"ok": False, "error": "not_found", "message": "收藏不存在"}
+        if title is not None:
+            target["title"] = str(title).strip()[:120] or target.get("title") or "未命名收藏"
+        if summary is not None:
+            target["summary"] = str(summary).strip()[: MAX_SUMMARY_CHARS * 2]
+        if keywords is not None:
+            target["keywords"] = _normalize_keywords(keywords)
+        target["updated_at"] = _now()
+        target["draft"] = False
+        _save_bookmarks(safe, items)
+        return {"ok": True, "actor_id": safe, "bookmark": _public_bookmark(target)}
+
+
+def ingest_bookmark(
+    actor_id: str,
+    *,
+    text: str = "",
+    url: str = "",
+    requirement: str = "",
+    title_hint: str = "",
+    fetcher: Optional[Fetcher] = None,
+    generator: Optional[BookmarkGenerator] = None,
+    resolve: bool = True,
+) -> dict[str, Any]:
+    """Create or merge one bookmark from URL and/or pasted text + optional requirement."""
+    safe = normalize_actor_id(actor_id)
+    url = (url or "").strip()
+    text = (text or "").strip()
+    requirement = (requirement or "").strip()
+    title_hint = (title_hint or "").strip()
+
+    if not url and not text:
+        return {"ok": False, "error": "empty_input", "message": "请提供链接或正文"}
+
+    page_title = ""
+    if url:
+        ok, reason = validate_ingest_url(url, resolve=resolve)
+        if not ok:
+            return {"ok": False, "error": "invalid_url", "message": reason}
+        if not text:
+            fetch = fetcher or _default_fetcher
+            try:
+                fetched_ok, err_or_url, body = fetch(url)
+            except Exception as exc:  # noqa: BLE001
+                return {
+                    "ok": False,
+                    "error": "fetch_failed",
+                    "message": f"抓取失败: {exc}"[:300],
+                }
+            if not fetched_ok:
+                return {
+                    "ok": False,
+                    "error": "fetch_failed",
+                    "message": f"抓取失败: {err_or_url}"[:300],
+                }
+            raw = body.decode("utf-8", errors="replace")
+            page_title, text = _strip_html(raw)
+            if not text.strip():
+                return {"ok": False, "error": "empty_body", "message": "页面无可提取正文"}
+
+    if len(text) > MAX_TEXT_CHARS:
+        text = text[:MAX_TEXT_CHARS]
+
+    gen = generator or draft_bookmark_fields
+    try:
+        fields = gen(text, title_hint=title_hint or page_title, requirement=requirement)
+    except TypeError:
+        fields = gen(text)
+    except Exception:  # noqa: BLE001 — never drop content if generator fails
+        fields = draft_bookmark_fields(
+            text, title_hint=title_hint or page_title, requirement=requirement
+        )
+
+    title = str(fields.get("title") or title_hint or page_title or "未命名收藏")[:120]
+    summary = str(fields.get("summary") or "")[: MAX_SUMMARY_CHARS * 2]
+    keywords = _normalize_keywords(fields.get("keywords"))
+    if not summary:
+        fallback = draft_bookmark_fields(
+            text, title_hint=title, requirement=requirement
+        )
+        summary = fallback["summary"]
+        keywords = keywords or fallback["keywords"]
+        title = title or fallback["title"]
+
+    kind = "url" if url else "text"
+    now = _now()
+    merged = False
+    merge_reason = ""
+
+    with _lock_for(safe):
+        items = _load_bookmarks(safe)
+        existing = _find_by_url(items, url) if url else None
+        if existing is None and not url:
+            existing = _find_keyword_overlap(items, keywords)
+
+        if existing is not None:
+            merged = True
+            merge_reason = "same_url" if url and str(existing.get("url") or "") == url else "keyword_overlap"
+            existing["title"] = title
+            existing["summary"] = summary
+            existing["keywords"] = _merge_keywords(
+                list(existing.get("keywords") or []), keywords
+            )
+            existing["body"] = text
+            if url:
+                existing["url"] = url
+            if requirement:
+                existing["requirement"] = requirement
+            existing["kind"] = kind
+            existing["draft"] = bool(fields.get("draft", True))
+            existing["updated_at"] = now
+            existing["char_count"] = len(text)
+            existing["merged_from"] = merge_reason
+            record = existing
+        else:
+            record = {
+                "id": _new_id(),
+                "title": title,
+                "summary": summary,
+                "keywords": keywords,
+                "url": url,
+                "body": text,
+                "requirement": requirement,
+                "kind": kind,
+                "draft": bool(fields.get("draft", True)),
+                "ingested_at": now,
+                "updated_at": now,
+                "char_count": len(text),
+                "merged_from": "",
+            }
+            items.append(record)
+
+        _save_bookmarks(safe, items)
+
+    msg = "已合并到已有收藏" if merged else "已生成收藏"
+    return {
+        "ok": True,
+        "actor_id": safe,
+        "merged": merged,
+        "merge_reason": merge_reason,
+        "bookmark": _public_bookmark(record),
+        "source": _public_bookmark(record),  # back-compat for #240 response shape
+        "message": msg,
+    }
 
 
 def ingest_text(
@@ -220,50 +641,19 @@ def ingest_text(
     title: str = "",
     source_url: str = "",
     source_id: str | None = None,
+    requirement: str = "",
+    generator: Optional[BookmarkGenerator] = None,
 ) -> dict[str, Any]:
-    """Clean, chunk, and persist pasted text into the actor's personal store."""
-    safe = normalize_actor_id(actor_id)
-    cleaned = (text or "").strip()
-    if not cleaned:
-        return {"ok": False, "error": "empty_text", "message": "文本为空"}
-    if len(cleaned) > MAX_TEXT_CHARS:
-        cleaned = cleaned[:MAX_TEXT_CHARS]
-
-    display_title = (title or "").strip() or (
-        source_url.strip() if source_url else "粘贴文本"
+    """Back-compat wrapper: paste text into a bookmark."""
+    return ingest_bookmark(
+        actor_id,
+        text=text,
+        url=source_url or (source_id if (source_id or "").startswith("http") else ""),
+        requirement=requirement,
+        title_hint=title,
+        generator=generator,
+        resolve=False,
     )
-    key = (source_id or source_url or f"paste:{display_title}")[:300]
-    ingested_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-
-    with _lock_for(safe):
-        rag = get_actor_rag(safe)
-        _remove_source_chunks(rag, key)
-        before = len(rag.chunks)
-        rag.ingest_text(cleaned, source=key)
-        added = len(rag.chunks) - before
-        # ingest_text skips disk write; personal store must survive restarts.
-        rag._save()
-
-        sources = [s for s in _load_sources(safe) if s.get("source_id") != key]
-        record = {
-            "source_id": key,
-            "title": display_title,
-            "url": source_url.strip() or "",
-            "ingested_at": ingested_at,
-            "chunk_count": added,
-            "char_count": len(cleaned),
-            "kind": "url" if source_url.strip() else "text",
-        }
-        sources.append(record)
-        _save_sources(safe, sources)
-
-    return {
-        "ok": True,
-        "actor_id": safe,
-        "source": record,
-        "chunk_count": added,
-        "message": f"已入库 {added} 个片段",
-    }
 
 
 def ingest_url(
@@ -272,40 +662,54 @@ def ingest_url(
     *,
     fetcher: Optional[Fetcher] = None,
     resolve: bool = True,
+    requirement: str = "",
+    text: str = "",
+    generator: Optional[BookmarkGenerator] = None,
 ) -> dict[str, Any]:
-    """Fetch a public http(s) page, extract text, and store under the actor."""
-    ok, reason = validate_ingest_url(url, resolve=resolve)
-    if not ok:
-        return {"ok": False, "error": "invalid_url", "message": reason}
-
-    fetch = fetcher or _default_fetcher
-    try:
-        fetched_ok, err_or_url, body = fetch(url.strip())
-    except Exception as exc:  # noqa: BLE001 — surface as ingest failure
-        return {
-            "ok": False,
-            "error": "fetch_failed",
-            "message": f"抓取失败: {exc}"[:300],
-        }
-    if not fetched_ok:
-        return {
-            "ok": False,
-            "error": "fetch_failed",
-            "message": f"抓取失败: {err_or_url}"[:300],
-        }
-
-    raw = body.decode("utf-8", errors="replace")
-    page_title, text = _strip_html(raw)
-    if not text.strip():
-        return {"ok": False, "error": "empty_body", "message": "页面无可提取正文"}
-
-    return ingest_text(
+    """Back-compat wrapper: URL (+ optional body override) into a bookmark."""
+    return ingest_bookmark(
         actor_id,
-        text,
-        title=page_title or url.strip(),
-        source_url=url.strip(),
-        source_id=url.strip(),
+        url=url,
+        text=text,
+        requirement=requirement,
+        fetcher=fetcher,
+        generator=generator,
+        resolve=resolve,
     )
+
+
+def _score_bookmark(query: str, item: dict[str, Any]) -> float:
+    q = (query or "").strip()
+    if not q:
+        return 0.0
+    ql = q.lower()
+    tokens = _tokenize(q)
+    score = 0.0
+    url = str(item.get("url") or "")
+    title = str(item.get("title") or "")
+    summary = str(item.get("summary") or "")
+    keywords = [str(k) for k in (item.get("keywords") or [])]
+    # Exact / substring URL hit
+    if url and (url in q or q in url or url.lower() in ql):
+        score += 8.0
+    for kw in keywords:
+        kl = kw.lower()
+        if kl and (kl in ql or any(t == kl or t in kl or kl in t for t in tokens)):
+            score += 3.0
+        if kw in q:
+            score += 1.5
+    for tok in tokens:
+        if tok in title.lower() or tok in title:
+            score += 2.0
+        if tok in summary.lower() or tok in summary:
+            score += 1.5
+    # Light body assist (not the primary UX object)
+    body = str(item.get("body") or "")
+    if body:
+        for tok in tokens[:20]:
+            if tok in body.lower() or tok in body:
+                score += 0.25
+    return score
 
 
 def search_personal(
@@ -314,16 +718,16 @@ def search_personal(
     *,
     top_k: int = 3,
 ) -> dict[str, Any]:
-    """Keyword/semantic search limited to one actor's personal store."""
+    """Search bookmarks by keywords, URL, title, and summary."""
     safe = normalize_actor_id(actor_id)
-    rag = get_actor_rag(safe)
+    items = _load_bookmarks(safe)
     process: list[dict[str, str]] = [
         {
             "step": "personal_kb",
-            "detail": f"actor={safe} chunks={len(rag.chunks)} sources={len(_load_sources(safe))}",
+            "detail": f"actor={safe} bookmarks={len(items)}",
         }
     ]
-    if not rag.chunks:
+    if not items:
         process.append(
             {
                 "step": "personal_empty",
@@ -339,28 +743,43 @@ def search_personal(
             "hint": "个人库中没有足够依据。请先投递网页链接或粘贴文本后再提问。",
         }
 
-    hits = rag.query(query, top_k=top_k)
+    scored: list[tuple[float, dict[str, Any]]] = []
+    for item in items:
+        sc = _score_bookmark(query, item)
+        if sc > 0:
+            scored.append((sc, item))
+    scored.sort(key=lambda x: x[0], reverse=True)
     process.append(
         {
-            "step": "personal_search",
-            "detail": f"keyword/semantic hits={len(hits)}",
+            "step": "bookmark_search",
+            "detail": (
+                f"keyword/url/title/summary hits={len(scored)} "
+                f"(top_k={top_k})"
+            ),
         }
     )
-    meta_by_id = {s.get("source_id"): s for s in _load_sources(safe)}
+
     results: list[dict[str, Any]] = []
-    for h in hits:
-        src = str(h.get("source") or "")
-        meta = meta_by_id.get(src) or {}
-        url = str(meta.get("url") or "")
-        if not url and (src.startswith("http://") or src.startswith("https://")):
-            url = src
+    for sc, item in scored[: max(top_k, 1)]:
+        url = str(item.get("url") or "")
+        title = str(item.get("title") or "")
+        summary = str(item.get("summary") or "")
+        keywords = list(item.get("keywords") or [])
+        body = str(item.get("body") or "")
+        # Citation content: summary first, then body excerpt for synthesize.
+        content = summary
+        if body and body not in content:
+            content = f"{summary}\n\n{body[:600]}" if summary else body[:800]
+        cite_source = url or f"bookmark:{item.get('id')}"
         results.append(
             {
-                "source": url or src,
-                "title": meta.get("title") or src,
+                "source": cite_source,
+                "title": title,
                 "url": url,
-                "score": h.get("score"),
-                "content": str(h.get("content") or "")[:800],
+                "score": sc,
+                "content": content[:1200],
+                "keywords": keywords,
+                "bookmark_id": item.get("id"),
                 "docs_source": "personal",
             }
         )
@@ -381,3 +800,8 @@ def search_personal(
         "docs_sources": ["personal"],
         "retrieval_process": process,
     }
+
+
+# Unused import guard for older call sites expecting fingerprint helpers.
+def _content_fingerprint(text: str) -> str:
+    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()[:16]
