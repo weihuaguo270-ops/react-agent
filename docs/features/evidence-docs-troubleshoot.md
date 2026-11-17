@@ -12,10 +12,11 @@
 完整演示路径：
 
 1. `python -m react_agent.server --host 127.0.0.1 --port 8765`（或 `react-agent-api`）
-2. 打开 `/` 或 `/ui`，填写 `X-Actor-Id`
-3. 调用 `POST /v1/docs/personal/ingest` 投递 `https` 链接和/或正文，以及可选 `requirement` → 生成一条可编辑收藏
-4. `GET /v1/docs/personal/bookmarks` 列出收藏；`POST /v1/docs/personal/bookmarks/{id}` 保存编辑
-5. 提问 → 按关键词 / 链接 / 标题 / 摘要检索 → 带引用答案或拒答
+2. 打开 `/` 或 `/ui`：先在「身份」视图填写并确认 `X-Actor-Id`（未确认不能进功能）
+3. 选择页并列三个入口（非步骤条）：投递收藏 / 我的收藏 / 提问取回；进入其一后仅显示该功能，可「返回选择页」
+4. 投递：`POST /v1/docs/personal/ingest`（链接和/或正文 + 可选 `requirement`）
+5. 我的收藏：`GET /v1/docs/personal/bookmarks` 列表；`POST /v1/docs/personal/bookmarks/{id}` 编辑保存
+6. 提问：`POST /v1/chat`（`docs_sources=personal`）→ 先答案、后引用；检索过程与思维链默认折叠
 
 成熟度：**可演示原型，非生产。** 无可用模型时仍给出可编辑草稿（标题候选 + 首段摘要），不静默丢内容。
 

@@ -5,54 +5,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>个人知识库</title>
 <style>
-:root{--bg:#f4f6f9;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-soft:#eff6ff;--green:#16a34a;--green-bg:#f0fdf4;--red:#dc2626;--red-bg:#fef2f2;--radius:10px}
+:root{--bg:#f4f6f9;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-soft:#eff6ff;--green-bg:#f0fdf4;--red-bg:#fef2f2;--radius:10px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:ui-sans-serif,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
-.wrap{max-width:1200px;margin:0 auto;padding:20px}
+.wrap{max-width:920px;margin:0 auto;padding:20px}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;flex-wrap:wrap}
 .brand h1{font-size:20px;font-weight:700}
-.brand p{color:var(--muted);font-size:12px;margin-top:4px;max-width:720px;line-height:1.5}
+.brand p{color:var(--muted);font-size:12px;margin-top:4px;max-width:640px;line-height:1.5}
 .badges{display:flex;gap:8px;flex-wrap:wrap}
 .badge{font-size:11px;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid #bfdbfe}
-.grid{display:grid;grid-template-columns:420px 1fr;gap:16px;align-items:start}
-@media(max-width:960px){.grid{grid-template-columns:1fr}}
-.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
-.panel h2{font-size:13px;font-weight:700;margin-bottom:10px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.panel h2{font-size:15px;font-weight:700;margin-bottom:8px}
+.panel .lead{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:12px}
 label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
 textarea,input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font:inherit;background:#fff}
-textarea{min-height:72px;resize:vertical;font-family:inherit}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+textarea{min-height:88px;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
 button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer}
 .btn-primary{background:var(--accent);color:#fff}
 .btn-primary:hover{filter:brightness(.95)}
 .btn-secondary{background:#fff;border:1px solid var(--border);color:var(--text)}
 .btn-small{padding:6px 10px;font-size:12px}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 10px;font-size:12px}
+.hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
+.view{display:none}
+.view.active{display:block}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+.topbar .who{font-size:13px}
+.topbar .who strong{font-weight:700}
+.choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:800px){.choice-grid{grid-template-columns:1fr}}
+.choice{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer}
+.choice:hover{border-color:var(--accent);background:var(--accent-soft)}
+.choice strong{display:block;font-size:15px;margin-bottom:6px;color:var(--text)}
+.choice span{display:block;font-size:12px;color:var(--muted);line-height:1.45;font-weight:400}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .chip{font-size:11px;padding:5px 10px;border-radius:999px;background:#f8fafc;border:1px solid var(--border);cursor:pointer}
 .chip:hover{border-color:var(--accent);color:var(--accent)}
 .kw{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:#f1f5f9;color:#334155;margin:0 4px 4px 0}
-.status{display:none;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:12px}
-.status.refused{display:block;background:var(--red-bg);border:1px solid #fecaca;color:#991b1b}
-.status.answered{display:block;background:var(--green-bg);border:1px solid #bbf7d0;color:#166534}
-.status.info{display:block;background:var(--accent-soft);border:1px solid #bfdbfe;color:#1e40af}
-.answer{white-space:pre-wrap;line-height:1.65;font-size:13px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;min-height:120px}
-.meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:11px;margin:10px 0}
-.cite-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.status{display:none;padding:10px 12px;border-radius:8px;margin:12px 0;font-size:12px}
+.status.show{display:block}
+.status.refused{background:var(--red-bg);border:1px solid #fecaca;color:#991b1b}
+.status.answered{background:var(--green-bg);border:1px solid #bbf7d0;color:#166534}
+.status.info{background:var(--accent-soft);border:1px solid #bfdbfe;color:#1e40af}
+.answer{white-space:pre-wrap;line-height:1.65;font-size:13px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;min-height:96px}
+.cite-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .cite{padding:6px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid #bfdbfe;font-size:12px;text-decoration:none;color:var(--accent)}
 .section{margin-top:14px}
-.section-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-bottom:8px}
+.section-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px}
 .card{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff}
 .card h3{font-size:13px;margin-bottom:4px}
 .card .sub{font-size:11px;color:var(--muted);margin-bottom:6px}
 .empty{color:var(--muted);font-size:12px;padding:12px;border:1px dashed var(--border);border-radius:8px;text-align:center}
-.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
-.flow-step{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;font-size:11px;color:var(--muted)}
-.flow-step strong{display:block;color:var(--text);font-size:12px;margin-bottom:4px}
-.flow-step.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-.hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
 .edit-box{margin-top:8px;display:none}
 .edit-box.open{display:block}
 .edit-box textarea{min-height:64px;margin-bottom:6px}
+.meta{color:var(--muted);font-size:11px;margin:8px 0}
+details.trace{margin-top:14px;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:#fff}
+details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:600}
+.err{color:#991b1b;font-size:12px;margin-top:8px;display:none}
+.err.show{display:block}
 </style>
 </head>
 <body>
@@ -60,83 +72,151 @@ button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:
   <header>
     <div class="brand">
       <h1>个人知识库</h1>
-      <p>员工投递链接或文章（可附带要求），助手生成一条<strong>收藏</strong>：标题、摘要与关键词。之后按关键词与来源链接检索取回带引用答案。当前是个人沉淀，不是企业制度库。</p>
+      <p>先确认员工身份，再任选<strong>投递收藏</strong>、<strong>我的收藏</strong>或<strong>提问取回</strong>。当前是个人沉淀，不是企业制度库。</p>
     </div>
-    <div class="badges" id="badges">
+    <div class="badges">
       <span class="badge" id="badge-version">v-</span>
       <span class="badge" id="badge-mode">offline</span>
-      <span class="badge">收藏 · 可编辑摘要</span>
+      <span class="badge">先身份 · 再三选一</span>
       <span class="badge">可演示原型</span>
     </div>
   </header>
 
-  <div class="flow" aria-hidden="true">
-    <div class="flow-step active"><strong>投递</strong>链接 / 正文 / 要求</div>
-    <div class="flow-step"><strong>生成收藏</strong>标题·摘要·关键词</div>
-    <div class="flow-step"><strong>提问检索</strong>关键词 / 链接</div>
-    <div class="flow-step"><strong>引用 / 拒答</strong>证据不足则说明</div>
-  </div>
-
-  <div class="grid">
+  <!-- 1. 身份 -->
+  <section class="view active" id="view-identity" data-view="identity">
     <div class="panel">
-      <h2>身份与投递</h2>
-      <label for="actor">员工身份（X-Actor-Id）</label>
-      <input id="actor" autocomplete="off" placeholder="例如 employee-1" value="employee-demo">
-      <p class="hint">入库与提问按此身份隔离；同一链接再次投递会合并到已有收藏。</p>
+      <h2>确认身份</h2>
+      <p class="lead">填写本次使用的员工身份（X-Actor-Id）。未确认身份前不能进入投递、收藏或提问。</p>
+      <label for="actor-input">员工身份（X-Actor-Id）</label>
+      <input id="actor-input" autocomplete="off" placeholder="例如 employee-1">
+      <p class="hint">身份对本次使用有效；入库与提问均按此隔离。A 的收藏不会被 B 看到。</p>
+      <p class="err" id="identity-error"></p>
+      <div class="row">
+        <button class="btn-primary" id="identity-confirm" type="button">确认身份，进入功能选择</button>
+      </div>
+    </div>
+  </section>
 
+  <!-- 2. 选择页 -->
+  <section class="view" id="view-home" data-view="home">
+    <div class="topbar">
+      <div class="who">当前身份：<strong id="home-actor-label">—</strong></div>
+      <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
+    </div>
+    <div class="panel">
+      <h2>选择功能</h2>
+      <p class="lead">三个入口并列，任选其一；用完后请返回本页再进其他功能。</p>
+      <div class="choice-grid" role="navigation" aria-label="功能选择">
+        <button class="choice" type="button" onclick="enterFeature('ingest')">
+          <strong>投递收藏</strong>
+          <span>提交链接或粘贴正文，可附带要求，生成一条收藏。</span>
+        </button>
+        <button class="choice" type="button" onclick="enterFeature('bookmarks')">
+          <strong>我的收藏</strong>
+          <span>查看当前身份下的标题、关键词、摘要与链接，并编辑保存。</span>
+        </button>
+        <button class="choice" type="button" onclick="enterFeature('ask')">
+          <strong>提问取回</strong>
+          <span>只在个人库检索；先看答案与引用，检索过程默认折叠。</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3a. 投递 -->
+  <section class="view" id="view-ingest" data-view="ingest">
+    <div class="topbar">
+      <div class="who">当前身份：<strong class="actor-label">—</strong></div>
+      <div class="row" style="margin:0">
+        <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
+        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>投递收藏</h2>
+      <p class="lead">链接与正文可单独或同时给；同一链接再次投递会合并到已有条目。</p>
       <label for="ingest_url">https 链接（可选）</label>
       <input id="ingest_url" placeholder="https://example.com/notes">
       <label for="ingest_text">粘贴正文（可选）</label>
-      <textarea id="ingest_text" placeholder="把文章或笔记粘贴到这里；可与链接同时给"></textarea>
+      <textarea id="ingest_text" placeholder="把文章或笔记粘贴到这里"></textarea>
       <label for="ingest_requirement">要求（可选）</label>
       <input id="ingest_requirement" placeholder="例如：重点摘安装步骤；摘要适合复习">
       <label for="ingest_title">标题提示（可选）</label>
       <input id="ingest_title" placeholder="不填则自动生成草稿标题">
       <div class="row">
-        <button class="btn-primary" id="ingest-btn" onclick="ingest()">投递为收藏</button>
-        <button class="btn-secondary" onclick="loadBookmarks()">刷新收藏</button>
+        <button class="btn-primary" id="ingest-btn" type="button" onclick="ingest()">投递为收藏</button>
+        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
       </div>
       <div class="status" id="ingest-status"></div>
+    </div>
+  </section>
 
-      <div class="section">
-        <div class="section-title">我的收藏</div>
-        <div id="bookmarks-list"><div class="empty">尚无收藏 · 先投递链接或正文</div></div>
-      </div>
-
-      <div class="section">
-        <h2>提问取回</h2>
-        <div class="chips" id="presets"></div>
-        <label for="question">问题</label>
-        <textarea id="question" placeholder="例如：安装步骤怎么写？或粘贴来源链接提问"></textarea>
-        <div class="row">
-          <button class="btn-primary" id="ask-btn" onclick="ask()">提问</button>
-          <button class="btn-secondary" onclick="clearAsk()">清空</button>
-        </div>
+  <!-- 3b. 我的收藏 -->
+  <section class="view" id="view-bookmarks" data-view="bookmarks">
+    <div class="topbar">
+      <div class="who">当前身份：<strong class="actor-label">—</strong></div>
+      <div class="row" style="margin:0">
+        <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
+        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
       </div>
     </div>
-
     <div class="panel">
-      <h2>结果 · 证据链</h2>
-      <div class="status" id="status"></div>
-      <div class="meta" id="meta"></div>
+      <h2>我的收藏</h2>
+      <p class="lead">仅显示当前身份下的收藏；可编辑标题、摘要与关键词后保存。</p>
+      <div class="row" style="margin-top:0">
+        <button class="btn-secondary btn-small" type="button" onclick="loadBookmarks()">刷新</button>
+      </div>
+      <div class="status" id="bookmark-status"></div>
+      <div class="section" id="bookmarks-list"><div class="empty">尚无收藏</div></div>
+      <div class="row">
+        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3c. 提问 -->
+  <section class="view" id="view-ask" data-view="ask">
+    <div class="topbar">
+      <div class="who">当前身份：<strong class="actor-label">—</strong></div>
+      <div class="row" style="margin:0">
+        <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
+        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>提问取回</h2>
+      <p class="lead">只检索当前身份的个人库。先展示答案，引用紧跟其后；检索过程与思维链默认折叠。</p>
+      <div class="chips" id="presets"></div>
+      <label for="question">问题</label>
+      <textarea id="question" placeholder="例如：安装步骤怎么写？或粘贴来源链接提问"></textarea>
+      <div class="row">
+        <button class="btn-primary" id="ask-btn" type="button" onclick="ask()">提问</button>
+        <button class="btn-secondary" type="button" onclick="clearAsk()">清空</button>
+        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
+      </div>
+      <div class="status" id="ask-status"></div>
+      <div class="meta" id="ask-meta"></div>
       <div class="section">
         <div class="section-title">答案</div>
-        <div class="answer" id="answer">生成收藏后提问；命中关键词或来源链接时给出带引用整理答案，否则明确拒答。</div>
+        <div class="answer" id="answer">提问后这里展示整理答案或拒答说明。</div>
       </div>
       <div class="section">
-        <div class="section-title">引用来源</div>
+        <div class="section-title">引用</div>
         <div class="cite-list" id="citations"><span class="empty">暂无引用</span></div>
       </div>
-      <div class="section">
-        <div class="section-title">检索过程</div>
-        <div id="retrieval-process"><div class="empty">提问后显示收藏检索步骤</div></div>
-      </div>
-      <div class="section">
-        <div class="section-title">Agent 工具步</div>
-        <div id="agent-steps"><div class="empty">离线 Agent：search_docs → verify_citations</div></div>
-      </div>
+      <details class="trace" id="trace-box">
+        <summary>检索过程与 Agent 思维链（展开查看）</summary>
+        <div class="section">
+          <div class="section-title">检索过程</div>
+          <div id="retrieval-process"><div class="empty">提问后可展开查看</div></div>
+        </div>
+        <div class="section">
+          <div class="section-title">Agent 工具步</div>
+          <div id="agent-steps"><div class="empty">提问后可展开查看</div></div>
+        </div>
+      </details>
     </div>
-  </div>
+  </section>
 </div>
 <script>
 const PRESETS = [
@@ -145,20 +225,101 @@ const PRESETS = [
   {label:"无关拒答", q:"明天股市会涨吗？"}
 ];
 
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+let currentActor = "";
+
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+function showView(name){
+  document.querySelectorAll(".view").forEach(el=>{
+    el.classList.toggle("active", el.dataset.view === name);
+  });
+}
+
+function syncActorLabels(){
+  const label = currentActor || "—";
+  const home = document.getElementById("home-actor-label");
+  if(home) home.textContent = label;
+  document.querySelectorAll(".actor-label").forEach(el=>{ el.textContent = label; });
+}
 
 function actorHeaders(){
-  const actor=(document.getElementById("actor").value||"").trim();
-  if(!actor) throw new Error("请填写员工身份（X-Actor-Id）");
-  return {"Content-Type":"application/json","X-Actor-Id":actor,"Accept":"application/json"};
+  if(!currentActor) throw new Error("请先确认员工身份");
+  return {"Content-Type":"application/json","X-Actor-Id":currentActor,"Accept":"application/json"};
+}
+
+function setStatus(id, kind, text){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.className = "status show " + (kind||"info");
+  el.textContent = text||"";
+}
+
+function clearFeatureState(){
+  ["ingest_url","ingest_text","ingest_requirement","ingest_title","question"].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value="";
+  });
+  const ingestSt=document.getElementById("ingest-status");
+  if(ingestSt){ ingestSt.className="status"; ingestSt.textContent=""; }
+  const bmSt=document.getElementById("bookmark-status");
+  if(bmSt){ bmSt.className="status"; bmSt.textContent=""; }
+  clearAsk();
+  const list=document.getElementById("bookmarks-list");
+  if(list) list.innerHTML='<div class="empty">尚无收藏</div>';
+}
+
+function confirmIdentity(){
+  const raw=(document.getElementById("actor-input").value||"").trim();
+  const err=document.getElementById("identity-error");
+  if(!raw){
+    err.textContent="请填写员工身份后再进入功能选择。";
+    err.classList.add("show");
+    return;
+  }
+  err.classList.remove("show");
+  err.textContent="";
+  currentActor = raw;
+  syncActorLabels();
+  clearFeatureState();
+  showView("home");
+}
+
+function changeActor(){
+  currentActor = "";
+  syncActorLabels();
+  clearFeatureState();
+  document.getElementById("actor-input").value = "";
+  showView("identity");
+  document.getElementById("actor-input").focus();
+}
+
+function backHome(){
+  if(!currentActor){ showView("identity"); return; }
+  showView("home");
+}
+
+function enterFeature(name){
+  if(!currentActor){ showView("identity"); return; }
+  syncActorLabels();
+  if(name==="ingest"){
+    showView("ingest");
+  }else if(name==="bookmarks"){
+    showView("bookmarks");
+    loadBookmarks();
+  }else if(name==="ask"){
+    showView("ask");
+  }
 }
 
 function initPresets(){
   const box=document.getElementById("presets");
   PRESETS.forEach(p=>{
     const b=document.createElement("button");
-    b.className="chip"; b.textContent=p.label;
-    b.onclick=()=>{document.getElementById("question").value=p.q;};
+    b.type="button";
+    b.className="chip";
+    b.textContent=p.label;
+    b.onclick=()=>{ document.getElementById("question").value=p.q; };
     box.appendChild(b);
   });
 }
@@ -180,7 +341,7 @@ function renderKeywords(kws){
 function renderBookmarks(bookmarks){
   const box=document.getElementById("bookmarks-list");
   if(!bookmarks||!bookmarks.length){
-    box.innerHTML='<div class="empty">尚无收藏 · 先投递链接或正文</div>';
+    box.innerHTML='<div class="empty">尚无收藏 · 可先去「投递收藏」</div>';
     return;
   }
   box.innerHTML=bookmarks.map(b=>{
@@ -194,7 +355,7 @@ function renderBookmarks(bookmarks){
       ${url}
       <div class="sub">${esc(b.updated_at||b.ingested_at||"")}${draft}</div>
       <div class="row">
-        <button class="btn-secondary btn-small" onclick="toggleEdit('${id}')">编辑</button>
+        <button class="btn-secondary btn-small" type="button" onclick="toggleEdit('${id}')">编辑</button>
       </div>
       <div class="edit-box" id="edit-${id}">
         <label>标题</label>
@@ -204,7 +365,7 @@ function renderBookmarks(bookmarks){
         <label>摘要</label>
         <textarea id="sum-${id}">${esc(b.summary||"")}</textarea>
         <div class="row">
-          <button class="btn-primary btn-small" onclick="saveBookmark('${id}')">保存</button>
+          <button class="btn-primary btn-small" type="button" onclick="saveBookmark('${id}')">保存</button>
         </div>
       </div>
     </div>`;
@@ -241,20 +402,15 @@ async function saveBookmark(id){
     });
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    const st=document.getElementById("ingest-status");
-    st.className="status info"; st.style.display="block";
-    st.textContent="已保存收藏「"+(data.bookmark&&data.bookmark.title||id)+"」";
+    setStatus("bookmark-status","info","已保存收藏「"+(data.bookmark&&data.bookmark.title||id)+"」");
     await loadBookmarks();
   }catch(e){
-    const st=document.getElementById("ingest-status");
-    st.className="status refused"; st.style.display="block";
-    st.textContent="保存失败: "+e.message;
+    setStatus("bookmark-status","refused","保存失败: "+e.message);
   }
 }
 
 async function ingest(){
   const btn=document.getElementById("ingest-btn");
-  const st=document.getElementById("ingest-status");
   btn.disabled=true; btn.textContent="生成中…";
   try{
     const url=(document.getElementById("ingest_url").value||"").trim();
@@ -272,29 +428,35 @@ async function ingest(){
     });
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    st.className="status info"; st.style.display="block";
     const b=data.bookmark||data.source||{};
     const merged=data.merged?"（已合并）":"";
-    st.textContent=`收藏「${b.title||""}」${merged} · 关键词 ${(b.keywords||[]).length} 个`;
+    setStatus("ingest-status","info",`收藏「${b.title||""}」${merged} · 关键词 ${(b.keywords||[]).length} 个`);
     document.getElementById("ingest_url").value="";
     document.getElementById("ingest_text").value="";
-    await loadBookmarks();
   }catch(e){
-    st.className="status refused"; st.style.display="block";
-    st.textContent="投递失败: "+e.message;
+    setStatus("ingest-status","refused","投递失败: "+e.message);
   }finally{
     btn.disabled=false; btn.textContent="投递为收藏";
   }
 }
 
 function clearAsk(){
-  document.getElementById("question").value="";
-  document.getElementById("answer").textContent="生成收藏后提问；命中关键词或来源链接时给出带引用整理答案，否则明确拒答。";
-  document.getElementById("citations").innerHTML='<span class="empty">暂无引用</span>';
-  document.getElementById("retrieval-process").innerHTML='<div class="empty">提问后显示收藏检索步骤</div>';
-  document.getElementById("agent-steps").innerHTML='<div class="empty">离线 Agent：search_docs → verify_citations</div>';
-  document.getElementById("status").className="status";
-  document.getElementById("meta").textContent="";
+  const q=document.getElementById("question");
+  if(q) q.value="";
+  const answer=document.getElementById("answer");
+  if(answer) answer.textContent="提问后这里展示整理答案或拒答说明。";
+  const cites=document.getElementById("citations");
+  if(cites) cites.innerHTML='<span class="empty">暂无引用</span>';
+  const rp=document.getElementById("retrieval-process");
+  if(rp) rp.innerHTML='<div class="empty">提问后可展开查看</div>';
+  const as=document.getElementById("agent-steps");
+  if(as) as.innerHTML='<div class="empty">提问后可展开查看</div>';
+  const st=document.getElementById("ask-status");
+  if(st){ st.className="status"; st.textContent=""; }
+  const meta=document.getElementById("ask-meta");
+  if(meta) meta.textContent="";
+  const trace=document.getElementById("trace-box");
+  if(trace) trace.open=false;
 }
 
 function renderCitations(cites){
@@ -331,28 +493,31 @@ async function ask(){
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
     const refused=!!data.refused;
-    const st=document.getElementById("status");
-    st.className="status "+(refused?"refused":"answered");
-    st.textContent=refused?("个人库依据不足 · 已拒答"):("已回答 · 引用收藏");
+    setStatus("ask-status", refused?"refused":"answered",
+      refused?"个人库依据不足 · 已拒答":"已回答 · 引用收藏");
     document.getElementById("answer").textContent=data.answer||"";
-    document.getElementById("meta").innerHTML=
-      `request_id: ${esc(data.request_id||"")} · actor: ${esc(data.actor_id||"")} · mode: ${esc(data.mode||"")}`;
+    document.getElementById("ask-meta").innerHTML=
+      `request_id: ${esc(data.request_id||"")} · actor: ${esc(data.actor_id||currentActor)} · mode: ${esc(data.mode||"")}`;
     document.getElementById("citations").innerHTML=renderCitations(data.citations||[]);
     document.getElementById("retrieval-process").innerHTML=renderRetrievalProcess(data.retrieval_process||[]);
     document.getElementById("agent-steps").innerHTML=renderAgentSteps(data.agent_steps||[], data.engine);
     document.getElementById("badge-mode").textContent=data.mode||"offline";
+    document.getElementById("trace-box").open=false;
   }catch(e){
-    document.getElementById("status").className="status refused";
-    document.getElementById("status").style.display="block";
-    document.getElementById("status").textContent="请求失败: "+e.message;
+    setStatus("ask-status","refused","请求失败: "+e.message);
   }finally{
     btn.disabled=false; btn.textContent="提问";
   }
 }
 
+document.getElementById("identity-confirm").addEventListener("click", confirmIdentity);
+document.getElementById("actor-input").addEventListener("keydown", e=>{
+  if(e.key==="Enter"){ e.preventDefault(); confirmIdentity(); }
+});
+
 initPresets();
 loadInfo();
-loadBookmarks().catch(()=>{});
+showView("identity");
 </script>
 </body>
 </html>
