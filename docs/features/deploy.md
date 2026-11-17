@@ -1,7 +1,7 @@
 # 部署与交付（P0）
 
 **读者：** 运维、集成方、面试 Demo 演示  
-**定位：** 单实例、离线可用的「规范咨询」（`docs_troubleshoot`）FastAPI 服务 — **不是**多租户平台。
+**定位：** 单实例、离线可用的「个人知识库」（`docs_troubleshoot`）FastAPI 服务 — **不是**多租户平台或企业制度库。
 
 ## 最快启动（Docker Compose）
 
@@ -69,7 +69,8 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 | `REACT_AGENT_SERVER_OFFLINE_REACT` | 未设 | `1` 时 `app=default` 走离线 ReAct smoke（CI/deploy，无 Key） |
 | `DEEPSEEK_API_KEY` | — | live 模式需要 |
 | `REACT_AGENT_DOCS_INGEST_DIRS` | — | 额外语料目录（逗号分隔，可 mount） |
-| `REACT_AGENT_DOCS_SOURCES` | `corpus` | 规范咨询资料源：`corpus` / `claude_official` / 逗号叠加；请求体 `docs_sources` 可覆盖 |
+| `REACT_AGENT_DOCS_SOURCES` | `corpus` | 评测默认语料源：`corpus`（契约评测）；页面个人库用请求体 `docs_sources=personal` + `X-Actor-Id` |
+| `REACT_AGENT_PERSONAL_KB_DIR` | （data_dir 下） | 个人知识库持久化根目录（仓库外 runtime） |
 | `REACT_AGENT_CLAUDE_DOCS_CACHE_DIR` | 运行时数据目录下 `claude-docs-cache/` | Claude 官方文档短时缓存（勿入库） |
 | `REACT_AGENT_CLAUDE_DOCS_CACHE_TTL` | `900` | 官方文档缓存秒数；`0` 禁用缓存 |
 | `REACT_AGENT_AUTH_TOKEN` | 未设 | 共享密钥；设置后业务接口要求 `Authorization: Bearer <token>`（或 `X-Api-Key`）；探针及 FastAPI 的无业务数据 `GET /expense`、`GET /expense/ops` 外壳公开，Claim/case API 不豁免 |

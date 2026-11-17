@@ -1,16 +1,16 @@
 # 企业内部智能工作助手（work-assistant）
 
-`work-assistant` 是企业内部智能工作助手：面向需要查规范、处理报销的员工，提供受控 Agent 执行、引用证据、人工审批边界和完整轨迹。仓库名与英文工作名统一为 **work-assistant**。
+`work-assistant` 是企业内部智能工作助手：面向需要沉淀个人资料、取回带引用答案并办理报销的员工，提供受控 Agent 执行、引用证据、人工审批边界和完整轨迹。仓库名与英文工作名统一为 **work-assistant**。
 
 ## 一句话定位
 
-企业内部智能工作助手帮助员工完成两件办公事：**规范咨询**（`docs_troubleshoot`）和**报销办理**（`expense`）。运行时、权限闸门、轨迹和评测是实现这些应用的工程能力，不是单独对外销售的通用 Agent 框架。
+企业内部智能工作助手帮助员工完成两件办公事：**个人知识库**（`docs_troubleshoot`）和**报销办理**（`expense`）。运行时、权限闸门、轨迹和评测是实现这些应用的工程能力，不是单独对外销售的通用 Agent 框架。
 
 ## 做什么 / 不做什么
 
 | 做什么 | 不做什么 |
 |---|---|
-| 依据内部文档回答规范问题，缺少证据时拒答或转人工 | 不宣称生产 SaaS、企业多租户或长期线上 SLA |
+| 把链接或文本沉淀到员工个人库，提问时只在该库检索并带引用回答；证据不足时明确拒答 | 不宣称生产 SaaS、企业制度库、多租户或长期线上 SLA |
 | 按政策和表单约束办理报销，保留决策与审批证据 | 不把合成任务、离线指标或沙箱成功率写成生产业务成功率 |
 | 受控调用工具、记录 Format B 轨迹、支持回归验收 | 不把仓库包装成通用 Agent 平台、自动根因诊断或云 APM |
 
@@ -18,19 +18,27 @@
 
 ## 两个办公场景
 
-### 规范咨询（主场景）
+### 个人知识库（主场景）
 
-员工询问内部 API、部署、故障排查或操作规范。助手检索文档、校验引用、组织证据化回答；没有足够依据时拒答。入口与评测：
+员工把网页链接或一段文本交给助手，助手拆成片段写入该员工自己的知识库；之后用自然语言提问，助手只在这份个人库里检索，给出带引用的整理答案。证据不足或库为空时明确拒答，不会改用项目内置演示语料冒充个人收藏。当前是个人沉淀，不是企业制度库。
+
+完整演示路径：
+
+1. 启动：`python -m react_agent.server --host 127.0.0.1 --port 8765`（或已安装入口 `react-agent-api`）
+2. 打开 `http://127.0.0.1:8765/`（或 `/ui`），填写 `X-Actor-Id`
+3. 投递一个 `https` 链接或粘贴文本 → 页面列出该身份下的来源与片段摘要
+4. 提问 → 仅个人库检索 → 带可点击引用的答案，或「个人库中没有足够依据」拒答
+
+成熟度：可演示原型，非生产。默认检索为关键词（`REACT_AGENT_RAG_MODE=keyword`）；向量检索可切换保留，不引入 Elasticsearch / OpenSearch。细粒度权限、来源合规与制度级访问控制见功能说明「后续目标」，本轮未实现；本轮唯一权限约束是按 `X-Actor-Id` 隔离入库与检索。
+
+评测与内置 14 篇语料仍服务 golden / git_docs 等契约，与页面默认个人库路径分离：
 
 ```bash
 set REACT_AGENT_APP=docs_troubleshoot
 set REACT_AGENT_RAG_MODE=keyword
 python demos/demo_docs_troubleshoot.py
 python scripts/eval/docs/run_docs_troubleshoot_eval.py
-python -m react_agent.server --port 8765
 ```
-
-演示闭环是：员工提问 → 检索规范 → 带引用回答或无依据拒答 → 说明权限/审批边界 → 落盘并回放轨迹。只读规范咨询不触发人工审批；涉及副作用的修复步骤仍由 `permission_gate` / approval 控制。
 
 ### 报销办理（第二场景）
 
@@ -69,7 +77,7 @@ python scripts/eval/acceptance/run_expense_business_eval.py --split dev
 # 本地 Agent 冒烟
 python -m react_agent "用 calculator 算 17*19"
 
-# 规范咨询
+# 个人知识库（评测语料 / 契约）
 python scripts/eval/docs/run_docs_troubleshoot_eval.py
 
 # 报销办理
@@ -85,7 +93,7 @@ python scripts/eval/acceptance/run_portfolio_acceptance.py
 
 | 名称 | 角色 | 边界 |
 |---|---|---|
-| 企业内部智能工作助手 / `work-assistant` | 仓库名与英文工作名 | 规范咨询 + 报销办理 |
+| 企业内部智能工作助手 / `work-assistant` | 仓库名与英文工作名 | 个人知识库 + 报销办理 |
 | `trace-debugger` | 质量配件 | 失败信号、规则回归、CI，不做最终裁决 |
 | `llm-eval-engine` | 质量配件 | 发版前自检，输出 `pass/review/hold` |
 
@@ -97,8 +105,8 @@ S0–S8 已完成原型验收，后续以现有能力演示与材料整理为主
 
 ## 简历项目简介
 
-企业内部智能工作助手（`work-assistant`）工程原型，面向需要查内部规范、办理报销的企业员工。
-规范咨询支持员工提问、检索内部文档、带引用回答；证据不足时明确拒答并保留查询轨迹。
+企业内部智能工作助手（`work-assistant`）工程原型，面向需要沉淀个人资料并办理报销的企业员工。
+个人知识库支持投递链接或文本、按员工身份隔离检索、带引用回答；证据不足时明确拒答并保留查询轨迹。
 报销办理按政策和表单约束校验，异常或高风险单据进入人工复核，由审批人批准、拒绝或升级。
 副作用操作经过 `permission_gate` / approval，审批绑定单据版本与 `decision_hash`，结果写入审计记录并可回放。
 底层复用 Agent runtime、轨迹和评测闭环，接入 `trace-debugger` 与 `llm-eval-engine` 做发布前验收。
@@ -106,7 +114,7 @@ S0–S8 已完成原型验收，后续以现有能力演示与材料整理为主
 
 ## 演示讲法
 
-先以员工身份提出一个内部规范问题，助手检索可引用的企业文档并返回证据化答案；找不到可靠依据时会拒答。再提交一笔报销，系统按政策和表单校验，必要时由 `route_review` 转入人工审批，审批人通过受保护的 `resolve_review` 批准、拒绝或升级。全程展示权限闸门、版本与决策指纹校验、审计记录和轨迹回放，最后说明 `trace-debugger` 负责失败扫描、`llm-eval-engine` 负责发布前 pass/review/hold，自身仍是可部署工程原型。
+先以员工身份投递一段笔记或公开链接，助手切分入库并列出该身份下来源；再提问，助手只在个人库检索并返回带引用答案，库空或无关时拒答。再提交一笔报销，系统按政策和表单校验，必要时由 `route_review` 转入人工审批，审批人通过受保护的 `resolve_review` 批准、拒绝或升级。全程展示权限闸门、版本与决策指纹校验、审计记录和轨迹回放，最后说明 `trace-debugger` 负责失败扫描、`llm-eval-engine` 负责发布前 pass/review/hold，自身仍是可部署工程原型。
 
 ## 进一步阅读
 

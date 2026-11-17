@@ -59,7 +59,24 @@ def rank_results(results: list[dict[str, Any]], query: str) -> list[dict[str, An
     if "幂等" in query or "idempotency" in ql:
         boosts += ["Idempotency-Key", "missing_idempotency_key", "409", "prod_idempotency"]
     if "对外名称" in query or "名称建议" in query or re.search(r"收敛.*什么|叫什么", query):
-        boosts += ["对外名称", "规范咨询", "evidence_docs_troubleshoot"]
+        boosts += ["对外名称", "规范咨询", "个人知识库", "evidence_docs_troubleshoot"]
+    if any(
+        k in query
+        for k in (
+            "个人知识库",
+            "个人库",
+            "投递",
+            "personal/ingest",
+            "PERSONAL_KB",
+        )
+    ):
+        boosts += [
+            "个人知识库",
+            "个人库",
+            "personal/ingest",
+            "evidence_docs_troubleshoot",
+            "react_agent_personal_kb_dir",
+        ]
     if "core" in ql or "自建" in query or re.search(r"core\s*实现|运行时默认", query, re.I):
         boosts += ["自建 core", "core_architecture", "react_loop"]
 
@@ -89,14 +106,19 @@ def rank_results(results: list[dict[str, Any]], query: str) -> list[dict[str, An
             ):
                 hit += 8.0
             if source_matches(src, "evidence_docs_troubleshoot") and (
-                "证据化" in query or "对外名称" in query or "名称" in query
+                "证据化" in query
+                or "对外名称" in query
+                or "名称" in query
+                or "个人知识库" in query
+                or "个人库" in query
+                or "投递" in query
             ):
                 hit += 8.0
             if source_matches(src, "evidence_docs_troubleshoot") and "证据化" in query:
                 hit += 6.0
-        if source_matches(src, "evidence_docs_troubleshoot") and "证据化" in query and not os.environ.get(
-            "REACT_AGENT_DOCS_GIT_ROOT"
-        ):
+        if source_matches(src, "evidence_docs_troubleshoot") and (
+            "证据化" in query or "个人知识库" in query or "个人库" in query
+        ) and not os.environ.get("REACT_AGENT_DOCS_GIT_ROOT"):
             hit += 5.0
         if "prod_" in src and any(
             k in query for k in ("生产", "网关", "504", "trace", "P1", "幂等", "Retry")

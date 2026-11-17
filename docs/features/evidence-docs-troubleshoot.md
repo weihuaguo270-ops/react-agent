@@ -1,137 +1,60 @@
-# 规范咨询（`docs_troubleshoot` · 垂直 demo · 客服/自动化线）
+# 个人知识库（`docs_troubleshoot` · 可演示原型）
 
-> **仓库应用方向**已扩展为三类主流场景，见 [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。  
-> 本页仅描述 **② 客服/工作流自动化** 下的 Runbook/文档垂直 demo，不是全仓唯一产品定义。
+> **仓库应用方向**见 [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。
+> 本页描述员工个人知识沉淀与取回这条线现在能做什么、成熟度边界，以及后续目标。评测命令见 [`DOCS_TROUBLESHOOT_EVAL.md`](DOCS_TROUBLESHOOT_EVAL.md)。
 
-本页写 **规范咨询（`docs_troubleshoot`）** 现在能做什么、不能说什么、接下来补什么。评测命令和门禁见 [`DOCS_TROUBLESHOOT_EVAL.md`](DOCS_TROUBLESHOOT_EVAL.md)。
+## 当前主路径
 
-## 两层定位
+员工把网页链接或一段文本交给助手（投递接口为 `POST /v1/docs/personal/ingest`）；助手清理正文、按约 500 字 / 50 字重叠切分，写入该员工自己的持久化知识库。之后员工用自然语言提问，助手**只在这份个人库**里检索，给出带引用的整理答案；证据不足或库为空时明确拒答「个人库中没有足够依据」，并提示先投递资料。
 
-| | 当前（已实现） | 目标（下一阶段） |
-|--|----------------|------------------|
-| **一句话** | 有证据约束的文档 / Runbook 问答后端 | 能收集现场证据、验证假设并给出可执行步骤的 API 故障诊断 Agent |
-| **输入** | 用户自然语言问题 + 内部语料索引 | 问题 + 真实资料源 + 错误响应 / 日志 / Trace / 配置快照 |
-| **输出** | 带引用的答案，或「依据不足」拒答 | 结构化诊断：现象、候选原因、证据、验证动作、修复步骤、风险与升级条件 |
-| **评测** | 34 条分层黄金集（关键词 + 引用 + 拒答） | 真实历史故障盲测：根因命中率、错误建议率、证据充分率、MTTR、正确升级率 |
+**当前是个人沉淀，不是企业制度库。** 页面标题与对外说明使用「个人知识库」；代码 / 评测标识可暂时保留 `docs_troubleshoot`。
 
-**对外名称建议收敛为「规范咨询」**；代码入口仍为 `docs_troubleshoot`。避免单独使用「API 排障 Agent」，以免用户期待自动定位根因。
+完整演示路径：
 
-## 为什么选这个主场景
+1. `python -m react_agent.server --host 127.0.0.1 --port 8765`（或 `react-agent-api`）
+2. 打开 `/` 或 `/ui`，填写 `X-Actor-Id`
+3. 调用 `POST /v1/docs/personal/ingest` 投递 `https` 链接（测试走本地 fixture，不依赖外网）或粘贴文本 → 列出该身份下已沉淀来源与片段数
+4. 提问 → 仅个人库关键词检索（默认）→ 引用列表与检索过程可见
 
-Core 里检索、工具调用、权限闸门、Harness 轨迹本来就在——拿来做文档 / Runbook 问答，比另搭一个泛 Agent 框架省事。
+成熟度：**可演示原型，非生产。** 不宣称已上线企业制度问答。
 
-另外有三样东西能离线验收：
-
-1. 固定语料（`corpus/` 14 篇）和 **34 条黄金集**，改代码跑 eval 就知道有没有回退。
-2. 引用 / 拒答策略写死在 Workflow 里，比开放聊天好判对错。
-3. v0.3 补了现场证据输入和 `diagnosis` schema，fault / production / git 三套 eval 也能挂 CI——但规则 + 检索为主，**不是**自动定根因。
-
-对外名称用「规范咨询」。单独叫「API 排障 Agent」容易让人以为能读线上日志自动定位——目前做不到。
-
-## 当前边界（须如实表述）
-
-### 工作流实质
-
-默认路径为 **检索 → 句级要点合成 → 引用 / 拒答策略**（`synthesize.py` + `draft.py` + `policy.py`），诊断步骤由 `cause_rules.py` / `diagnosis.py` 结构化输出，不是开放式多轮根因推理。
-
-### 起草能力
-
-`synthesize.py` 从命中结果抽取与问题相关的句子并标注来源；`cause_rules.py` 将现场 HTTP 错误映射为候选原因与修复步骤。**不会**在无文档/证据支撑时臆造根因。
-
-### 检索与语料
-
-- 当前语料为 **14 篇** 内置 md；排序含针对固定问法的 domain boost。
-- 在黄金集上表现好，**不能**等同证明对真实企业文档库、OpenAPI 全量或多版本混部有效。
-- **可选资料源：Claude 官方开发者文档**（`platform.claude.com`）。查询时先读 [`/llms.txt`](https://platform.claude.com/llms.txt) 按标题/摘要选题，再按需拉正文；引用必须是官方原文 URL。也可参考 [`/docs/mcp`](https://platform.claude.com/docs/mcp)。**不把官方文档全文写入仓库或提交缓存**；本地仅允许短时缓存（标注来源与获取时间）。
-- 资料源由 `REACT_AGENT_DOCS_SOURCES` 或请求体 `docs_sources` 控制：`corpus`（默认，评测不变）、`claude_official`、或两者叠加。仅启用官方源且在线失败时，**明确报错/拒答**，不会默默改走内置语料却仍显示「Claude 官方文档」。
-- 本能力是额外资料源，**不是**企业内部规范库；界面与文档须写明查阅的是 Claude 官方文档。
-
-### 未接入 / 未自动采集的现场证据
-
-当前**不会自动抓取**线上流量，但 Workflow **支持**调用方传入：
-
-- HTTP 错误 JSON + 状态码（`error_response`）
-- 请求头（脱敏，`request_headers`）
-- **日志片段**（`log_excerpt`）与 **Trace JSON**（`trace_context`）
-- 配置快照（`read_config_snapshot`）、健康探测（`probe_service_health`）
-
-仍**不读取**：未传入的应用日志流、分布式 Trace 后端、自动 OpenAPI 拉取（需 `REACT_AGENT_INGEST_OPENAPI=1` 与 spec 路径）。
-
-## 下一阶段主线：三个闭环
-
-通用 Agent 能力（多 Agent、ToT、Dashboard 等）保持实验态，不扩主场景叙事。接下来主要补这三块（v0.3 已有一版，见下表）：
-
-### 实现状态（2026-07）
-
-| 闭环 | 状态 | 入口 |
-|------|------|------|
-| ① 真实资料 | **增强** | 递归 ingest + Git · **生产盲测语料** `fixtures/.../production_corpus` |
-| ② 现场证据 | **增强** | error / headers / log / trace / **Trace MCP** / config / health |
-| ③ 结构化诊断 | **增强** | `cause_infer` + **`fix_policy` 权限闸门**（`pending_fix_steps`） |
-| 评测 | **增强** | golden 34 · fault 12 · production 5 · **git docs 5** |
-
-### 1. 接入真实资料
+### 本轮已实现的最小约束
 
 | 能力 | 说明 |
 |------|------|
-| 目录 / Git 仓库 ingest | 替代仅 `corpus/*.md` 静态包 |
-| OpenAPI / 版本元数据 | 端点、错误码、Sunset 与文档对齐 |
-| 增量索引 | 文档变更可追踪、可回归 |
+| 投递 | `POST /v1/docs/personal/ingest`：`url` 或 `text` 二选一 |
+| 列表 | `GET /v1/docs/personal/sources`：当前身份下来源与片段摘要 |
+| 提问 | `POST /v1/chat` + `docs_sources=personal` + `X-Actor-Id` |
+| 隔离 | 入库与检索按 actor 隔离；A 的收藏不能被 B 查到 |
+| 抓取边界 | 仅 `http/https`；拒绝 `file://`、localhost、私网；限超时与正文大小；只存提取文本 |
+| 持久化 | 落在仓库外的 runtime 目录，进程重启后仍在。个人库落盘目录默认在 runtime data 下，可用环境变量 `REACT_AGENT_PERSONAL_KB_DIR` 覆盖。 |
+| 检索 | 默认关键词；`REACT_AGENT_RAG_MODE=semantic` 可切换向量，不引入 ES/OpenSearch |
+| 拒答 | 库空或无命中时明确拒答，**不**回退到内置 14 篇演示语料 |
 
-### 2. 接入现场证据
+内置 14 篇语料与 `git_docs` 等评测语料继续服务既有契约评测；它们不是页面默认回答库。评测默认 `docs_sources=corpus`（或未指定）保持不变。
 
-| 证据类型 | 用途 |
-|----------|------|
-| 错误响应 JSON + HTTP 状态 | 与语料错误码表对照 |
-| 请求头（脱敏） | Bearer / Request-Id 等 |
-| 日志片段 + Trace ID | 关联 runbook 排查链 |
-| 配置快照 | 环境变量、功能开关 |
-| 健康检查 | `/health` 等探测结果作为事实输入 |
+## 后续目标：来源范围、安全合规、权限控制
 
-### 3. 输出结构化诊断
+本轮**未做**，只记目标：
 
-目标 schema（示意）：
+- 按身份控制可见来源范围（职级 / 部门矩阵）
+- 企业安全合规与来源审计
+- 细粒度权限矩阵与审批
+- 转人工、真实邮件或 IM 通知
 
-```yaml
-phenomenon:        # 用户可见现象
-candidate_causes:  # 排序后的候选原因
-evidence:          # 每条原因绑定的文档或现场证据
-verify_actions:    # 建议验证步骤（只读优先）
-fix_steps:         # 可执行修复（须过权限闸门）
-risks:             # 误操作风险
-escalation:        # 何时升级、找谁
-citations:         # 文档引用（保留现有约束）
-```
+本轮唯一与权限相关的实现是：`X-Actor-Id`（或等价 actor）隔离个人库。
 
-Workflow 版本演进：`docs_troubleshoot` v3+ 在保留引用 / 拒答 policy 的前提下，增加 evidence 输入 step 与结构化 final。
+## 评测与工程证据
 
-## 评测演进
+| 入口 | 作用 |
+|------|------|
+| golden / fault / production / git_docs | 既有契约与回归；默认走内置或指定语料，与个人库 UI 路径分离 |
+| `tests/apps/docs_troubleshoot/test_personal_kb.py` | 入库、隔离、拒答、非法 URL（全程离线 fixture） |
 
-| 阶段 | 指标 | 数据集 |
-|------|------|--------|
-| **现在** | pass_rate、by_tag、引用命中、拒答正确 | `golden.json` 34 条 + pytest guards |
-| **仿真故障** | 答案 + `diagnosis` + 根因/禁词指标 | `fault_cases.json` 12 条 · `run_fault_eval.py` |
-| **生产盲测** | 仅外部 ingest 语料可答 | `production_cases.json` 5 条 · `run_production_eval.py` |
-| **指标草案（非当前必做）** | 根因命中率、错误建议率、证据充分率 | 真实 / 仿真历史故障盲测集（held_out 冻结）；与已放弃的跨仓发布门槛「3 个项目、30 条真实任务、10 条独立 held-out」分开记录 |
-| **运营** | 平均解决时间、正确升级率 | 脱敏工单回放（需单独治理） |
-
-黄金集仍作 **回归门禁**；新指标在新数据集上分栏报告，不与 keyword 命中率混谈。
-
-跨仓发布门槛「3 个项目、30 条真实任务、10 条独立 held-out」已于 2026-11-16 放弃，不在本页继续作为必做项。本页已有的 golden、故障、生产盲测和 Git 文档 held-out 入口继续作为规范咨询原型证据。不再把「尚未达到该门槛，下一步必须补齐跨仓账本 golden 或 held-out」写成当前目标，也不为 llm-eval-engine 或 trace-debugger 规划补齐该门槛。这些入口仍是工程原型证据，不写成生产成熟度。
-
-## 与运行时其他能力的关系
-
-| 模块 | 主场景阶段 |
-|------|------------|
-| Workflow + 引用 policy | **当前交付核心** |
-| ReAct + ToolGuard + Harness | 探索路径；为诊断闭环提供执行与轨迹 |
-| 权限闸门 | 修复步骤、健康检查、读配置均须走 gate |
-| capability / execution / public RAG | 通用能力轨，**非**下一阶段扩张重点 |
-| 多 Agent（Orchestrator / Worker） | 实验能力，非默认叙事 |
+跨仓发布门槛「3 个项目、30 条真实任务、10 条独立 held-out」已于 2026-11-16 放弃。现有评测入口仍是工程原型证据，不写成生产成熟度。
 
 ## 相关文档
 
-- 架构：[`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)
-- 工作流入口：[`AGENT_WORKFLOW.md`](AGENT_WORKFLOW.md)
+- 应用方向：[`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)
 - 黄金集评测：[`DOCS_TROUBLESHOOT_EVAL.md`](DOCS_TROUBLESHOOT_EVAL.md)
 - 成熟度矩阵：[`PRODUCTION_MATURITY.md`](PRODUCTION_MATURITY.md)

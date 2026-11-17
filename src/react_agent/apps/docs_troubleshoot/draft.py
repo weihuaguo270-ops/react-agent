@@ -99,6 +99,16 @@ def select_hits(ranked: list[dict[str, Any]], query: str) -> list[dict[str, Any]
     return ranked[:1]
 
 
+def _personal_refuse_draft(search_hits: Any) -> str:
+    from react_agent.apps.docs_troubleshoot.policy import PERSONAL_REFUSE_TEMPLATE
+
+    if isinstance(search_hits, dict):
+        hint = str(search_hits.get("hint") or "").strip()
+        if hint:
+            return hint
+    return PERSONAL_REFUSE_TEMPLATE
+
+
 def build_draft_from_hits(
     query: str,
     search_hits: Any,
@@ -106,9 +116,19 @@ def build_draft_from_hits(
     evidence_bundle: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build draft + policy hints from retrieval blobs."""
+    from react_agent.apps.docs_troubleshoot.docs_sources import (
+        SOURCE_CORPUS,
+        SOURCE_PERSONAL,
+        resolve_docs_sources,
+    )
+    from react_agent.apps.docs_troubleshoot.policy import PERSONAL_REFUSE_TEMPLATE
+
+    sources_active = resolve_docs_sources()
+    personal = SOURCE_PERSONAL in sources_active
+
     if should_refuse_query(query):
         return {
-            "draft": "依据不足，无法给出确定结论。",
+            "draft": PERSONAL_REFUSE_TEMPLATE if personal else "依据不足，无法给出确定结论。",
             "allowed_sources": [],
             "need_refuse": True,
         }
@@ -123,13 +143,9 @@ def build_draft_from_hits(
         seen.add(key)
         uniq.append(r)
 
-    from react_agent.apps.docs_troubleshoot.docs_sources import (
-        SOURCE_CORPUS,
-        resolve_docs_sources,
-    )
-
     if (
-        SOURCE_CORPUS in resolve_docs_sources()
+        not personal
+        and SOURCE_CORPUS in sources_active
         and _ARCH_META.search(query)
         and not any(
             source_matches(str(r.get("source") or "").lower(), "core_architecture")
@@ -159,7 +175,7 @@ def build_draft_from_hits(
     ranked = rank_with_evidence(uniq, query, evidence_bundle)
     if not ranked:
         return {
-            "draft": "未检索到相关文档。",
+            "draft": _personal_refuse_draft(search_hits) if personal else "未检索到相关文档。",
             "allowed_sources": [],
             "need_refuse": True,
         }
@@ -169,7 +185,7 @@ def build_draft_from_hits(
     draft, sources = synthesize_draft(query, top, field_summary=field_summary)
     if not draft:
         return {
-            "draft": "未检索到相关文档。",
+            "draft": _personal_refuse_draft(search_hits) if personal else "未检索到相关文档。",
             "allowed_sources": [],
             "need_refuse": True,
         }

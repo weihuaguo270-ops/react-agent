@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>规范咨询</title>
+<title>个人知识库</title>
 <style>
 :root{--bg:#f4f6f9;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-soft:#eff6ff;--green:#16a34a;--green-bg:#f0fdf4;--red:#dc2626;--red-bg:#fef2f2;--amber:#d97706;--amber-bg:#fffbeb;--radius:10px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+body{font-family:ui-sans-serif,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
 .wrap{max-width:1200px;margin:0 auto;padding:20px}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;flex-wrap:wrap}
 .brand h1{font-size:20px;font-weight:700}
-.brand p{color:var(--muted);font-size:12px;margin-top:4px;max-width:640px;line-height:1.5}
+.brand p{color:var(--muted);font-size:12px;margin-top:4px;max-width:720px;line-height:1.5}
 .badges{display:flex;gap:8px;flex-wrap:wrap}
 .badge{font-size:11px;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid #bfdbfe}
 .grid{display:grid;grid-template-columns:380px 1fr;gap:16px;align-items:start}
@@ -19,9 +19,8 @@ header{display:flex;justify-content:space-between;align-items:flex-start;gap:16p
 .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
 .panel h2{font-size:13px;font-weight:700;margin-bottom:10px}
 label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
-textarea,input,select{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font:inherit;background:#fff}
+textarea,input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font:inherit;background:#fff}
 textarea{min-height:88px;resize:vertical;font-family:inherit}
-textarea.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;min-height:72px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer}
 .btn-primary{background:var(--accent);color:#fff}
@@ -33,80 +32,79 @@ button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:
 .status{display:none;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:12px}
 .status.refused{display:block;background:var(--red-bg);border:1px solid #fecaca;color:#991b1b}
 .status.answered{display:block;background:var(--green-bg);border:1px solid #bbf7d0;color:#166534}
+.status.info{display:block;background:var(--accent-soft);border:1px solid #bfdbfe;color:#1e40af}
 .answer{white-space:pre-wrap;line-height:1.65;font-size:13px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;min-height:120px}
 .meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:11px;margin:10px 0}
 .cite-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.cite{padding:6px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid #bfdbfe;font-size:12px}
+.cite{padding:6px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid #bfdbfe;font-size:12px;text-decoration:none;color:var(--accent)}
 .section{margin-top:14px}
-.section-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.section-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-bottom:8px}
 .card{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#fff}
 .card h3{font-size:13px;margin-bottom:6px}
 .card .sub{font-size:11px;color:var(--muted)}
-.tag{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;margin-right:4px}
-.tag-high{background:#fee2e2;color:#991b1b}
-.tag-med{background:var(--amber-bg);color:#92400e}
-.tag-low{background:#f1f5f9;color:#475569}
-.list{margin:6px 0 0 18px;font-size:12px;line-height:1.6}
 .empty{color:var(--muted);font-size:12px;padding:12px;border:1px dashed var(--border);border-radius:8px;text-align:center}
-.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .flow-step{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;font-size:11px;color:var(--muted)}
 .flow-step strong{display:block;color:var(--text);font-size:12px;margin-bottom:4px}
 .flow-step.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-details{margin-top:8px}
-summary{cursor:pointer;color:var(--muted);font-size:12px}
+.hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="brand">
-      <h1>规范咨询</h1>
-      <p>不是泛聊天：答案必须能引用文档，没依据就拒答。资料源可选<strong>内置演示语料</strong>或<strong>Claude 官方开发者文档</strong>（platform.claude.com，现查现引）；不是企业内部规范库。可附带 HTTP 错误 / 日志 / Trace 作为现场证据。</p>
+      <h1>个人知识库</h1>
+      <p>员工把网页链接或一段文本交给助手沉淀到<strong>自己的</strong>知识库，再用自然语言提问取回带引用的整理答案。当前是个人沉淀演示，不是企业制度库；细粒度权限与来源合规见文档「后续目标」。</p>
     </div>
     <div class="badges" id="badges">
       <span class="badge" id="badge-version">v-</span>
       <span class="badge" id="badge-mode">offline</span>
-      <span class="badge" id="badge-sources">资料源: corpus</span>
-      <span class="badge">引用 / 拒答</span>
-      <span class="badge">diagnosis</span>
+      <span class="badge">个人库 · 引用 / 拒答</span>
+      <span class="badge">可演示原型</span>
     </div>
   </header>
 
   <div class="flow" aria-hidden="true">
-    <div class="flow-step"><strong>现场证据</strong>可选传入</div>
-    <div class="flow-step"><strong>检索</strong>语料命中</div>
-    <div class="flow-step"><strong>合成</strong>句级要点</div>
-    <div class="flow-step active"><strong>策略</strong>引用/拒答</div>
-    <div class="flow-step"><strong>诊断</strong>结构化输出</div>
+    <div class="flow-step active"><strong>投递</strong>链接或文本</div>
+    <div class="flow-step"><strong>切分入库</strong>按身份隔离</div>
+    <div class="flow-step"><strong>提问检索</strong>仅个人库</div>
+    <div class="flow-step"><strong>引用 / 拒答</strong>证据不足则明确说明</div>
   </div>
 
   <div class="grid">
     <div class="panel">
-      <h2>提问与现场证据</h2>
-      <div class="chips" id="presets"></div>
-      <label for="docs_sources">资料源</label>
-      <select id="docs_sources">
-        <option value="corpus">内置演示语料（评测默认）</option>
-        <option value="claude_official">Claude 官方文档（platform.claude.com）</option>
-        <option value="corpus,claude_official">内置语料 + Claude 官方文档</option>
-      </select>
-      <label for="question">问题</label>
-      <textarea id="question" placeholder="例如：缺少 Authorization 返回什么？"></textarea>
-      <details>
-        <summary>HTTP 错误 JSON（error_response）</summary>
-        <textarea id="error_response" class="mono" placeholder='{"status":401,"error":{"code":"unauthorized"}}'></textarea>
-      </details>
-      <details>
-        <summary>日志片段（log_excerpt）</summary>
-        <textarea id="log_excerpt" class="mono" placeholder="upstream_timeout trace_id=..."></textarea>
-      </details>
-      <details>
-        <summary>Trace JSON（trace_context）</summary>
-        <textarea id="trace_context" class="mono" placeholder='{"trace_id":"tr-504","spans":[]}'></textarea>
-      </details>
+      <h2>身份与投递</h2>
+      <label for="actor">员工身份（X-Actor-Id）</label>
+      <input id="actor" autocomplete="off" placeholder="例如 employee-1" value="employee-demo">
+      <p class="hint">入库与提问都按此身份隔离；A 的收藏不会被 B 查到。</p>
+
+      <label for="ingest_url">投递 https 链接</label>
+      <input id="ingest_url" placeholder="https://example.com/notes">
+      <label for="ingest_text">或粘贴文本</label>
+      <textarea id="ingest_text" placeholder="把想沉淀的段落粘贴到这里"></textarea>
+      <label for="ingest_title">标题（可选，仅文本投递）</label>
+      <input id="ingest_title" placeholder="例如：周会纪要">
       <div class="row">
-        <button class="btn-primary" id="ask-btn" onclick="ask()">查询</button>
-        <button class="btn-secondary" onclick="clearForm()">清空</button>
+        <button class="btn-primary" id="ingest-btn" onclick="ingest()">投递入库</button>
+        <button class="btn-secondary" onclick="loadSources()">刷新来源</button>
+      </div>
+      <div class="status" id="ingest-status"></div>
+
+      <div class="section">
+        <div class="section-title">已沉淀来源</div>
+        <div id="sources-list"><div class="empty">尚无来源 · 先投递链接或文本</div></div>
+      </div>
+
+      <div class="section">
+        <h2>提问取回</h2>
+        <div class="chips" id="presets"></div>
+        <label for="question">问题</label>
+        <textarea id="question" placeholder="例如：这份笔记里关于限流怎么说？"></textarea>
+        <div class="row">
+          <button class="btn-primary" id="ask-btn" onclick="ask()">提问</button>
+          <button class="btn-secondary" onclick="clearAsk()">清空</button>
+        </div>
       </div>
     </div>
 
@@ -116,7 +114,7 @@ summary{cursor:pointer;color:var(--muted);font-size:12px}
       <div class="meta" id="meta"></div>
       <div class="section">
         <div class="section-title">答案</div>
-        <div class="answer" id="answer">输入问题后，这里展示带引用约束的答案，或拒答说明。</div>
+        <div class="answer" id="answer">投递资料后提问，这里展示带引用的整理答案；个人库为空或无命中时会明确拒答。</div>
       </div>
       <div class="section">
         <div class="section-title">引用来源</div>
@@ -124,41 +122,36 @@ summary{cursor:pointer;color:var(--muted);font-size:12px}
       </div>
       <div class="section">
         <div class="section-title">检索过程</div>
-        <div id="retrieval-process"><div class="empty">启用 Claude 官方文档时，显示索引筛选与拉页步骤</div></div>
-      </div>
-      <div class="section">
-        <div class="section-title">诊断（diagnosis）</div>
-        <div id="diagnosis"><div class="empty">无 diagnosis 或未传入现场证据</div></div>
+        <div id="retrieval-process"><div class="empty">提问后显示个人库检索步骤</div></div>
       </div>
       <div class="section">
         <div class="section-title">Agent 工具步</div>
-        <div id="agent-steps"><div class="empty">离线 Agent 循环：search → verify_citations → …</div></div>
+        <div id="agent-steps"><div class="empty">离线 Agent：search_docs → verify_citations</div></div>
       </div>
     </div>
   </div>
 </div>
 <script>
 const PRESETS = [
-  {label:"401 鉴权", q:"缺少 Authorization 返回什么？"},
-  {label:"400 cursor", q:"invalid_request 和 cursor 有什么关系？"},
-  {label:"429 限流", q:"429 速率限制怎么处理？", err:{status:429,error:{code:"rate_limited"}}},
-  {label:"域外拒答", q:"我们公司股价明天多少？"},
-  {label:"504 + log", q:"网关超时怎么排查？", log:"upstream_timeout trace_id=tr-504 status=504"}
+  {label:"问已入库内容", q:"这篇资料的主要结论是什么？"},
+  {label:"无关问题拒答", q:"明天股市会涨吗？"},
+  {label:"空库提示", q:"我的个人库里有什么部署规范？"}
 ];
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+
+function actorHeaders(){
+  const actor=(document.getElementById("actor").value||"").trim();
+  if(!actor) throw new Error("请填写员工身份（X-Actor-Id）");
+  return {"Content-Type":"application/json","X-Actor-Id":actor,"Accept":"application/json"};
+}
 
 function initPresets(){
   const box=document.getElementById("presets");
   PRESETS.forEach(p=>{
     const b=document.createElement("button");
     b.className="chip"; b.textContent=p.label;
-    b.onclick=()=>{
-      document.getElementById("question").value=p.q;
-      document.getElementById("error_response").value=p.err?JSON.stringify(p.err,null,2):"";
-      document.getElementById("log_excerpt").value=p.log||"";
-      document.getElementById("trace_context").value="";
-    };
+    b.onclick=()=>{document.getElementById("question").value=p.q;};
     box.appendChild(b);
   });
 }
@@ -172,30 +165,73 @@ async function loadInfo(){
   }catch(e){}
 }
 
-function parseJsonField(id){
-  const raw=document.getElementById(id).value.trim();
-  if(!raw) return undefined;
-  try{return JSON.parse(raw);}catch(e){throw new Error(id+" 不是合法 JSON");}
+function renderSources(sources, chunkCount){
+  const box=document.getElementById("sources-list");
+  if(!sources||!sources.length){
+    box.innerHTML=`<div class="empty">尚无来源 · 片段合计 ${esc(chunkCount||0)}</div>`;
+    return;
+  }
+  box.innerHTML=sources.map(s=>{
+    const title=esc(s.title||s.source_id||"未命名");
+    const url=s.url?`<div class="sub"><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.url)}</a></div>`:"";
+    return `<div class="card"><h3>${title}</h3>
+      <div class="sub">片段 ${esc(s.chunk_count??0)} · ${esc(s.kind||"")} · ${esc(s.ingested_at||"")}</div>${url}</div>`;
+  }).join("")+`<div class="sub" style="margin-top:8px">个人库片段合计：${esc(chunkCount||0)}</div>`;
 }
 
-function clearForm(){
-  ["question","error_response","log_excerpt","trace_context"].forEach(id=>document.getElementById(id).value="");
-  document.getElementById("docs_sources").value="corpus";
-  document.getElementById("answer").textContent="输入问题后，这里展示带引用约束的答案，或拒答说明。";
+async function loadSources(){
+  try{
+    const headers=actorHeaders();
+    delete headers["Content-Type"];
+    const resp=await fetch("/v1/docs/personal/sources",{headers});
+    const data=await resp.json();
+    if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
+    renderSources(data.sources||[], data.chunk_count||0);
+  }catch(e){
+    document.getElementById("sources-list").innerHTML=`<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+
+async function ingest(){
+  const btn=document.getElementById("ingest-btn");
+  const st=document.getElementById("ingest-status");
+  btn.disabled=true; btn.textContent="入库中…";
+  try{
+    const url=(document.getElementById("ingest_url").value||"").trim();
+    const text=(document.getElementById("ingest_text").value||"").trim();
+    const title=(document.getElementById("ingest_title").value||"").trim();
+    if(!url && !text) throw new Error("请填写链接或粘贴文本（二选一）");
+    if(url && text) throw new Error("请只投递链接或文本其中一种");
+    const body=url?{url}:{text,title};
+    const resp=await fetch("/v1/docs/personal/ingest",{
+      method:"POST", headers:actorHeaders(), body:JSON.stringify(body)
+    });
+    const data=await resp.json();
+    if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
+    st.className="status info";
+    st.style.display="block";
+    const src=data.source||{};
+    st.textContent=`已入库「${src.title||""}」· 片段 ${data.chunk_count||0}`;
+    document.getElementById("ingest_url").value="";
+    document.getElementById("ingest_text").value="";
+    await loadSources();
+  }catch(e){
+    st.className="status refused";
+    st.style.display="block";
+    st.textContent="投递失败: "+e.message;
+  }finally{
+    btn.disabled=false; btn.textContent="投递入库";
+  }
+}
+
+function clearAsk(){
+  document.getElementById("question").value="";
+  document.getElementById("answer").textContent="投递资料后提问，这里展示带引用的整理答案；个人库为空或无命中时会明确拒答。";
   document.getElementById("citations").innerHTML='<span class="empty">暂无引用</span>';
-  document.getElementById("retrieval-process").innerHTML='<div class="empty">启用 Claude 官方文档时，显示索引筛选与拉页步骤</div>';
-  document.getElementById("diagnosis").innerHTML='<div class="empty">无 diagnosis 或未传入现场证据</div>';
-  document.getElementById("agent-steps").innerHTML='<div class="empty">离线 Agent 循环：search → verify_citations → …</div>';
+  document.getElementById("retrieval-process").innerHTML='<div class="empty">提问后显示个人库检索步骤</div>';
+  document.getElementById("agent-steps").innerHTML='<div class="empty">离线 Agent：search_docs → verify_citations</div>';
   document.getElementById("status").className="status";
   document.getElementById("meta").textContent="";
-  document.getElementById("badge-sources").textContent="资料源: corpus";
-}
-
-function renderAgentSteps(steps, engine){
-  if(!steps||!steps.length){
-    return `<div class="empty">engine: ${esc(engine||"agent")} · 无步序数据</div>`;
-  }
-  return steps.map(s=>`<div class="card"><h3>Step ${esc(s.step)} · ${esc(s.action||"")}</h3><div class="sub">${esc(s.thought||"")}</div></div>`).join("");
 }
 
 function renderCitations(cites){
@@ -211,86 +247,59 @@ function renderCitations(cites){
   }).join("");
 }
 
-function renderRetrievalProcess(steps, sources){
-  const label=(sources||[]).join(", ")||"corpus";
+function renderRetrievalProcess(steps){
   if(!steps||!steps.length){
-    return `<div class="empty">资料源: ${esc(label)} · 无额外检索过程</div>`;
+    return `<div class="empty">资料源: personal · 无额外检索过程</div>`;
   }
   return steps.map(s=>`<div class="card"><h3>${esc(s.step||s.phase||"step")}</h3><div class="sub">${esc(s.detail||s.message||JSON.stringify(s))}</div></div>`).join("");
 }
 
-function renderDiagnosis(d){
-  if(!d||!Object.keys(d).length){
-    return '<div class="empty">无 diagnosis 或未传入现场证据</div>';
+function renderAgentSteps(steps, engine){
+  if(!steps||!steps.length){
+    return `<div class="empty">engine: ${esc(engine||"agent")} · 无步序数据</div>`;
   }
-  let html="";
-  if(d.phenomenon) html+=`<div class="card"><h3>现象</h3><div>${esc(d.phenomenon)}</div></div>`;
-  const causes=d.candidate_causes||[];
-  if(causes.length){
-    html+=`<div class="card"><h3>候选原因</h3>`;
-    causes.forEach(c=>{
-      const conf=(c.confidence||"medium").toLowerCase();
-      const cls=conf.includes("high")?"tag-high":conf.includes("low")?"tag-low":"tag-med";
-      html+=`<div style="margin-top:8px"><span class="tag ${cls}">${esc(c.confidence||"")}</span> ${esc(c.cause||"")}`;
-      if(c.doc_hints&&c.doc_hints.length) html+=`<div class="sub">文档: ${esc(c.doc_hints.join(", "))}</div>`;
-      html+=`</div>`;
-    });
-    html+=`</div>`;
-  }
-  const mkList=(title, items)=>{
-    if(!items||!items.length) return "";
-    return `<div class="card"><h3>${title}</h3><ul class="list">${items.map(x=>`<li>${esc(typeof x==="string"?x:JSON.stringify(x))}</li>`).join("")}</ul></div>`;
-  };
-  html+=mkList("验证动作", d.verify_actions);
-  html+=mkList("可执行修复", d.fix_steps);
-  html+=mkList("待确认修复", d.pending_fix_steps);
-  html+=mkList("拦截步骤", d.blocked_fix_steps);
-  if(d.escalation) html+=`<div class="card"><h3>升级条件</h3><div>${esc(d.escalation)}</div></div>`;
-  return html||'<div class="empty">diagnosis 为空</div>';
+  return steps.map(s=>`<div class="card"><h3>Step ${esc(s.step)} · ${esc(s.action||"")}</h3><div class="sub">${esc(s.thought||"")}</div></div>`).join("");
 }
 
 async function ask(){
   const btn=document.getElementById("ask-btn");
-  btn.disabled=true; btn.textContent="查询中…";
+  btn.disabled=true; btn.textContent="检索中…";
   try{
-    const body={
-      message:document.getElementById("question").value.trim(),
-      docs_sources:document.getElementById("docs_sources").value
-    };
-    const er=parseJsonField("error_response"); if(er!==undefined) body.error_response=er;
-    const log=document.getElementById("log_excerpt").value.trim(); if(log) body.log_excerpt=log;
-    const tr=parseJsonField("trace_context"); if(tr!==undefined) body.trace_context=tr;
-    if(!body.message) throw new Error("请输入问题");
-    const resp=await fetch("/v1/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const message=document.getElementById("question").value.trim();
+    if(!message) throw new Error("请输入问题");
+    const body={message, docs_sources:"personal"};
+    const resp=await fetch("/v1/chat",{
+      method:"POST",
+      headers:actorHeaders(),
+      body:JSON.stringify(body)
+    });
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
     const refused=!!data.refused;
     const st=document.getElementById("status");
     st.className="status "+(refused?"refused":"answered");
-    const srcLabel=(data.docs_sources||[]).join(", ")||body.docs_sources;
     st.textContent=refused
-      ?("依据不足 · 已拒答 · 资料源: "+srcLabel)
-      :("已回答 · 引用策略通过 · 资料源: "+srcLabel);
+      ?("个人库依据不足 · 已拒答")
+      :("已回答 · 引用策略通过 · 个人知识库");
     document.getElementById("answer").textContent=data.answer||"";
     document.getElementById("meta").innerHTML=
-      `request_id: ${esc(data.request_id||"")} · mode: ${esc(data.mode||"")} · trajectory: ${esc(data.trajectory_id||"")} · sources: ${esc(srcLabel)}`;
+      `request_id: ${esc(data.request_id||"")} · actor: ${esc(data.actor_id||"")} · mode: ${esc(data.mode||"")} · trajectory: ${esc(data.trajectory_id||"")}`;
     document.getElementById("citations").innerHTML=renderCitations(data.citations||[]);
-    document.getElementById("retrieval-process").innerHTML=renderRetrievalProcess(data.retrieval_process||[], data.docs_sources||[]);
-    document.getElementById("diagnosis").innerHTML=renderDiagnosis(data.diagnosis||{});
+    document.getElementById("retrieval-process").innerHTML=renderRetrievalProcess(data.retrieval_process||[]);
     document.getElementById("agent-steps").innerHTML=renderAgentSteps(data.agent_steps||[], data.engine);
     document.getElementById("badge-mode").textContent=data.mode||"offline";
-    document.getElementById("badge-sources").textContent="资料源: "+srcLabel;
   }catch(e){
     document.getElementById("status").className="status refused";
     document.getElementById("status").style.display="block";
     document.getElementById("status").textContent="请求失败: "+e.message;
   }finally{
-    btn.disabled=false; btn.textContent="查询";
+    btn.disabled=false; btn.textContent="提问";
   }
 }
 
 initPresets();
 loadInfo();
+loadSources().catch(()=>{});
 </script>
 </body>
 </html>

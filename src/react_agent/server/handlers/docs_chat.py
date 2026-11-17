@@ -19,6 +19,16 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
         "on",
     )
     trajectory_id = ""
+    actor_id = (
+        body.get("actor_id")
+        or body.get("actor")
+        or body.get("x_actor_id")
+        or ""
+    )
+    if isinstance(actor_id, str):
+        actor_id = actor_id.strip()
+    else:
+        actor_id = ""
 
     if use_llm:
         try:
@@ -66,16 +76,27 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
         extra["trace_context"] = body.get("trace_context")
     if body.get("docs_sources") is not None:
         extra["docs_sources"] = body.get("docs_sources")
+    if actor_id:
+        extra["actor_id"] = actor_id
 
     out = answer_offline(message, **extra)
     sources = [c.get("source", "") for c in (out.get("citations") or []) if c.get("source")]
+    citations = out.get("citations") or [{"source": s} for s in sources[:3]]
+    # Prefer clickable URLs when citation source is already an http(s) link.
+    enriched = []
+    for c in citations:
+        item = dict(c) if isinstance(c, dict) else {"source": str(c)}
+        src = str(item.get("source") or "")
+        if not item.get("url") and (src.startswith("http://") or src.startswith("https://")):
+            item["url"] = src
+        enriched.append(item)
     tid = out.get("trajectory_id") or trajectory_id or f"offline-{request_id[:8]}"
     return 200, {
         "request_id": request_id,
         "app": "docs_troubleshoot",
         "answer": out["answer"],
         "trajectory_id": tid,
-        "citations": out.get("citations") or [{"source": s} for s in sources[:3]],
+        "citations": enriched,
         "refused": out.get("refused", False),
         "diagnosis": out.get("diagnosis") or {},
         "mode": "offline",
@@ -84,4 +105,5 @@ def handle_docs_chat(body: dict, request_id: str) -> tuple[int, dict]:
         "session_id": body.get("session_id") or "",
         "docs_sources": out.get("docs_sources") or [],
         "retrieval_process": out.get("retrieval_process") or [],
+        "actor_id": actor_id or "",
     }

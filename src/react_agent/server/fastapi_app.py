@@ -487,10 +487,49 @@ def create_app(
     async def chat(
         request: ChatRequest,
         x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
     ) -> JSONResponse:
         request_id = _request_id(x_request_id)
+        body = request.model_dump(exclude_none=True)
+        if x_actor_id and x_actor_id.strip() and not body.get("actor_id"):
+            body["actor_id"] = x_actor_id.strip()
         status, payload = await run_in_threadpool(
-            _run_chat, chat_handler, request.model_dump(exclude_none=True), request_id
+            _run_chat, chat_handler, body, request_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
+    @api.post("/v1/docs/personal/ingest")
+    async def personal_kb_ingest(
+        request: Request,
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_ingest
+
+        request_id = _request_id(x_request_id)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        status, payload = await run_in_threadpool(
+            handle_personal_ingest, body, request_id, actor_id=x_actor_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
+    @api.get("/v1/docs/personal/sources")
+    async def personal_kb_sources(
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_sources
+
+        request_id = _request_id(x_request_id)
+        status, payload = await run_in_threadpool(
+            handle_personal_sources, request_id, actor_id=x_actor_id
         )
         payload.setdefault("request_id", request_id)
         return JSONResponse(payload, status_code=status)
@@ -499,9 +538,13 @@ def create_app(
     async def chat_stream(
         request: ChatRequest,
         x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
     ) -> StreamingResponse:
+        body = request.model_dump(exclude_none=True)
+        if x_actor_id and x_actor_id.strip() and not body.get("actor_id"):
+            body["actor_id"] = x_actor_id.strip()
         return _sse_response(
-            chat_handler, request.model_dump(exclude_none=True), _request_id(x_request_id)
+            chat_handler, body, _request_id(x_request_id)
         )
 
     @api.get("/v1/chat/stream")

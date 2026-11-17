@@ -293,6 +293,14 @@ class AgentHandler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if path == "/v1/docs/personal/sources":
+            from react_agent.server.handlers.personal_kb import handle_personal_sources
+
+            status, payload = handle_personal_sources(
+                request_id, actor_id=self.headers.get("X-Actor-Id")
+            )
+            self._send(status, payload)
+            return
         status, payload = error_response("not_found", f"unknown path {path}", request_id, 404)
         self._send(status, payload)
 
@@ -317,6 +325,9 @@ class AgentHandler(BaseHTTPRequestHandler):
         try:
             if path == "/v1/chat":
                 self._prepare_request_context(body, request_id)
+                actor = (self.headers.get("X-Actor-Id") or "").strip()
+                if actor and not body.get("actor_id"):
+                    body["actor_id"] = actor
                 status, payload = handle_chat(body, request_id)
                 if "request_id" not in payload and "error" not in payload:
                     payload["request_id"] = request_id
@@ -329,7 +340,18 @@ class AgentHandler(BaseHTTPRequestHandler):
                 self._send(status, payload)
                 return
             if path == "/v1/chat/stream":
+                actor = (self.headers.get("X-Actor-Id") or "").strip()
+                if actor and not body.get("actor_id"):
+                    body["actor_id"] = actor
                 self._send_sse(body, request_id)
+                return
+            if path == "/v1/docs/personal/ingest":
+                from react_agent.server.handlers.personal_kb import handle_personal_ingest
+
+                status, payload = handle_personal_ingest(
+                    body, request_id, actor_id=self.headers.get("X-Actor-Id")
+                )
+                self._send(status, payload)
                 return
             if path.startswith("/v1/approvals/"):
                 from react_agent.safety import approvals
@@ -420,6 +442,7 @@ def serve(host: str = "127.0.0.1", port: int = 8765):
     if gate_warning:
         print(gate_warning)
     print("[server] POST /v1/chat  app=default|docs_troubleshoot|expense")
+    print("[server] POST /v1/docs/personal/ingest  GET /v1/docs/personal/sources")
     print("[server] POST/GET /v1/chat/stream  text/event-stream progress")
     print("[server] GET /v1/info  /health /ready  /  /ui")
     print("[server] REACT_AGENT_SERVER_LLM=1 for app=default (general ReAct)")

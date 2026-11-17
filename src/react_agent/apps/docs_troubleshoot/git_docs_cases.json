@@ -2,9 +2,9 @@
   {
     "id": "git01",
     "tag": "git_blind",
-    "question": "对外名称建议收敛为什么？",
+    "question": "个人知识库演示路径里投递资料调用哪个接口？",
     "expect": "answer",
-    "must_any": ["规范咨询"],
+    "must_any": ["/v1/docs/personal/ingest", "personal/ingest"],
     "must_cite": true,
     "prefer_sources": ["features/evidence-docs-troubleshoot.md"]
   },
