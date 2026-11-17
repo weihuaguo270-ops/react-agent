@@ -70,7 +70,7 @@ def _finalize(state: dict[str, Any], **_: Any) -> dict[str, Any]:
 def build_docs_troubleshoot_workflow() -> WorkflowDef:
     return WorkflowDef(
         name="docs_troubleshoot",
-        description="证据化文档排障 v5：日志/Trace + 现场证据 → 检索 → 文档推断诊断",
+        description="规范咨询 v5：日志/Trace + 现场证据 → 检索 → 文档推断诊断",
         version="5",
         handlers={
             "parse_evidence": _parse_evidence,

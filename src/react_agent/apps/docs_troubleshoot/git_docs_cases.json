@@ -4,7 +4,7 @@
     "tag": "git_blind",
     "question": "对外名称建议收敛为什么？",
     "expect": "answer",
-    "must_any": ["证据化文档排障"],
+    "must_any": ["规范咨询"],
     "must_cite": true,
     "prefer_sources": ["features/evidence-docs-troubleshoot.md"]
   },

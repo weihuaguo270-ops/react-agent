@@ -59,7 +59,7 @@ def rank_results(results: list[dict[str, Any]], query: str) -> list[dict[str, An
     if "幂等" in query or "idempotency" in ql:
         boosts += ["Idempotency-Key", "missing_idempotency_key", "409", "prod_idempotency"]
     if "对外名称" in query or "名称建议" in query or re.search(r"收敛.*什么|叫什么", query):
-        boosts += ["对外名称", "证据化文档排障", "evidence_docs_troubleshoot"]
+        boosts += ["对外名称", "规范咨询", "evidence_docs_troubleshoot"]
     if "core" in ql or "自建" in query or re.search(r"core\s*实现|运行时默认", query, re.I):
         boosts += ["自建 core", "core_architecture", "react_loop"]
 

@@ -33,7 +33,7 @@ def extract_relevant_sentences(content: str, query: str, *, limit: int = 2) -> l
         if re.search(r"HTTP\s*方法|什么方法", query, re.I) and "options" in sl:
             score += 4.0
         if re.search(r"对外名称|名称建议|产品名|收敛", query):
-            for kw in ("对外名称", "证据化文档排障", "API 排障 Agent"):
+            for kw in ("对外名称", "规范咨询", "API 排障 Agent"):
                 if kw in sent:
                     score += 8.0
         if re.search(r"Core|自建|运行时默认", query, re.I):
