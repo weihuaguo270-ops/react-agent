@@ -21,7 +21,7 @@ Core 运行时、**三类主流应用**、评测与实验模块的分区说明�
 src/react_agent/
 ├── react_loop.py          ReAct 循环
 ├── workflow/              声明式 Workflow
-├── apps/docs_troubleshoot/  垂直 demo：② 客服线 · 证据化文档排障
+├── apps/docs_troubleshoot/  垂直 demo：② 客服线 · 规范咨询
 ├── server/                HTTP：stdlib app + FastAPI fastapi_app（两个入口点）
 ├── skills/                可注册 skill：schema 校验 / 业务边界 / 风险评估 · run_skill()
 ├── multimodal.py          本地制品归一化为可审计证据（不调用 OCR/VLM 服务）

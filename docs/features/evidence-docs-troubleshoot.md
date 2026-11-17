@@ -1,9 +1,9 @@
-# 证据化文档排障（垂直 demo · 客服/自动化线）
+# 规范咨询（`docs_troubleshoot` · 垂直 demo · 客服/自动化线）
 
 > **仓库应用方向**已扩展为三类主流场景，见 [`APPLICATION_DIRECTION.md`](APPLICATION_DIRECTION.md)。  
 > 本页仅描述 **② 客服/工作流自动化** 下的 Runbook/文档垂直 demo，不是全仓唯一产品定义。
 
-本页写 **docs_troubleshoot** 现在能做什么、不能说什么、接下来补什么。评测命令和门禁见 [`DOCS_TROUBLESHOOT_EVAL.md`](DOCS_TROUBLESHOOT_EVAL.md)。
+本页写 **规范咨询（`docs_troubleshoot`）** 现在能做什么、不能说什么、接下来补什么。评测命令和门禁见 [`DOCS_TROUBLESHOOT_EVAL.md`](DOCS_TROUBLESHOOT_EVAL.md)。
 
 ## 两层定位
 
@@ -14,7 +14,7 @@
 | **输出** | 带引用的答案，或「依据不足」拒答 | 结构化诊断：现象、候选原因、证据、验证动作、修复步骤、风险与升级条件 |
 | **评测** | 34 条分层黄金集（关键词 + 引用 + 拒答） | 真实历史故障盲测：根因命中率、错误建议率、证据充分率、MTTR、正确升级率 |
 
-**对外名称建议收敛为「证据化文档排障」**；避免单独使用「API 排障 Agent」，以免用户期待自动定位根因。
+**对外名称建议收敛为「规范咨询」**；代码入口仍为 `docs_troubleshoot`。避免单独使用「API 排障 Agent」，以免用户期待自动定位根因。
 
 ## 为什么选这个主场景
 
@@ -26,7 +26,7 @@ Core 里检索、工具调用、权限闸门、Harness 轨迹本来就在——�
 2. 引用 / 拒答策略写死在 Workflow 里，比开放聊天好判对错。
 3. v0.3 补了现场证据输入和 `diagnosis` schema，fault / production / git 三套 eval 也能挂 CI——但规则 + 检索为主，**不是**自动定根因。
 
-对外名称用「证据化文档排障」。单独叫「API 排障 Agent」容易让人以为能读线上日志自动定位——目前做不到。
+对外名称用「规范咨询」。单独叫「API 排障 Agent」容易让人以为能读线上日志自动定位——目前做不到。
 
 ## 当前边界（须如实表述）
 
@@ -106,7 +106,7 @@ Workflow 版本演进：`docs_troubleshoot` v3+ 在保留引用 / 拒答 policy 
 
 | 阶段 | 指标 | 数据集 |
 |------|------|--------|
-| **现在** | pass_rate、by_tag、引用命中、拒答正确 | `golden.json` 34 条 + leakage guards |
+| **现在** | pass_rate、by_tag、引用命中、拒答正确 | `golden.json` 34 条 + pytest guards |
 | **仿真故障** | 答案 + `diagnosis` + 根因/禁词指标 | `fault_cases.json` 12 条 · `run_fault_eval.py` |
 | **生产盲测** | 仅外部 ingest 语料可答 | `production_cases.json` 5 条 · `run_production_eval.py` |
 | **下一阶** | 根因命中率、错误建议率、证据充分率 | 真实 / 仿真历史故障盲测集（held_out 冻结） |

@@ -1,6 +1,6 @@
 # Agent 工作流
 
-主场景 **docs_troubleshoot**：当前为 [**证据化文档排障**](EVIDENCE_DOCS_TROUBLESHOOT.md)（可引用、可拒答），目标演进为 API 故障诊断 Agent。架构见 [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)。
+主场景 **规范咨询（`docs_troubleshoot`）**：当前为 [**规范咨询**](EVIDENCE_DOCS_TROUBLESHOOT.md)（可引用、可拒答），目标演进为 API 故障诊断 Agent。架构见 [`CORE_ARCHITECTURE.md`](CORE_ARCHITECTURE.md)。
 
 ## 默认路径：离线 Agent 循环
 

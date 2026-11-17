@@ -164,7 +164,7 @@ docs/specs/harness/evidence/phase4-completion.md
 - **状态**: 规格定义阶段
 - **进度**: 规格已编写，尚未开始实施
 
-### docs_troubleshoot - 证据化文档排障
+### docs_troubleshoot - 规范咨询
 - **代码**: `src/react_agent/apps/docs_troubleshoot/` (21个Python文件)
 - **评测**: `scripts/eval/docs/` (4个评测脚本)
 - **状态**: ✅ Active (在 CI 中运行)

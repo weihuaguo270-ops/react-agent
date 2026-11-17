@@ -33,7 +33,7 @@ def test_health_and_chat_offline():
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=5) as resp:
             assert resp.status == 200
             html = resp.read().decode("utf-8")
-        assert "证据化文档排障" in html
+        assert "规范咨询" in html
 
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/info", timeout=5) as resp:
             info = json.loads(resp.read().decode("utf-8"))

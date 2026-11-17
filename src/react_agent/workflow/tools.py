@@ -65,7 +65,7 @@ RUN_WORKFLOW_DEF = {
     "function": {
         "name": "run_workflow",
         "description": (
-            "运行命名 Workflow。文档排障请用 name=docs_troubleshoot 并传 query。"
+            "运行命名 Workflow。规范咨询请用 name=docs_troubleshoot 并传 query。"
             "比自由 ReAct 更可控、可审计。"
         ),
         "parameters": {

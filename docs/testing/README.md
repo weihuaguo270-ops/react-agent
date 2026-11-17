@@ -42,7 +42,7 @@ testing/
 - `evidence-map.md` - 证据地图和验收框架
 - `p0-evidence-map.md` - P0 证据地图
 - `eval-index.md` - 评测索引
-- `docs-troubleshoot-eval.md` - 文档排障评测
+- `docs-troubleshoot-eval.md` - 规范咨询评测
 - `software-task-dataset.md` - 软件任务数据集
 - `software-task-runner.md` - 软件任务运行器
 - `evidence.md` - 证据框架
