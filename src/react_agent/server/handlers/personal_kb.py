@@ -1,4 +1,4 @@
-"""HTTP helpers for personal knowledge-base ingest / list / update."""
+"""HTTP helpers for personal knowledge-base ingest / list / update / agent chat."""
 from __future__ import annotations
 
 from typing import Any
@@ -57,21 +57,18 @@ def handle_personal_agent_chat(
         "on",
     )
     if not use_llm:
+        msg = (
+            "当前未接入灵活对话与联网生成所需的模型。"
+            "请配置 LLM，并设置 REACT_AGENT_SERVER_LLM=1 后再使用知识库助手。"
+            "若只想把已有链接、PDF 或文件收入个人库，仍可用左侧「加入资料」有限后备。"
+        )
         return 200, {
             "request_id": request_id,
             "ok": False,
             "needs_llm": True,
             "actor_id": actor,
-            "answer": (
-                "当前未接入灵活对话所需的模型。"
-                "请配置 LLM，并设置 REACT_AGENT_SERVER_LLM=1 后再使用知识库助手。"
-                "若只想保存链接或正文，仍可用左侧「快速投递」生成可编辑草稿。"
-            ),
-            "reply": (
-                "当前未接入灵活对话所需的模型。"
-                "请配置 LLM，并设置 REACT_AGENT_SERVER_LLM=1 后再使用知识库助手。"
-                "若只想保存链接或正文，仍可用左侧「快速投递」生成可编辑草稿。"
-            ),
+            "answer": msg,
+            "reply": msg,
             "mode": "needs_llm",
             "citations": [],
             "refused": False,
@@ -132,13 +129,9 @@ def handle_personal_ingest(
     fetcher=None,
     generator=None,
 ) -> tuple[int, dict]:
-    """Ingest a URL and/or pasted text (+ optional requirement) as one bookmark.
-
-    Optional ``message`` is parsed into url / text / requirement for chat ingest.
-    Explicit url/text/requirement fields still override empty slots.
-    """
+    """Ingest a URL, pasted text, PDF, or local file as one document."""
     from react_agent.apps.docs_troubleshoot.personal_kb import (
-        ingest_bookmark,
+        ingest_document,
         normalize_actor_id,
         parse_ingest_message,
     )
@@ -163,11 +156,16 @@ def handle_personal_ingest(
     requirement = str(
         body.get("requirement") or body.get("request") or body.get("ask") or ""
     ).strip()
+    filename = str(body.get("filename") or body.get("file_name") or "").strip()
+    content_base64 = str(
+        body.get("content_base64") or body.get("file_base64") or ""
+    ).strip()
+    content_type = str(body.get("content_type") or body.get("mime") or "").strip()
 
     message = body.get("message")
     if isinstance(message, str) and message.strip():
         parsed = parse_ingest_message(message)
-        if not parsed.get("ok") and not url and not text_s:
+        if not parsed.get("ok") and not url and not text_s and not content_base64:
             code = str(parsed.get("error") or "invalid_request")
             return error_response(
                 code,
@@ -183,41 +181,53 @@ def handle_personal_ingest(
             if not requirement:
                 requirement = str(parsed.get("requirement") or "").strip()
 
-    if not url and not text_s:
+    if not url and not text_s and not content_base64:
         return error_response(
             "invalid_request",
-            "url or text is required",
+            "url, text, or file upload is required",
             request_id,
             400,
         )
 
-    out = ingest_bookmark(
+    out = ingest_document(
         actor,
         url=url,
         text=text_s,
         requirement=requirement,
         title_hint=title,
+        filename=filename,
+        content_base64=content_base64,
+        content_type=content_type,
         fetcher=fetcher,
         generator=generator,
-        resolve=True if url and not text_s else False,
+        resolve=True if url and not text_s and not content_base64 else False,
     )
 
     if not out.get("ok"):
         code = str(out.get("error") or "ingest_failed")
         status = (
             400
-            if code in ("invalid_url", "empty_text", "empty_body", "empty_input")
+            if code
+            in (
+                "invalid_url",
+                "empty_text",
+                "empty_body",
+                "empty_input",
+                "invalid_upload",
+                "too_large",
+            )
             else 502
         )
         return error_response(code, str(out.get("message") or code), request_id, status)
 
-    bookmark = out.get("bookmark") or {}
+    document = out.get("document") or out.get("bookmark") or {}
     return 200, {
         "request_id": request_id,
         "ok": True,
         "actor_id": out.get("actor_id") or actor,
-        "bookmark": bookmark,
-        "source": bookmark,
+        "document": document,
+        "bookmark": document,
+        "source": document,
         "merged": bool(out.get("merged")),
         "merge_reason": out.get("merge_reason") or "",
         "message": out.get("message") or "ok",
@@ -229,9 +239,9 @@ def handle_personal_sources(
     *,
     actor_id: str | None = None,
 ) -> tuple[int, dict[str, Any]]:
-    """List bookmarks already stored for the actor."""
+    """List documents already stored for the actor."""
     from react_agent.apps.docs_troubleshoot.personal_kb import (
-        list_bookmarks,
+        list_documents,
         normalize_actor_id,
     )
 
@@ -248,30 +258,32 @@ def handle_personal_sources(
     except ValueError as exc:
         return error_response("invalid_request", str(exc), request_id, 400)
 
-    bookmarks = list_bookmarks(actor)
+    documents = list_documents(actor)
     return 200, {
         "request_id": request_id,
         "ok": True,
         "actor_id": actor,
-        "bookmarks": bookmarks,
-        "sources": bookmarks,
-        "bookmark_count": len(bookmarks),
-        "source_count": len(bookmarks),
+        "documents": documents,
+        "bookmarks": documents,
+        "sources": documents,
+        "document_count": len(documents),
+        "bookmark_count": len(documents),
+        "source_count": len(documents),
     }
 
 
 def handle_personal_update(
-    bookmark_id: str,
+    document_id: str,
     body: dict,
     request_id: str,
     *,
     actor_id: str | None = None,
 ) -> tuple[int, dict[str, Any]]:
-    """Patch title / summary / keywords, or revise via requirement/message."""
+    """Patch title / summary / body, or revise via requirement/message."""
     from react_agent.apps.docs_troubleshoot.personal_kb import (
         normalize_actor_id,
-        revise_bookmark,
-        save_bookmark,
+        revise_document,
+        save_document,
     )
 
     actor = _actor_from(body, actor_id)
@@ -287,15 +299,17 @@ def handle_personal_update(
     except ValueError as exc:
         return error_response("invalid_request", str(exc), request_id, 400)
 
-    bid = (bookmark_id or "").strip()
-    if not bid:
-        return error_response("invalid_request", "bookmark id required", request_id, 400)
+    did = (document_id or "").strip()
+    if not did:
+        return error_response("invalid_request", "document id required", request_id, 400)
 
     kwargs: dict[str, Any] = {}
     if "title" in body:
         kwargs["title"] = body.get("title")
     if "summary" in body:
         kwargs["summary"] = body.get("summary")
+    if "body" in body:
+        kwargs["body"] = body.get("body")
     if "keywords" in body:
         kwargs["keywords"] = body.get("keywords")
 
@@ -304,40 +318,44 @@ def handle_personal_update(
     ).strip()
 
     if not kwargs and requirement:
-        out = revise_bookmark(actor, bid, requirement=requirement)
+        out = revise_document(actor, did, requirement=requirement)
         if not out.get("ok"):
             code = str(out.get("error") or "update_failed")
             status = 404 if code == "not_found" else 400
             return error_response(
                 code, str(out.get("message") or code), request_id, status
             )
+        document = out.get("document") or out.get("bookmark") or {}
         return 200, {
             "request_id": request_id,
             "ok": True,
             "actor_id": actor,
-            "bookmark": out.get("bookmark") or {},
+            "document": document,
+            "bookmark": document,
             "revised": True,
-            "message": out.get("message") or "已按要求更新收藏",
+            "message": out.get("message") or "已按要求更新文档",
         }
 
     if not kwargs:
         return error_response(
             "invalid_request",
-            "provide title, summary, keywords, and/or requirement",
+            "provide title, summary, body, keywords, and/or requirement",
             request_id,
             400,
         )
 
-    out = save_bookmark(actor, bid, **kwargs)
+    out = save_document(actor, did, **kwargs)
     if not out.get("ok"):
         code = str(out.get("error") or "update_failed")
         status = 404 if code == "not_found" else 400
         return error_response(code, str(out.get("message") or code), request_id, status)
 
+    document = out.get("document") or out.get("bookmark") or {}
     return 200, {
         "request_id": request_id,
         "ok": True,
         "actor_id": actor,
-        "bookmark": out.get("bookmark") or {},
+        "document": document,
+        "bookmark": document,
         "message": "已保存",
     }

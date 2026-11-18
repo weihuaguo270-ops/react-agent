@@ -38,10 +38,11 @@ button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:
 .banner.show{display:block}
 .workspace{display:grid;grid-template-columns:minmax(280px,0.95fr) minmax(320px,1.15fr);gap:14px}
 @media(max-width:900px){.workspace{grid-template-columns:1fr}}
-.kw{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:#f1f5f9;color:#334155;margin:0 4px 4px 0}
-.card{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff}
-.card h3{font-size:13px;margin-bottom:4px}
-.card .sub{font-size:11px;color:var(--muted);margin-bottom:6px}
+.doc{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:#fff}
+.doc h3{font-size:14px;margin-bottom:6px;line-height:1.35}
+.doc .summary{font-size:12px;color:#334155;line-height:1.55;white-space:pre-wrap}
+.doc .meta{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
+.doc .meta a{color:var(--accent);text-decoration:none}
 .empty{color:var(--muted);font-size:12px;padding:12px;border:1px dashed var(--border);border-radius:8px;text-align:center}
 .edit-box{margin-top:8px;display:none}
 .edit-box.open{display:block}
@@ -51,7 +52,7 @@ button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:
 .status.refused{background:var(--red-bg);border:1px solid #fecaca;color:#991b1b}
 .status.answered{background:var(--green-bg);border:1px solid #bbf7d0;color:#166534}
 .status.info{background:var(--accent-soft);border:1px solid #bfdbfe;color:#1e40af}
-.chat-thread{display:flex;flex-direction:column;gap:10px;min-height:280px;max-height:520px;overflow:y:auto;padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
+.chat-thread{display:flex;flex-direction:column;gap:10px;min-height:280px;max-height:520px;overflow-y:auto;padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
 .chat-bubble{max-width:92%;padding:10px 12px;border-radius:10px;line-height:1.55;font-size:13px;white-space:pre-wrap;word-break:break-word}
 .chat-bubble.user{align-self:flex-end;background:var(--accent);color:#fff}
 .chat-bubble.assistant{align-self:flex-start;background:#fff;border:1px solid var(--border);color:var(--text)}
@@ -64,6 +65,7 @@ details.trace{margin-top:10px;border:1px solid var(--border);border-radius:8px;p
 details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:600}
 .quick{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)}
 .quick h3{font-size:13px;margin-bottom:6px}
+.kind{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;background:#f1f5f9;color:#475569;margin-right:6px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -71,12 +73,12 @@ details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weig
   <header>
     <div class="brand">
       <h1>个人知识库</h1>
-      <p>确认身份后进入工作区：左侧浏览与编辑收藏，右侧与通用 Agent 对话投递、改写与提问。当前是个人沉淀，不是企业制度库。</p>
+      <p>确认身份后进入工作区：左侧是我的文档与摘要，右侧是可随时说话的通用 Agent。基本单位是文档（原文、摘要或 Agent 文稿），不是收藏卡片字段。</p>
     </div>
     <div class="badges">
       <span class="badge" id="badge-version">v-</span>
       <span class="badge" id="badge-mode">offline</span>
-      <span class="badge">收藏库 + Agent</span>
+      <span class="badge">文档工作区 + Agent</span>
       <span class="badge">可演示原型</span>
     </div>
   </header>
@@ -87,7 +89,7 @@ details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weig
       <p class="lead">填写本次使用的员工身份（X-Actor-Id）。未确认前不能进入工作区。</p>
       <label for="actor-input">员工身份（X-Actor-Id）</label>
       <input id="actor-input" autocomplete="off" placeholder="例如 employee-1">
-      <p class="hint">身份对本次使用有效；入库与提问均按此隔离。A 的收藏不会被 B 看到。</p>
+      <p class="hint">身份对本次使用有效；入库与提问均按此隔离。A 的文档不会被 B 看到。</p>
       <p class="err" id="identity-error"></p>
       <div class="row">
         <button class="btn-primary" id="identity-confirm" type="button">确认身份，进入工作区</button>
@@ -100,39 +102,41 @@ details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weig
       <div class="who">当前身份：<strong id="ws-actor-label">—</strong></div>
       <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
     </div>
-    <div class="banner" id="llm-banner">灵活对话需要已配置的 LLM，并设置 <code>REACT_AGENT_SERVER_LLM=1</code>。未接入模型时不会假装记住要求；仍可用左侧「快速投递」保存链接/正文草稿。</div>
+    <div class="banner" id="llm-banner">灵活对话与联网生成需要已配置的 LLM，并设置 <code>REACT_AGENT_SERVER_LLM=1</code>。未接入模型时不会假装对话；仍可用左侧「加入资料」直接收入链接 / PDF / 文件 / 正文。</div>
     <div class="workspace">
       <div class="panel">
-        <h2>我的收藏</h2>
-        <p class="lead">当前身份下的标题、关键词、摘要与链接；可直接编辑保存。</p>
+        <h2>我的文档</h2>
+        <p class="lead">当前身份下的文档与摘要；可展开编辑标题、摘要与正文。</p>
         <div class="row" style="margin-top:0">
-          <button class="btn-secondary btn-small" type="button" onclick="loadBookmarks()">刷新</button>
+          <button class="btn-secondary btn-small" type="button" onclick="loadDocuments()">刷新</button>
         </div>
-        <div class="status" id="bookmark-status"></div>
-        <div id="bookmarks-list"><div class="empty">尚无收藏</div></div>
+        <div class="status" id="doc-status"></div>
+        <div id="documents-list"><div class="empty">尚无文档</div></div>
         <div class="quick">
-          <h3>快速投递（有限后备）</h3>
-          <p class="hint">不经过 Agent：直接保存链接或正文并生成可编辑草稿。</p>
+          <h3>加入资料（有限后备）</h3>
+          <p class="hint">不经过 Agent：直接把链接、PDF、本地文件或粘贴正文收入个人库。</p>
           <label for="quick_url">https 链接（可选）</label>
           <input id="quick_url" placeholder="https://example.com/notes">
+          <label for="quick_file">本机文件 / PDF（可选）</label>
+          <input id="quick_file" type="file" accept=".pdf,.txt,.md,.markdown,.html,.htm,.json,.csv,text/*">
           <label for="quick_text">粘贴正文（可选）</label>
           <textarea id="quick_text" placeholder="文章或笔记"></textarea>
-          <label for="quick_req">要求（可选）</label>
+          <label for="quick_req">摘要要求（可选）</label>
           <input id="quick_req" placeholder="例如：重点摘安装步骤">
           <div class="row">
-            <button class="btn-secondary btn-small" type="button" onclick="quickIngest()">保存为草稿收藏</button>
+            <button class="btn-secondary btn-small" type="button" onclick="quickIngest()">加入个人库</button>
           </div>
         </div>
       </div>
       <div class="panel">
         <h2>知识库助手</h2>
-        <p class="lead">通用 Agent（react_loop + LLM）。可寒暄、讨论整理、投递、改写与提问；提问只查个人库。</p>
+        <p class="lead">通用 Agent（react_loop + LLM）。可寒暄、加入资料、改写摘要、提问，也可检索网上信息生成文档；提问只查个人库。</p>
         <div class="chat-thread" id="agent-thread" aria-live="polite">
-          <div class="chat-bubble assistant">你好。确认身份后，可以直接问我是谁、讨论怎么整理，或发链接/正文让我写入收藏；提问时我会只依据你的个人库，并尽量给出引用。</div>
+          <div class="chat-bubble assistant">你好。确认身份后，可以直接问我是谁、讨论怎么整理，或发链接 / PDF / 正文让我写入文档；需要时我也可以检索网上信息生成文稿，你确认后再保存进个人库。</div>
         </div>
         <div class="composer">
           <label for="agent-input">消息</label>
-          <textarea id="agent-input" placeholder="例如：你好 / 你是谁 / 帮我整理这段笔记 / 摘要再短一点 / 安装步骤怎么写？"></textarea>
+          <textarea id="agent-input" placeholder="例如：你好 / 你是谁 / 帮我整理这段笔记 / 摘要再短一点 / 检索并写一篇关于… / 保存到个人库"></textarea>
           <div class="row" style="margin-top:0">
             <button class="btn-primary" id="agent-btn" type="button" onclick="sendAgent()">发送</button>
             <button class="btn-secondary" type="button" onclick="resetAgentChat()">清空对话</button>
@@ -149,7 +153,7 @@ details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weig
 </div>
 <script>
 let currentActor = "";
-const AGENT_WELCOME = "你好。确认身份后，可以直接问我是谁、讨论怎么整理，或发链接/正文让我写入收藏；提问时我会只依据你的个人库，并尽量给出引用。";
+const AGENT_WELCOME = "你好。确认身份后，可以直接问我是谁、讨论怎么整理，或发链接 / PDF / 正文让我写入文档；需要时我也可以检索网上信息生成文稿，你确认后再保存进个人库。";
 
 function esc(s){
   return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
@@ -169,10 +173,6 @@ function setStatus(id, kind, text){
   el.className="status show "+(kind||"info");
   el.textContent=text||"";
 }
-function renderKeywords(kws){
-  if(!kws||!kws.length) return '<span class="sub">（无关键词）</span>';
-  return kws.map(k=>`<span class="kw">${esc(k)}</span>`).join("");
-}
 function confirmIdentity(){
   const raw=(document.getElementById("actor-input").value||"").trim();
   const err=document.getElementById("identity-error");
@@ -181,9 +181,9 @@ function confirmIdentity(){
   currentActor=raw;
   document.getElementById("ws-actor-label").textContent=raw;
   resetAgentChat();
-  document.getElementById("bookmarks-list").innerHTML='<div class="empty">尚无收藏</div>';
+  document.getElementById("documents-list").innerHTML='<div class="empty">尚无文档</div>';
   showView("workspace");
-  loadBookmarks();
+  loadDocuments();
   probeLlmBanner();
 }
 function changeActor(){
@@ -211,7 +211,6 @@ function appendBubble(role, text, cls){
   thread.scrollTop=thread.scrollHeight;
 }
 async function probeLlmBanner(){
-  // Soft hint only; real gate is server-side on each chat turn.
   try{
     const r=await fetch("/v1/info");
     const j=await r.json();
@@ -219,29 +218,32 @@ async function probeLlmBanner(){
     document.getElementById("badge-mode").textContent=j.default_mode||"offline";
   }catch(e){}
 }
-async function loadInfo(){ probeLlmBanner(); }
-function renderBookmarks(bookmarks){
-  const box=document.getElementById("bookmarks-list");
-  if(!bookmarks||!bookmarks.length){
-    box.innerHTML='<div class="empty">尚无收藏 · 可在右侧对话投递，或用下方快速投递</div>';
+function loadInfo(){ probeLlmBanner(); }
+function kindLabel(k){
+  const map={url:"链接",pdf:"PDF",file:"文件",text:"正文",agent:"Agent"};
+  return map[k]||k||"文档";
+}
+function renderDocuments(docs){
+  const box=document.getElementById("documents-list");
+  if(!docs||!docs.length){
+    box.innerHTML='<div class="empty">尚无文档 · 可在右侧对话加入，或用下方加入资料</div>';
     return;
   }
-  box.innerHTML=bookmarks.map(b=>{
-    const id=esc(b.id||"");
-    const url=b.url?`<div class="sub"><a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${esc(b.url)}</a></div>`:"";
-    const draft=b.draft?' · 草稿':"";
-    return `<div class="card" data-id="${id}">
-      <h3>${esc(b.title||"未命名收藏")}</h3>
-      <div>${renderKeywords(b.keywords||[])}</div>
-      <div class="sub" style="margin-top:6px;white-space:pre-wrap">${esc(b.summary||"")}</div>
-      ${url}
-      <div class="sub">${esc(b.updated_at||b.ingested_at||"")}${draft}</div>
+  box.innerHTML=docs.map(d=>{
+    const id=esc(d.id||"");
+    const source=d.url
+      ? `<a href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.url)}</a>`
+      : (d.filename?esc(d.filename):"无外部来源");
+    const draft=d.draft?' · 草稿':"";
+    return `<div class="doc" data-id="${id}">
+      <h3><span class="kind">${esc(kindLabel(d.kind))}</span>${esc(d.title||"未命名文档")}</h3>
+      <div class="summary">${esc(d.summary||"（无摘要）")}</div>
+      <div class="meta">来源：${source}<br>${esc(d.updated_at||d.ingested_at||"")}${draft} · ${esc(String(d.char_count||0))} 字</div>
       <div class="row"><button class="btn-secondary btn-small" type="button" onclick="toggleEdit('${id}')">编辑</button></div>
       <div class="edit-box" id="edit-${id}">
-        <label>标题</label><input id="title-${id}" value="${esc(b.title||"")}">
-        <label>关键词（逗号分隔）</label><input id="kw-${id}" value="${esc((b.keywords||[]).join(", "))}">
-        <label>摘要</label><textarea id="sum-${id}">${esc(b.summary||"")}</textarea>
-        <div class="row"><button class="btn-primary btn-small" type="button" onclick="saveBookmark('${id}')">保存</button></div>
+        <label>标题</label><input id="title-${id}" value="${esc(d.title||"")}">
+        <label>摘要</label><textarea id="sum-${id}">${esc(d.summary||"")}</textarea>
+        <div class="row"><button class="btn-primary btn-small" type="button" onclick="saveDocument('${id}')">保存</button></div>
       </div>
     </div>`;
   }).join("");
@@ -250,54 +252,77 @@ function toggleEdit(id){
   const el=document.getElementById("edit-"+id);
   if(el) el.classList.toggle("open");
 }
-async function loadBookmarks(){
+async function loadDocuments(){
   try{
     const headers=actorHeaders(); delete headers["Content-Type"];
-    const resp=await fetch("/v1/docs/personal/bookmarks",{headers});
+    const resp=await fetch("/v1/docs/personal/documents",{headers});
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    renderBookmarks(data.bookmarks||data.sources||[]);
+    renderDocuments(data.documents||data.bookmarks||data.sources||[]);
   }catch(e){
-    document.getElementById("bookmarks-list").innerHTML=`<div class="empty">${esc(e.message)}</div>`;
+    document.getElementById("documents-list").innerHTML=`<div class="empty">${esc(e.message)}</div>`;
   }
 }
-async function saveBookmark(id){
+async function saveDocument(id){
   try{
     const body={
       title:document.getElementById("title-"+id).value,
-      summary:document.getElementById("sum-"+id).value,
-      keywords:document.getElementById("kw-"+id).value
+      summary:document.getElementById("sum-"+id).value
     };
-    const resp=await fetch("/v1/docs/personal/bookmarks/"+encodeURIComponent(id),{
+    const resp=await fetch("/v1/docs/personal/documents/"+encodeURIComponent(id),{
       method:"POST", headers:actorHeaders(), body:JSON.stringify(body)
     });
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    setStatus("bookmark-status","info","已保存「"+(data.bookmark&&data.bookmark.title||id)+"」");
-    await loadBookmarks();
-  }catch(e){ setStatus("bookmark-status","refused","保存失败: "+e.message); }
+    const doc=data.document||data.bookmark||{};
+    setStatus("doc-status","info","已保存「"+(doc.title||id)+"」");
+    await loadDocuments();
+  }catch(e){ setStatus("doc-status","refused","保存失败: "+e.message); }
+}
+function readFileAsBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const result=String(reader.result||"");
+      const idx=result.indexOf(",");
+      resolve(idx>=0?result.slice(idx+1):result);
+    };
+    reader.onerror=()=>reject(reader.error||new Error("read failed"));
+    reader.readAsDataURL(file);
+  });
 }
 async function quickIngest(){
   try{
     const url=(document.getElementById("quick_url").value||"").trim();
     const text=(document.getElementById("quick_text").value||"").trim();
     const requirement=(document.getElementById("quick_req").value||"").trim();
-    if(!url && !text) throw new Error("请提供链接或正文");
-    const body={}; if(url) body.url=url; if(text) body.text=text; if(requirement) body.requirement=requirement;
+    const fileInput=document.getElementById("quick_file");
+    const file=fileInput&&fileInput.files&&fileInput.files[0];
+    if(!url && !text && !file) throw new Error("请提供链接、正文或本地文件");
+    const body={};
+    if(url) body.url=url;
+    if(text) body.text=text;
+    if(requirement) body.requirement=requirement;
+    if(file){
+      body.filename=file.name;
+      body.content_type=file.type||"";
+      body.content_base64=await readFileAsBase64(file);
+    }
     const resp=await fetch("/v1/docs/personal/ingest",{method:"POST",headers:actorHeaders(),body:JSON.stringify(body)});
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    const b=data.bookmark||{};
-    setStatus("bookmark-status","info",`草稿「${b.title||""}」${data.merged?"（已合并）":""}`);
+    const d=data.document||data.bookmark||{};
+    setStatus("doc-status","info",`已加入「${d.title||""}」${data.merged?"（已合并）":""}`);
     document.getElementById("quick_url").value="";
     document.getElementById("quick_text").value="";
-    await loadBookmarks();
-  }catch(e){ setStatus("bookmark-status","refused","投递失败: "+e.message); }
+    if(fileInput) fileInput.value="";
+    await loadDocuments();
+  }catch(e){ setStatus("doc-status","refused","加入失败: "+e.message); }
 }
 function renderCitations(cites){
   if(!cites||!cites.length) return "";
   return cites.map(c=>{
-    const src=c.source||c.url||c;
+    const src=c.source||c.url||c.filename||c;
     const url=c.url||(/^https?:\/\//i.test(String(src))?src:"");
     const title=c.title?esc(c.title)+" · ":"";
     if(url) return `<a class="cite" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${title}${esc(url)}</a>`;
@@ -306,7 +331,7 @@ function renderCitations(cites){
 }
 function renderAgentSteps(steps){
   if(!steps||!steps.length) return `<div class="empty">无步序数据</div>`;
-  return steps.map(s=>`<div class="card"><h3>Step ${esc(s.step)} · ${esc(s.action||s.tool||"")}</h3><div class="sub">${esc(s.thought||s.detail||"")}</div></div>`).join("");
+  return steps.map(s=>`<div class="doc"><h3>Step ${esc(s.step)} · ${esc(s.action||s.tool||"")}</h3><div class="meta">${esc(s.thought||s.detail||"")}</div></div>`).join("");
 }
 async function sendAgent(){
   const btn=document.getElementById("agent-btn");
@@ -333,7 +358,7 @@ async function sendAgent(){
     }
     document.getElementById("agent-citations").innerHTML=renderCitations(data.citations||[]);
     document.getElementById("agent-steps").innerHTML=renderAgentSteps(data.agent_steps||[]);
-    await loadBookmarks();
+    await loadDocuments();
   }catch(e){
     appendBubble("assistant", "请求失败："+e.message, "error");
   }finally{

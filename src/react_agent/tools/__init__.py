@@ -210,7 +210,7 @@ def _core_definitions() -> list[dict]:
 def get_registry(app: str | None = None) -> dict[str, Any]:
     """返回 Core 工具 + 指定应用工具的合并视图（不改动全局对象）。
 
-    ``personal_kb`` 仅暴露个人库工具，避免 web/corpus 工具混入提问路径。
+    ``personal_kb`` 仅暴露个人库工具（含受控的联网检索包装），避免 corpus 工具混入。
     """
     target = (app if app is not None else active_tools_app()).strip().lower()
     if target in ("personal_kb", "personal"):

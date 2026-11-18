@@ -293,7 +293,11 @@ class AgentHandler(BaseHTTPRequestHandler):
                 },
             )
             return
-        if path in ("/v1/docs/personal/sources", "/v1/docs/personal/bookmarks"):
+        if path in (
+            "/v1/docs/personal/sources",
+            "/v1/docs/personal/bookmarks",
+            "/v1/docs/personal/documents",
+        ):
             from react_agent.server.handlers.personal_kb import handle_personal_sources
 
             status, payload = handle_personal_sources(
@@ -363,12 +367,14 @@ class AgentHandler(BaseHTTPRequestHandler):
                 )
                 self._send(status, payload)
                 return
-            if path.startswith("/v1/docs/personal/bookmarks/"):
+            if path.startswith("/v1/docs/personal/bookmarks/") or path.startswith(
+                "/v1/docs/personal/documents/"
+            ):
                 from react_agent.server.handlers.personal_kb import handle_personal_update
 
-                bookmark_id = path.rsplit("/", 1)[-1]
+                document_id = path.rsplit("/", 1)[-1]
                 status, payload = handle_personal_update(
-                    bookmark_id,
+                    document_id,
                     body,
                     request_id,
                     actor_id=self.headers.get("X-Actor-Id"),

@@ -36,8 +36,8 @@ def test_health_and_chat_offline():
         assert "个人知识库" in html
         assert 'data-view="identity"' in html
         assert 'data-view="workspace"' in html
-        assert "我的收藏" in html and "知识库助手" in html
-        assert "收藏库 + Agent" in html
+        assert "我的文档" in html and "知识库助手" in html
+        assert "文档工作区 + Agent" in html
         assert "/v1/docs/personal/chat" in html
         assert "REACT_AGENT_SERVER_LLM" in html
         assert 'data-view="home"' not in html

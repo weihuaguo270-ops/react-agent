@@ -70,7 +70,7 @@ Kubernetes 建议：liveness → `/health`；readiness → `/ready`。
 | `DEEPSEEK_API_KEY` | — | live 模式需要 |
 | `REACT_AGENT_DOCS_INGEST_DIRS` | — | 额外语料目录（逗号分隔，可 mount） |
 | `REACT_AGENT_DOCS_SOURCES` | `corpus` | 评测默认语料源：`corpus`（契约评测）；页面个人库用请求体 `docs_sources=personal` + `X-Actor-Id` |
-| `REACT_AGENT_PERSONAL_KB_DIR` | （data_dir 下） | 个人收藏持久化根目录（仓库外 runtime；bookmarks.json） |
+| `REACT_AGENT_PERSONAL_KB_DIR` | （data_dir 下） | 个人文档持久化根目录（仓库外 runtime；documents.json） |
 | `REACT_AGENT_CLAUDE_DOCS_CACHE_DIR` | 运行时数据目录下 `claude-docs-cache/` | Claude 官方文档短时缓存（勿入库） |
 | `REACT_AGENT_CLAUDE_DOCS_CACHE_TTL` | `900` | 官方文档缓存秒数；`0` 禁用缓存 |
 | `REACT_AGENT_AUTH_TOKEN` | 未设 | 共享密钥；设置后业务接口要求 `Authorization: Bearer <token>`（或 `X-Api-Key`）；探针及 FastAPI 的无业务数据 `GET /expense`、`GET /expense/ops` 外壳公开，Claim/case API 不豁免 |

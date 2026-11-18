@@ -1,7 +1,9 @@
 """Personal knowledge-base agent: tools + system prompt for Live LLM ReAct.
 
 Used by the workspace chat when ``REACT_AGENT_SERVER_LLM=1``. Tool execution is
-scoped to the current actor's bookmarks only — no corpus / web fallback.
+scoped to the current actor's documents. Web search/fetch are only for
+research + draft generation when the user asks — never as a fallback for
+personal-library Q&A.
 """
 from __future__ import annotations
 
@@ -10,28 +12,30 @@ from typing import Any
 
 from react_agent.apps.docs_troubleshoot.personal_kb import (
     current_actor_id,
-    ingest_bookmark,
-    list_bookmarks,
-    revise_bookmark,
-    save_bookmark,
+    get_document,
+    ingest_document,
+    list_documents,
+    revise_document,
+    save_document,
+    save_generated_document,
     search_personal,
 )
 
 
-PERSONAL_KB_SYSTEM_PROMPT = """你是「个人知识库」助手，帮员工沉淀、整理和取回自己的收藏。
+PERSONAL_KB_SYSTEM_PROMPT = """你是「个人知识库」助手，工作方式对齐文档与摘要工作区：一边是员工自己的文档，一边是可随时对话的通用 Agent。
 
 身份与边界：
-- 你可以正常寒暄、自我介绍（例如回答「你是谁」「你好」），这不是入库要求。
-- 只使用提供的个人库工具。禁止编造收藏，禁止用内置语料或外部网页冒充个人库内容。
-- 提问取回时只能依据工具返回的个人收藏；证据不足时必须明确回答「个人库中没有足够依据」，并说明缺什么。
-- 非法或不可访问的 URL 应如实告知用户，不要创建空收藏。
+- 你可以正常寒暄、自我介绍（例如回答「你是谁」「你好」）。寒暄不是入库要求，也不要要求用户必须先发链接。
+- 提问取回时只能调用 personal_search_documents / personal_list_documents / personal_get_document，依据该员工个人库中的文档作答；有依据时给出引用（文档标题 + 原链接或文件名）。证据不足必须明确回答「个人库中没有足够依据」，禁止用内置语料或网页搜索结果冒充个人库答案。
+- 非法或不可访问的 URL 应如实告知，不要创建空文档。
+- 没有可用的网络检索时，说明无法联网生成，不要编造网页内容。
 
 工作方式：
-- 需要写入/合并收藏时调用 personal_ingest_bookmark（链接和/或正文，可选整理要求）。
-- 需要改标题、摘要、关键词，或按自然语言要求重写某条时，调用 personal_update_bookmark。
-- 需要浏览库时用 personal_list_bookmarks；需要按问题检索时用 personal_search_bookmarks。
-- 真正改库后，在回复里展示更新后的标题、关键词和摘要（以及是否合并）。
-- 先讨论整理方式可以只说话、不调用工具；材料够了再写入。
+- 加入资料：personal_upsert_document（https 链接、粘贴正文、或用户已上传的文件正文；同一 URL 会合并更新）。
+- 改写摘要/正文：personal_update_document（按 requirement 或直接改字段）。
+- 浏览库：personal_list_documents；取单篇：personal_get_document。
+- 用户要求检索网上信息并生成文稿时：先 personal_web_search，需要正文再 personal_fetch_page，在对话里展示草稿；仅当用户明确要求保存到个人库时，调用 personal_save_generated_document。不要保存到用户本机路径。
+- 模型自己决定何时说话、何时调用工具；不要把每一句当成入库或状态机分类。
 """
 
 
@@ -47,22 +51,87 @@ def _require_actor() -> str:
     return actor
 
 
+def personal_upsert_document(
+    url: str = "",
+    text: str = "",
+    requirement: str = "",
+    title_hint: str = "",
+    filename: str = "",
+) -> str:
+    """Create or merge one document from URL and/or pasted / uploaded text."""
+    actor = _require_actor()
+    out = ingest_document(
+        actor,
+        url=(url or "").strip(),
+        text=(text or "").strip(),
+        requirement=(requirement or "").strip(),
+        title_hint=(title_hint or "").strip(),
+        filename=(filename or "").strip(),
+        resolve=True if (url or "").strip() and not (text or "").strip() else False,
+    )
+    return json.dumps(out, ensure_ascii=False)
+
+
+# Back-compat alias for older tests / tool names
 def personal_ingest_bookmark(
     url: str = "",
     text: str = "",
     requirement: str = "",
     title_hint: str = "",
 ) -> str:
-    """Create or merge one bookmark from URL and/or pasted text."""
-    actor = _require_actor()
-    out = ingest_bookmark(
-        actor,
-        url=(url or "").strip(),
-        text=(text or "").strip(),
-        requirement=(requirement or "").strip(),
-        title_hint=(title_hint or "").strip(),
-        resolve=True if (url or "").strip() and not (text or "").strip() else False,
+    return personal_upsert_document(
+        url=url, text=text, requirement=requirement, title_hint=title_hint
     )
+
+
+def personal_update_document(
+    document_id: str = "",
+    bookmark_id: str = "",
+    title: str | None = None,
+    summary: str | None = None,
+    body: str | None = None,
+    keywords: str | None = None,
+    requirement: str | None = None,
+) -> str:
+    """Update an existing document by fields and/or a natural-language requirement."""
+    actor = _require_actor()
+    did = (document_id or bookmark_id or "").strip()
+    if not did:
+        return json.dumps(
+            {"ok": False, "error": "invalid_request", "message": "document_id required"},
+            ensure_ascii=False,
+        )
+    req = (requirement or "").strip()
+    if req and title is None and summary is None and body is None and keywords is None:
+        out = revise_document(actor, did, requirement=req)
+        return json.dumps(out, ensure_ascii=False)
+
+    kwargs: dict[str, Any] = {}
+    if title is not None:
+        kwargs["title"] = title
+    if summary is not None:
+        kwargs["summary"] = summary
+    if body is not None:
+        kwargs["body"] = body
+    if keywords is not None:
+        kwargs["keywords"] = keywords
+    if not kwargs and not req:
+        return json.dumps(
+            {
+                "ok": False,
+                "error": "invalid_request",
+                "message": "provide title/summary/body/keywords and/or requirement",
+            },
+            ensure_ascii=False,
+        )
+    if kwargs:
+        out = save_document(actor, did, **kwargs)
+        if not out.get("ok"):
+            return json.dumps(out, ensure_ascii=False)
+        if req:
+            out = revise_document(actor, did, requirement=req)
+        return json.dumps(out, ensure_ascii=False)
+    out = revise_document(actor, did, requirement=req)
     return json.dumps(out, ensure_ascii=False)
 
 
@@ -73,82 +142,174 @@ def personal_update_bookmark(
     keywords: str | None = None,
     requirement: str | None = None,
 ) -> str:
-    """Update an existing bookmark by fields and/or a natural-language requirement."""
+    return personal_update_document(
+        document_id=bookmark_id,
+        title=title,
+        summary=summary,
+        keywords=keywords,
+        requirement=requirement,
+    )
+
+
+def personal_list_documents() -> str:
+    """List documents for the current actor."""
     actor = _require_actor()
-    bid = (bookmark_id or "").strip()
-    if not bid:
-        return json.dumps(
-            {"ok": False, "error": "invalid_request", "message": "bookmark_id required"},
-            ensure_ascii=False,
-        )
-    req = (requirement or "").strip()
-    if req and title is None and summary is None and keywords is None:
-        out = revise_bookmark(actor, bid, requirement=req)
-        return json.dumps(out, ensure_ascii=False)
-
-    kwargs: dict[str, Any] = {}
-    if title is not None:
-        kwargs["title"] = title
-    if summary is not None:
-        kwargs["summary"] = summary
-    if keywords is not None:
-        kwargs["keywords"] = keywords
-    if not kwargs and not req:
-        return json.dumps(
-            {
-                "ok": False,
-                "error": "invalid_request",
-                "message": "provide title/summary/keywords and/or requirement",
-            },
-            ensure_ascii=False,
-        )
-    if kwargs:
-        out = save_bookmark(actor, bid, **kwargs)
-        if not out.get("ok"):
-            return json.dumps(out, ensure_ascii=False)
-        if req:
-            out = revise_bookmark(actor, bid, requirement=req)
-        return json.dumps(out, ensure_ascii=False)
-    out = revise_bookmark(actor, bid, requirement=req)
-    return json.dumps(out, ensure_ascii=False)
-
-
-def personal_list_bookmarks() -> str:
-    """List bookmarks for the current actor."""
-    actor = _require_actor()
-    items = list_bookmarks(actor)
+    items = list_documents(actor)
     return json.dumps(
-        {"ok": True, "actor_id": actor, "bookmark_count": len(items), "bookmarks": items},
+        {
+            "ok": True,
+            "actor_id": actor,
+            "document_count": len(items),
+            "bookmark_count": len(items),
+            "documents": items,
+            "bookmarks": items,
+        },
         ensure_ascii=False,
     )
 
 
-def personal_search_bookmarks(query: str, top_k: int = 5) -> str:
-    """Search only the current actor's personal bookmarks."""
+personal_list_bookmarks = personal_list_documents
+
+
+def personal_get_document(document_id: str) -> str:
+    """Return one document including full body."""
+    actor = _require_actor()
+    did = (document_id or "").strip()
+    if not did:
+        return json.dumps(
+            {"ok": False, "error": "invalid_request", "message": "document_id required"},
+            ensure_ascii=False,
+        )
+    doc = get_document(actor, did)
+    if not doc:
+        return json.dumps(
+            {"ok": False, "error": "not_found", "message": "文档不存在"},
+            ensure_ascii=False,
+        )
+    return json.dumps({"ok": True, "document": doc, "bookmark": doc}, ensure_ascii=False)
+
+
+def personal_search_documents(query: str, top_k: int = 5) -> str:
+    """Search only the current actor's personal documents."""
     actor = _require_actor()
     out = search_personal(actor, query, top_k=int(top_k or 5))
-    # Never attach corpus hits here.
     return json.dumps(out, ensure_ascii=False)
 
 
-_INGEST_DEF = {
+personal_search_bookmarks = personal_search_documents
+
+
+def personal_web_search(query: str, max_results: int = 3) -> str:
+    """Search the public web for research / draft generation (not personal Q&A)."""
+    from react_agent.tools.web_search import web_search
+
+    q = (query or "").strip()
+    if not q:
+        return json.dumps(
+            {"ok": False, "error": "invalid_request", "message": "query required"},
+            ensure_ascii=False,
+        )
+    try:
+        raw = web_search(q, max_results=int(max_results or 3))
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps(
+            {
+                "ok": False,
+                "error": "search_unavailable",
+                "message": f"网络检索不可用：{exc}"[:300],
+            },
+            ensure_ascii=False,
+        )
+    text = str(raw or "")
+    failed = (
+        not text
+        or text.startswith("搜索出错")
+        or "搜索未找到" in text
+        or "不可用" in text
+    )
+    if failed:
+        return json.dumps(
+            {
+                "ok": False,
+                "error": "search_unavailable",
+                "message": text or "当前无法检索网上信息，不能编造网页内容。",
+                "results_text": text,
+            },
+            ensure_ascii=False,
+        )
+    return json.dumps(
+        {"ok": True, "results_text": text, "message": "仅用于生成草稿；回答个人库问题请用 personal_search_documents"},
+        ensure_ascii=False,
+    )
+
+
+def personal_fetch_page(url: str) -> str:
+    """Fetch a public page for research / draft generation."""
+    from react_agent.tools.fetch_page import fetch_page
+
+    u = (url or "").strip()
+    if not u:
+        return json.dumps(
+            {"ok": False, "error": "invalid_request", "message": "url required"},
+            ensure_ascii=False,
+        )
+    try:
+        raw = fetch_page(u)
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps(
+            {
+                "ok": False,
+                "error": "fetch_unavailable",
+                "message": f"无法抓取网页：{exc}"[:300],
+            },
+            ensure_ascii=False,
+        )
+    text = str(raw or "")
+    if text.startswith("不支持的地址") or text.startswith("[已拦截]") or text.startswith("[读取失败]"):
+        return json.dumps(
+            {"ok": False, "error": "fetch_failed", "message": text[:300]},
+            ensure_ascii=False,
+        )
+    return json.dumps({"ok": True, "url": u, "content": text}, ensure_ascii=False)
+
+
+def personal_save_generated_document(
+    title: str,
+    body: str,
+    summary: str = "",
+    source_url: str = "",
+) -> str:
+    """Save an Agent-generated document into the personal library after user confirms."""
+    actor = _require_actor()
+    out = save_generated_document(
+        actor,
+        title=(title or "").strip(),
+        body=(body or "").strip(),
+        summary=(summary or "").strip(),
+        source_url=(source_url or "").strip(),
+    )
+    return json.dumps(out, ensure_ascii=False)
+
+
+_UPSERT_DEF = {
     "type": "function",
     "function": {
-        "name": "personal_ingest_bookmark",
+        "name": "personal_upsert_document",
         "description": (
-            "将 https 链接和/或粘贴正文写入当前员工的个人收藏；"
-            "同一 URL 或强关键词重叠时会合并。可选 requirement 指定整理重点。"
+            "将 https 链接和/或粘贴/上传正文写入当前员工的个人文档库；"
+            "同一 URL 再次加入会合并更新。可选 requirement 指定摘要重点。"
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "url": {"type": "string", "description": "可选 https 链接"},
-                "text": {"type": "string", "description": "可选粘贴正文"},
+                "text": {"type": "string", "description": "可选粘贴或文件正文"},
                 "requirement": {
                     "type": "string",
                     "description": "可选整理要求，如「重点摘安装步骤」",
                 },
                 "title_hint": {"type": "string", "description": "可选标题提示"},
+                "filename": {"type": "string", "description": "可选本地文件名（如 note.pdf）"},
             },
         },
     },
@@ -157,24 +318,25 @@ _INGEST_DEF = {
 _UPDATE_DEF = {
     "type": "function",
     "function": {
-        "name": "personal_update_bookmark",
+        "name": "personal_update_document",
         "description": (
-            "更新已有收藏：可直接改 title/summary/keywords，"
-            "或只给 requirement 按正文重写摘要/关键词（如「摘要再短一点」）。"
+            "更新已有文档：可直接改 title/summary/body，"
+            "或只给 requirement 按正文重写摘要（如「摘要再短一点」）。"
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "bookmark_id": {"type": "string"},
+                "document_id": {"type": "string"},
                 "title": {"type": "string"},
                 "summary": {"type": "string"},
+                "body": {"type": "string"},
                 "keywords": {
                     "type": "string",
-                    "description": "逗号分隔关键词，或 JSON 数组字符串",
+                    "description": "可选内部检索词，逗号分隔",
                 },
                 "requirement": {"type": "string"},
             },
-            "required": ["bookmark_id"],
+            "required": ["document_id"],
         },
     },
 }
@@ -182,18 +344,32 @@ _UPDATE_DEF = {
 _LIST_DEF = {
     "type": "function",
     "function": {
-        "name": "personal_list_bookmarks",
-        "description": "列出当前员工个人库中的全部收藏（标题/关键词/摘要/链接）。",
+        "name": "personal_list_documents",
+        "description": "列出当前员工个人库中的全部文档（标题/摘要/来源）。",
         "parameters": {"type": "object", "properties": {}},
+    },
+}
+
+_GET_DEF = {
+    "type": "function",
+    "function": {
+        "name": "personal_get_document",
+        "description": "按 id 读取一篇文档的全文与摘要。",
+        "parameters": {
+            "type": "object",
+            "properties": {"document_id": {"type": "string"}},
+            "required": ["document_id"],
+        },
     },
 }
 
 _SEARCH_DEF = {
     "type": "function",
     "function": {
-        "name": "personal_search_bookmarks",
+        "name": "personal_search_documents",
         "description": (
-            "仅在当前员工个人收藏中检索。结果不足时请拒答「个人库中没有足够依据」。"
+            "仅在当前员工个人文档中检索。结果不足时请拒答「个人库中没有足够依据」。"
+            "回答个人库问题时必须用此工具，不要用联网搜索代替。"
         ),
         "parameters": {
             "type": "object",
@@ -206,8 +382,79 @@ _SEARCH_DEF = {
     },
 }
 
-TOOL_DEFINITIONS = [_INGEST_DEF, _UPDATE_DEF, _LIST_DEF, _SEARCH_DEF]
+_WEB_DEF = {
+    "type": "function",
+    "function": {
+        "name": "personal_web_search",
+        "description": (
+            "按用户要求检索网上信息，用于生成新文稿草稿。"
+            "不可用作个人库提问的答案来源。不可用时说明无法联网生成。"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string"},
+                "max_results": {"type": "integer"},
+            },
+            "required": ["query"],
+        },
+    },
+}
+
+_FETCH_DEF = {
+    "type": "function",
+    "function": {
+        "name": "personal_fetch_page",
+        "description": "抓取公开网页正文，用于生成草稿；非法 URL 会被拒绝。",
+        "parameters": {
+            "type": "object",
+            "properties": {"url": {"type": "string"}},
+            "required": ["url"],
+        },
+    },
+}
+
+_SAVE_GEN_DEF = {
+    "type": "function",
+    "function": {
+        "name": "personal_save_generated_document",
+        "description": (
+            "在用户确认后，把 Agent 生成的文稿保存进当前身份的个人库工作区。"
+            "不要保存到用户本机文件系统路径。"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "body": {"type": "string"},
+                "summary": {"type": "string"},
+                "source_url": {"type": "string"},
+            },
+            "required": ["title", "body"],
+        },
+    },
+}
+
+TOOL_DEFINITIONS = [
+    _UPSERT_DEF,
+    _UPDATE_DEF,
+    _LIST_DEF,
+    _GET_DEF,
+    _SEARCH_DEF,
+    _WEB_DEF,
+    _FETCH_DEF,
+    _SAVE_GEN_DEF,
+]
 TOOL_REGISTRY = {
+    "personal_upsert_document": personal_upsert_document,
+    "personal_update_document": personal_update_document,
+    "personal_list_documents": personal_list_documents,
+    "personal_get_document": personal_get_document,
+    "personal_search_documents": personal_search_documents,
+    "personal_web_search": personal_web_search,
+    "personal_fetch_page": personal_fetch_page,
+    "personal_save_generated_document": personal_save_generated_document,
+    # Aliases kept registered so older prompts/tests still resolve.
     "personal_ingest_bookmark": personal_ingest_bookmark,
     "personal_update_bookmark": personal_update_bookmark,
     "personal_list_bookmarks": personal_list_bookmarks,

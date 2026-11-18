@@ -544,6 +544,7 @@ def create_app(
 
     @api.get("/v1/docs/personal/sources")
     @api.get("/v1/docs/personal/bookmarks")
+    @api.get("/v1/docs/personal/documents")
     async def personal_kb_sources(
         x_request_id: str | None = Header(default=None),
         x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
@@ -557,10 +558,12 @@ def create_app(
         payload.setdefault("request_id", request_id)
         return JSONResponse(payload, status_code=status)
 
-    @api.patch("/v1/docs/personal/bookmarks/{bookmark_id}")
-    @api.post("/v1/docs/personal/bookmarks/{bookmark_id}")
+    @api.patch("/v1/docs/personal/bookmarks/{document_id}")
+    @api.post("/v1/docs/personal/bookmarks/{document_id}")
+    @api.patch("/v1/docs/personal/documents/{document_id}")
+    @api.post("/v1/docs/personal/documents/{document_id}")
     async def personal_kb_update(
-        bookmark_id: str,
+        document_id: str,
         request: Request,
         x_request_id: str | None = Header(default=None),
         x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
@@ -576,7 +579,7 @@ def create_app(
             body = {}
         status, payload = await run_in_threadpool(
             handle_personal_update,
-            bookmark_id,
+            document_id,
             body,
             request_id,
             actor_id=x_actor_id,
