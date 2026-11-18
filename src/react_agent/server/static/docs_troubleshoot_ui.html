@@ -65,6 +65,18 @@ details.trace{margin-top:14px;border:1px solid var(--border);border-radius:8px;p
 details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:600}
 .err{color:#991b1b;font-size:12px;margin-top:8px;display:none}
 .err.show{display:block}
+.chat-thread{display:flex;flex-direction:column;gap:10px;min-height:220px;max-height:420px;overflow:y:auto;padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
+.chat-bubble{max-width:92%;padding:10px 12px;border-radius:10px;line-height:1.55;font-size:13px;white-space:pre-wrap;word-break:break-word}
+.chat-bubble.user{align-self:flex-end;background:var(--accent);color:#fff}
+.chat-bubble.assistant{align-self:flex-start;background:#fff;border:1px solid var(--border);color:var(--text)}
+.chat-bubble.assistant.error{background:var(--red-bg);border-color:#fecaca;color:#991b1b}
+.chat-bubble .bm-title{font-weight:700;font-size:14px;margin-bottom:6px}
+.chat-bubble .bm-summary{margin-top:6px}
+.chat-bubble .bm-meta{margin-top:8px;font-size:11px;color:var(--muted)}
+.chat-bubble.assistant .bm-meta{color:var(--muted)}
+.chat-bubble.assistant a{color:var(--accent)}
+.composer{display:flex;flex-direction:column;gap:8px}
+.composer textarea{min-height:72px}
 </style>
 </head>
 <body>
@@ -109,7 +121,7 @@ details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weig
       <div class="choice-grid" role="navigation" aria-label="功能选择">
         <button class="choice" type="button" onclick="enterFeature('ingest')">
           <strong>投递收藏</strong>
-          <span>提交链接或粘贴正文，可附带要求，生成一条收藏。</span>
+          <span>用对话投递并查看生成的收藏。</span>
         </button>
         <button class="choice" type="button" onclick="enterFeature('bookmarks')">
           <strong>我的收藏</strong>
@@ -123,7 +135,7 @@ details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weig
     </div>
   </section>
 
-  <!-- 3a. 投递 -->
+  <!-- 3a. 投递（对话） -->
   <section class="view" id="view-ingest" data-view="ingest">
     <div class="topbar">
       <div class="who">当前身份：<strong class="actor-label">—</strong></div>
@@ -134,20 +146,19 @@ details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weig
     </div>
     <div class="panel">
       <h2>投递收藏</h2>
-      <p class="lead">链接与正文可单独或同时给；同一链接再次投递会合并到已有条目。</p>
-      <label for="ingest_url">https 链接（可选）</label>
-      <input id="ingest_url" placeholder="https://example.com/notes">
-      <label for="ingest_text">粘贴正文（可选）</label>
-      <textarea id="ingest_text" placeholder="把文章或笔记粘贴到这里"></textarea>
-      <label for="ingest_requirement">要求（可选）</label>
-      <input id="ingest_requirement" placeholder="例如：重点摘安装步骤；摘要适合复习">
-      <label for="ingest_title">标题提示（可选）</label>
-      <input id="ingest_title" placeholder="不填则自动生成草稿标题">
-      <div class="row">
-        <button class="btn-primary" id="ingest-btn" type="button" onclick="ingest()">投递为收藏</button>
-        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
+      <p class="lead">把链接、正文和要求写在同一条消息里。助手会在对话中展示标题、关键词与摘要；同一轮可继续改刚生成的那条，不必分栏填表。</p>
+      <div class="chat-thread" id="ingest-thread" aria-live="polite">
+        <div class="chat-bubble assistant">发送链接或粘贴正文即可生成收藏。例如：「https://example.com/note 重点摘安装步骤」，或直接粘贴文章。同一对话里可以说「摘要再短一点」来调整当前这条。</div>
       </div>
-      <div class="status" id="ingest-status"></div>
+      <div class="composer">
+        <label for="ingest-input">消息</label>
+        <textarea id="ingest-input" placeholder="链接、正文、要求写在一起；或继续说「关键词加上安装」"></textarea>
+        <div class="row" style="margin-top:0">
+          <button class="btn-primary" id="ingest-btn" type="button" onclick="sendIngest()">发送</button>
+          <button class="btn-secondary" type="button" onclick="resetIngestChat()">新开一轮</button>
+          <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -226,6 +237,9 @@ const PRESETS = [
 ];
 
 let currentActor = "";
+let ingestCurrentId = "";
+const INGEST_WELCOME = "发送链接或粘贴正文即可生成收藏。例如：「https://example.com/note 重点摘安装步骤」，或直接粘贴文章。同一对话里可以说「摘要再短一点」来调整当前这条。";
+const URL_IN_MSG = /https?:\/\/[^\s<>"'`]+/i;
 
 function esc(s){
   return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
@@ -257,11 +271,9 @@ function setStatus(id, kind, text){
 }
 
 function clearFeatureState(){
-  ["ingest_url","ingest_text","ingest_requirement","ingest_title","question"].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value="";
-  });
-  const ingestSt=document.getElementById("ingest-status");
-  if(ingestSt){ ingestSt.className="status"; ingestSt.textContent=""; }
+  const q=document.getElementById("question");
+  if(q) q.value="";
+  resetIngestChat();
   const bmSt=document.getElementById("bookmark-status");
   if(bmSt){ bmSt.className="status"; bmSt.textContent=""; }
   clearAsk();
@@ -409,34 +421,101 @@ async function saveBookmark(id){
   }
 }
 
-async function ingest(){
+function resetIngestChat(){
+  ingestCurrentId = "";
+  const thread=document.getElementById("ingest-thread");
+  if(thread){
+    thread.innerHTML=`<div class="chat-bubble assistant">${esc(INGEST_WELCOME)}</div>`;
+  }
+  const input=document.getElementById("ingest-input");
+  if(input) input.value="";
+}
+
+function appendIngestBubble(role, html, isError){
+  const thread=document.getElementById("ingest-thread");
+  if(!thread) return;
+  const div=document.createElement("div");
+  div.className="chat-bubble "+role+(isError?" error":"");
+  div.innerHTML=html;
+  thread.appendChild(div);
+  thread.scrollTop=thread.scrollHeight;
+}
+
+function renderBookmarkCard(b, opts){
+  opts=opts||{};
+  const kws=renderKeywords(b.keywords||[]);
+  let source="";
+  if(b.url){
+    source=`<div class="bm-meta">来源：<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${esc(b.url)}</a></div>`;
+  }else{
+    source=`<div class="bm-meta">文本收藏（无来源链接）</div>`;
+  }
+  let note="";
+  if(opts.merged){
+    const reason=opts.mergeReason==="same_url"?"同一链接":(opts.mergeReason==="keyword_overlap"?"关键词相近":"已有条目");
+    note=`<div class="bm-meta">已合并到已有收藏（${esc(reason)}）</div>`;
+  }else if(opts.revised){
+    note=`<div class="bm-meta">已按你的要求更新当前这条收藏</div>`;
+  }else if(opts.created){
+    note=`<div class="bm-meta">已生成新收藏</div>`;
+  }
+  return `<div class="bm-title">${esc(b.title||"未命名收藏")}</div>
+    <div>${kws}</div>
+    <div class="bm-summary">${esc(b.summary||"（无摘要）")}</div>
+    ${source}${note}`;
+}
+
+function looksLikeNewIngest(msg){
+  if(URL_IN_MSG.test(msg)) return true;
+  const withoutUrls=msg.replace(/https?:\/\/[^\s<>"'`]+/gi," ").trim();
+  if(withoutUrls.length>=80) return true;
+  if((withoutUrls.match(/\n/g)||[]).length>=1 && withoutUrls.length>=40) return true;
+  return false;
+}
+
+async function sendIngest(){
   const btn=document.getElementById("ingest-btn");
-  btn.disabled=true; btn.textContent="生成中…";
+  const input=document.getElementById("ingest-input");
+  const message=(input.value||"").trim();
+  if(!message) return;
+  btn.disabled=true; btn.textContent="处理中…";
+  appendIngestBubble("user", esc(message));
+  input.value="";
   try{
-    const url=(document.getElementById("ingest_url").value||"").trim();
-    const text=(document.getElementById("ingest_text").value||"").trim();
-    const requirement=(document.getElementById("ingest_requirement").value||"").trim();
-    const title=(document.getElementById("ingest_title").value||"").trim();
-    if(!url && !text) throw new Error("请提供链接或正文（可同时给）");
-    const body={};
-    if(url) body.url=url;
-    if(text) body.text=text;
-    if(requirement) body.requirement=requirement;
-    if(title) body.title=title;
+    const wantNew=looksLikeNewIngest(message);
+    if(!wantNew && !ingestCurrentId){
+      appendIngestBubble("assistant", esc("还需要链接或正文才能入库；仅提要求不够。"), true);
+      return;
+    }
+    if(!wantNew && ingestCurrentId){
+      const resp=await fetch("/v1/docs/personal/bookmarks/"+encodeURIComponent(ingestCurrentId),{
+        method:"POST", headers:actorHeaders(),
+        body:JSON.stringify({requirement: message})
+      });
+      const data=await resp.json();
+      if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
+      const b=data.bookmark||{};
+      ingestCurrentId=b.id||ingestCurrentId;
+      appendIngestBubble("assistant", renderBookmarkCard(b,{revised:true}));
+      return;
+    }
     const resp=await fetch("/v1/docs/personal/ingest",{
-      method:"POST", headers:actorHeaders(), body:JSON.stringify(body)
+      method:"POST", headers:actorHeaders(),
+      body:JSON.stringify({message})
     });
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
     const b=data.bookmark||data.source||{};
-    const merged=data.merged?"（已合并）":"";
-    setStatus("ingest-status","info",`收藏「${b.title||""}」${merged} · 关键词 ${(b.keywords||[]).length} 个`);
-    document.getElementById("ingest_url").value="";
-    document.getElementById("ingest_text").value="";
+    ingestCurrentId=b.id||"";
+    appendIngestBubble("assistant", renderBookmarkCard(b,{
+      created:!data.merged,
+      merged:!!data.merged,
+      mergeReason:data.merge_reason||""
+    }));
   }catch(e){
-    setStatus("ingest-status","refused","投递失败: "+e.message);
+    appendIngestBubble("assistant", esc("投递失败："+e.message), true);
   }finally{
-    btn.disabled=false; btn.textContent="投递为收藏";
+    btn.disabled=false; btn.textContent="发送";
   }
 }
 
@@ -513,6 +592,9 @@ async function ask(){
 document.getElementById("identity-confirm").addEventListener("click", confirmIdentity);
 document.getElementById("actor-input").addEventListener("keydown", e=>{
   if(e.key==="Enter"){ e.preventDefault(); confirmIdentity(); }
+});
+document.getElementById("ingest-input").addEventListener("keydown", e=>{
+  if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); sendIngest(); }
 });
 
 initPresets();

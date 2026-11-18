@@ -408,6 +408,210 @@ def draft_bookmark_fields(
     }
 
 
+_URL_IN_TEXT_RE = re.compile(r"https?://[^\s<>\"'`]+", re.IGNORECASE)
+_REQ_HINT_RE = re.compile(
+    r"(重点|摘要|复习|做成|关键词|短一点|缩短|再短|加上|请|帮我|要求|整理|摘取|摘)"
+)
+_SHORTEN_RE = re.compile(r"(短一点|缩短|再短|更短)")
+_ADD_KEYWORD_RE = re.compile(
+    r"关键词[^。\n]{0,12}加上\s*[「『\"]?([^」』\"。\n；;]+)[」』\"]?"
+)
+
+
+def _looks_like_requirement(text: str) -> bool:
+    s = (text or "").strip()
+    if not s or len(s) > 60:
+        return False
+    if _REQ_HINT_RE.search(s):
+        return True
+    return len(s) <= 40
+
+
+def _looks_like_article_text(text: str) -> bool:
+    s = (text or "").strip()
+    if len(s) >= 50:
+        return True
+    if s.count("\n") >= 1 and len(s) >= 30:
+        return True
+    return False
+
+
+def parse_ingest_message(message: str) -> dict[str, Any]:
+    """Split one chat message into url / text / requirement for ingest.
+
+    First http(s) URL becomes the bookmark URL; extra URLs stay in text or
+    requirement so they are not silently dropped. Short remainder with
+    requirement cues becomes ``requirement``; longer remainder becomes ``text``.
+    """
+    raw = (message or "").strip()
+    if not raw:
+        return {
+            "ok": False,
+            "error": "empty_message",
+            "message": "请输入链接、正文或调整要求",
+        }
+
+    urls = _URL_IN_TEXT_RE.findall(raw)
+    # Trim common trailing punctuation from matched URLs.
+    cleaned_urls: list[str] = []
+    for u in urls:
+        cleaned_urls.append(u.rstrip(".,;:)]}>\"'"))
+    urls = cleaned_urls
+
+    remainder = raw
+    for u in urls:
+        remainder = remainder.replace(u, " ", 1)
+    remainder = re.sub(r"[ \t]+\n", "\n", remainder)
+    remainder = re.sub(r"\n{3,}", "\n\n", remainder)
+    remainder = re.sub(r"[ \t]{2,}", " ", remainder).strip()
+
+    url = urls[0] if urls else ""
+    extra_urls = urls[1:]
+    text = ""
+    requirement = ""
+
+    if remainder:
+        lines = [ln.strip() for ln in remainder.splitlines() if ln.strip()]
+        if _looks_like_article_text(remainder):
+            if len(lines) >= 2 and _looks_like_requirement(lines[-1]):
+                text = "\n".join(lines[:-1]).strip()
+                requirement = lines[-1]
+            else:
+                text = remainder
+        elif _looks_like_requirement(remainder) or (
+            url and not _looks_like_article_text(remainder)
+        ):
+            # Short cue / leftover with a URL → processing requirement, not body.
+            requirement = remainder
+        else:
+            text = remainder
+
+    if extra_urls:
+        note = "其他链接：" + " ".join(extra_urls)
+        if text:
+            text = f"{text}\n\n{note}"
+        elif requirement:
+            requirement = f"{requirement}；{note}"
+        else:
+            requirement = note
+
+    if not url and not text:
+        return {
+            "ok": False,
+            "error": "need_content",
+            "message": "还需要链接或正文才能入库；仅提要求不够",
+            "url": "",
+            "text": "",
+            "requirement": requirement,
+            "extra_urls": extra_urls,
+        }
+
+    return {
+        "ok": True,
+        "url": url,
+        "text": text,
+        "requirement": requirement,
+        "extra_urls": extra_urls,
+        "message": "ok",
+    }
+
+
+def message_suggests_new_ingest(message: str) -> bool:
+    """True when the chat turn should create/merge via ingest (not revise)."""
+    parsed = parse_ingest_message(message)
+    if not parsed.get("ok"):
+        # need_content / empty → not a new ingest payload
+        return bool(_URL_IN_TEXT_RE.search(message or ""))
+    return bool(parsed.get("url") or _looks_like_article_text(str(parsed.get("text") or "")))
+
+
+def revise_bookmark(
+    actor_id: str,
+    bookmark_id: str,
+    *,
+    requirement: str = "",
+    generator: Optional[BookmarkGenerator] = None,
+) -> dict[str, Any]:
+    """Re-draft title/summary/keywords for an existing bookmark from its body."""
+    safe = normalize_actor_id(actor_id)
+    req = (requirement or "").strip()
+    if not req:
+        return {
+            "ok": False,
+            "error": "invalid_request",
+            "message": "请提供调整要求",
+        }
+    bid = (bookmark_id or "").strip()
+    if not bid:
+        return {
+            "ok": False,
+            "error": "invalid_request",
+            "message": "bookmark id required",
+        }
+
+    with _lock_for(safe):
+        items = _load_bookmarks(safe)
+        target = None
+        for item in items:
+            if str(item.get("id")) == bid:
+                target = item
+                break
+        if target is None:
+            return {"ok": False, "error": "not_found", "message": "收藏不存在"}
+
+        body = str(target.get("body") or "").strip()
+        title = str(target.get("title") or "")
+        summary = str(target.get("summary") or "")
+        keywords = list(target.get("keywords") or [])
+
+        add_match = _ADD_KEYWORD_RE.search(req)
+        if add_match:
+            added = _normalize_keywords(
+                re.split(r"[,，、/\s]+", add_match.group(1).strip())
+            )
+            keywords = _merge_keywords(keywords, added)
+        elif _SHORTEN_RE.search(req) and summary:
+            keep = max(80, len(summary) // 2)
+            if len(summary) > keep:
+                summary = summary[: keep - 1].rstrip() + "…"
+            if req and "【按要求" not in summary[:20]:
+                summary = f"【按要求「{req[:40]}」整理】{summary}"
+        else:
+            if not body:
+                return {
+                    "ok": False,
+                    "error": "empty_body",
+                    "message": "该收藏没有可重写的正文",
+                }
+            gen = generator or draft_bookmark_fields
+            try:
+                fields = gen(body, title_hint=title, requirement=req)
+            except TypeError:
+                fields = gen(body)
+            except Exception:  # noqa: BLE001
+                fields = draft_bookmark_fields(
+                    body, title_hint=title, requirement=req
+                )
+            title = str(fields.get("title") or title)[:120]
+            summary = str(fields.get("summary") or summary)
+            keywords = _normalize_keywords(fields.get("keywords") or keywords)
+
+        target["title"] = title[:120] or target.get("title") or "未命名收藏"
+        target["summary"] = summary[: MAX_SUMMARY_CHARS * 2]
+        target["keywords"] = keywords
+        target["requirement"] = req
+        target["updated_at"] = _now()
+        target["draft"] = True
+        _save_bookmarks(safe, items)
+        return {
+            "ok": True,
+            "actor_id": safe,
+            "bookmark": _public_bookmark(target),
+            "revised": True,
+            "message": "已按要求更新收藏",
+        }
+
+
 def keyword_jaccard(a: list[str], b: list[str]) -> float:
     sa = {x.lower() for x in a if x}
     sb = {x.lower() for x in b if x}

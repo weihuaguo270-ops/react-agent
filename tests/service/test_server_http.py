@@ -39,6 +39,9 @@ def test_health_and_chat_offline():
         assert "投递收藏" in html and "我的收藏" in html and "提问取回" in html
         assert "返回选择页" in html
         assert "先身份 · 再三选一" in html
+        assert "用对话投递并查看生成的收藏" in html
+        assert 'id="ingest-thread"' in html
+        assert "ingest_url" not in html
 
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/info", timeout=5) as resp:
             info = json.loads(resp.read().decode("utf-8"))

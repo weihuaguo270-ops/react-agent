@@ -21,10 +21,15 @@ def handle_personal_ingest(
     fetcher=None,
     generator=None,
 ) -> tuple[int, dict]:
-    """Ingest a URL and/or pasted text (+ optional requirement) as one bookmark."""
+    """Ingest a URL and/or pasted text (+ optional requirement) as one bookmark.
+
+    Optional ``message`` is parsed into url / text / requirement for chat ingest.
+    Explicit url/text/requirement fields still override empty slots.
+    """
     from react_agent.apps.docs_troubleshoot.personal_kb import (
         ingest_bookmark,
         normalize_actor_id,
+        parse_ingest_message,
     )
 
     actor = _actor_from(body, actor_id)
@@ -47,6 +52,25 @@ def handle_personal_ingest(
     requirement = str(
         body.get("requirement") or body.get("request") or body.get("ask") or ""
     ).strip()
+
+    message = body.get("message")
+    if isinstance(message, str) and message.strip():
+        parsed = parse_ingest_message(message)
+        if not parsed.get("ok") and not url and not text_s:
+            code = str(parsed.get("error") or "invalid_request")
+            return error_response(
+                code,
+                str(parsed.get("message") or code),
+                request_id,
+                400,
+            )
+        if parsed.get("ok"):
+            if not url:
+                url = str(parsed.get("url") or "").strip()
+            if not text_s:
+                text_s = str(parsed.get("text") or "").strip()
+            if not requirement:
+                requirement = str(parsed.get("requirement") or "").strip()
 
     if not url and not text_s:
         return error_response(
@@ -132,9 +156,10 @@ def handle_personal_update(
     *,
     actor_id: str | None = None,
 ) -> tuple[int, dict[str, Any]]:
-    """Patch title / summary / keywords on one bookmark."""
+    """Patch title / summary / keywords, or revise via requirement/message."""
     from react_agent.apps.docs_troubleshoot.personal_kb import (
         normalize_actor_id,
+        revise_bookmark,
         save_bookmark,
     )
 
@@ -162,10 +187,32 @@ def handle_personal_update(
         kwargs["summary"] = body.get("summary")
     if "keywords" in body:
         kwargs["keywords"] = body.get("keywords")
+
+    requirement = str(
+        body.get("requirement") or body.get("message") or body.get("request") or ""
+    ).strip()
+
+    if not kwargs and requirement:
+        out = revise_bookmark(actor, bid, requirement=requirement)
+        if not out.get("ok"):
+            code = str(out.get("error") or "update_failed")
+            status = 404 if code == "not_found" else 400
+            return error_response(
+                code, str(out.get("message") or code), request_id, status
+            )
+        return 200, {
+            "request_id": request_id,
+            "ok": True,
+            "actor_id": actor,
+            "bookmark": out.get("bookmark") or {},
+            "revised": True,
+            "message": out.get("message") or "已按要求更新收藏",
+        }
+
     if not kwargs:
         return error_response(
             "invalid_request",
-            "provide title, summary, and/or keywords",
+            "provide title, summary, keywords, and/or requirement",
             request_id,
             400,
         )

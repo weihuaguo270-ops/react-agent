@@ -31,6 +31,76 @@ def _fixture_fetcher(url: str):
     return True, url, FIXTURE_HTML.read_bytes()
 
 
+def test_parse_ingest_message_splits_url_text_requirement():
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        message_suggests_new_ingest,
+        parse_ingest_message,
+    )
+
+    url_req = parse_ingest_message(
+        "https://example.com/personal-note 重点摘安装步骤"
+    )
+    assert url_req["ok"] is True
+    assert url_req["url"] == "https://example.com/personal-note"
+    assert url_req["text"] == ""
+    assert "安装" in url_req["requirement"]
+
+    multi = parse_ingest_message(
+        "正文第一段讲安装。\n\n第二段讲启动。\nhttps://example.com/a "
+        "https://example.com/b 摘要适合复习"
+    )
+    assert multi["ok"] is True
+    assert multi["url"] == "https://example.com/a"
+    assert "https://example.com/b" in multi["text"] or "https://example.com/b" in multi[
+        "requirement"
+    ]
+    assert multi["extra_urls"] == ["https://example.com/b"]
+
+    article = parse_ingest_message(
+        "安装指南：先安装依赖，再执行 migrate，最后启动服务。\n"
+        "复习要点：依赖、migrate、启动。这是足够长的粘贴正文用于识别。"
+    )
+    assert article["ok"] is True
+    assert not article["url"]
+    assert "migrate" in article["text"]
+
+    need = parse_ingest_message("摘要再短一点")
+    assert need["ok"] is False
+    assert need["error"] == "need_content"
+    assert message_suggests_new_ingest("https://example.com/x") is True
+    assert message_suggests_new_ingest("摘要再短一点") is False
+
+
+def test_revise_bookmark_updates_same_id(personal_tmp):
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        ingest_bookmark,
+        list_bookmarks,
+        revise_bookmark,
+    )
+
+    first = ingest_bookmark(
+        "employee-a",
+        text=(
+            "安装指南：先安装依赖，再执行 migrate，最后启动服务。"
+            "复习要点：依赖、migrate、启动。冷却窗口与 Retry-After。"
+        ),
+        requirement="重点摘安装步骤",
+    )
+    assert first["ok"] is True
+    bm_id = first["bookmark"]["id"]
+    before = first["bookmark"]["summary"]
+
+    shortened = revise_bookmark("employee-a", bm_id, requirement="摘要再短一点")
+    assert shortened["ok"] is True
+    assert shortened["bookmark"]["id"] == bm_id
+    assert len(shortened["bookmark"]["summary"]) <= len(before)
+
+    keyed = revise_bookmark("employee-a", bm_id, requirement="关键词加上安装")
+    assert keyed["ok"] is True
+    assert "安装" in keyed["bookmark"]["keywords"]
+    assert len(list_bookmarks("employee-a")) == 1
+
+
 def test_ingest_creates_editable_bookmark_draft(personal_tmp):
     from react_agent.apps.docs_troubleshoot.personal_kb import (
         clear_actor_cache,
@@ -369,6 +439,48 @@ def test_http_bookmark_endpoints(personal_tmp):
         assert bm.get("summary")
         assert bm.get("keywords") is not None
 
+        chat_req = urllib.request.Request(
+            f"http://127.0.0.1:{port}/v1/docs/personal/ingest",
+            data=json.dumps(
+                {
+                    "message": (
+                        "聊天投递正文：限流时按 Retry-After 退避，并记录冷却窗口。"
+                        "第二段说明幂等键与重复请求如何处理，便于复习。"
+                        "\n摘要适合复习"
+                    )
+                }
+            ).encode("utf-8"),
+            headers={"Content-Type": "application/json", "X-Actor-Id": "http-user"},
+            method="POST",
+        )
+        with urllib.request.urlopen(chat_req, timeout=5) as resp:
+            chat_body = json.loads(resp.read().decode("utf-8"))
+        assert chat_body.get("ok") is True
+        chat_bm = chat_body.get("bookmark") or {}
+        assert chat_bm.get("id")
+        assert chat_bm.get("summary")
+
+        need_req = urllib.request.Request(
+            f"http://127.0.0.1:{port}/v1/docs/personal/ingest",
+            data=json.dumps({"message": "摘要再短一点"}).encode("utf-8"),
+            headers={"Content-Type": "application/json", "X-Actor-Id": "http-user"},
+            method="POST",
+        )
+        with pytest.raises(urllib.error.HTTPError) as need_err:
+            urllib.request.urlopen(need_req, timeout=5)
+        assert need_err.value.code == 400
+
+        revise_req = urllib.request.Request(
+            f"http://127.0.0.1:{port}/v1/docs/personal/bookmarks/{chat_bm['id']}",
+            data=json.dumps({"requirement": "关键词加上限流"}).encode("utf-8"),
+            headers={"Content-Type": "application/json", "X-Actor-Id": "http-user"},
+            method="POST",
+        )
+        with urllib.request.urlopen(revise_req, timeout=5) as resp:
+            revised = json.loads(resp.read().decode("utf-8"))
+        assert revised.get("revised") is True
+        assert "限流" in (revised.get("bookmark") or {}).get("keywords", [])
+
         list_req = urllib.request.Request(
             f"http://127.0.0.1:{port}/v1/docs/personal/bookmarks",
             headers={"X-Actor-Id": "http-user"},
@@ -376,7 +488,7 @@ def test_http_bookmark_endpoints(personal_tmp):
         )
         with urllib.request.urlopen(list_req, timeout=5) as resp:
             listed = json.loads(resp.read().decode("utf-8"))
-        assert listed.get("bookmark_count") == 1
+        assert listed.get("bookmark_count") == 2
 
         upd = urllib.request.Request(
             f"http://127.0.0.1:{port}/v1/docs/personal/bookmarks/{bm['id']}",

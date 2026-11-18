@@ -5,7 +5,9 @@
 
 ## 当前主路径
 
-员工通过 `POST /v1/docs/personal/ingest` 投递网页链接或文章正文（可附带要求，例如「重点摘安装步骤」），助手生成**一条收藏**：标题、摘要、标题下的检索关键词，以及可选的来源链接；原文保留供引用。员工可直接查看并编辑标题、摘要与关键词。之后提问时，优先用关键词、来源链接、标题与摘要检索合并；证据不足或库为空时明确拒答「个人库中没有足够依据」，不会回退到内置 14 篇演示语料。
+投递资料调用 `POST /v1/docs/personal/ingest`（页面用对话发送；可传 `message`，或原有 `url` / `text` / `requirement`）。
+
+员工在「投递收藏」把链接、正文与要求写在同一条消息里，助手在对话中展示生成的**一条收藏**：标题、标题下关键词、摘要与来源链接（无链接则标明文本收藏）；若合并也会说明。同一轮可继续提要求，经 `POST /v1/docs/personal/bookmarks/{id}` 更新当前条目。完整列表与直接编辑仍在「我的收藏」。之后在「提问取回」提问时，优先用关键词、来源链接、标题与摘要检索；证据不足或库为空时明确拒答「个人库中没有足够依据」，不会回退到内置 14 篇演示语料。
 
 **主体验是收藏条目，不是切段列表。** 当前是个人沉淀，不是企业制度库。代码 / 评测标识可暂时保留 `docs_troubleshoot`。
 
@@ -14,9 +16,9 @@
 1. `python -m react_agent.server --host 127.0.0.1 --port 8765`（或 `react-agent-api`）
 2. 打开 `/` 或 `/ui`：先在「身份」视图填写并确认 `X-Actor-Id`（未确认不能进功能）
 3. 选择页并列三个入口（非步骤条）：投递收藏 / 我的收藏 / 提问取回；进入其一后仅显示该功能，可「返回选择页」
-4. 投递：`POST /v1/docs/personal/ingest`（链接和/或正文 + 可选 `requirement`）
-5. 我的收藏：`GET /v1/docs/personal/bookmarks` 列表；`POST /v1/docs/personal/bookmarks/{id}` 编辑保存
-6. 提问：`POST /v1/chat`（`docs_sources=personal`）→ 先答案、后引用；检索过程与思维链默认折叠
+4. 投递收藏：对话发送 → `POST /v1/docs/personal/ingest`（可选 `message`，或 `url`/`text`/`requirement`）；回复展示标题/关键词/摘要/是否合并；续写要求走 `POST .../bookmarks/{id}`
+5. 我的收藏：`GET /v1/docs/personal/bookmarks` 列表；`POST /v1/docs/personal/bookmarks/{id}` 直接编辑保存
+6. 提问取回：`POST /v1/chat`（`docs_sources=personal`）→ 先答案、后引用；检索过程与思维链默认折叠
 
 成熟度：**可演示原型，非生产。** 无可用模型时仍给出可编辑草稿（标题候选 + 首段摘要），不静默丢内容。
 
@@ -24,9 +26,9 @@
 
 | 能力 | 说明 |
 |------|------|
-| 投递 | `POST /v1/docs/personal/ingest`：`url` 与 `text` 可单独或同时给；可选 `requirement` |
+| 投递 | 页面为对话；`POST /v1/docs/personal/ingest` 支持 `message` 或 `url`/`text`/`requirement` |
 | 收藏 | 每条含 title / summary / keywords / url；无模型时用离线草稿生成器 |
-| 编辑 | `POST`/`PATCH /v1/docs/personal/bookmarks/{id}` 更新标题、摘要、关键词 |
+| 编辑 | `POST`/`PATCH /v1/docs/personal/bookmarks/{id}`：字段保存，或 `requirement`/`message` 按要求重写当前条 |
 | 合并 | 同一 URL 再次投递合并到原条目；关键词 Jaccard≥0.5 且交集≥2 时合并（无复杂聚类） |
 | 提问 | `POST /v1/chat` + `docs_sources=personal` + `X-Actor-Id` |
 | 隔离 | 入库与检索按 actor 隔离；A 的收藏不能被 B 查到 |
