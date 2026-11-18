@@ -5,375 +5,1644 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>个人知识库</title>
 <style>
-:root{--bg:#f4f6f9;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-soft:#eff6ff;--green-bg:#f0fdf4;--red-bg:#fef2f2;--radius:10px}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:ui-sans-serif,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
-.wrap{max-width:1100px;margin:0 auto;padding:20px}
-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;flex-wrap:wrap}
-.brand h1{font-size:20px;font-weight:700}
-.brand p{color:var(--muted);font-size:12px;margin-top:4px;max-width:720px;line-height:1.5}
-.badges{display:flex;gap:8px;flex-wrap:wrap}
-.badge{font-size:11px;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid #bfdbfe}
-.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
-.panel h2{font-size:15px;font-weight:700;margin-bottom:8px}
-.panel .lead{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:12px}
-label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
-textarea,input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font:inherit;background:#fff}
-textarea{min-height:72px;resize:vertical}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
-button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{filter:brightness(.95)}
-.btn-secondary{background:#fff;border:1px solid var(--border);color:var(--text)}
-.btn-small{padding:6px 10px;font-size:12px}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 10px;font-size:12px}
-.hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
-.view{display:none}
-.view.active{display:block}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
-.topbar .who{font-size:13px}
-.err{color:#991b1b;font-size:12px;margin-top:8px;display:none}
-.err.show{display:block}
-.banner{display:none;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:12px;line-height:1.5;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
-.banner.show{display:block}
-.workspace{display:grid;grid-template-columns:minmax(280px,0.95fr) minmax(320px,1.15fr);gap:14px}
-@media(max-width:900px){.workspace{grid-template-columns:1fr}}
-.doc{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:#fff}
-.doc h3{font-size:14px;margin-bottom:6px;line-height:1.35}
-.doc .summary{font-size:12px;color:#334155;line-height:1.55;white-space:pre-wrap}
-.doc .meta{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
-.doc .meta a{color:var(--accent);text-decoration:none}
-.empty{color:var(--muted);font-size:12px;padding:12px;border:1px dashed var(--border);border-radius:8px;text-align:center}
-.edit-box{margin-top:8px;display:none}
-.edit-box.open{display:block}
-.edit-box textarea{min-height:64px;margin-bottom:6px}
-.status{display:none;padding:10px 12px;border-radius:8px;margin:12px 0;font-size:12px}
-.status.show{display:block}
-.status.refused{background:var(--red-bg);border:1px solid #fecaca;color:#991b1b}
-.status.answered{background:var(--green-bg);border:1px solid #bbf7d0;color:#166534}
-.status.info{background:var(--accent-soft);border:1px solid #bfdbfe;color:#1e40af}
-.chat-thread{display:flex;flex-direction:column;gap:10px;min-height:280px;max-height:520px;overflow-y:auto;padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
-.chat-bubble{max-width:92%;padding:10px 12px;border-radius:10px;line-height:1.55;font-size:13px;white-space:pre-wrap;word-break:break-word}
-.chat-bubble.user{align-self:flex-end;background:var(--accent);color:#fff}
-.chat-bubble.assistant{align-self:flex-start;background:#fff;border:1px solid var(--border);color:var(--text)}
-.chat-bubble.assistant.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
-.chat-bubble.assistant.error{background:var(--red-bg);border-color:#fecaca;color:#991b1b}
-.composer textarea{min-height:72px}
-.cite-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.cite{padding:6px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid #bfdbfe;font-size:12px;text-decoration:none;color:var(--accent)}
-details.trace{margin-top:10px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:#fff}
-details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:600}
-.quick{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)}
-.quick h3{font-size:13px;margin-bottom:6px}
-.kind{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;background:#f1f5f9;color:#475569;margin-right:6px;vertical-align:middle}
+:root {
+  --bg: #f4f6f9;
+  --card: #fff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --green-text: #166534;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --red-text: #991b1b;
+  --yellow-bg: #fff7ed;
+  --yellow-border: #fed7aa;
+  --yellow-text: #9a3412;
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ===== Views ===== */
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+/* ===== Identity View ===== */
+.identity-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.identity-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.identity-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.identity-header p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.identity-panel {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.identity-panel h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.identity-panel label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.identity-panel input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font: inherit;
+  background: #fff;
+  margin-bottom: 8px;
+}
+
+.identity-panel input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.identity-hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.identity-error {
+  display: none;
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  color: var(--red-text);
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.identity-error.show {
+  display: block;
+}
+
+.btn {
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  width: 100%;
+}
+
+.btn-primary:hover {
+  filter: brightness(0.95);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Workspace View ===== */
+.workspace-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 16px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Bar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.topbar-left {
+  font-size: 13px;
+}
+
+.topbar-left strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.topbar-right {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-ghost:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Banner */
+.banner {
+  display: none;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.banner.show {
+  display: block;
+}
+
+.banner.warning {
+  background: var(--yellow-bg);
+  border: 1px solid var(--yellow-border);
+  color: var(--yellow-text);
+}
+
+.banner.info {
+  background: var(--accent-soft);
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+
+.banner code {
+  background: rgba(0,0,0,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+/* Three Column Layout */
+.workspace-main {
+  display: grid;
+  grid-template-columns: 300px 1fr 420px;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workspace-main.no-detail {
+  grid-template-columns: 300px 1fr;
+}
+
+@media (max-width: 1200px) {
+  .workspace-main {
+    grid-template-columns: 280px 1fr;
+  }
+
+  .detail-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: rgba(0,0,0,0.3);
+    display: none;
+  }
+
+  .detail-panel.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .detail-content {
+    background: var(--card);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-main {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .docs-panel, .chat-panel {
+    display: none;
+  }
+
+  .docs-panel.active, .chat-panel.active {
+    display: flex;
+  }
+}
+
+/* Panel Common */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.panel-count {
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+
+.btn-icon:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* ===== Documents Panel ===== */
+.docs-panel {
+  grid-column: 1;
+}
+
+.doc-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.doc-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+}
+
+.doc-card.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.doc-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.doc-kind {
+  display: inline-block;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.doc-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.doc-summary {
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.doc-meta {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.doc-meta a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.doc-meta a:hover {
+  text-decoration: underline;
+}
+
+.docs-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+.docs-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.docs-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.docs-empty-guide {
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: left;
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+/* Ingest Panel */
+.ingest-panel {
+  display: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin: 12px;
+  margin-top: 0;
+}
+
+.ingest-panel.show {
+  display: block;
+}
+
+.ingest-panel h3 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.ingest-panel label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  margin-top: 12px;
+}
+
+.ingest-panel label:first-of-type {
+  margin-top: 0;
+}
+
+.ingest-panel input,
+.ingest-panel textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12px;
+  background: #fff;
+}
+
+.ingest-panel textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.ingest-panel input:focus,
+.ingest-panel textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.ingest-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-secondary {
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-secondary:hover {
+  background: var(--bg);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.ingest-status {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ingest-status.show {
+  display: block;
+}
+
+.ingest-status.success {
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  color: var(--green-text);
+}
+
+.ingest-status.error {
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  color: var(--red-text);
+}
+
+.ingest-status.loading {
+  background: var(--accent-soft);
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+
+/* ===== Detail Panel ===== */
+.detail-panel {
+  grid-column: 2;
+}
+
+.detail-toolbar {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.detail-toolbar-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.detail-toolbar-right {
+  display: flex;
+  gap: 8px;
+}
+
+.detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.detail-doc-header {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-doc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.detail-doc-title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.detail-doc-source {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.detail-doc-source a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.detail-doc-source a:hover {
+  text-decoration: underline;
+}
+
+.detail-doc-info {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.detail-section-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.detail-edit input,
+.detail-edit textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font: inherit;
+  background: #fff;
+  margin-bottom: 12px;
+}
+
+.detail-edit textarea {
+  min-height: 200px;
+  resize: vertical;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+
+.detail-edit-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+/* ===== Chat Panel ===== */
+.chat-panel {
+  grid-column: 3;
+}
+
+@media (max-width: 1200px) {
+  .chat-panel {
+    grid-column: 2;
+  }
+}
+
+.chat-thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  line-height: 1.6;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.assistant {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-bubble.assistant.warn {
+  background: var(--yellow-bg);
+  border-color: var(--yellow-border);
+  color: var(--yellow-text);
+}
+
+.chat-bubble.assistant.error {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+  color: var(--red-text);
+}
+
+.chat-bubble.assistant.success {
+  background: var(--green-bg);
+  border-color: var(--green-border);
+  color: var(--green-text);
+}
+
+.chat-bubble a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.chat-trace {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.03);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.chat-trace summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+}
+
+.chat-trace-content {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+.chat-composer {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+  background: var(--card);
+  flex-shrink: 0;
+}
+
+.chat-composer textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+  resize: none;
+  min-height: 80px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.chat-composer textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.chat-composer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.chat-disabled {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+.chat-disabled-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.chat-disabled-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.chat-disabled-text {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.chat-disabled-code {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--text);
+}
+
+/* Utility */
+.hidden {
+  display: none !important;
+}
+
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">
+
+<!-- Identity View -->
+<div class="view active" id="view-identity">
+  <div class="identity-container">
+    <div class="identity-header">
       <h1>个人知识库</h1>
-      <p>确认身份后进入工作区：左侧是我的文档与摘要，右侧是可随时说话的通用 Agent。基本单位是文档（原文、摘要或 Agent 文稿），不是收藏卡片字段。</p>
+      <p>确认身份后进入工作区：一边是我的文档，一边是可对话的 Agent</p>
     </div>
-    <div class="badges">
-      <span class="badge" id="badge-version">v-</span>
-      <span class="badge" id="badge-mode">offline</span>
-      <span class="badge">文档工作区 + Agent</span>
-      <span class="badge">可演示原型</span>
-    </div>
-  </header>
 
-  <section class="view active" id="view-identity" data-view="identity">
-    <div class="panel">
+    <div class="identity-panel">
       <h2>确认身份</h2>
-      <p class="lead">填写本次使用的员工身份（X-Actor-Id）。未确认前不能进入工作区。</p>
       <label for="actor-input">员工身份（X-Actor-Id）</label>
-      <input id="actor-input" autocomplete="off" placeholder="例如 employee-1">
-      <p class="hint">身份对本次使用有效；入库与提问均按此隔离。A 的文档不会被 B 看到。</p>
-      <p class="err" id="identity-error"></p>
-      <div class="row">
-        <button class="btn-primary" id="identity-confirm" type="button">确认身份，进入工作区</button>
+      <input
+        id="actor-input"
+        type="text"
+        placeholder="例如 employee-1"
+        autocomplete="off"
+      >
+      <div class="identity-hint">
+        身份对本次使用有效。不同身份的文档相互隔离，你只能看到自己的文档。
       </div>
+      <div class="identity-error" id="identity-error"></div>
+      <button class="btn btn-primary" id="identity-confirm">
+        确认身份，进入工作区
+      </button>
     </div>
-  </section>
-
-  <section class="view" id="view-workspace" data-view="workspace">
-    <div class="topbar">
-      <div class="who">当前身份：<strong id="ws-actor-label">—</strong></div>
-      <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
-    </div>
-    <div class="banner" id="llm-banner">灵活对话与联网生成需要已配置的 LLM，并设置 <code>REACT_AGENT_SERVER_LLM=1</code>。未接入模型时不会假装对话；仍可用左侧「加入资料」直接收入链接 / PDF / 文件 / 正文。</div>
-    <div class="workspace">
-      <div class="panel">
-        <h2>我的文档</h2>
-        <p class="lead">当前身份下的文档与摘要；可展开编辑标题、摘要与正文。</p>
-        <div class="row" style="margin-top:0">
-          <button class="btn-secondary btn-small" type="button" onclick="loadDocuments()">刷新</button>
-        </div>
-        <div class="status" id="doc-status"></div>
-        <div id="documents-list"><div class="empty">尚无文档</div></div>
-        <div class="quick">
-          <h3>加入资料（有限后备）</h3>
-          <p class="hint">不经过 Agent：直接把链接、PDF、本地文件或粘贴正文收入个人库。</p>
-          <label for="quick_url">https 链接（可选）</label>
-          <input id="quick_url" placeholder="https://example.com/notes">
-          <label for="quick_file">本机文件 / PDF（可选）</label>
-          <input id="quick_file" type="file" accept=".pdf,.txt,.md,.markdown,.html,.htm,.json,.csv,text/*">
-          <label for="quick_text">粘贴正文（可选）</label>
-          <textarea id="quick_text" placeholder="文章或笔记"></textarea>
-          <label for="quick_req">摘要要求（可选）</label>
-          <input id="quick_req" placeholder="例如：重点摘安装步骤">
-          <div class="row">
-            <button class="btn-secondary btn-small" type="button" onclick="quickIngest()">加入个人库</button>
-          </div>
-        </div>
-      </div>
-      <div class="panel">
-        <h2>知识库助手</h2>
-        <p class="lead">通用 Agent（react_loop + LLM）。可寒暄、加入资料、改写摘要、提问，也可检索网上信息生成文档；提问只查个人库。</p>
-        <div class="chat-thread" id="agent-thread" aria-live="polite">
-          <div class="chat-bubble assistant">你好。确认身份后，可以直接问我是谁、讨论怎么整理，或发链接 / PDF / 正文让我写入文档；需要时我也可以检索网上信息生成文稿，你确认后再保存进个人库。</div>
-        </div>
-        <div class="composer">
-          <label for="agent-input">消息</label>
-          <textarea id="agent-input" placeholder="例如：你好 / 你是谁 / 帮我整理这段笔记 / 摘要再短一点 / 检索并写一篇关于… / 保存到个人库"></textarea>
-          <div class="row" style="margin-top:0">
-            <button class="btn-primary" id="agent-btn" type="button" onclick="sendAgent()">发送</button>
-            <button class="btn-secondary" type="button" onclick="resetAgentChat()">清空对话</button>
-          </div>
-        </div>
-        <div class="cite-list" id="agent-citations"></div>
-        <details class="trace" id="agent-trace">
-          <summary>Agent 工具步（展开查看）</summary>
-          <div id="agent-steps"><div class="empty">发送后可展开查看</div></div>
-        </details>
-      </div>
-    </div>
-  </section>
+  </div>
 </div>
-<script>
-let currentActor = "";
-const AGENT_WELCOME = "你好。确认身份后，可以直接问我是谁、讨论怎么整理，或发链接 / PDF / 正文让我写入文档；需要时我也可以检索网上信息生成文稿，你确认后再保存进个人库。";
 
-function esc(s){
-  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+<!-- Workspace View -->
+<div class="view" id="view-workspace">
+  <div class="workspace-container">
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        当前身份：<strong id="ws-actor-label">—</strong>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-ghost" id="btn-refresh-docs">刷新文档</button>
+        <button class="btn-ghost" id="btn-change-actor">更换身份</button>
+      </div>
+    </div>
+
+    <!-- Banner -->
+    <div class="banner warning" id="llm-banner">
+      当前未接入灵活对话与联网生成所需的模型。你仍可以把链接、PDF 或本地文件加入个人库，但无法使用 Agent 对话、改写摘要或联网生成文档。
+      <br>配置方法：设置 <code>REACT_AGENT_SERVER_LLM=1</code>
+    </div>
+
+    <!-- Mobile Tabs (hidden on desktop) -->
+    <div class="workspace-tabs hidden">
+      <button class="tab-btn active" data-tab="docs">文档</button>
+      <button class="tab-btn" data-tab="chat">对话</button>
+      <button class="tab-btn hidden" data-tab="detail" id="tab-detail">阅读</button>
+    </div>
+
+    <!-- Three Column Layout -->
+    <div class="workspace-main no-detail">
+      <!-- Left: Documents Panel -->
+      <div class="panel docs-panel active">
+        <div class="panel-header">
+          <div>
+            <span class="panel-title">我的文档</span>
+            <span class="panel-count" id="doc-count">(0)</span>
+          </div>
+          <div class="panel-actions">
+            <button class="btn-icon" id="btn-add-doc" title="加入资料">+</button>
+            <button class="btn-icon" id="btn-reload-docs" title="刷新">⟳</button>
+          </div>
+        </div>
+        <div class="panel-body" id="docs-list">
+          <div class="docs-empty">
+            <div class="docs-empty-icon">📄</div>
+            <div class="docs-empty-title">还没有文档</div>
+            <div class="docs-empty-guide">
+              开始加入第一份资料：<br>
+              • 点击上方「+」按钮<br>
+              • 在右侧对话中发送链接或粘贴正文<br>
+              • 直接拖拽文件到这里
+            </div>
+          </div>
+        </div>
+
+        <!-- Ingest Panel -->
+        <div class="ingest-panel" id="ingest-panel">
+          <h3>加入资料</h3>
+          <label>https 链接（可选）</label>
+          <input type="text" id="ingest-url" placeholder="https://example.com/article">
+
+          <label>或粘贴正文（可选）</label>
+          <textarea id="ingest-text" placeholder="文章或笔记内容"></textarea>
+
+          <label>或选择本地文件（可选）</label>
+          <input type="file" id="ingest-file" accept=".pdf,.txt,.md,.markdown,.html,.htm,.json">
+
+          <label>摘要要求（可选）</label>
+          <input type="text" id="ingest-requirement" placeholder="例如：重点摘安装步骤">
+
+          <div class="ingest-actions">
+            <button class="btn btn-primary btn-sm" id="btn-ingest">加入个人库</button>
+            <button class="btn btn-secondary btn-sm" id="btn-cancel-ingest">取消</button>
+          </div>
+
+          <div class="ingest-status" id="ingest-status"></div>
+        </div>
+      </div>
+
+      <!-- Middle: Detail Panel (hidden by default) -->
+      <div class="panel detail-panel" id="detail-panel">
+        <div class="detail-toolbar">
+          <div class="detail-toolbar-left">
+            <button class="btn-ghost" id="btn-close-detail">← 返回列表</button>
+          </div>
+          <div class="detail-toolbar-right">
+            <button class="btn-ghost" id="btn-edit-doc">编辑</button>
+            <button class="btn-ghost" id="btn-close-detail-x">×</button>
+          </div>
+        </div>
+        <div class="detail-body" id="detail-body">
+          <!-- Document content will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Right: Chat Panel -->
+      <div class="panel chat-panel active">
+        <div class="panel-header">
+          <div class="panel-title">知识库助手</div>
+          <div class="panel-actions">
+            <button class="btn-icon" id="btn-clear-chat" title="清空对话">🗑</button>
+          </div>
+        </div>
+        <div class="chat-thread" id="chat-thread">
+          <div class="chat-bubble assistant">
+            你好。我是你的知识库助手，可以帮你加入资料、改写摘要、回答问题，也可以检索网上信息生成文档。
+          </div>
+        </div>
+        <div class="chat-composer">
+          <textarea
+            id="chat-input"
+            placeholder="问我任何问题，或发送链接、粘贴正文..."
+            rows="3"
+          ></textarea>
+          <div class="chat-composer-actions">
+            <button class="btn btn-primary btn-sm" id="btn-send-chat">发送</button>
+            <button class="btn btn-secondary btn-sm" id="btn-reset-chat">清空对话</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== State =====
+let currentActor = '';
+let documents = [];
+let currentDocumentId = null;
+let chatHistory = [];
+let llmAvailable = true;
+
+const AGENT_WELCOME = '你好。我是你的知识库助手，可以帮你加入资料、改写摘要、回答问题，也可以检索网上信息生成文档。';
+
+// ===== Utility Functions =====
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
-function showView(name){
-  document.querySelectorAll(".view").forEach(el=>{
-    el.classList.toggle("active", el.dataset.view === name);
+
+function showView(viewId) {
+  document.querySelectorAll('.view').forEach(el => {
+    el.classList.toggle('active', el.id === viewId);
   });
 }
-function actorHeaders(){
-  if(!currentActor) throw new Error("请先确认员工身份");
-  return {"Content-Type":"application/json","X-Actor-Id":currentActor,"Accept":"application/json"};
+
+function showError(elementId, message) {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.textContent = message;
+    el.classList.add('show');
+  }
 }
-function setStatus(id, kind, text){
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.className="status show "+(kind||"info");
-  el.textContent=text||"";
+
+function hideError(elementId) {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.classList.remove('show');
+  }
 }
-function confirmIdentity(){
-  const raw=(document.getElementById("actor-input").value||"").trim();
-  const err=document.getElementById("identity-error");
-  if(!raw){ err.textContent="请填写员工身份后再进入工作区。"; err.classList.add("show"); return; }
-  err.classList.remove("show"); err.textContent="";
-  currentActor=raw;
-  document.getElementById("ws-actor-label").textContent=raw;
-  resetAgentChat();
-  document.getElementById("documents-list").innerHTML='<div class="empty">尚无文档</div>';
-  showView("workspace");
-  loadDocuments();
-  probeLlmBanner();
+
+function actorHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'X-Actor-Id': currentActor,
+    'Accept': 'application/json'
+  };
 }
-function changeActor(){
-  currentActor="";
-  document.getElementById("ws-actor-label").textContent="—";
-  document.getElementById("actor-input").value="";
-  document.getElementById("llm-banner").classList.remove("show");
-  resetAgentChat();
-  showView("identity");
-  document.getElementById("actor-input").focus();
-}
-function resetAgentChat(){
-  document.getElementById("agent-thread").innerHTML=`<div class="chat-bubble assistant">${esc(AGENT_WELCOME)}</div>`;
-  document.getElementById("agent-input").value="";
-  document.getElementById("agent-citations").innerHTML="";
-  document.getElementById("agent-steps").innerHTML='<div class="empty">发送后可展开查看</div>';
-  document.getElementById("agent-trace").open=false;
-}
-function appendBubble(role, text, cls){
-  const thread=document.getElementById("agent-thread");
-  const div=document.createElement("div");
-  div.className="chat-bubble "+role+(cls?" "+cls:"");
-  div.textContent=text;
-  thread.appendChild(div);
-  thread.scrollTop=thread.scrollHeight;
-}
-async function probeLlmBanner(){
-  try{
-    const r=await fetch("/v1/info");
-    const j=await r.json();
-    document.getElementById("badge-version").textContent="v"+(j.version||"?");
-    document.getElementById("badge-mode").textContent=j.default_mode||"offline";
-  }catch(e){}
-}
-function loadInfo(){ probeLlmBanner(); }
-function kindLabel(k){
-  const map={url:"链接",pdf:"PDF",file:"文件",text:"正文",agent:"Agent"};
-  return map[k]||k||"文档";
-}
-function renderDocuments(docs){
-  const box=document.getElementById("documents-list");
-  if(!docs||!docs.length){
-    box.innerHTML='<div class="empty">尚无文档 · 可在右侧对话加入，或用下方加入资料</div>';
+
+// ===== Identity Functions =====
+function confirmIdentity() {
+  const raw = (document.getElementById('actor-input').value || '').trim();
+
+  if (!raw) {
+    showError('identity-error', '请填写员工身份');
     return;
   }
-  box.innerHTML=docs.map(d=>{
-    const id=esc(d.id||"");
-    const source=d.url
-      ? `<a href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.url)}</a>`
-      : (d.filename?esc(d.filename):"无外部来源");
-    const draft=d.draft?' · 草稿':"";
-    return `<div class="doc" data-id="${id}">
-      <h3><span class="kind">${esc(kindLabel(d.kind))}</span>${esc(d.title||"未命名文档")}</h3>
-      <div class="summary">${esc(d.summary||"（无摘要）")}</div>
-      <div class="meta">来源：${source}<br>${esc(d.updated_at||d.ingested_at||"")}${draft} · ${esc(String(d.char_count||0))} 字</div>
-      <div class="row"><button class="btn-secondary btn-small" type="button" onclick="toggleEdit('${id}')">编辑</button></div>
-      <div class="edit-box" id="edit-${id}">
-        <label>标题</label><input id="title-${id}" value="${esc(d.title||"")}">
-        <label>摘要</label><textarea id="sum-${id}">${esc(d.summary||"")}</textarea>
-        <div class="row"><button class="btn-primary btn-small" type="button" onclick="saveDocument('${id}')">保存</button></div>
-      </div>
-    </div>`;
-  }).join("");
+
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(raw)) {
+    showError('identity-error', '身份格式应为字母数字及 ._- 符号，不超过 64 字符');
+    return;
+  }
+
+  hideError('identity-error');
+  currentActor = raw;
+  document.getElementById('ws-actor-label').textContent = raw;
+
+  showView('view-workspace');
+  resetChat();
+  loadDocuments();
+  checkLlmAvailability();
 }
-function toggleEdit(id){
-  const el=document.getElementById("edit-"+id);
-  if(el) el.classList.toggle("open");
+
+function changeActor() {
+  if (!confirm('更换身份后当前对话将清空，文档库将切换到新身份。确认继续？')) {
+    return;
+  }
+
+  currentActor = '';
+  currentDocumentId = null;
+  documents = [];
+  chatHistory = [];
+
+  document.getElementById('ws-actor-label').textContent = '—';
+  document.getElementById('actor-input').value = '';
+  hideError('identity-error');
+
+  showView('view-identity');
+  setTimeout(() => document.getElementById('actor-input').focus(), 100);
 }
-async function loadDocuments(){
-  try{
-    const headers=actorHeaders(); delete headers["Content-Type"];
-    const resp=await fetch("/v1/docs/personal/documents",{headers});
-    const data=await resp.json();
-    if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    renderDocuments(data.documents||data.bookmarks||data.sources||[]);
-  }catch(e){
-    document.getElementById("documents-list").innerHTML=`<div class="empty">${esc(e.message)}</div>`;
+
+// ===== LLM Check =====
+async function checkLlmAvailability() {
+  try {
+    const resp = await fetch('/v1/info');
+    const data = await resp.json();
+    llmAvailable = data.default_mode !== 'offline';
+
+    const banner = document.getElementById('llm-banner');
+    if (!llmAvailable) {
+      banner.classList.add('show');
+      showChatDisabled();
+    } else {
+      banner.classList.remove('show');
+    }
+  } catch (e) {
+    console.error('Failed to check LLM availability:', e);
   }
 }
-async function saveDocument(id){
-  try{
-    const body={
-      title:document.getElementById("title-"+id).value,
-      summary:document.getElementById("sum-"+id).value
-    };
-    const resp=await fetch("/v1/docs/personal/documents/"+encodeURIComponent(id),{
-      method:"POST", headers:actorHeaders(), body:JSON.stringify(body)
-    });
-    const data=await resp.json();
-    if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    const doc=data.document||data.bookmark||{};
-    setStatus("doc-status","info","已保存「"+(doc.title||id)+"」");
-    await loadDocuments();
-  }catch(e){ setStatus("doc-status","refused","保存失败: "+e.message); }
+
+// ===== Document Functions =====
+async function loadDocuments() {
+  try {
+    const headers = actorHeaders();
+    delete headers['Content-Type'];
+
+    const resp = await fetch('/v1/docs/personal/documents', { headers });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error((data.error && data.error.message) || resp.statusText);
+    }
+
+    documents = data.documents || data.bookmarks || data.sources || [];
+    renderDocuments();
+  } catch (e) {
+    console.error('Failed to load documents:', e);
+    renderDocumentsError(e.message);
+  }
 }
-function readFileAsBase64(file){
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onload=()=>{
-      const result=String(reader.result||"");
-      const idx=result.indexOf(",");
-      resolve(idx>=0?result.slice(idx+1):result);
+
+function renderDocuments() {
+  const container = document.getElementById('docs-list');
+  const countEl = document.getElementById('doc-count');
+
+  countEl.textContent = `(${documents.length})`;
+
+  if (documents.length === 0) {
+    container.innerHTML = `
+      <div class="docs-empty">
+        <div class="docs-empty-icon">📄</div>
+        <div class="docs-empty-title">还没有文档</div>
+        <div class="docs-empty-guide">
+          开始加入第一份资料：<br>
+          • 点击上方「+」按钮<br>
+          • 在右侧对话中发送链接或粘贴正文<br>
+          • 直接拖拽文件到这里
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = documents.map(doc => {
+    const kindLabel = {
+      url: '链接',
+      pdf: 'PDF',
+      file: '文件',
+      text: '正文',
+      agent: 'Agent'
+    }[doc.kind] || '文档';
+
+    const source = doc.url
+      ? `<a href="${esc(doc.url)}" target="_blank" rel="noopener noreferrer">${esc(doc.url)}</a>`
+      : (doc.filename ? esc(doc.filename) : '无外部来源');
+
+    const isActive = currentDocumentId === doc.id;
+
+    return `
+      <div class="doc-card ${isActive ? 'active' : ''}" data-id="${esc(doc.id)}">
+        <div class="doc-header">
+          <span class="doc-kind">${esc(kindLabel)}</span>
+          <div class="doc-title">${esc(doc.title || '未命名文档')}</div>
+        </div>
+        <div class="doc-summary">${esc(doc.summary || '（无摘要）')}</div>
+        <div class="doc-meta">
+          ${source}<br>
+          ${esc(doc.updated_at || doc.ingested_at || '')} · ${esc(doc.char_count || 0)} 字
+          ${doc.draft ? ' · 草稿' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Attach click handlers
+  document.querySelectorAll('.doc-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const docId = card.dataset.id;
+      openDocument(docId);
+    });
+  });
+}
+
+function renderDocumentsError(message) {
+  const container = document.getElementById('docs-list');
+  container.innerHTML = `
+    <div class="docs-empty">
+      <div class="docs-empty-title">加载失败</div>
+      <div class="docs-empty-guide">${esc(message)}</div>
+    </div>
+  `;
+}
+
+async function openDocument(docId) {
+  currentDocumentId = docId;
+
+  try {
+    const headers = actorHeaders();
+    delete headers['Content-Type'];
+
+    const resp = await fetch(`/v1/docs/personal/documents/${encodeURIComponent(docId)}`, { headers });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error((data.error && data.error.message) || resp.statusText);
+    }
+
+    const doc = data.document || data.bookmark || {};
+    renderDocumentDetail(doc);
+    showDetailPanel();
+    renderDocuments(); // Update active state
+  } catch (e) {
+    console.error('Failed to load document:', e);
+    alert('无法加载文档：' + e.message);
+  }
+}
+
+function renderDocumentDetail(doc) {
+  const kindLabel = {
+    url: '链接',
+    pdf: 'PDF',
+    file: '文件',
+    text: '正文',
+    agent: 'Agent'
+  }[doc.kind] || '文档';
+
+  const source = doc.url
+    ? `<a href="${esc(doc.url)}" target="_blank" rel="noopener noreferrer">${esc(doc.url)}</a>`
+    : (doc.filename ? esc(doc.filename) : '无外部来源');
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-doc-header">
+      <div class="detail-doc-title-row">
+        <span class="doc-kind">${esc(kindLabel)}</span>
+        <h2 class="detail-doc-title">${esc(doc.title || '未命名文档')}</h2>
+      </div>
+      <div class="detail-doc-source">来源：${source}</div>
+      <div class="detail-doc-info">
+        更新于 ${esc(doc.updated_at || doc.ingested_at || '')} · ${esc(doc.char_count || 0)} 字
+        ${doc.draft ? ' · 草稿' : ''}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">摘要</div>
+      <div class="detail-section-content">${esc(doc.summary || '（无摘要）')}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">正文</div>
+      <div class="detail-section-content">${esc(doc.body || '（无正文）')}</div>
+    </div>
+  `;
+}
+
+function showDetailPanel() {
+  const workspace = document.querySelector('.workspace-main');
+  const detailPanel = document.getElementById('detail-panel');
+
+  workspace.classList.remove('no-detail');
+  detailPanel.classList.add('show');
+
+  // Mobile: show detail tab
+  const detailTab = document.getElementById('tab-detail');
+  if (detailTab) {
+    detailTab.classList.remove('hidden');
+  }
+}
+
+function closeDetailPanel() {
+  const workspace = document.querySelector('.workspace-main');
+  const detailPanel = document.getElementById('detail-panel');
+
+  workspace.classList.add('no-detail');
+  detailPanel.classList.remove('show');
+
+  currentDocumentId = null;
+  renderDocuments(); // Update active state
+
+  // Mobile: hide detail tab
+  const detailTab = document.getElementById('tab-detail');
+  if (detailTab) {
+    detailTab.classList.add('hidden');
+  }
+}
+
+function editDocument() {
+  if (!currentDocumentId) return;
+
+  const doc = documents.find(d => d.id === currentDocumentId);
+  if (!doc) return;
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-edit">
+      <label>标题</label>
+      <input type="text" id="edit-title" value="${esc(doc.title || '')}">
+
+      <label>摘要</label>
+      <textarea id="edit-summary" rows="4">${esc(doc.summary || '')}</textarea>
+
+      <label>正文</label>
+      <textarea id="edit-body">${esc(doc.body || '')}</textarea>
+
+      <div class="detail-edit-actions">
+        <button class="btn btn-primary btn-sm" id="btn-save-edit">保存更改</button>
+        <button class="btn btn-secondary btn-sm" id="btn-cancel-edit">取消</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btn-save-edit').addEventListener('click', saveDocumentEdit);
+  document.getElementById('btn-cancel-edit').addEventListener('click', () => openDocument(currentDocumentId));
+}
+
+async function saveDocumentEdit() {
+  if (!currentDocumentId) return;
+
+  const title = document.getElementById('edit-title').value;
+  const summary = document.getElementById('edit-summary').value;
+  const body = document.getElementById('edit-body').value;
+
+  try {
+    const resp = await fetch(`/v1/docs/personal/documents/${encodeURIComponent(currentDocumentId)}`, {
+      method: 'POST',
+      headers: actorHeaders(),
+      body: JSON.stringify({ title, summary, body })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error((data.error && data.error.message) || resp.statusText);
+    }
+
+    await loadDocuments();
+    await openDocument(currentDocumentId);
+
+    appendChatBubble('assistant', '已保存文档更改', 'success');
+  } catch (e) {
+    console.error('Failed to save document:', e);
+    alert('保存失败：' + e.message);
+  }
+}
+
+// ===== Ingest Functions =====
+function showIngestPanel() {
+  document.getElementById('ingest-panel').classList.add('show');
+}
+
+function hideIngestPanel() {
+  document.getElementById('ingest-panel').classList.remove('show');
+  clearIngestForm();
+}
+
+function clearIngestForm() {
+  document.getElementById('ingest-url').value = '';
+  document.getElementById('ingest-text').value = '';
+  document.getElementById('ingest-file').value = '';
+  document.getElementById('ingest-requirement').value = '';
+  hideIngestStatus();
+}
+
+function showIngestStatus(message, type = 'loading') {
+  const status = document.getElementById('ingest-status');
+  status.textContent = message;
+  status.className = `ingest-status show ${type}`;
+}
+
+function hideIngestStatus() {
+  document.getElementById('ingest-status').classList.remove('show');
+}
+
+async function ingestDocument() {
+  const url = document.getElementById('ingest-url').value.trim();
+  const text = document.getElementById('ingest-text').value.trim();
+  const file = document.getElementById('ingest-file').files[0];
+  const requirement = document.getElementById('ingest-requirement').value.trim();
+
+  if (!url && !text && !file) {
+    showIngestStatus('请至少填写一项：链接、正文或本地文件', 'error');
+    return;
+  }
+
+  showIngestStatus('正在加入文档...', 'loading');
+
+  try {
+    const payload = { url, text, requirement };
+
+    if (file) {
+      const base64 = await readFileAsBase64(file);
+      payload.filename = file.name;
+      payload.content_base64 = base64;
+      payload.content_type = file.type;
+    }
+
+    const resp = await fetch('/v1/docs/personal/ingest', {
+      method: 'POST',
+      headers: actorHeaders(),
+      body: JSON.stringify(payload)
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error((data.error && data.error.message) || resp.statusText);
+    }
+
+    const doc = data.document || data.bookmark || {};
+    showIngestStatus(`已加入文档「${doc.title || '未命名文档'}」`, 'success');
+
+    await loadDocuments();
+
+    setTimeout(() => {
+      hideIngestPanel();
+    }, 2000);
+  } catch (e) {
+    console.error('Failed to ingest document:', e);
+    showIngestStatus('加入失败：' + e.message, 'error');
+  }
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      const idx = result.indexOf(',');
+      resolve(idx >= 0 ? result.slice(idx + 1) : result);
     };
-    reader.onerror=()=>reject(reader.error||new Error("read failed"));
+    reader.onerror = () => reject(reader.error || new Error('读取文件失败'));
     reader.readAsDataURL(file);
   });
 }
-async function quickIngest(){
-  try{
-    const url=(document.getElementById("quick_url").value||"").trim();
-    const text=(document.getElementById("quick_text").value||"").trim();
-    const requirement=(document.getElementById("quick_req").value||"").trim();
-    const fileInput=document.getElementById("quick_file");
-    const file=fileInput&&fileInput.files&&fileInput.files[0];
-    if(!url && !text && !file) throw new Error("请提供链接、正文或本地文件");
-    const body={};
-    if(url) body.url=url;
-    if(text) body.text=text;
-    if(requirement) body.requirement=requirement;
-    if(file){
-      body.filename=file.name;
-      body.content_type=file.type||"";
-      body.content_base64=await readFileAsBase64(file);
-    }
-    const resp=await fetch("/v1/docs/personal/ingest",{method:"POST",headers:actorHeaders(),body:JSON.stringify(body)});
-    const data=await resp.json();
-    if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    const d=data.document||data.bookmark||{};
-    setStatus("doc-status","info",`已加入「${d.title||""}」${data.merged?"（已合并）":""}`);
-    document.getElementById("quick_url").value="";
-    document.getElementById("quick_text").value="";
-    if(fileInput) fileInput.value="";
-    await loadDocuments();
-  }catch(e){ setStatus("doc-status","refused","加入失败: "+e.message); }
+
+// ===== Chat Functions =====
+function appendChatBubble(role, text, className = '') {
+  const thread = document.getElementById('chat-thread');
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${role} ${className}`.trim();
+  bubble.textContent = text;
+  thread.appendChild(bubble);
+  thread.scrollTop = thread.scrollHeight;
+
+  chatHistory.push({ role, content: text });
 }
-function renderCitations(cites){
-  if(!cites||!cites.length) return "";
-  return cites.map(c=>{
-    const src=c.source||c.url||c.filename||c;
-    const url=c.url||(/^https?:\/\//i.test(String(src))?src:"");
-    const title=c.title?esc(c.title)+" · ":"";
-    if(url) return `<a class="cite" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${title}${esc(url)}</a>`;
-    return `<span class="cite">${title}${esc(src)}</span>`;
-  }).join("");
+
+function resetChat() {
+  const thread = document.getElementById('chat-thread');
+  thread.innerHTML = `
+    <div class="chat-bubble assistant">
+      ${esc(AGENT_WELCOME)}
+    </div>
+  `;
+  chatHistory = [];
+  document.getElementById('chat-input').value = '';
 }
-function renderAgentSteps(steps){
-  if(!steps||!steps.length) return `<div class="empty">无步序数据</div>`;
-  return steps.map(s=>`<div class="doc"><h3>Step ${esc(s.step)} · ${esc(s.action||s.tool||"")}</h3><div class="meta">${esc(s.thought||s.detail||"")}</div></div>`).join("");
+
+function showChatDisabled() {
+  const thread = document.getElementById('chat-thread');
+  thread.innerHTML = `
+    <div class="chat-disabled">
+      <div class="chat-disabled-icon">🤖</div>
+      <div class="chat-disabled-title">当前未接入对话模型</div>
+      <div class="chat-disabled-text">
+        无法进行灵活对话、改写摘要或联网生成文档。<br><br>
+        你仍可以通过左侧「+」按钮直接收入链接、PDF 或本地文件。
+      </div>
+      <div class="chat-disabled-code">
+        配置方法：设置环境变量<br>
+        REACT_AGENT_SERVER_LLM=1
+      </div>
+    </div>
+  `;
+
+  document.getElementById('chat-input').disabled = true;
+  document.getElementById('btn-send-chat').disabled = true;
 }
-async function sendAgent(){
-  const btn=document.getElementById("agent-btn");
-  const input=document.getElementById("agent-input");
-  const message=(input.value||"").trim();
-  if(!message) return;
-  btn.disabled=true; btn.textContent="思考中…";
-  appendBubble("user", message);
-  input.value="";
-  try{
-    const resp=await fetch("/v1/docs/personal/chat",{
-      method:"POST", headers:actorHeaders(), body:JSON.stringify({message})
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  appendChatBubble('user', message);
+  input.value = '';
+
+  // Show typing indicator
+  const thread = document.getElementById('chat-thread');
+  const typingId = 'typing-' + Date.now();
+  const typing = document.createElement('div');
+  typing.id = typingId;
+  typing.className = 'chat-bubble assistant';
+  typing.textContent = '正在思考...';
+  thread.appendChild(typing);
+  thread.scrollTop = thread.scrollHeight;
+
+  try {
+    const resp = await fetch('/v1/docs/personal/agent/chat', {
+      method: 'POST',
+      headers: actorHeaders(),
+      body: JSON.stringify({ message })
     });
-    const data=await resp.json();
-    if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    const reply=data.reply||data.answer||"";
-    if(data.needs_llm || data.mode==="needs_llm"){
-      document.getElementById("llm-banner").classList.add("show");
-      appendBubble("assistant", reply, "warn");
-    }else{
-      document.getElementById("llm-banner").classList.remove("show");
-      appendBubble("assistant", reply, data.refused?"error":"");
-      document.getElementById("badge-mode").textContent=data.mode||"llm";
+
+    const data = await resp.json();
+
+    // Remove typing indicator
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.remove();
+
+    if (!resp.ok) {
+      throw new Error((data.error && data.error.message) || resp.statusText);
     }
-    document.getElementById("agent-citations").innerHTML=renderCitations(data.citations||[]);
-    document.getElementById("agent-steps").innerHTML=renderAgentSteps(data.agent_steps||[]);
-    await loadDocuments();
-  }catch(e){
-    appendBubble("assistant", "请求失败："+e.message, "error");
-  }finally{
-    btn.disabled=false; btn.textContent="发送";
+
+    const answer = data.answer || data.reply || '无回复';
+    const refused = data.refused || answer.includes('个人库中没有足够依据');
+    const needsLlm = data.needs_llm;
+
+    if (needsLlm) {
+      appendChatBubble('assistant', answer, 'warn');
+    } else if (refused) {
+      appendChatBubble('assistant', answer, 'warn');
+    } else {
+      appendChatBubble('assistant', answer);
+    }
+
+    // If document was added/updated, reload list
+    if (answer.includes('已加入文档') || answer.includes('已合并') || answer.includes('已保存')) {
+      await loadDocuments();
+    }
+  } catch (e) {
+    // Remove typing indicator
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.remove();
+
+    console.error('Failed to send chat:', e);
+    appendChatBubble('assistant', '发送失败：' + e.message, 'error');
   }
 }
-document.getElementById("identity-confirm").addEventListener("click", confirmIdentity);
-document.getElementById("actor-input").addEventListener("keydown", e=>{
-  if(e.key==="Enter"){ e.preventDefault(); confirmIdentity(); }
+
+// ===== Event Handlers =====
+document.getElementById('identity-confirm').addEventListener('click', confirmIdentity);
+document.getElementById('actor-input').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') confirmIdentity();
 });
-document.getElementById("agent-input").addEventListener("keydown", e=>{
-  if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); sendAgent(); }
+
+document.getElementById('btn-change-actor').addEventListener('click', changeActor);
+document.getElementById('btn-refresh-docs').addEventListener('click', loadDocuments);
+document.getElementById('btn-reload-docs').addEventListener('click', loadDocuments);
+
+document.getElementById('btn-add-doc').addEventListener('click', showIngestPanel);
+document.getElementById('btn-cancel-ingest').addEventListener('click', hideIngestPanel);
+document.getElementById('btn-ingest').addEventListener('click', ingestDocument);
+
+document.getElementById('btn-close-detail').addEventListener('click', closeDetailPanel);
+document.getElementById('btn-close-detail-x').addEventListener('click', closeDetailPanel);
+document.getElementById('btn-edit-doc').addEventListener('click', editDocument);
+
+document.getElementById('btn-send-chat').addEventListener('click', sendChat);
+document.getElementById('btn-reset-chat').addEventListener('click', () => {
+  if (confirm('确认清空对话记录？')) {
+    resetChat();
+  }
 });
-loadInfo();
-showView("identity");
+document.getElementById('btn-clear-chat').addEventListener('click', () => {
+  if (confirm('确认清空对话记录？')) {
+    resetChat();
+  }
+});
+
+document.getElementById('chat-input').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChat();
+  }
+});
+
+// Auto-expand textarea
+document.getElementById('chat-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+});
+
+// Focus on load
+window.addEventListener('load', () => {
+  document.getElementById('actor-input').focus();
+});
 </script>
 </body>
 </html>
