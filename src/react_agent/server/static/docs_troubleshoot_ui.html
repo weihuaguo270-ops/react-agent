@@ -8,10 +8,10 @@
 :root{--bg:#f4f6f9;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-soft:#eff6ff;--green-bg:#f0fdf4;--red-bg:#fef2f2;--radius:10px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:ui-sans-serif,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
-.wrap{max-width:920px;margin:0 auto;padding:20px}
+.wrap{max-width:1100px;margin:0 auto;padding:20px}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;flex-wrap:wrap}
 .brand h1{font-size:20px;font-weight:700}
-.brand p{color:var(--muted);font-size:12px;margin-top:4px;max-width:640px;line-height:1.5}
+.brand p{color:var(--muted);font-size:12px;margin-top:4px;max-width:720px;line-height:1.5}
 .badges{display:flex;gap:8px;flex-wrap:wrap}
 .badge{font-size:11px;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid #bfdbfe}
 .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
@@ -19,7 +19,7 @@ header{display:flex;justify-content:space-between;align-items:flex-start;gap:16p
 .panel .lead{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:12px}
 label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
 textarea,input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font:inherit;background:#fff}
-textarea{min-height:88px;resize:vertical}
+textarea{min-height:72px;resize:vertical}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
 button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer}
 .btn-primary{background:var(--accent);color:#fff}
@@ -32,27 +32,13 @@ button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:
 .view.active{display:block}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
 .topbar .who{font-size:13px}
-.topbar .who strong{font-weight:700}
-.choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-@media(max-width:800px){.choice-grid{grid-template-columns:1fr}}
-.choice{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer}
-.choice:hover{border-color:var(--accent);background:var(--accent-soft)}
-.choice strong{display:block;font-size:15px;margin-bottom:6px;color:var(--text)}
-.choice span{display:block;font-size:12px;color:var(--muted);line-height:1.45;font-weight:400}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.chip{font-size:11px;padding:5px 10px;border-radius:999px;background:#f8fafc;border:1px solid var(--border);cursor:pointer}
-.chip:hover{border-color:var(--accent);color:var(--accent)}
+.err{color:#991b1b;font-size:12px;margin-top:8px;display:none}
+.err.show{display:block}
+.banner{display:none;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:12px;line-height:1.5;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
+.banner.show{display:block}
+.workspace{display:grid;grid-template-columns:minmax(280px,0.95fr) minmax(320px,1.15fr);gap:14px}
+@media(max-width:900px){.workspace{grid-template-columns:1fr}}
 .kw{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:#f1f5f9;color:#334155;margin:0 4px 4px 0}
-.status{display:none;padding:10px 12px;border-radius:8px;margin:12px 0;font-size:12px}
-.status.show{display:block}
-.status.refused{background:var(--red-bg);border:1px solid #fecaca;color:#991b1b}
-.status.answered{background:var(--green-bg);border:1px solid #bbf7d0;color:#166534}
-.status.info{background:var(--accent-soft);border:1px solid #bfdbfe;color:#1e40af}
-.answer{white-space:pre-wrap;line-height:1.65;font-size:13px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;min-height:96px}
-.cite-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.cite{padding:6px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid #bfdbfe;font-size:12px;text-decoration:none;color:var(--accent)}
-.section{margin-top:14px}
-.section-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px}
 .card{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff}
 .card h3{font-size:13px;margin-bottom:4px}
 .card .sub{font-size:11px;color:var(--muted);margin-bottom:6px}
@@ -60,23 +46,24 @@ button{border:none;border-radius:8px;padding:10px 14px;font:inherit;font-weight:
 .edit-box{margin-top:8px;display:none}
 .edit-box.open{display:block}
 .edit-box textarea{min-height:64px;margin-bottom:6px}
-.meta{color:var(--muted);font-size:11px;margin:8px 0}
-details.trace{margin-top:14px;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:#fff}
-details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:600}
-.err{color:#991b1b;font-size:12px;margin-top:8px;display:none}
-.err.show{display:block}
-.chat-thread{display:flex;flex-direction:column;gap:10px;min-height:220px;max-height:420px;overflow:y:auto;padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
+.status{display:none;padding:10px 12px;border-radius:8px;margin:12px 0;font-size:12px}
+.status.show{display:block}
+.status.refused{background:var(--red-bg);border:1px solid #fecaca;color:#991b1b}
+.status.answered{background:var(--green-bg);border:1px solid #bbf7d0;color:#166534}
+.status.info{background:var(--accent-soft);border:1px solid #bfdbfe;color:#1e40af}
+.chat-thread{display:flex;flex-direction:column;gap:10px;min-height:280px;max-height:520px;overflow:y:auto;padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
 .chat-bubble{max-width:92%;padding:10px 12px;border-radius:10px;line-height:1.55;font-size:13px;white-space:pre-wrap;word-break:break-word}
 .chat-bubble.user{align-self:flex-end;background:var(--accent);color:#fff}
 .chat-bubble.assistant{align-self:flex-start;background:#fff;border:1px solid var(--border);color:var(--text)}
+.chat-bubble.assistant.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
 .chat-bubble.assistant.error{background:var(--red-bg);border-color:#fecaca;color:#991b1b}
-.chat-bubble .bm-title{font-weight:700;font-size:14px;margin-bottom:6px}
-.chat-bubble .bm-summary{margin-top:6px}
-.chat-bubble .bm-meta{margin-top:8px;font-size:11px;color:var(--muted)}
-.chat-bubble.assistant .bm-meta{color:var(--muted)}
-.chat-bubble.assistant a{color:var(--accent)}
-.composer{display:flex;flex-direction:column;gap:8px}
 .composer textarea{min-height:72px}
+.cite-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cite{padding:6px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid #bfdbfe;font-size:12px;text-decoration:none;color:var(--accent)}
+details.trace{margin-top:10px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:#fff}
+details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:600}
+.quick{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)}
+.quick h3{font-size:13px;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -84,259 +71,147 @@ details.trace summary{cursor:pointer;color:var(--muted);font-size:12px;font-weig
   <header>
     <div class="brand">
       <h1>个人知识库</h1>
-      <p>先确认员工身份，再任选<strong>投递收藏</strong>、<strong>我的收藏</strong>或<strong>提问取回</strong>。当前是个人沉淀，不是企业制度库。</p>
+      <p>确认身份后进入工作区：左侧浏览与编辑收藏，右侧与通用 Agent 对话投递、改写与提问。当前是个人沉淀，不是企业制度库。</p>
     </div>
     <div class="badges">
       <span class="badge" id="badge-version">v-</span>
       <span class="badge" id="badge-mode">offline</span>
-      <span class="badge">先身份 · 再三选一</span>
+      <span class="badge">收藏库 + Agent</span>
       <span class="badge">可演示原型</span>
     </div>
   </header>
 
-  <!-- 1. 身份 -->
   <section class="view active" id="view-identity" data-view="identity">
     <div class="panel">
       <h2>确认身份</h2>
-      <p class="lead">填写本次使用的员工身份（X-Actor-Id）。未确认身份前不能进入投递、收藏或提问。</p>
+      <p class="lead">填写本次使用的员工身份（X-Actor-Id）。未确认前不能进入工作区。</p>
       <label for="actor-input">员工身份（X-Actor-Id）</label>
       <input id="actor-input" autocomplete="off" placeholder="例如 employee-1">
       <p class="hint">身份对本次使用有效；入库与提问均按此隔离。A 的收藏不会被 B 看到。</p>
       <p class="err" id="identity-error"></p>
       <div class="row">
-        <button class="btn-primary" id="identity-confirm" type="button">确认身份，进入功能选择</button>
+        <button class="btn-primary" id="identity-confirm" type="button">确认身份，进入工作区</button>
       </div>
     </div>
   </section>
 
-  <!-- 2. 选择页 -->
-  <section class="view" id="view-home" data-view="home">
+  <section class="view" id="view-workspace" data-view="workspace">
     <div class="topbar">
-      <div class="who">当前身份：<strong id="home-actor-label">—</strong></div>
+      <div class="who">当前身份：<strong id="ws-actor-label">—</strong></div>
       <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
     </div>
-    <div class="panel">
-      <h2>选择功能</h2>
-      <p class="lead">三个入口并列，任选其一；用完后请返回本页再进其他功能。</p>
-      <div class="choice-grid" role="navigation" aria-label="功能选择">
-        <button class="choice" type="button" onclick="enterFeature('ingest')">
-          <strong>投递收藏</strong>
-          <span>用对话投递并查看生成的收藏。</span>
-        </button>
-        <button class="choice" type="button" onclick="enterFeature('bookmarks')">
-          <strong>我的收藏</strong>
-          <span>查看当前身份下的标题、关键词、摘要与链接，并编辑保存。</span>
-        </button>
-        <button class="choice" type="button" onclick="enterFeature('ask')">
-          <strong>提问取回</strong>
-          <span>只在个人库检索；先看答案与引用，检索过程默认折叠。</span>
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3a. 投递（对话） -->
-  <section class="view" id="view-ingest" data-view="ingest">
-    <div class="topbar">
-      <div class="who">当前身份：<strong class="actor-label">—</strong></div>
-      <div class="row" style="margin:0">
-        <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
-        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
-      </div>
-    </div>
-    <div class="panel">
-      <h2>投递收藏</h2>
-      <p class="lead">把链接、正文和要求写在同一条消息里。助手会在对话中展示标题、关键词与摘要；同一轮可继续改刚生成的那条，不必分栏填表。</p>
-      <div class="chat-thread" id="ingest-thread" aria-live="polite">
-        <div class="chat-bubble assistant">发送链接或粘贴正文即可生成收藏。例如：「https://example.com/note 重点摘安装步骤」，或直接粘贴文章。同一对话里可以说「摘要再短一点」来调整当前这条。</div>
-      </div>
-      <div class="composer">
-        <label for="ingest-input">消息</label>
-        <textarea id="ingest-input" placeholder="链接、正文、要求写在一起；或继续说「关键词加上安装」"></textarea>
+    <div class="banner" id="llm-banner">灵活对话需要已配置的 LLM，并设置 <code>REACT_AGENT_SERVER_LLM=1</code>。未接入模型时不会假装记住要求；仍可用左侧「快速投递」保存链接/正文草稿。</div>
+    <div class="workspace">
+      <div class="panel">
+        <h2>我的收藏</h2>
+        <p class="lead">当前身份下的标题、关键词、摘要与链接；可直接编辑保存。</p>
         <div class="row" style="margin-top:0">
-          <button class="btn-primary" id="ingest-btn" type="button" onclick="sendIngest()">发送</button>
-          <button class="btn-secondary" type="button" onclick="resetIngestChat()">新开一轮</button>
-          <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
+          <button class="btn-secondary btn-small" type="button" onclick="loadBookmarks()">刷新</button>
+        </div>
+        <div class="status" id="bookmark-status"></div>
+        <div id="bookmarks-list"><div class="empty">尚无收藏</div></div>
+        <div class="quick">
+          <h3>快速投递（有限后备）</h3>
+          <p class="hint">不经过 Agent：直接保存链接或正文并生成可编辑草稿。</p>
+          <label for="quick_url">https 链接（可选）</label>
+          <input id="quick_url" placeholder="https://example.com/notes">
+          <label for="quick_text">粘贴正文（可选）</label>
+          <textarea id="quick_text" placeholder="文章或笔记"></textarea>
+          <label for="quick_req">要求（可选）</label>
+          <input id="quick_req" placeholder="例如：重点摘安装步骤">
+          <div class="row">
+            <button class="btn-secondary btn-small" type="button" onclick="quickIngest()">保存为草稿收藏</button>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- 3b. 我的收藏 -->
-  <section class="view" id="view-bookmarks" data-view="bookmarks">
-    <div class="topbar">
-      <div class="who">当前身份：<strong class="actor-label">—</strong></div>
-      <div class="row" style="margin:0">
-        <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
-        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
-      </div>
-    </div>
-    <div class="panel">
-      <h2>我的收藏</h2>
-      <p class="lead">仅显示当前身份下的收藏；可编辑标题、摘要与关键词后保存。</p>
-      <div class="row" style="margin-top:0">
-        <button class="btn-secondary btn-small" type="button" onclick="loadBookmarks()">刷新</button>
-      </div>
-      <div class="status" id="bookmark-status"></div>
-      <div class="section" id="bookmarks-list"><div class="empty">尚无收藏</div></div>
-      <div class="row">
-        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3c. 提问 -->
-  <section class="view" id="view-ask" data-view="ask">
-    <div class="topbar">
-      <div class="who">当前身份：<strong class="actor-label">—</strong></div>
-      <div class="row" style="margin:0">
-        <button class="btn-ghost" type="button" onclick="changeActor()">更换身份</button>
-        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
-      </div>
-    </div>
-    <div class="panel">
-      <h2>提问取回</h2>
-      <p class="lead">只检索当前身份的个人库。先展示答案，引用紧跟其后；检索过程与思维链默认折叠。</p>
-      <div class="chips" id="presets"></div>
-      <label for="question">问题</label>
-      <textarea id="question" placeholder="例如：安装步骤怎么写？或粘贴来源链接提问"></textarea>
-      <div class="row">
-        <button class="btn-primary" id="ask-btn" type="button" onclick="ask()">提问</button>
-        <button class="btn-secondary" type="button" onclick="clearAsk()">清空</button>
-        <button class="btn-secondary" type="button" onclick="backHome()">返回选择页</button>
-      </div>
-      <div class="status" id="ask-status"></div>
-      <div class="meta" id="ask-meta"></div>
-      <div class="section">
-        <div class="section-title">答案</div>
-        <div class="answer" id="answer">提问后这里展示整理答案或拒答说明。</div>
-      </div>
-      <div class="section">
-        <div class="section-title">引用</div>
-        <div class="cite-list" id="citations"><span class="empty">暂无引用</span></div>
-      </div>
-      <details class="trace" id="trace-box">
-        <summary>检索过程与 Agent 思维链（展开查看）</summary>
-        <div class="section">
-          <div class="section-title">检索过程</div>
-          <div id="retrieval-process"><div class="empty">提问后可展开查看</div></div>
+      <div class="panel">
+        <h2>知识库助手</h2>
+        <p class="lead">通用 Agent（react_loop + LLM）。可寒暄、讨论整理、投递、改写与提问；提问只查个人库。</p>
+        <div class="chat-thread" id="agent-thread" aria-live="polite">
+          <div class="chat-bubble assistant">你好。确认身份后，可以直接问我是谁、讨论怎么整理，或发链接/正文让我写入收藏；提问时我会只依据你的个人库，并尽量给出引用。</div>
         </div>
-        <div class="section">
-          <div class="section-title">Agent 工具步</div>
-          <div id="agent-steps"><div class="empty">提问后可展开查看</div></div>
+        <div class="composer">
+          <label for="agent-input">消息</label>
+          <textarea id="agent-input" placeholder="例如：你好 / 你是谁 / 帮我整理这段笔记 / 摘要再短一点 / 安装步骤怎么写？"></textarea>
+          <div class="row" style="margin-top:0">
+            <button class="btn-primary" id="agent-btn" type="button" onclick="sendAgent()">发送</button>
+            <button class="btn-secondary" type="button" onclick="resetAgentChat()">清空对话</button>
+          </div>
         </div>
-      </details>
+        <div class="cite-list" id="agent-citations"></div>
+        <details class="trace" id="agent-trace">
+          <summary>Agent 工具步（展开查看）</summary>
+          <div id="agent-steps"><div class="empty">发送后可展开查看</div></div>
+        </details>
+      </div>
     </div>
   </section>
 </div>
 <script>
-const PRESETS = [
-  {label:"按关键词问", q:"安装步骤"},
-  {label:"按链接问", q:"https://example.com/personal-note"},
-  {label:"无关拒答", q:"明天股市会涨吗？"}
-];
-
 let currentActor = "";
-let ingestCurrentId = "";
-const INGEST_WELCOME = "发送链接或粘贴正文即可生成收藏。例如：「https://example.com/note 重点摘安装步骤」，或直接粘贴文章。同一对话里可以说「摘要再短一点」来调整当前这条。";
-const URL_IN_MSG = /https?:\/\/[^\s<>"'`]+/i;
+const AGENT_WELCOME = "你好。确认身份后，可以直接问我是谁、讨论怎么整理，或发链接/正文让我写入收藏；提问时我会只依据你的个人库，并尽量给出引用。";
 
 function esc(s){
   return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 }
-
 function showView(name){
   document.querySelectorAll(".view").forEach(el=>{
     el.classList.toggle("active", el.dataset.view === name);
   });
 }
-
-function syncActorLabels(){
-  const label = currentActor || "—";
-  const home = document.getElementById("home-actor-label");
-  if(home) home.textContent = label;
-  document.querySelectorAll(".actor-label").forEach(el=>{ el.textContent = label; });
-}
-
 function actorHeaders(){
   if(!currentActor) throw new Error("请先确认员工身份");
   return {"Content-Type":"application/json","X-Actor-Id":currentActor,"Accept":"application/json"};
 }
-
 function setStatus(id, kind, text){
-  const el = document.getElementById(id);
+  const el=document.getElementById(id);
   if(!el) return;
-  el.className = "status show " + (kind||"info");
-  el.textContent = text||"";
+  el.className="status show "+(kind||"info");
+  el.textContent=text||"";
 }
-
-function clearFeatureState(){
-  const q=document.getElementById("question");
-  if(q) q.value="";
-  resetIngestChat();
-  const bmSt=document.getElementById("bookmark-status");
-  if(bmSt){ bmSt.className="status"; bmSt.textContent=""; }
-  clearAsk();
-  const list=document.getElementById("bookmarks-list");
-  if(list) list.innerHTML='<div class="empty">尚无收藏</div>';
+function renderKeywords(kws){
+  if(!kws||!kws.length) return '<span class="sub">（无关键词）</span>';
+  return kws.map(k=>`<span class="kw">${esc(k)}</span>`).join("");
 }
-
 function confirmIdentity(){
   const raw=(document.getElementById("actor-input").value||"").trim();
   const err=document.getElementById("identity-error");
-  if(!raw){
-    err.textContent="请填写员工身份后再进入功能选择。";
-    err.classList.add("show");
-    return;
-  }
-  err.classList.remove("show");
-  err.textContent="";
-  currentActor = raw;
-  syncActorLabels();
-  clearFeatureState();
-  showView("home");
+  if(!raw){ err.textContent="请填写员工身份后再进入工作区。"; err.classList.add("show"); return; }
+  err.classList.remove("show"); err.textContent="";
+  currentActor=raw;
+  document.getElementById("ws-actor-label").textContent=raw;
+  resetAgentChat();
+  document.getElementById("bookmarks-list").innerHTML='<div class="empty">尚无收藏</div>';
+  showView("workspace");
+  loadBookmarks();
+  probeLlmBanner();
 }
-
 function changeActor(){
-  currentActor = "";
-  syncActorLabels();
-  clearFeatureState();
-  document.getElementById("actor-input").value = "";
+  currentActor="";
+  document.getElementById("ws-actor-label").textContent="—";
+  document.getElementById("actor-input").value="";
+  document.getElementById("llm-banner").classList.remove("show");
+  resetAgentChat();
   showView("identity");
   document.getElementById("actor-input").focus();
 }
-
-function backHome(){
-  if(!currentActor){ showView("identity"); return; }
-  showView("home");
+function resetAgentChat(){
+  document.getElementById("agent-thread").innerHTML=`<div class="chat-bubble assistant">${esc(AGENT_WELCOME)}</div>`;
+  document.getElementById("agent-input").value="";
+  document.getElementById("agent-citations").innerHTML="";
+  document.getElementById("agent-steps").innerHTML='<div class="empty">发送后可展开查看</div>';
+  document.getElementById("agent-trace").open=false;
 }
-
-function enterFeature(name){
-  if(!currentActor){ showView("identity"); return; }
-  syncActorLabels();
-  if(name==="ingest"){
-    showView("ingest");
-  }else if(name==="bookmarks"){
-    showView("bookmarks");
-    loadBookmarks();
-  }else if(name==="ask"){
-    showView("ask");
-  }
+function appendBubble(role, text, cls){
+  const thread=document.getElementById("agent-thread");
+  const div=document.createElement("div");
+  div.className="chat-bubble "+role+(cls?" "+cls:"");
+  div.textContent=text;
+  thread.appendChild(div);
+  thread.scrollTop=thread.scrollHeight;
 }
-
-function initPresets(){
-  const box=document.getElementById("presets");
-  PRESETS.forEach(p=>{
-    const b=document.createElement("button");
-    b.type="button";
-    b.className="chip";
-    b.textContent=p.label;
-    b.onclick=()=>{ document.getElementById("question").value=p.q; };
-    box.appendChild(b);
-  });
-}
-
-async function loadInfo(){
+async function probeLlmBanner(){
+  // Soft hint only; real gate is server-side on each chat turn.
   try{
     const r=await fetch("/v1/info");
     const j=await r.json();
@@ -344,16 +219,11 @@ async function loadInfo(){
     document.getElementById("badge-mode").textContent=j.default_mode||"offline";
   }catch(e){}
 }
-
-function renderKeywords(kws){
-  if(!kws||!kws.length) return '<span class="sub">（无关键词）</span>';
-  return kws.map(k=>`<span class="kw">${esc(k)}</span>`).join("");
-}
-
+async function loadInfo(){ probeLlmBanner(); }
 function renderBookmarks(bookmarks){
   const box=document.getElementById("bookmarks-list");
   if(!bookmarks||!bookmarks.length){
-    box.innerHTML='<div class="empty">尚无收藏 · 可先去「投递收藏」</div>';
+    box.innerHTML='<div class="empty">尚无收藏 · 可在右侧对话投递，或用下方快速投递</div>';
     return;
   }
   box.innerHTML=bookmarks.map(b=>{
@@ -366,33 +236,23 @@ function renderBookmarks(bookmarks){
       <div class="sub" style="margin-top:6px;white-space:pre-wrap">${esc(b.summary||"")}</div>
       ${url}
       <div class="sub">${esc(b.updated_at||b.ingested_at||"")}${draft}</div>
-      <div class="row">
-        <button class="btn-secondary btn-small" type="button" onclick="toggleEdit('${id}')">编辑</button>
-      </div>
+      <div class="row"><button class="btn-secondary btn-small" type="button" onclick="toggleEdit('${id}')">编辑</button></div>
       <div class="edit-box" id="edit-${id}">
-        <label>标题</label>
-        <input id="title-${id}" value="${esc(b.title||"")}">
-        <label>关键词（逗号分隔）</label>
-        <input id="kw-${id}" value="${esc((b.keywords||[]).join(", "))}">
-        <label>摘要</label>
-        <textarea id="sum-${id}">${esc(b.summary||"")}</textarea>
-        <div class="row">
-          <button class="btn-primary btn-small" type="button" onclick="saveBookmark('${id}')">保存</button>
-        </div>
+        <label>标题</label><input id="title-${id}" value="${esc(b.title||"")}">
+        <label>关键词（逗号分隔）</label><input id="kw-${id}" value="${esc((b.keywords||[]).join(", "))}">
+        <label>摘要</label><textarea id="sum-${id}">${esc(b.summary||"")}</textarea>
+        <div class="row"><button class="btn-primary btn-small" type="button" onclick="saveBookmark('${id}')">保存</button></div>
       </div>
     </div>`;
   }).join("");
 }
-
 function toggleEdit(id){
   const el=document.getElementById("edit-"+id);
   if(el) el.classList.toggle("open");
 }
-
 async function loadBookmarks(){
   try{
-    const headers=actorHeaders();
-    delete headers["Content-Type"];
+    const headers=actorHeaders(); delete headers["Content-Type"];
     const resp=await fetch("/v1/docs/personal/bookmarks",{headers});
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
@@ -401,7 +261,6 @@ async function loadBookmarks(){
     document.getElementById("bookmarks-list").innerHTML=`<div class="empty">${esc(e.message)}</div>`;
   }
 }
-
 async function saveBookmark(id){
   try{
     const body={
@@ -414,190 +273,80 @@ async function saveBookmark(id){
     });
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    setStatus("bookmark-status","info","已保存收藏「"+(data.bookmark&&data.bookmark.title||id)+"」");
+    setStatus("bookmark-status","info","已保存「"+(data.bookmark&&data.bookmark.title||id)+"」");
     await loadBookmarks();
-  }catch(e){
-    setStatus("bookmark-status","refused","保存失败: "+e.message);
-  }
+  }catch(e){ setStatus("bookmark-status","refused","保存失败: "+e.message); }
 }
-
-function resetIngestChat(){
-  ingestCurrentId = "";
-  const thread=document.getElementById("ingest-thread");
-  if(thread){
-    thread.innerHTML=`<div class="chat-bubble assistant">${esc(INGEST_WELCOME)}</div>`;
-  }
-  const input=document.getElementById("ingest-input");
-  if(input) input.value="";
-}
-
-function appendIngestBubble(role, html, isError){
-  const thread=document.getElementById("ingest-thread");
-  if(!thread) return;
-  const div=document.createElement("div");
-  div.className="chat-bubble "+role+(isError?" error":"");
-  div.innerHTML=html;
-  thread.appendChild(div);
-  thread.scrollTop=thread.scrollHeight;
-}
-
-function renderBookmarkCard(b, opts){
-  opts=opts||{};
-  const kws=renderKeywords(b.keywords||[]);
-  let source="";
-  if(b.url){
-    source=`<div class="bm-meta">来源：<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${esc(b.url)}</a></div>`;
-  }else{
-    source=`<div class="bm-meta">文本收藏（无来源链接）</div>`;
-  }
-  let note="";
-  if(opts.merged){
-    const reason=opts.mergeReason==="same_url"?"同一链接":(opts.mergeReason==="keyword_overlap"?"关键词相近":"已有条目");
-    note=`<div class="bm-meta">已合并到已有收藏（${esc(reason)}）</div>`;
-  }else if(opts.revised){
-    note=`<div class="bm-meta">已按你的要求更新当前这条收藏</div>`;
-  }else if(opts.created){
-    note=`<div class="bm-meta">已生成新收藏</div>`;
-  }
-  return `<div class="bm-title">${esc(b.title||"未命名收藏")}</div>
-    <div>${kws}</div>
-    <div class="bm-summary">${esc(b.summary||"（无摘要）")}</div>
-    ${source}${note}`;
-}
-
-function looksLikeNewIngest(msg){
-  if(URL_IN_MSG.test(msg)) return true;
-  const withoutUrls=msg.replace(/https?:\/\/[^\s<>"'`]+/gi," ").trim();
-  if(withoutUrls.length>=80) return true;
-  if((withoutUrls.match(/\n/g)||[]).length>=1 && withoutUrls.length>=40) return true;
-  return false;
-}
-
-async function sendIngest(){
-  const btn=document.getElementById("ingest-btn");
-  const input=document.getElementById("ingest-input");
-  const message=(input.value||"").trim();
-  if(!message) return;
-  btn.disabled=true; btn.textContent="处理中…";
-  appendIngestBubble("user", esc(message));
-  input.value="";
+async function quickIngest(){
   try{
-    const wantNew=looksLikeNewIngest(message);
-    if(!wantNew && !ingestCurrentId){
-      appendIngestBubble("assistant", esc("还需要链接或正文才能入库；仅提要求不够。"), true);
-      return;
-    }
-    if(!wantNew && ingestCurrentId){
-      const resp=await fetch("/v1/docs/personal/bookmarks/"+encodeURIComponent(ingestCurrentId),{
-        method:"POST", headers:actorHeaders(),
-        body:JSON.stringify({requirement: message})
-      });
-      const data=await resp.json();
-      if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-      const b=data.bookmark||{};
-      ingestCurrentId=b.id||ingestCurrentId;
-      appendIngestBubble("assistant", renderBookmarkCard(b,{revised:true}));
-      return;
-    }
-    const resp=await fetch("/v1/docs/personal/ingest",{
-      method:"POST", headers:actorHeaders(),
-      body:JSON.stringify({message})
-    });
+    const url=(document.getElementById("quick_url").value||"").trim();
+    const text=(document.getElementById("quick_text").value||"").trim();
+    const requirement=(document.getElementById("quick_req").value||"").trim();
+    if(!url && !text) throw new Error("请提供链接或正文");
+    const body={}; if(url) body.url=url; if(text) body.text=text; if(requirement) body.requirement=requirement;
+    const resp=await fetch("/v1/docs/personal/ingest",{method:"POST",headers:actorHeaders(),body:JSON.stringify(body)});
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    const b=data.bookmark||data.source||{};
-    ingestCurrentId=b.id||"";
-    appendIngestBubble("assistant", renderBookmarkCard(b,{
-      created:!data.merged,
-      merged:!!data.merged,
-      mergeReason:data.merge_reason||""
-    }));
-  }catch(e){
-    appendIngestBubble("assistant", esc("投递失败："+e.message), true);
-  }finally{
-    btn.disabled=false; btn.textContent="发送";
-  }
+    const b=data.bookmark||{};
+    setStatus("bookmark-status","info",`草稿「${b.title||""}」${data.merged?"（已合并）":""}`);
+    document.getElementById("quick_url").value="";
+    document.getElementById("quick_text").value="";
+    await loadBookmarks();
+  }catch(e){ setStatus("bookmark-status","refused","投递失败: "+e.message); }
 }
-
-function clearAsk(){
-  const q=document.getElementById("question");
-  if(q) q.value="";
-  const answer=document.getElementById("answer");
-  if(answer) answer.textContent="提问后这里展示整理答案或拒答说明。";
-  const cites=document.getElementById("citations");
-  if(cites) cites.innerHTML='<span class="empty">暂无引用</span>';
-  const rp=document.getElementById("retrieval-process");
-  if(rp) rp.innerHTML='<div class="empty">提问后可展开查看</div>';
-  const as=document.getElementById("agent-steps");
-  if(as) as.innerHTML='<div class="empty">提问后可展开查看</div>';
-  const st=document.getElementById("ask-status");
-  if(st){ st.className="status"; st.textContent=""; }
-  const meta=document.getElementById("ask-meta");
-  if(meta) meta.textContent="";
-  const trace=document.getElementById("trace-box");
-  if(trace) trace.open=false;
-}
-
 function renderCitations(cites){
-  if(!cites||!cites.length) return '<span class="empty">无引用（可能已拒答）</span>';
+  if(!cites||!cites.length) return "";
   return cites.map(c=>{
     const src=c.source||c.url||c;
     const url=c.url||(/^https?:\/\//i.test(String(src))?src:"");
     const title=c.title?esc(c.title)+" · ":"";
-    if(url){
-      return `<a class="cite" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${title}${esc(url)}</a>`;
-    }
+    if(url) return `<a class="cite" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${title}${esc(url)}</a>`;
     return `<span class="cite">${title}${esc(src)}</span>`;
   }).join("");
 }
-
-function renderRetrievalProcess(steps){
-  if(!steps||!steps.length) return `<div class="empty">资料源: personal · 无额外检索过程</div>`;
-  return steps.map(s=>`<div class="card"><h3>${esc(s.step||"step")}</h3><div class="sub">${esc(s.detail||s.message||JSON.stringify(s))}</div></div>`).join("");
+function renderAgentSteps(steps){
+  if(!steps||!steps.length) return `<div class="empty">无步序数据</div>`;
+  return steps.map(s=>`<div class="card"><h3>Step ${esc(s.step)} · ${esc(s.action||s.tool||"")}</h3><div class="sub">${esc(s.thought||s.detail||"")}</div></div>`).join("");
 }
-
-function renderAgentSteps(steps, engine){
-  if(!steps||!steps.length) return `<div class="empty">engine: ${esc(engine||"agent")} · 无步序数据</div>`;
-  return steps.map(s=>`<div class="card"><h3>Step ${esc(s.step)} · ${esc(s.action||"")}</h3><div class="sub">${esc(s.thought||"")}</div></div>`).join("");
-}
-
-async function ask(){
-  const btn=document.getElementById("ask-btn");
-  btn.disabled=true; btn.textContent="检索中…";
+async function sendAgent(){
+  const btn=document.getElementById("agent-btn");
+  const input=document.getElementById("agent-input");
+  const message=(input.value||"").trim();
+  if(!message) return;
+  btn.disabled=true; btn.textContent="思考中…";
+  appendBubble("user", message);
+  input.value="";
   try{
-    const message=document.getElementById("question").value.trim();
-    if(!message) throw new Error("请输入问题");
-    const body={message, docs_sources:"personal"};
-    const resp=await fetch("/v1/chat",{method:"POST", headers:actorHeaders(), body:JSON.stringify(body)});
+    const resp=await fetch("/v1/docs/personal/chat",{
+      method:"POST", headers:actorHeaders(), body:JSON.stringify({message})
+    });
     const data=await resp.json();
     if(!resp.ok) throw new Error((data.error&&data.error.message)||resp.statusText);
-    const refused=!!data.refused;
-    setStatus("ask-status", refused?"refused":"answered",
-      refused?"个人库依据不足 · 已拒答":"已回答 · 引用收藏");
-    document.getElementById("answer").textContent=data.answer||"";
-    document.getElementById("ask-meta").innerHTML=
-      `request_id: ${esc(data.request_id||"")} · actor: ${esc(data.actor_id||currentActor)} · mode: ${esc(data.mode||"")}`;
-    document.getElementById("citations").innerHTML=renderCitations(data.citations||[]);
-    document.getElementById("retrieval-process").innerHTML=renderRetrievalProcess(data.retrieval_process||[]);
-    document.getElementById("agent-steps").innerHTML=renderAgentSteps(data.agent_steps||[], data.engine);
-    document.getElementById("badge-mode").textContent=data.mode||"offline";
-    document.getElementById("trace-box").open=false;
+    const reply=data.reply||data.answer||"";
+    if(data.needs_llm || data.mode==="needs_llm"){
+      document.getElementById("llm-banner").classList.add("show");
+      appendBubble("assistant", reply, "warn");
+    }else{
+      document.getElementById("llm-banner").classList.remove("show");
+      appendBubble("assistant", reply, data.refused?"error":"");
+      document.getElementById("badge-mode").textContent=data.mode||"llm";
+    }
+    document.getElementById("agent-citations").innerHTML=renderCitations(data.citations||[]);
+    document.getElementById("agent-steps").innerHTML=renderAgentSteps(data.agent_steps||[]);
+    await loadBookmarks();
   }catch(e){
-    setStatus("ask-status","refused","请求失败: "+e.message);
+    appendBubble("assistant", "请求失败："+e.message, "error");
   }finally{
-    btn.disabled=false; btn.textContent="提问";
+    btn.disabled=false; btn.textContent="发送";
   }
 }
-
 document.getElementById("identity-confirm").addEventListener("click", confirmIdentity);
 document.getElementById("actor-input").addEventListener("keydown", e=>{
   if(e.key==="Enter"){ e.preventDefault(); confirmIdentity(); }
 });
-document.getElementById("ingest-input").addEventListener("keydown", e=>{
-  if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); sendIngest(); }
+document.getElementById("agent-input").addEventListener("keydown", e=>{
+  if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); sendAgent(); }
 });
-
-initPresets();
 loadInfo();
 showView("identity");
 </script>

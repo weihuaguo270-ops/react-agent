@@ -63,6 +63,10 @@ TOOL_PERMISSIONS: dict[str, PermissionLevel] = {
     "summarize": PermissionLevel.SAFE,
     "rag_query": PermissionLevel.SAFE,
     "search_docs": PermissionLevel.SAFE,
+    "personal_ingest_bookmark": PermissionLevel.SAFE,
+    "personal_update_bookmark": PermissionLevel.SAFE,
+    "personal_list_bookmarks": PermissionLevel.SAFE,
+    "personal_search_bookmarks": PermissionLevel.SAFE,
     "lookup_api": PermissionLevel.SAFE,
     "verify_citations": PermissionLevel.SAFE,
     # docs_troubleshoot 其余注册工具：纯解析/只读，显式标注为 SAFE

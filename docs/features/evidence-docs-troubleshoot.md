@@ -5,9 +5,11 @@
 
 ## 当前主路径
 
-投递资料调用 `POST /v1/docs/personal/ingest`（页面用对话发送；可传 `message`，或原有 `url` / `text` / `requirement`）。
+投递资料调用 `POST /v1/docs/personal/ingest`（直接入库）；页面对话调用 `POST /v1/docs/personal/chat`（需 `REACT_AGENT_SERVER_LLM=1`）。
 
-员工在「投递收藏」把链接、正文与要求写在同一条消息里，助手在对话中展示生成的**一条收藏**：标题、标题下关键词、摘要与来源链接（无链接则标明文本收藏）；若合并也会说明。同一轮可继续提要求，经 `POST /v1/docs/personal/bookmarks/{id}` 更新当前条目。完整列表与直接编辑仍在「我的收藏」。之后在「提问取回」提问时，优先用关键词、来源链接、标题与摘要检索；证据不足或库为空时明确拒答「个人库中没有足够依据」，不会回退到内置 14 篇演示语料。
+页面确认身份后进入「收藏库 + Agent」工作区：左侧浏览/编辑收藏与可选快速投递；右侧对话接入通用 `react_loop` + LLM 与个人库工具。未开模型时明确提示无法灵活对话，不会用离线脚本冒充 Agent。
+
+Agent 可寒暄、讨论整理、写入/合并收藏、按要求改写，并就个人库提问；有依据应展示标题/关键词/摘要或引用，证据不足拒答「个人库中没有足够依据」，不回退内置 14 篇语料。
 
 **主体验是收藏条目，不是切段列表。** 当前是个人沉淀，不是企业制度库。代码 / 评测标识可暂时保留 `docs_troubleshoot`。
 
@@ -15,10 +17,10 @@
 
 1. `python -m react_agent.server --host 127.0.0.1 --port 8765`（或 `react-agent-api`）
 2. 打开 `/` 或 `/ui`：先在「身份」视图填写并确认 `X-Actor-Id`（未确认不能进功能）
-3. 选择页并列三个入口（非步骤条）：投递收藏 / 我的收藏 / 提问取回；进入其一后仅显示该功能，可「返回选择页」
-4. 投递收藏：对话发送 → `POST /v1/docs/personal/ingest`（可选 `message`，或 `url`/`text`/`requirement`）；回复展示标题/关键词/摘要/是否合并；续写要求走 `POST .../bookmarks/{id}`
-5. 我的收藏：`GET /v1/docs/personal/bookmarks` 列表；`POST /v1/docs/personal/bookmarks/{id}` 直接编辑保存
-6. 提问取回：`POST /v1/chat`（`docs_sources=personal`）→ 先答案、后引用；检索过程与思维链默认折叠
+3. 进入工作区：左侧「我的收藏」+ 右侧知识库助手对话（非三入口硬门禁）
+4. Agent 对话：`POST /v1/docs/personal/chat`（`REACT_AGENT_SERVER_LLM=1`）；工具含写入/更新/列表/检索个人收藏
+5. 快速投递后备：`POST /v1/docs/personal/ingest`；列表编辑：`GET/POST /v1/docs/personal/bookmarks`
+6. 评测/兼容提问仍可用 `POST /v1/chat` + `docs_sources=personal`
 
 成熟度：**可演示原型，非生产。** 无可用模型时仍给出可编辑草稿（标题候选 + 首段摘要），不静默丢内容。
 
@@ -26,7 +28,7 @@
 
 | 能力 | 说明 |
 |------|------|
-| 投递 | 页面为对话；`POST /v1/docs/personal/ingest` 支持 `message` 或 `url`/`text`/`requirement` |
+| 投递 | 工作区 Agent（`/v1/docs/personal/chat` + LLM）或直接 `/ingest`（无 url/text 时拒绝空入库） |
 | 收藏 | 每条含 title / summary / keywords / url；无模型时用离线草稿生成器 |
 | 编辑 | `POST`/`PATCH /v1/docs/personal/bookmarks/{id}`：字段保存，或 `requirement`/`message` 按要求重写当前条 |
 | 合并 | 同一 URL 再次投递合并到原条目；关键词 Jaccard≥0.5 且交集≥2 时合并（无复杂聚类） |

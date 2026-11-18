@@ -408,7 +408,10 @@ def draft_bookmark_fields(
     }
 
 
-_URL_IN_TEXT_RE = re.compile(r"https?://[^\s<>\"'`]+", re.IGNORECASE)
+_URL_IN_TEXT_RE = re.compile(
+    r"(?:https?|file|ftp|data|javascript|vbscript):[^\s<>\"'`]+",
+    re.IGNORECASE,
+)
 _REQ_HINT_RE = re.compile(
     r"(重点|摘要|复习|做成|关键词|短一点|缩短|再短|加上|请|帮我|要求|整理|摘取|摘)"
 )
@@ -436,23 +439,15 @@ def _looks_like_article_text(text: str) -> bool:
     return False
 
 
-def parse_ingest_message(message: str) -> dict[str, Any]:
-    """Split one chat message into url / text / requirement for ingest.
+def extract_ingest_fields(message: str) -> dict[str, Any]:
+    """Split a message into url / text / requirement without rejecting empties.
 
     First http(s) URL becomes the bookmark URL; extra URLs stay in text or
     requirement so they are not silently dropped. Short remainder with
     requirement cues becomes ``requirement``; longer remainder becomes ``text``.
     """
     raw = (message or "").strip()
-    if not raw:
-        return {
-            "ok": False,
-            "error": "empty_message",
-            "message": "请输入链接、正文或调整要求",
-        }
-
     urls = _URL_IN_TEXT_RE.findall(raw)
-    # Trim common trailing punctuation from matched URLs.
     cleaned_urls: list[str] = []
     for u in urls:
         cleaned_urls.append(u.rstrip(".,;:)]}>\"'"))
@@ -481,7 +476,6 @@ def parse_ingest_message(message: str) -> dict[str, Any]:
         elif _looks_like_requirement(remainder) or (
             url and not _looks_like_article_text(remainder)
         ):
-            # Short cue / leftover with a URL → processing requirement, not body.
             requirement = remainder
         else:
             text = remainder
@@ -495,17 +489,6 @@ def parse_ingest_message(message: str) -> dict[str, Any]:
         else:
             requirement = note
 
-    if not url and not text:
-        return {
-            "ok": False,
-            "error": "need_content",
-            "message": "还需要链接或正文才能入库；仅提要求不够",
-            "url": "",
-            "text": "",
-            "requirement": requirement,
-            "extra_urls": extra_urls,
-        }
-
     return {
         "ok": True,
         "url": url,
@@ -514,6 +497,29 @@ def parse_ingest_message(message: str) -> dict[str, Any]:
         "extra_urls": extra_urls,
         "message": "ok",
     }
+
+
+def parse_ingest_message(message: str) -> dict[str, Any]:
+    """Split one message for direct ingest; reject when neither url nor text."""
+    raw = (message or "").strip()
+    if not raw:
+        return {
+            "ok": False,
+            "error": "empty_message",
+            "message": "请输入链接、正文或调整要求",
+        }
+    fields = extract_ingest_fields(raw)
+    if not fields.get("url") and not fields.get("text"):
+        return {
+            "ok": False,
+            "error": "need_content",
+            "message": "还需要链接或正文才能入库；仅提要求不够",
+            "url": "",
+            "text": "",
+            "requirement": fields.get("requirement") or "",
+            "extra_urls": fields.get("extra_urls") or [],
+        }
+    return fields
 
 
 def message_suggests_new_ingest(message: str) -> bool:

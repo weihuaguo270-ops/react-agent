@@ -13,6 +13,117 @@ def _actor_from(body: dict | None, header_actor: str | None) -> str:
     return raw
 
 
+def handle_personal_agent_chat(
+    body: dict,
+    request_id: str,
+    *,
+    actor_id: str | None = None,
+) -> tuple[int, dict]:
+    """Workspace Agent chat via react_loop + personal KB tools (Live LLM)."""
+    import os
+
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        normalize_actor_id,
+        reset_actor_id,
+        set_actor_id,
+    )
+
+    actor = _actor_from(body, actor_id)
+    if not actor:
+        return error_response(
+            "forbidden_actor",
+            "X-Actor-Id is required",
+            request_id,
+            403,
+        )
+    try:
+        normalize_actor_id(actor)
+    except ValueError as exc:
+        return error_response("invalid_request", str(exc), request_id, 400)
+
+    message = body.get("message")
+    if not isinstance(message, str) or not message.strip():
+        return error_response(
+            "invalid_request",
+            "message is required",
+            request_id,
+            400,
+        )
+
+    use_llm = os.environ.get("REACT_AGENT_SERVER_LLM", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    if not use_llm:
+        return 200, {
+            "request_id": request_id,
+            "ok": False,
+            "needs_llm": True,
+            "actor_id": actor,
+            "answer": (
+                "当前未接入灵活对话所需的模型。"
+                "请配置 LLM，并设置 REACT_AGENT_SERVER_LLM=1 后再使用知识库助手。"
+                "若只想保存链接或正文，仍可用左侧「快速投递」生成可编辑草稿。"
+            ),
+            "reply": (
+                "当前未接入灵活对话所需的模型。"
+                "请配置 LLM，并设置 REACT_AGENT_SERVER_LLM=1 后再使用知识库助手。"
+                "若只想保存链接或正文，仍可用左侧「快速投递」生成可编辑草稿。"
+            ),
+            "mode": "needs_llm",
+            "citations": [],
+            "refused": False,
+            "agent_steps": [],
+        }
+
+    from react_agent.apps.docs_troubleshoot.personal_agent import TOOL_DEFINITIONS
+    from react_agent.harness.recorder import current_trajectory
+    from react_agent.react_loop import get_last_trajectory_steps, react_loop
+    from react_agent.tools import set_request_app
+
+    token = set_actor_id(actor)
+    set_request_app("personal_kb")
+    answer = ""
+    tid = ""
+    steps: list = []
+    try:
+        try:
+            answer = react_loop(
+                message.strip(),
+                max_steps=int(body.get("max_steps") or 8),
+                tool_defs=TOOL_DEFINITIONS,
+            )
+            if not isinstance(answer, str):
+                answer = str(answer.get("output", answer))
+            traj = current_trajectory()
+            if traj is not None:
+                tid = getattr(traj, "session_id", "") or getattr(traj, "id", "") or ""
+            steps = get_last_trajectory_steps() or []
+        except Exception as exc:  # noqa: BLE001
+            return error_response("internal_error", str(exc)[:300], request_id, 500)
+    finally:
+        reset_actor_id(token)
+        set_request_app("")
+
+    refused = "个人库中没有足够依据" in (answer or "")
+    return 200, {
+        "request_id": request_id,
+        "ok": True,
+        "needs_llm": False,
+        "actor_id": actor,
+        "answer": answer,
+        "reply": answer,
+        "mode": "llm",
+        "app": "personal_kb",
+        "trajectory_id": tid or request_id,
+        "agent_steps": steps,
+        "citations": [],
+        "refused": refused,
+    }
+
+
 def handle_personal_ingest(
     body: dict,
     request_id: str,

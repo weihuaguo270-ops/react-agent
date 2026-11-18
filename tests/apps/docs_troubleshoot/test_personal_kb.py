@@ -31,6 +31,80 @@ def _fixture_fetcher(url: str):
     return True, url, FIXTURE_HTML.read_bytes()
 
 
+def test_personal_agent_tools_ingest_update_search(personal_tmp):
+    from react_agent.apps.docs_troubleshoot.personal_agent import (
+        personal_ingest_bookmark,
+        personal_list_bookmarks,
+        personal_search_bookmarks,
+        personal_update_bookmark,
+    )
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        list_bookmarks,
+        reset_actor_id,
+        set_actor_id,
+    )
+
+    token = set_actor_id("employee-a")
+    try:
+        created = json.loads(
+            personal_ingest_bookmark(
+                text=(
+                    "安装指南：先安装依赖，再执行 migrate，最后启动服务。"
+                    "复习要点：依赖、migrate、启动。"
+                ),
+                requirement="重点摘安装步骤",
+            )
+        )
+        assert created["ok"] is True
+        bm_id = created["bookmark"]["id"]
+        listed = json.loads(personal_list_bookmarks())
+        assert listed["bookmark_count"] == 1
+        updated = json.loads(
+            personal_update_bookmark(bm_id, requirement="摘要再短一点")
+        )
+        assert updated["ok"] is True
+        assert updated["bookmark"]["id"] == bm_id
+        hit = json.loads(personal_search_bookmarks("安装步骤"))
+        assert isinstance(hit.get("results"), list)
+        assert hit["results"], "expected personal search hit"
+        assert len(list_bookmarks("employee-a")) == 1
+    finally:
+        reset_actor_id(token)
+
+
+def test_personal_agent_chat_requires_llm_flag(personal_tmp, monkeypatch):
+    from http.server import ThreadingHTTPServer
+    import threading
+    import time
+    import urllib.request
+
+    monkeypatch.delenv("REACT_AGENT_SERVER_LLM", raising=False)
+    from react_agent.server.app import AgentHandler
+    from react_agent.tools import enable_app_tools
+
+    enable_app_tools()
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), AgentHandler)
+    port = httpd.server_address[1]
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    time.sleep(0.1)
+    try:
+        req = urllib.request.Request(
+            f"http://127.0.0.1:{port}/v1/docs/personal/chat",
+            data=json.dumps({"message": "你是谁"}).encode("utf-8"),
+            headers={"Content-Type": "application/json", "X-Actor-Id": "chat-user"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+        assert body.get("needs_llm") is True
+        assert body.get("mode") == "needs_llm"
+        assert "REACT_AGENT_SERVER_LLM" in (body.get("reply") or "")
+        assert "已记住整理要求" not in (body.get("reply") or "")
+        assert "你是谁" not in (body.get("requirement") or "")
+    finally:
+        httpd.shutdown()
+
+
 def test_parse_ingest_message_splits_url_text_requirement():
     from react_agent.apps.docs_troubleshoot.personal_kb import (
         message_suggests_new_ingest,

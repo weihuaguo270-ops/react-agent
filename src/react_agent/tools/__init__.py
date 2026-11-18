@@ -171,6 +171,13 @@ def active_tools_app() -> str:
 
 
 def _app_registry_and_defs(app: str) -> tuple[dict[str, Any], list[dict]]:
+    if app in ("personal_kb", "personal"):
+        from react_agent.apps.docs_troubleshoot.personal_agent import (
+            TOOL_DEFINITIONS as PERSONAL_DEFS,
+            TOOL_REGISTRY as PERSONAL_REGISTRY,
+        )
+
+        return dict(PERSONAL_REGISTRY), list(PERSONAL_DEFS)
     if app not in ("docs_troubleshoot", "docs"):
         return {}, []
     from react_agent.apps.docs_troubleshoot import (
@@ -201,8 +208,14 @@ def _core_definitions() -> list[dict]:
 
 
 def get_registry(app: str | None = None) -> dict[str, Any]:
-    """返回 Core 工具 + 指定应用工具的合并视图（不改动全局对象）。"""
+    """返回 Core 工具 + 指定应用工具的合并视图（不改动全局对象）。
+
+    ``personal_kb`` 仅暴露个人库工具，避免 web/corpus 工具混入提问路径。
+    """
     target = (app if app is not None else active_tools_app()).strip().lower()
+    if target in ("personal_kb", "personal"):
+        extra, _ = _app_registry_and_defs(target)
+        return extra
     merged: dict[str, Any] = _core_registry()
     extra, _ = _app_registry_and_defs(target)
     merged.update(extra)
@@ -212,6 +225,9 @@ def get_registry(app: str | None = None) -> dict[str, Any]:
 def get_tool_definitions(app: str | None = None) -> list[dict]:
     """返回当前应用应有的工具描述列表（不读全局 TOOL_DEFINITIONS）。"""
     target = (app if app is not None else active_tools_app()).strip().lower()
+    if target in ("personal_kb", "personal"):
+        _, extra = _app_registry_and_defs(target)
+        return list(extra)
     defs = _core_definitions()
     names = {d["function"]["name"] for d in defs if "function" in d}
     _, extra = _app_registry_and_defs(target)
@@ -244,6 +260,14 @@ def _all_app_tool_names() -> set[str]:
         from react_agent.apps.docs_troubleshoot import TOOL_REGISTRY as DOCS_REG
 
         names.update(DOCS_REG)
+    except Exception:
+        pass
+    try:
+        from react_agent.apps.docs_troubleshoot.personal_agent import (
+            TOOL_REGISTRY as PERSONAL_REG,
+        )
+
+        names.update(PERSONAL_REG)
     except Exception:
         pass
     return names

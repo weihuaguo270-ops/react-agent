@@ -345,6 +345,16 @@ class AgentHandler(BaseHTTPRequestHandler):
                     body["actor_id"] = actor
                 self._send_sse(body, request_id)
                 return
+            if path in ("/v1/docs/personal/chat", "/v1/docs/personal/ingest/chat"):
+                from react_agent.server.handlers.personal_kb import (
+                    handle_personal_agent_chat,
+                )
+
+                status, payload = handle_personal_agent_chat(
+                    body, request_id, actor_id=self.headers.get("X-Actor-Id")
+                )
+                self._send(status, payload)
+                return
             if path == "/v1/docs/personal/ingest":
                 from react_agent.server.handlers.personal_kb import handle_personal_ingest
 
@@ -455,6 +465,7 @@ def serve(host: str = "127.0.0.1", port: int = 8765):
         print(gate_warning)
     print("[server] POST /v1/chat  app=default|docs_troubleshoot|expense")
     print("[server] POST /v1/docs/personal/ingest  GET /v1/docs/personal/bookmarks")
+    print("[server] POST /v1/docs/personal/chat  personal KB Agent (needs REACT_AGENT_SERVER_LLM=1)")
     print("[server] POST /v1/docs/personal/bookmarks/{id}  update title/summary/keywords")
     print("[server] POST/GET /v1/chat/stream  text/event-stream progress")
     print("[server] GET /v1/info  /health /ready  /  /ui")

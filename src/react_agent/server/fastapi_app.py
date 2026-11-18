@@ -499,6 +499,28 @@ def create_app(
         payload.setdefault("request_id", request_id)
         return JSONResponse(payload, status_code=status)
 
+    @api.post("/v1/docs/personal/chat")
+    @api.post("/v1/docs/personal/ingest/chat")
+    async def personal_kb_agent_chat(
+        request: Request,
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_agent_chat
+
+        request_id = _request_id(x_request_id)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        status, payload = await run_in_threadpool(
+            handle_personal_agent_chat, body, request_id, actor_id=x_actor_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
     @api.post("/v1/docs/personal/ingest")
     async def personal_kb_ingest(
         request: Request,
