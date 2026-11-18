@@ -45,7 +45,7 @@
     "operations/failure-regression-pipeline.md": "10c26e89cc2b43618d2401a3f7f98d0e57db4ab30c5a47ec8704c5839b776cee",
     "operations/failure-regression-pitch.md": "b7f100cc637dc96de17def92eece5567668e5eba0d3d87ed7386932d87647ff5",
     "operations/workflow-improvements.md": "c6d96e3bef6eb90e4a30d9e920eea6e6db6238e39a4cad97b0e121e149f7bc3e",
-    "personal-kb-ui-design.md": "a1cabf41c7db75cc6127a1f731be5ff33ee8d3085177537ccf23340b341ff324",
+    "personal-kb-ui-design.md": "e9c3d4a1d72dd5f64a6340f94d4207a654490f5e30a9d4e58c5afd882f3a0b4a",
     "reports/HARNESS_BUILD_SPEC_COMPLETE.md": "39836716c871dfb1e7d43833a4b2326a0e37dd48d469d80464cf2f82f9f8ff3e",
     "reports/HARNESS_PROGRESS_REPORT.md": "23e0c777eec3b79c464efcfab65a5864b0474c476bcce4723a164619905a466f",
     "reports/P5_CHECKLIST.md": "3296ab84b836357cf6de3729594cf5eac29b58643f55aabd0697764cefa7643a",
@@ -98,6 +98,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-11-18T12:32:28Z",
+  "generated_at": "2026-11-18T12:33:48Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }
