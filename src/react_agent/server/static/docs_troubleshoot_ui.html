@@ -6,23 +6,25 @@
 <title>个人知识库</title>
 <style>
 :root {
-  --bg: #f4f6f9;
-  --card: #fff;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --accent: #2563eb;
-  --accent-soft: #eff6ff;
-  --green-bg: #f0fdf4;
-  --green-border: #bbf7d0;
-  --green-text: #166534;
-  --red-bg: #fef2f2;
-  --red-border: #fecaca;
-  --red-text: #991b1b;
-  --yellow-bg: #fff7ed;
-  --yellow-border: #fed7aa;
-  --yellow-text: #9a3412;
-  --radius: 8px;
+  --bg: #faf9f7;
+  --card: #ffffff;
+  --border: #d4d1cc;
+  --text: #1a1816;
+  --muted: #736b5e;
+  --link: #3d5a80;
+  --hover: #2a4261;
+  --error-bg: #fef5f5;
+  --error-border: #e8c5c5;
+  --error-text: #8b3a3a;
+  --warn-bg: #fef8f0;
+  --warn-border: #e5d5b8;
+  --warn-text: #7a5e2f;
+  --info-bg: #f5f7fa;
+  --info-border: #cbd5e0;
+  --info-text: #4a5568;
+  --success-bg: #f0f5f0;
+  --success-border: #c3d8c3;
+  --success-text: #3a6b3a;
 }
 
 * {
@@ -32,12 +34,12 @@
 }
 
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* ===== Views ===== */
@@ -53,18 +55,17 @@ body {
 .identity-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 60px 20px;
 }
 
 .identity-header {
-  text-align: center;
   margin-bottom: 40px;
 }
 
 .identity-header h1 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 6px;
 }
 
 .identity-header p {
@@ -73,32 +74,30 @@ body {
 }
 
 .identity-panel {
-  max-width: 480px;
+  max-width: 420px;
   margin: 0 auto;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
+  padding: 28px;
 }
 
 .identity-panel h2 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 18px;
 }
 
 .identity-panel label {
   display: block;
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 13px;
+  color: var(--text);
   margin-bottom: 6px;
 }
 
 .identity-panel input {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 12px;
+  padding: 9px 11px;
   font: inherit;
   background: #fff;
   margin-bottom: 8px;
@@ -106,24 +105,22 @@ body {
 
 .identity-panel input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--link);
 }
 
 .identity-hint {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   line-height: 1.5;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .identity-error {
   display: none;
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  color: var(--red-text);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
   padding: 10px 12px;
-  border-radius: var(--radius);
   font-size: 12px;
   margin-bottom: 16px;
 }
@@ -133,27 +130,31 @@ body {
 }
 
 .btn {
-  border: none;
-  border-radius: var(--radius);
-  padding: 10px 16px;
+  border: 1px solid var(--border);
+  padding: 9px 16px;
   font: inherit;
-  font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.15s;
+  background: var(--card);
+  color: var(--text);
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: #fff;
+  background: var(--text);
+  color: var(--card);
+  border-color: var(--text);
   width: 100%;
+  font-weight: 500;
 }
 
 .btn-primary:hover {
-  filter: brightness(0.95);
+  background: #2a2725;
+  border-color: #2a2725;
 }
 
 .btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -161,7 +162,7 @@ body {
 .workspace-container {
   max-width: 1600px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 14px;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -173,52 +174,51 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 
 .topbar-left {
   font-size: 13px;
+  color: var(--muted);
 }
 
 .topbar-left strong {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text);
 }
 
 .topbar-right {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .btn-ghost {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   color: var(--muted);
-  padding: 6px 12px;
+  padding: 5px 10px;
   font-size: 12px;
-  border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .btn-ghost:hover {
-  background: var(--bg);
   color: var(--text);
+  border-color: var(--border);
 }
 
 /* Banner */
 .banner {
   display: none;
-  padding: 12px 16px;
-  border-radius: var(--radius);
+  padding: 11px 14px;
   font-size: 12px;
   line-height: 1.6;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  border: 1px solid;
 }
 
 .banner.show {
@@ -226,42 +226,34 @@ body {
 }
 
 .banner.warning {
-  background: var(--yellow-bg);
-  border: 1px solid var(--yellow-border);
-  color: var(--yellow-text);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+  color: var(--warn-text);
 }
 
 .banner.info {
-  background: var(--accent-soft);
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
-}
-
-.banner code {
-  background: rgba(0,0,0,0.05);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--info-text);
 }
 
 /* Three Column Layout */
 .workspace-main {
   display: grid;
-  grid-template-columns: 300px 1fr 420px;
-  gap: 12px;
+  grid-template-columns: 280px 1fr 380px;
+  gap: 10px;
   flex: 1;
   min-height: 0;
   overflow: hidden;
 }
 
 .workspace-main.no-detail {
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 280px 1fr;
 }
 
 @media (max-width: 1200px) {
   .workspace-main {
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 260px 1fr;
   }
 
   .detail-panel {
@@ -271,7 +263,7 @@ body {
     right: 0;
     bottom: 0;
     z-index: 100;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.2);
     display: none;
   }
 
@@ -283,12 +275,11 @@ body {
 
   .detail-content {
     background: var(--card);
-    max-width: 600px;
+    max-width: 680px;
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
-    border-radius: var(--radius);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    border: 1px solid var(--border);
   }
 }
 
@@ -299,26 +290,25 @@ body {
 
   .workspace-tabs {
     display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-    padding: 0 4px;
+    gap: 6px;
+    margin-bottom: 10px;
+    padding: 0 2px;
   }
 
   .tab-btn {
     flex: 1;
-    padding: 10px;
+    padding: 8px;
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     font-size: 13px;
     cursor: pointer;
     transition: all 0.15s;
   }
 
   .tab-btn.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
+    background: var(--text);
+    color: var(--card);
+    border-color: var(--text);
   }
 
   .docs-panel, .chat-panel {
@@ -334,7 +324,6 @@ body {
 .panel {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -342,7 +331,7 @@ body {
 }
 
 .panel-header {
-  padding: 14px 16px;
+  padding: 11px 14px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
@@ -351,45 +340,45 @@ body {
 }
 
 .panel-title {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .panel-count {
   font-size: 12px;
   color: var(--muted);
   margin-left: 6px;
+  font-weight: 400;
 }
 
 .panel-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .btn-icon {
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  width: 32px;
-  height: 32px;
+  border: 1px solid transparent;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--muted);
   transition: all 0.15s;
 }
 
 .btn-icon:hover {
-  background: var(--bg);
   color: var(--text);
+  border-color: var(--border);
 }
 
 .panel-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: 0;
 }
 
 /* ===== Documents Panel ===== */
@@ -397,116 +386,65 @@ body {
   grid-column: 1;
 }
 
-.doc-card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-  margin-bottom: 10px;
+.doc-item {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.1s;
 }
 
-.doc-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+.doc-item:hover {
+  background: #f7f6f5;
 }
 
-.doc-card.active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+.doc-item.active {
+  background: #f0efed;
 }
 
-.doc-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
+.doc-item:last-child {
+  border-bottom: none;
 }
 
-.doc-kind {
-  display: inline-block;
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: #f1f5f9;
-  color: #475569;
-  font-weight: 600;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.doc-title {
-  font-size: 14px;
-  font-weight: 600;
+.doc-item-title {
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1.4;
+  margin-bottom: 4px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.doc-summary {
-  font-size: 12px;
-  color: #334155;
-  line-height: 1.5;
-  margin-bottom: 8px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.doc-meta {
+.doc-item-meta {
   font-size: 11px;
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
-.doc-meta a {
-  color: var(--accent);
+.doc-item-meta a {
+  color: var(--link);
   text-decoration: none;
 }
 
-.doc-meta a:hover {
+.doc-item-meta a:hover {
   text-decoration: underline;
 }
 
 .docs-empty {
-  text-align: center;
   padding: 40px 20px;
+  text-align: center;
   color: var(--muted);
-}
-
-.docs-empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.docs-empty-title {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.docs-empty-guide {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
-  text-align: left;
-  max-width: 240px;
-  margin: 0 auto;
 }
 
 /* Ingest Panel */
 .ingest-panel {
   display: none;
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin: 12px;
-  margin-top: 0;
+  border-top: 1px solid var(--border);
+  padding: 14px;
 }
 
 .ingest-panel.show {
@@ -515,7 +453,7 @@ body {
 
 .ingest-panel h3 {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 12px;
 }
 
@@ -523,8 +461,8 @@ body {
   display: block;
   font-size: 11px;
   color: var(--muted);
-  margin-bottom: 6px;
-  margin-top: 12px;
+  margin-bottom: 5px;
+  margin-top: 10px;
 }
 
 .ingest-panel label:first-of-type {
@@ -535,27 +473,26 @@ body {
 .ingest-panel textarea {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 8px 10px;
+  padding: 7px 9px;
   font: inherit;
   font-size: 12px;
   background: #fff;
 }
 
 .ingest-panel textarea {
-  min-height: 80px;
+  min-height: 70px;
   resize: vertical;
 }
 
 .ingest-panel input:focus,
 .ingest-panel textarea:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--link);
 }
 
 .ingest-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin-top: 12px;
 }
 
@@ -563,30 +500,28 @@ body {
   background: #fff;
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 8px 14px;
+  padding: 7px 12px;
   font-size: 12px;
-  font-weight: 600;
-  border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .btn-secondary:hover {
-  background: var(--bg);
+  background: #f7f6f5;
 }
 
 .btn-sm {
-  padding: 6px 12px;
+  padding: 6px 11px;
   font-size: 12px;
 }
 
 .ingest-status {
   display: none;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: var(--radius);
+  margin-top: 10px;
+  padding: 9px 11px;
   font-size: 11px;
   line-height: 1.5;
+  border: 1px solid;
 }
 
 .ingest-status.show {
@@ -594,21 +529,21 @@ body {
 }
 
 .ingest-status.success {
-  background: var(--green-bg);
-  border: 1px solid var(--green-border);
-  color: var(--green-text);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success-text);
 }
 
 .ingest-status.error {
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  color: var(--red-text);
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error-text);
 }
 
 .ingest-status.loading {
-  background: var(--accent-soft);
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--info-text);
 }
 
 /* ===== Detail Panel ===== */
@@ -617,7 +552,7 @@ body {
 }
 
 .detail-toolbar {
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
@@ -627,48 +562,43 @@ body {
 
 .detail-toolbar-left {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
 .detail-toolbar-right {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .detail-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 24px 28px;
+  line-height: 1.7;
 }
 
 .detail-doc-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
 
-.detail-doc-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
 .detail-doc-title {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 10px;
 }
 
 .detail-doc-source {
   font-size: 12px;
   color: var(--muted);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .detail-doc-source a {
-  color: var(--accent);
+  color: var(--link);
   text-decoration: none;
 }
 
@@ -682,12 +612,12 @@ body {
 }
 
 .detail-section {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .detail-section-title {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -706,23 +636,23 @@ body {
 .detail-edit textarea {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 12px;
+  padding: 9px 11px;
   font: inherit;
   background: #fff;
   margin-bottom: 12px;
 }
 
 .detail-edit textarea {
-  min-height: 200px;
+  min-height: 180px;
   resize: vertical;
-  font-family: ui-monospace, monospace;
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
   font-size: 13px;
+  line-height: 1.6;
 }
 
 .detail-edit-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   padding-top: 12px;
 }
 
@@ -740,66 +670,65 @@ body {
 .chat-thread {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
-  background: #f8fafc;
+  padding: 14px;
+  background: #fcfcfb;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .chat-bubble {
-  max-width: 85%;
-  padding: 10px 14px;
-  border-radius: 12px;
+  max-width: 88%;
+  padding: 9px 12px;
   line-height: 1.6;
   font-size: 13px;
   white-space: pre-wrap;
   word-break: break-word;
+  border: 1px solid;
 }
 
 .chat-bubble.user {
   align-self: flex-end;
-  background: var(--accent);
-  color: #fff;
-  border-bottom-right-radius: 4px;
+  background: #f0efed;
+  border-color: #dddad5;
+  color: var(--text);
 }
 
 .chat-bubble.assistant {
   align-self: flex-start;
   background: #fff;
-  border: 1px solid var(--border);
+  border-color: var(--border);
   color: var(--text);
-  border-bottom-left-radius: 4px;
 }
 
 .chat-bubble.assistant.warn {
-  background: var(--yellow-bg);
-  border-color: var(--yellow-border);
-  color: var(--yellow-text);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+  color: var(--warn-text);
 }
 
 .chat-bubble.assistant.error {
-  background: var(--red-bg);
-  border-color: var(--red-border);
-  color: var(--red-text);
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error-text);
 }
 
 .chat-bubble.assistant.success {
-  background: var(--green-bg);
-  border-color: var(--green-border);
-  color: var(--green-text);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success-text);
 }
 
 .chat-bubble a {
-  color: inherit;
+  color: var(--link);
   text-decoration: underline;
 }
 
 .chat-trace {
-  margin-top: 10px;
-  padding: 8px 10px;
-  background: rgba(0,0,0,0.03);
-  border-radius: 6px;
+  margin-top: 8px;
+  padding: 7px 9px;
+  background: rgba(0,0,0,0.02);
+  border: 1px solid var(--border);
   font-size: 11px;
   color: var(--muted);
 }
@@ -807,19 +736,19 @@ body {
 .chat-trace summary {
   cursor: pointer;
   user-select: none;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .chat-trace-content {
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 7px;
+  padding-top: 7px;
   border-top: 1px solid var(--border);
   line-height: 1.5;
 }
 
 .chat-composer {
   border-top: 1px solid var(--border);
-  padding: 12px;
+  padding: 11px;
   background: var(--card);
   flex-shrink: 0;
 }
@@ -827,58 +756,38 @@ body {
 .chat-composer textarea {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 12px;
+  padding: 9px 11px;
   font: inherit;
   font-size: 13px;
   background: #fff;
   resize: none;
-  min-height: 80px;
-  max-height: 160px;
+  min-height: 70px;
+  max-height: 140px;
   overflow-y: auto;
 }
 
 .chat-composer textarea:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--link);
 }
 
 .chat-composer-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 7px;
 }
 
 .chat-disabled {
+  padding: 32px 20px;
   text-align: center;
-  padding: 40px 20px;
   color: var(--muted);
-}
-
-.chat-disabled-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.chat-disabled-title {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.chat-disabled-text {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
 }
 
-.chat-disabled-code {
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: #f1f5f9;
-  border-radius: 6px;
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
+.chat-disabled-title {
+  font-weight: 500;
+  margin-bottom: 10px;
   color: var(--text);
 }
 
@@ -888,7 +797,7 @@ body {
 }
 
 .loading {
-  opacity: 0.6;
+  opacity: 0.5;
   pointer-events: none;
 }
 </style>
@@ -900,24 +809,24 @@ body {
   <div class="identity-container">
     <div class="identity-header">
       <h1>个人知识库</h1>
-      <p>确认身份后进入工作区：一边是我的文档，一边是可对话的 Agent</p>
+      <p>请先确认员工身份</p>
     </div>
 
     <div class="identity-panel">
       <h2>确认身份</h2>
-      <label for="actor-input">员工身份（X-Actor-Id）</label>
+      <label for="actor-input">员工身份</label>
       <input
         id="actor-input"
         type="text"
-        placeholder="例如 employee-1"
+        placeholder="工号"
         autocomplete="off"
       >
       <div class="identity-hint">
-        身份对本次使用有效。不同身份的文档相互隔离，你只能看到自己的文档。
+        不同身份的文档相互隔离。
       </div>
       <div class="identity-error" id="identity-error"></div>
       <button class="btn btn-primary" id="identity-confirm">
-        确认身份，进入工作区
+        进入
       </button>
     </div>
   </div>
@@ -932,15 +841,14 @@ body {
         当前身份：<strong id="ws-actor-label">—</strong>
       </div>
       <div class="topbar-right">
-        <button class="btn-ghost" id="btn-refresh-docs">刷新文档</button>
+        <button class="btn-ghost" id="btn-refresh-docs">刷新</button>
         <button class="btn-ghost" id="btn-change-actor">更换身份</button>
       </div>
     </div>
 
     <!-- Banner -->
     <div class="banner warning" id="llm-banner">
-      当前未接入灵活对话与联网生成所需的模型。你仍可以把链接、PDF 或本地文件加入个人库，但无法使用 Agent 对话、改写摘要或联网生成文档。
-      <br>配置方法：设置 <code>REACT_AGENT_SERVER_LLM=1</code>
+      当前未接入对话模型，暂不能通过对话改写或生成文档。仍可加入链接、PDF 和文件。
     </div>
 
     <!-- Mobile Tabs (hidden on desktop) -->
@@ -956,35 +864,28 @@ body {
       <div class="panel docs-panel active">
         <div class="panel-header">
           <div>
-            <span class="panel-title">我的文档</span>
+            <span class="panel-title">文档</span>
             <span class="panel-count" id="doc-count">(0)</span>
           </div>
           <div class="panel-actions">
-            <button class="btn-icon" id="btn-add-doc" title="加入资料">+</button>
+            <button class="btn-icon" id="btn-add-doc" title="加入">+</button>
             <button class="btn-icon" id="btn-reload-docs" title="刷新">⟳</button>
           </div>
         </div>
         <div class="panel-body" id="docs-list">
           <div class="docs-empty">
-            <div class="docs-empty-icon">📄</div>
-            <div class="docs-empty-title">还没有文档</div>
-            <div class="docs-empty-guide">
-              开始加入第一份资料：<br>
-              • 点击上方「+」按钮<br>
-              • 在右侧对话中发送链接或粘贴正文<br>
-              • 直接拖拽文件到这里
-            </div>
+            还没有文档，可以加入链接、文件，或把内容粘贴进来。
           </div>
         </div>
 
         <!-- Ingest Panel -->
         <div class="ingest-panel" id="ingest-panel">
           <h3>加入资料</h3>
-          <label>https 链接（可选）</label>
-          <input type="text" id="ingest-url" placeholder="https://example.com/article">
+          <label>链接（可选）</label>
+          <input type="text" id="ingest-url" placeholder="https://">
 
           <label>或粘贴正文（可选）</label>
-          <textarea id="ingest-text" placeholder="文章或笔记内容"></textarea>
+          <textarea id="ingest-text" placeholder=""></textarea>
 
           <label>或选择本地文件（可选）</label>
           <input type="file" id="ingest-file" accept=".pdf,.txt,.md,.markdown,.html,.htm,.json">
@@ -993,7 +894,7 @@ body {
           <input type="text" id="ingest-requirement" placeholder="例如：重点摘安装步骤">
 
           <div class="ingest-actions">
-            <button class="btn btn-primary btn-sm" id="btn-ingest">加入个人库</button>
+            <button class="btn btn-secondary btn-sm" id="btn-ingest">加入</button>
             <button class="btn btn-secondary btn-sm" id="btn-cancel-ingest">取消</button>
           </div>
 
@@ -1005,7 +906,7 @@ body {
       <div class="panel detail-panel" id="detail-panel">
         <div class="detail-toolbar">
           <div class="detail-toolbar-left">
-            <button class="btn-ghost" id="btn-close-detail">← 返回列表</button>
+            <button class="btn-ghost" id="btn-close-detail">← 返回</button>
           </div>
           <div class="detail-toolbar-right">
             <button class="btn-ghost" id="btn-edit-doc">编辑</button>
@@ -1020,25 +921,22 @@ body {
       <!-- Right: Chat Panel -->
       <div class="panel chat-panel active">
         <div class="panel-header">
-          <div class="panel-title">知识库助手</div>
+          <div class="panel-title">对话</div>
           <div class="panel-actions">
-            <button class="btn-icon" id="btn-clear-chat" title="清空对话">🗑</button>
+            <button class="btn-icon" id="btn-clear-chat" title="清空">🗑</button>
           </div>
         </div>
         <div class="chat-thread" id="chat-thread">
-          <div class="chat-bubble assistant">
-            你好。我是你的知识库助手，可以帮你加入资料、改写摘要、回答问题，也可以检索网上信息生成文档。
-          </div>
         </div>
         <div class="chat-composer">
           <textarea
             id="chat-input"
-            placeholder="问我任何问题，或发送链接、粘贴正文..."
+            placeholder="输入说明，或粘贴链接、正文"
             rows="3"
           ></textarea>
           <div class="chat-composer-actions">
-            <button class="btn btn-primary btn-sm" id="btn-send-chat">发送</button>
-            <button class="btn btn-secondary btn-sm" id="btn-reset-chat">清空对话</button>
+            <button class="btn btn-secondary btn-sm" id="btn-send-chat">发送</button>
+            <button class="btn btn-secondary btn-sm" id="btn-reset-chat">清空</button>
           </div>
         </div>
       </div>
@@ -1053,8 +951,6 @@ let documents = [];
 let currentDocumentId = null;
 let chatHistory = [];
 let llmAvailable = true;
-
-const AGENT_WELCOME = '你好。我是你的知识库助手，可以帮你加入资料、改写摘要、回答问题，也可以检索网上信息生成文档。';
 
 // ===== Utility Functions =====
 function esc(s) {
@@ -1105,7 +1001,7 @@ function confirmIdentity() {
   }
 
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(raw)) {
-    showError('identity-error', '身份格式应为字母数字及 ._- 符号，不超过 64 字符');
+    showError('identity-error', '身份格式不正确');
     return;
   }
 
@@ -1120,7 +1016,7 @@ function confirmIdentity() {
 }
 
 function changeActor() {
-  if (!confirm('更换身份后当前对话将清空，文档库将切换到新身份。确认继续？')) {
+  if (!confirm('更换身份后当前对话将清空。确认继续？')) {
     return;
   }
 
@@ -1186,65 +1082,67 @@ function renderDocuments() {
   if (documents.length === 0) {
     container.innerHTML = `
       <div class="docs-empty">
-        <div class="docs-empty-icon">📄</div>
-        <div class="docs-empty-title">还没有文档</div>
-        <div class="docs-empty-guide">
-          开始加入第一份资料：<br>
-          • 点击上方「+」按钮<br>
-          • 在右侧对话中发送链接或粘贴正文<br>
-          • 直接拖拽文件到这里
-        </div>
+        还没有文档，可以加入链接、文件，或把内容粘贴进来。
       </div>
     `;
     return;
   }
 
   container.innerHTML = documents.map(doc => {
-    const kindLabel = {
-      url: '链接',
-      pdf: 'PDF',
-      file: '文件',
-      text: '正文',
-      agent: 'Agent'
-    }[doc.kind] || '文档';
-
     const source = doc.url
-      ? `<a href="${esc(doc.url)}" target="_blank" rel="noopener noreferrer">${esc(doc.url)}</a>`
-      : (doc.filename ? esc(doc.filename) : '无外部来源');
+      ? `<a href="${esc(doc.url)}" target="_blank" rel="noopener noreferrer">${esc(truncateUrl(doc.url))}</a>`
+      : (doc.filename ? esc(doc.filename) : '本地');
 
+    const date = formatDate(doc.updated_at || doc.ingested_at || '');
     const isActive = currentDocumentId === doc.id;
 
     return `
-      <div class="doc-card ${isActive ? 'active' : ''}" data-id="${esc(doc.id)}">
-        <div class="doc-header">
-          <span class="doc-kind">${esc(kindLabel)}</span>
-          <div class="doc-title">${esc(doc.title || '未命名文档')}</div>
-        </div>
-        <div class="doc-summary">${esc(doc.summary || '（无摘要）')}</div>
-        <div class="doc-meta">
-          ${source}<br>
-          ${esc(doc.updated_at || doc.ingested_at || '')} · ${esc(doc.char_count || 0)} 字
-          ${doc.draft ? ' · 草稿' : ''}
-        </div>
+      <div class="doc-item ${isActive ? 'active' : ''}" data-id="${esc(doc.id)}">
+        <div class="doc-item-title">${esc(doc.title || '未命名文档')}</div>
+        <div class="doc-item-meta">${source} · ${date}</div>
       </div>
     `;
   }).join('');
 
   // Attach click handlers
-  document.querySelectorAll('.doc-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const docId = card.dataset.id;
+  document.querySelectorAll('.doc-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const docId = item.dataset.id;
       openDocument(docId);
     });
   });
+}
+
+function truncateUrl(url) {
+  if (url.length <= 40) return url;
+  const parsed = new URL(url);
+  return parsed.hostname + (parsed.pathname.length > 20 ? parsed.pathname.slice(0, 20) + '...' : parsed.pathname);
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now - d;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return '刚刚';
+  if (diffMins < 60) return `${diffMins} 分钟前`;
+  if (diffHours < 24) return `${diffHours} 小时前`;
+  if (diffDays < 7) return `${diffDays} 天前`;
+
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  return `${month}/${day}`;
 }
 
 function renderDocumentsError(message) {
   const container = document.getElementById('docs-list');
   container.innerHTML = `
     <div class="docs-empty">
-      <div class="docs-empty-title">加载失败</div>
-      <div class="docs-empty-guide">${esc(message)}</div>
+      加载失败：${esc(message)}
     </div>
   `;
 }
@@ -1274,29 +1172,17 @@ async function openDocument(docId) {
 }
 
 function renderDocumentDetail(doc) {
-  const kindLabel = {
-    url: '链接',
-    pdf: 'PDF',
-    file: '文件',
-    text: '正文',
-    agent: 'Agent'
-  }[doc.kind] || '文档';
-
   const source = doc.url
     ? `<a href="${esc(doc.url)}" target="_blank" rel="noopener noreferrer">${esc(doc.url)}</a>`
-    : (doc.filename ? esc(doc.filename) : '无外部来源');
+    : (doc.filename ? esc(doc.filename) : '本地');
+
+  const dateInfo = doc.updated_at || doc.ingested_at || '';
 
   document.getElementById('detail-body').innerHTML = `
     <div class="detail-doc-header">
-      <div class="detail-doc-title-row">
-        <span class="doc-kind">${esc(kindLabel)}</span>
-        <h2 class="detail-doc-title">${esc(doc.title || '未命名文档')}</h2>
-      </div>
+      <h2 class="detail-doc-title">${esc(doc.title || '未命名文档')}</h2>
       <div class="detail-doc-source">来源：${source}</div>
-      <div class="detail-doc-info">
-        更新于 ${esc(doc.updated_at || doc.ingested_at || '')} · ${esc(doc.char_count || 0)} 字
-        ${doc.draft ? ' · 草稿' : ''}
-      </div>
+      <div class="detail-doc-info">${esc(dateInfo)} · ${esc(doc.char_count || 0)} 字</div>
     </div>
 
     <div class="detail-section">
@@ -1360,7 +1246,7 @@ function editDocument() {
       <textarea id="edit-body">${esc(doc.body || '')}</textarea>
 
       <div class="detail-edit-actions">
-        <button class="btn btn-primary btn-sm" id="btn-save-edit">保存更改</button>
+        <button class="btn btn-secondary btn-sm" id="btn-save-edit">保存</button>
         <button class="btn btn-secondary btn-sm" id="btn-cancel-edit">取消</button>
       </div>
     </div>
@@ -1393,7 +1279,7 @@ async function saveDocumentEdit() {
     await loadDocuments();
     await openDocument(currentDocumentId);
 
-    appendChatBubble('assistant', '已保存文档更改', 'success');
+    appendChatBubble('assistant', '已保存', 'success');
   } catch (e) {
     console.error('Failed to save document:', e);
     alert('保存失败：' + e.message);
@@ -1435,11 +1321,11 @@ async function ingestDocument() {
   const requirement = document.getElementById('ingest-requirement').value.trim();
 
   if (!url && !text && !file) {
-    showIngestStatus('请至少填写一项：链接、正文或本地文件', 'error');
+    showIngestStatus('请至少填写一项', 'error');
     return;
   }
 
-  showIngestStatus('正在加入文档...', 'loading');
+  showIngestStatus('正在加入...', 'loading');
 
   try {
     const payload = { url, text, requirement };
@@ -1464,13 +1350,13 @@ async function ingestDocument() {
     }
 
     const doc = data.document || data.bookmark || {};
-    showIngestStatus(`已加入文档「${doc.title || '未命名文档'}」`, 'success');
+    showIngestStatus(`已加入「${doc.title || '未命名文档'}」`, 'success');
 
     await loadDocuments();
 
     setTimeout(() => {
       hideIngestPanel();
-    }, 2000);
+    }, 1500);
   } catch (e) {
     console.error('Failed to ingest document:', e);
     showIngestStatus('加入失败：' + e.message, 'error');
@@ -1504,11 +1390,7 @@ function appendChatBubble(role, text, className = '') {
 
 function resetChat() {
   const thread = document.getElementById('chat-thread');
-  thread.innerHTML = `
-    <div class="chat-bubble assistant">
-      ${esc(AGENT_WELCOME)}
-    </div>
-  `;
+  thread.innerHTML = '';
   chatHistory = [];
   document.getElementById('chat-input').value = '';
 }
@@ -1517,16 +1399,8 @@ function showChatDisabled() {
   const thread = document.getElementById('chat-thread');
   thread.innerHTML = `
     <div class="chat-disabled">
-      <div class="chat-disabled-icon">🤖</div>
       <div class="chat-disabled-title">当前未接入对话模型</div>
-      <div class="chat-disabled-text">
-        无法进行灵活对话、改写摘要或联网生成文档。<br><br>
-        你仍可以通过左侧「+」按钮直接收入链接、PDF 或本地文件。
-      </div>
-      <div class="chat-disabled-code">
-        配置方法：设置环境变量<br>
-        REACT_AGENT_SERVER_LLM=1
-      </div>
+      暂不能通过对话改写或生成文档。仍可加入链接、PDF 和文件。
     </div>
   `;
 
@@ -1549,7 +1423,7 @@ async function sendChat() {
   const typing = document.createElement('div');
   typing.id = typingId;
   typing.className = 'chat-bubble assistant';
-  typing.textContent = '正在思考...';
+  typing.textContent = '...';
   thread.appendChild(typing);
   thread.scrollTop = thread.scrollHeight;
 
@@ -1583,7 +1457,7 @@ async function sendChat() {
     }
 
     // If document was added/updated, reload list
-    if (answer.includes('已加入文档') || answer.includes('已合并') || answer.includes('已保存')) {
+    if (answer.includes('已加入') || answer.includes('已合并') || answer.includes('已保存')) {
       await loadDocuments();
     }
   } catch (e) {
@@ -1636,7 +1510,7 @@ document.getElementById('chat-input').addEventListener('keypress', (e) => {
 // Auto-expand textarea
 document.getElementById('chat-input').addEventListener('input', function() {
   this.style.height = 'auto';
-  this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+  this.style.height = Math.min(this.scrollHeight, 140) + 'px';
 });
 
 // Focus on load
