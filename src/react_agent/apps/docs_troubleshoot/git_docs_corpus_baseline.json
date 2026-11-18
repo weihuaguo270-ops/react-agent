@@ -35,7 +35,7 @@
     "daily_smoke/VARIANCE.md": "9f9d32ff8ede65dd7d0d7a5d291f3c42aa7c5882a03b714ec4d598e5910be462",
     "features/application-direction.md": "38bfc7bab34ba6dd43a100585e1fd74b2a89457065aa2ba553fe5a3793a50fa8",
     "features/deploy.md": "8afa9dfb4102af77f6bdbb069eaea54a0cd77c36b330f4b44c07f312f2b0ee68",
-    "features/evidence-docs-troubleshoot.md": "fe369d1fba9237f0bd64366071ec0f568a2ef9cb3409d89e6786108ac7308e81",
+    "features/evidence-docs-troubleshoot.md": "36ae899065236f18bd94a27fc73a0e6da0237aef4976f321164b0dfd0a3ae165",
     "features/plugins.md": "2a3893e8ca5772ec47fe00c9705d82a569af8c51c2321019b26f22e6663c784f",
     "features/portability.md": "d0c37400b27755966ea78457d5675aa691a74ea19a7720fe823dc37d36f1bb4f",
     "features/sandbox-security.md": "fff4d505b75557505b1367f9fd7dcb32128d48c226b3838dac0405dd906003b5",
@@ -45,7 +45,7 @@
     "operations/failure-regression-pipeline.md": "10c26e89cc2b43618d2401a3f7f98d0e57db4ab30c5a47ec8704c5839b776cee",
     "operations/failure-regression-pitch.md": "b7f100cc637dc96de17def92eece5567668e5eba0d3d87ed7386932d87647ff5",
     "operations/workflow-improvements.md": "c6d96e3bef6eb90e4a30d9e920eea6e6db6238e39a4cad97b0e121e149f7bc3e",
-    "personal-kb-ui-design.md": "2c49f3a8f544bd276a42b0c9ec389a7f372a4ebb2eac5886f6958cf81008f93f",
+    "personal-kb-ui-design.md": "a1cabf41c7db75cc6127a1f731be5ff33ee8d3085177537ccf23340b341ff324",
     "reports/HARNESS_BUILD_SPEC_COMPLETE.md": "39836716c871dfb1e7d43833a4b2326a0e37dd48d469d80464cf2f82f9f8ff3e",
     "reports/HARNESS_PROGRESS_REPORT.md": "23e0c777eec3b79c464efcfab65a5864b0474c476bcce4723a164619905a466f",
     "reports/P5_CHECKLIST.md": "3296ab84b836357cf6de3729594cf5eac29b58643f55aabd0697764cefa7643a",
@@ -98,6 +98,6 @@
     "testing/frameworks/software-task-runner.md": "d49c429c594a4a85f746457fbd568c3f9505219a770c4b34829938c02020f5af",
     "testing/frameworks/step-watcher-baseline.md": "2f1f5ac3c5773029a80a65c01df257495e80c29d6bb8447ff880a9689531643d"
   },
-  "generated_at": "2026-11-18T09:35:55Z",
+  "generated_at": "2026-11-18T12:32:28Z",
   "note": "git-docs 评测语料基线；docs/ 变更后请复核 git_docs_cases.json 断言后刷新"
 }

@@ -37,6 +37,9 @@ MAX_UPLOAD_BYTES = 2_000_000
 _actor_override: ContextVar[str | None] = ContextVar(
     "docs_troubleshoot_actor_id", default=None
 )
+_focused_document: ContextVar[dict[str, Any] | None] = ContextVar(
+    "docs_troubleshoot_focused_document", default=None
+)
 _LOCKS: dict[str, threading.RLock] = {}
 _LOCKS_GUARD = threading.Lock()
 
@@ -99,6 +102,21 @@ def reset_actor_id(token: Token) -> None:
 def current_actor_id() -> str | None:
     """Return the request-scoped actor id, if any."""
     return _actor_override.get()
+
+
+def set_focused_document(document: dict[str, Any] | None) -> Token:
+    """Bind the document currently open in the workspace reader (if any)."""
+    return _focused_document.set(document)
+
+
+def reset_focused_document(token: Token) -> None:
+    """Restore previous focused-document binding."""
+    _focused_document.reset(token)
+
+
+def current_focused_document() -> dict[str, Any] | None:
+    """Return the request-scoped focused document, if any."""
+    return _focused_document.get()
 
 
 def normalize_actor_id(raw: str | None) -> str:

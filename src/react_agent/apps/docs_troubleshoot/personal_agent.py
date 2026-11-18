@@ -1,6 +1,6 @@
 """Personal knowledge-base agent: tools + system prompt for Live LLM ReAct.
 
-Used by the workspace chat when ``REACT_AGENT_SERVER_LLM=1``. Tool execution is
+Uses the shared llm_config / LLM_PROVIDER path via react_loop. Tool execution is
 scoped to the current actor's documents. Web search/fetch are only for
 research + draft generation when the user asks — never as a fallback for
 personal-library Q&A.
@@ -12,6 +12,7 @@ from typing import Any
 
 from react_agent.apps.docs_troubleshoot.personal_kb import (
     current_actor_id,
+    current_focused_document,
     get_document,
     ingest_document,
     list_documents,
@@ -22,7 +23,7 @@ from react_agent.apps.docs_troubleshoot.personal_kb import (
 )
 
 
-PERSONAL_KB_SYSTEM_PROMPT = """你是「个人知识库」助手，工作方式对齐文档与摘要工作区：一边是员工自己的文档，一边是可随时对话的通用 Agent。
+PERSONAL_KB_SYSTEM_PROMPT = """你是「个人知识库」助手，工作在文档库 + 正文阅读 + 对话的三分区工作区。
 
 身份与边界：
 - 你可以正常寒暄、自我介绍（例如回答「你是谁」「你好」）。寒暄不是入库要求，也不要要求用户必须先发链接。
@@ -31,8 +32,8 @@ PERSONAL_KB_SYSTEM_PROMPT = """你是「个人知识库」助手，工作方式�
 - 没有可用的网络检索时，说明无法联网生成，不要编造网页内容。
 
 工作方式：
-- 加入资料：personal_upsert_document（https 链接、粘贴正文、或用户已上传的文件正文；同一 URL 会合并更新）。
-- 改写摘要/正文：personal_update_document（按 requirement 或直接改字段）。
+- 用户发来链接、粘贴正文或整理要求时：用 personal_upsert_document 写入/合并（同一 URL 合并更新）；先讨论也可以只说话。
+- 改写摘要/正文：personal_update_document（按 requirement 或直接改字段）。若用户正在阅读某篇文档，优先针对该文档处理。
 - 浏览库：personal_list_documents；取单篇：personal_get_document。
 - 用户要求检索网上信息并生成文稿时：先 personal_web_search，需要正文再 personal_fetch_page，在对话里展示草稿；仅当用户明确要求保存到个人库时，调用 personal_save_generated_document。不要保存到用户本机路径。
 - 模型自己决定何时说话、何时调用工具；不要把每一句当成入库或状态机分类。
@@ -41,7 +42,20 @@ PERSONAL_KB_SYSTEM_PROMPT = """你是「个人知识库」助手，工作方式�
 
 def get_system_prompt(question: str = "") -> str:
     _ = question
-    return PERSONAL_KB_SYSTEM_PROMPT
+    prompt = PERSONAL_KB_SYSTEM_PROMPT
+    focused = current_focused_document()
+    if focused:
+        title = str(focused.get("title") or "未命名文档")
+        doc_id = str(focused.get("id") or "")
+        url = str(focused.get("url") or "")
+        filename = str(focused.get("filename") or "")
+        source = url or filename or "本地"
+        prompt += (
+            f"\n\n当前用户正在阅读文档「{title}」（id={doc_id}，来源：{source}）。"
+            "若用户要求改写、摘要、补充或提问该文，优先对该文档调用 "
+            "personal_get_document / personal_update_document。"
+        )
+    return prompt
 
 
 def _require_actor() -> str:

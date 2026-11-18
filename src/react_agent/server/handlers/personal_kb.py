@@ -19,14 +19,16 @@ def handle_personal_agent_chat(
     *,
     actor_id: str | None = None,
 ) -> tuple[int, dict]:
-    """Workspace Agent chat via react_loop + personal KB tools (Live LLM)."""
-    import os
-
+    """Workspace Agent chat via react_loop + personal KB tools (shared LLM config)."""
     from react_agent.apps.docs_troubleshoot.personal_kb import (
+        get_document,
         normalize_actor_id,
         reset_actor_id,
+        reset_focused_document,
         set_actor_id,
+        set_focused_document,
     )
+    from react_agent.llm import is_llm_configured
 
     actor = _actor_from(body, actor_id)
     if not actor:
@@ -50,22 +52,16 @@ def handle_personal_agent_chat(
             400,
         )
 
-    use_llm = os.environ.get("REACT_AGENT_SERVER_LLM", "").strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "on",
-    )
-    if not use_llm:
+    if not is_llm_configured():
         msg = (
-            "当前未接入灵活对话与联网生成所需的模型。"
-            "请配置 LLM，并设置 REACT_AGENT_SERVER_LLM=1 后再使用知识库助手。"
-            "若只想把已有链接、PDF 或文件收入个人库，仍可用左侧「加入资料」有限后备。"
+            "当前未接入对话模型，暂不能通过对话改写或生成文档。"
+            "仍可在左侧加入本地文件。"
         )
         return 200, {
             "request_id": request_id,
             "ok": False,
             "needs_llm": True,
+            "llm_available": False,
             "actor_id": actor,
             "answer": msg,
             "reply": msg,
@@ -80,7 +76,11 @@ def handle_personal_agent_chat(
     from react_agent.react_loop import get_last_trajectory_steps, react_loop
     from react_agent.tools import set_request_app
 
+    focused_id = str(body.get("document_id") or body.get("focused_document_id") or "").strip()
+    focused_doc = get_document(actor, focused_id) if focused_id else None
+
     token = set_actor_id(actor)
+    focus_token = set_focused_document(focused_doc)
     set_request_app("personal_kb")
     answer = ""
     tid = ""
@@ -101,6 +101,7 @@ def handle_personal_agent_chat(
         except Exception as exc:  # noqa: BLE001
             return error_response("internal_error", str(exc)[:300], request_id, 500)
     finally:
+        reset_focused_document(focus_token)
         reset_actor_id(token)
         set_request_app("")
 
@@ -109,6 +110,7 @@ def handle_personal_agent_chat(
         "request_id": request_id,
         "ok": True,
         "needs_llm": False,
+        "llm_available": True,
         "actor_id": actor,
         "answer": answer,
         "reply": answer,
@@ -118,6 +120,7 @@ def handle_personal_agent_chat(
         "agent_steps": steps,
         "citations": [],
         "refused": refused,
+        "focused_document_id": focused_id or "",
     }
 
 
@@ -269,6 +272,48 @@ def handle_personal_sources(
         "document_count": len(documents),
         "bookmark_count": len(documents),
         "source_count": len(documents),
+    }
+
+
+def handle_personal_get(
+    document_id: str,
+    request_id: str,
+    *,
+    actor_id: str | None = None,
+) -> tuple[int, dict[str, Any]]:
+    """Return one document including full body for the reader pane."""
+    from react_agent.apps.docs_troubleshoot.personal_kb import (
+        get_document,
+        normalize_actor_id,
+    )
+
+    actor = (actor_id or "").strip()
+    if not actor:
+        return error_response(
+            "forbidden_actor",
+            "X-Actor-Id is required",
+            request_id,
+            403,
+        )
+    try:
+        normalize_actor_id(actor)
+    except ValueError as exc:
+        return error_response("invalid_request", str(exc), request_id, 400)
+
+    did = (document_id or "").strip()
+    if not did:
+        return error_response("invalid_request", "document id required", request_id, 400)
+
+    doc = get_document(actor, did)
+    if not doc:
+        return error_response("not_found", "文档不存在", request_id, 404)
+
+    return 200, {
+        "request_id": request_id,
+        "ok": True,
+        "actor_id": actor,
+        "document": doc,
+        "bookmark": doc,
     }
 
 

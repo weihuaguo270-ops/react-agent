@@ -443,12 +443,17 @@ def create_app(
 
     @api.get("/v1/info")
     async def info(x_request_id: str | None = Header(default=None)) -> dict[str, Any]:
+        from react_agent.llm import is_llm_configured
+
         default_app = normalize_app(None)
+        llm_available = is_llm_configured()
         return {
             "product": "react-agent",
             "version": package_version(),
             "default_app": default_app,
             "applications": list_applications(),
+            "default_mode": "llm" if llm_available else "offline",
+            "llm_available": llm_available,
             "features": [
                 "business_skill_contracts",
                 "progressive_skill_context",
@@ -554,6 +559,22 @@ def create_app(
         request_id = _request_id(x_request_id)
         status, payload = await run_in_threadpool(
             handle_personal_sources, request_id, actor_id=x_actor_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
+    @api.get("/v1/docs/personal/bookmarks/{document_id}")
+    @api.get("/v1/docs/personal/documents/{document_id}")
+    async def personal_kb_get(
+        document_id: str,
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_get
+
+        request_id = _request_id(x_request_id)
+        status, payload = await run_in_threadpool(
+            handle_personal_get, document_id, request_id, actor_id=x_actor_id
         )
         payload.setdefault("request_id", request_id)
         return JSONResponse(payload, status_code=status)

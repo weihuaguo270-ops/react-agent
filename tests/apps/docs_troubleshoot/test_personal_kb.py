@@ -73,13 +73,14 @@ def test_personal_agent_tools_ingest_update_search(personal_tmp):
         reset_actor_id(token)
 
 
-def test_personal_agent_chat_requires_llm_flag(personal_tmp, monkeypatch):
+def test_personal_agent_chat_offline_without_model(personal_tmp, monkeypatch):
     from http.server import ThreadingHTTPServer
     import threading
     import time
     import urllib.request
 
-    monkeypatch.delenv("REACT_AGENT_SERVER_LLM", raising=False)
+    # CI / offline path: force shared LLM gate off without calling a real model.
+    monkeypatch.setenv("REACT_AGENT_SERVER_LLM", "0")
     from react_agent.server.app import AgentHandler
     from react_agent.tools import enable_app_tools
 
@@ -99,7 +100,8 @@ def test_personal_agent_chat_requires_llm_flag(personal_tmp, monkeypatch):
             body = json.loads(resp.read().decode("utf-8"))
         assert body.get("needs_llm") is True
         assert body.get("mode") == "needs_llm"
-        assert "REACT_AGENT_SERVER_LLM" in (body.get("reply") or "")
+        assert "未接入对话模型" in (body.get("reply") or "")
+        assert "REACT_AGENT_SERVER_LLM" not in (body.get("reply") or "")
         assert "已记住整理要求" not in (body.get("reply") or "")
         assert "你是谁" not in (body.get("requirement") or "")
     finally:
