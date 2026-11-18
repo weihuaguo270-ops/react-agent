@@ -1,7 +1,10 @@
-"""Resolve active documentation sources for 规范咨询 (docs_troubleshoot).
+"""Resolve active documentation sources for docs_troubleshoot.
 
 Sources are additive and request-scoped. Default remains the built-in corpus so
 existing golden / git_docs evaluations stay unchanged unless explicitly enabled.
+
+The UI personal-knowledge path uses ``personal`` and never falls back to the
+14-article demo corpus.
 """
 from __future__ import annotations
 
@@ -11,7 +14,10 @@ from typing import Iterable
 
 SOURCE_CORPUS = "corpus"
 SOURCE_CLAUDE_OFFICIAL = "claude_official"
-KNOWN_SOURCES = frozenset({SOURCE_CORPUS, SOURCE_CLAUDE_OFFICIAL})
+SOURCE_PERSONAL = "personal"
+KNOWN_SOURCES = frozenset(
+    {SOURCE_CORPUS, SOURCE_CLAUDE_OFFICIAL, SOURCE_PERSONAL}
+)
 
 _override: ContextVar[tuple[str, ...] | None] = ContextVar(
     "docs_troubleshoot_sources", default=None
@@ -32,6 +38,9 @@ def parse_docs_sources(raw: str | Iterable[str] | None) -> list[str]:
             continue
         if part not in out:
             out.append(part)
+    # Personal KB must not silently mix with the builtin demo corpus.
+    if SOURCE_PERSONAL in out:
+        return [SOURCE_PERSONAL]
     return out
 
 
@@ -70,6 +79,11 @@ def uses_corpus(sources: Iterable[str] | None = None) -> bool:
     return SOURCE_CORPUS in active
 
 
+def uses_personal(sources: Iterable[str] | None = None) -> bool:
+    active = list(sources) if sources is not None else resolve_docs_sources()
+    return SOURCE_PERSONAL in active
+
+
 def source_display_label(sources: Iterable[str] | None = None) -> str:
     active = list(sources) if sources is not None else resolve_docs_sources()
     labels = []
@@ -78,6 +92,8 @@ def source_display_label(sources: Iterable[str] | None = None) -> str:
             labels.append("Claude 官方文档 (platform.claude.com)")
         elif s == SOURCE_CORPUS:
             labels.append("内置演示语料")
+        elif s == SOURCE_PERSONAL:
+            labels.append("个人知识库")
         else:
             labels.append(s)
     return " + ".join(labels) if labels else "内置演示语料"

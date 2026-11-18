@@ -502,6 +502,28 @@ def get_default_llm(force_reload: bool = False) -> LLM:
     return LLM_DEFAULT
 
 
+def is_llm_configured() -> bool:
+    """True when the shared llm_config / LLM_PROVIDER setup can drive react_loop.
+
+    Ollama needs no API key. Other providers need a non-empty key from env or
+    llm_config.json. Callers that must stay offline (CI) should set
+    ``REACT_AGENT_SERVER_LLM=0`` explicitly — that forces False without
+    probing keys.
+    """
+    forced = os.environ.get("REACT_AGENT_SERVER_LLM", "").strip().lower()
+    if forced in ("0", "false", "no", "off"):
+        return False
+    try:
+        llm = get_default_llm()
+    except Exception:
+        return False
+    if llm is None:
+        return False
+    if getattr(llm, "provider_name", "") == "ollama":
+        return True
+    return bool((getattr(llm, "api_key", None) or "").strip())
+
+
 def list_providers() -> list[str]:
     """列出所有可用的 provider 名称"""
     return _list_providers()

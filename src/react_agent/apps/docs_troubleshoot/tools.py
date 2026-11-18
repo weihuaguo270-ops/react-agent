@@ -31,10 +31,11 @@ def _load_index():
 
 
 def search_docs(query: str, top_k: int = 3) -> str:
-    """Search configured docs sources (builtin corpus and/or Claude official)."""
+    """Search configured docs sources (personal KB, corpus, and/or Claude official)."""
     from react_agent.apps.docs_troubleshoot.docs_sources import (
         SOURCE_CLAUDE_OFFICIAL,
         SOURCE_CORPUS,
+        SOURCE_PERSONAL,
         resolve_docs_sources,
         source_display_label,
     )
@@ -45,6 +46,42 @@ def search_docs(query: str, top_k: int = 3) -> str:
         {"step": "docs_sources", "detail": source_display_label(sources)}
     ]
     errors: list[str] = []
+
+    # Personal mode is exclusive: never fall back to the 14-article demo corpus.
+    if SOURCE_PERSONAL in sources:
+        from react_agent.apps.docs_troubleshoot.personal_kb import (
+            current_actor_id,
+            search_personal,
+        )
+
+        actor = current_actor_id()
+        if not actor:
+            return json.dumps(
+                {
+                    "ok": False,
+                    "message": "actor_required",
+                    "error": "missing_actor",
+                    "hint": "个人知识库需要 X-Actor-Id。",
+                    "results": [],
+                    "docs_sources": sources,
+                    "retrieval_process": process
+                    + [{"step": "personal_kb", "detail": "missing actor_id"}],
+                },
+                ensure_ascii=False,
+            )
+        out = search_personal(actor, query, top_k=top_k)
+        process.extend(out.get("retrieval_process") or [])
+        return json.dumps(
+            {
+                "ok": bool(out.get("ok")),
+                "message": out.get("message"),
+                "hint": out.get("hint"),
+                "results": out.get("results") or [],
+                "docs_sources": sources,
+                "retrieval_process": process,
+            },
+            ensure_ascii=False,
+        )
 
     if SOURCE_CLAUDE_OFFICIAL in sources:
         from react_agent.apps.docs_troubleshoot.claude_docs import search_claude_official

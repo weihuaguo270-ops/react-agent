@@ -238,7 +238,10 @@ class AgentHandler(BaseHTTPRequestHandler):
             self.wfile.write(raw)
             return
         if path == "/v1/info":
+            from react_agent.llm import is_llm_configured
+
             default_app = normalize_app(None)
+            llm_available = is_llm_configured()
             self._send(
                 200,
                 {
@@ -251,9 +254,8 @@ class AgentHandler(BaseHTTPRequestHandler):
                     # 对外宣称的三支柱定位（见 docs/guide/APPLICATION_DIRECTION.md）；
                     # rag_research 目前没有绑定应用，故不出现在上面的 pillars 中
                     "declared_pillars": ["coding_execution", "support_automation", "rag_research"],
-                    "default_mode": "offline"
-                    if default_app != "default"
-                    else "llm",
+                    "default_mode": "llm" if llm_available else "offline",
+                    "llm_available": llm_available,
                     "features": [
                         "multi_app_chat",
                         "agent_loop_offline",
@@ -293,6 +295,29 @@ class AgentHandler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if path in (
+            "/v1/docs/personal/sources",
+            "/v1/docs/personal/bookmarks",
+            "/v1/docs/personal/documents",
+        ):
+            from react_agent.server.handlers.personal_kb import handle_personal_sources
+
+            status, payload = handle_personal_sources(
+                request_id, actor_id=self.headers.get("X-Actor-Id")
+            )
+            self._send(status, payload)
+            return
+        if path.startswith("/v1/docs/personal/bookmarks/") or path.startswith(
+            "/v1/docs/personal/documents/"
+        ):
+            from react_agent.server.handlers.personal_kb import handle_personal_get
+
+            document_id = path.rsplit("/", 1)[-1]
+            status, payload = handle_personal_get(
+                document_id, request_id, actor_id=self.headers.get("X-Actor-Id")
+            )
+            self._send(status, payload)
+            return
         status, payload = error_response("not_found", f"unknown path {path}", request_id, 404)
         self._send(status, payload)
 
@@ -317,6 +342,9 @@ class AgentHandler(BaseHTTPRequestHandler):
         try:
             if path == "/v1/chat":
                 self._prepare_request_context(body, request_id)
+                actor = (self.headers.get("X-Actor-Id") or "").strip()
+                if actor and not body.get("actor_id"):
+                    body["actor_id"] = actor
                 status, payload = handle_chat(body, request_id)
                 if "request_id" not in payload and "error" not in payload:
                     payload["request_id"] = request_id
@@ -329,7 +357,42 @@ class AgentHandler(BaseHTTPRequestHandler):
                 self._send(status, payload)
                 return
             if path == "/v1/chat/stream":
+                actor = (self.headers.get("X-Actor-Id") or "").strip()
+                if actor and not body.get("actor_id"):
+                    body["actor_id"] = actor
                 self._send_sse(body, request_id)
+                return
+            if path in ("/v1/docs/personal/chat", "/v1/docs/personal/ingest/chat"):
+                from react_agent.server.handlers.personal_kb import (
+                    handle_personal_agent_chat,
+                )
+
+                status, payload = handle_personal_agent_chat(
+                    body, request_id, actor_id=self.headers.get("X-Actor-Id")
+                )
+                self._send(status, payload)
+                return
+            if path == "/v1/docs/personal/ingest":
+                from react_agent.server.handlers.personal_kb import handle_personal_ingest
+
+                status, payload = handle_personal_ingest(
+                    body, request_id, actor_id=self.headers.get("X-Actor-Id")
+                )
+                self._send(status, payload)
+                return
+            if path.startswith("/v1/docs/personal/bookmarks/") or path.startswith(
+                "/v1/docs/personal/documents/"
+            ):
+                from react_agent.server.handlers.personal_kb import handle_personal_update
+
+                document_id = path.rsplit("/", 1)[-1]
+                status, payload = handle_personal_update(
+                    document_id,
+                    body,
+                    request_id,
+                    actor_id=self.headers.get("X-Actor-Id"),
+                )
+                self._send(status, payload)
                 return
             if path.startswith("/v1/approvals/"):
                 from react_agent.safety import approvals
@@ -420,6 +483,9 @@ def serve(host: str = "127.0.0.1", port: int = 8765):
     if gate_warning:
         print(gate_warning)
     print("[server] POST /v1/chat  app=default|docs_troubleshoot|expense")
+    print("[server] POST /v1/docs/personal/ingest  GET /v1/docs/personal/bookmarks")
+    print("[server] POST /v1/docs/personal/chat  personal KB Agent (shared llm_config)")
+    print("[server] POST /v1/docs/personal/bookmarks/{id}  update title/summary/keywords")
     print("[server] POST/GET /v1/chat/stream  text/event-stream progress")
     print("[server] GET /v1/info  /health /ready  /  /ui")
     print("[server] REACT_AGENT_SERVER_LLM=1 for app=default (general ReAct)")

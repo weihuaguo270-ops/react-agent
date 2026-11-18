@@ -33,7 +33,15 @@ def test_health_and_chat_offline():
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=5) as resp:
             assert resp.status == 200
             html = resp.read().decode("utf-8")
-        assert "规范咨询" in html
+        assert "个人知识库" in html
+        assert 'id="view-identity"' in html
+        assert 'id="view-workspace"' in html
+        assert 'id="docs-panel"' in html and 'id="detail-panel"' in html
+        assert 'id="chat-panel"' in html
+        assert "加入本地文件" in html
+        assert "/v1/docs/personal/chat" in html
+        assert "REACT_AGENT_SERVER_LLM" not in html
+        assert 'id="view-home"' not in html
 
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/info", timeout=5) as resp:
             info = json.loads(resp.read().decode("utf-8"))

@@ -443,12 +443,17 @@ def create_app(
 
     @api.get("/v1/info")
     async def info(x_request_id: str | None = Header(default=None)) -> dict[str, Any]:
+        from react_agent.llm import is_llm_configured
+
         default_app = normalize_app(None)
+        llm_available = is_llm_configured()
         return {
             "product": "react-agent",
             "version": package_version(),
             "default_app": default_app,
             "applications": list_applications(),
+            "default_mode": "llm" if llm_available else "offline",
+            "llm_available": llm_available,
             "features": [
                 "business_skill_contracts",
                 "progressive_skill_context",
@@ -487,10 +492,118 @@ def create_app(
     async def chat(
         request: ChatRequest,
         x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
     ) -> JSONResponse:
         request_id = _request_id(x_request_id)
+        body = request.model_dump(exclude_none=True)
+        if x_actor_id and x_actor_id.strip() and not body.get("actor_id"):
+            body["actor_id"] = x_actor_id.strip()
         status, payload = await run_in_threadpool(
-            _run_chat, chat_handler, request.model_dump(exclude_none=True), request_id
+            _run_chat, chat_handler, body, request_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
+    @api.post("/v1/docs/personal/chat")
+    @api.post("/v1/docs/personal/ingest/chat")
+    async def personal_kb_agent_chat(
+        request: Request,
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_agent_chat
+
+        request_id = _request_id(x_request_id)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        status, payload = await run_in_threadpool(
+            handle_personal_agent_chat, body, request_id, actor_id=x_actor_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
+    @api.post("/v1/docs/personal/ingest")
+    async def personal_kb_ingest(
+        request: Request,
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_ingest
+
+        request_id = _request_id(x_request_id)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        status, payload = await run_in_threadpool(
+            handle_personal_ingest, body, request_id, actor_id=x_actor_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
+    @api.get("/v1/docs/personal/sources")
+    @api.get("/v1/docs/personal/bookmarks")
+    @api.get("/v1/docs/personal/documents")
+    async def personal_kb_sources(
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_sources
+
+        request_id = _request_id(x_request_id)
+        status, payload = await run_in_threadpool(
+            handle_personal_sources, request_id, actor_id=x_actor_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
+    @api.get("/v1/docs/personal/bookmarks/{document_id}")
+    @api.get("/v1/docs/personal/documents/{document_id}")
+    async def personal_kb_get(
+        document_id: str,
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_get
+
+        request_id = _request_id(x_request_id)
+        status, payload = await run_in_threadpool(
+            handle_personal_get, document_id, request_id, actor_id=x_actor_id
+        )
+        payload.setdefault("request_id", request_id)
+        return JSONResponse(payload, status_code=status)
+
+    @api.patch("/v1/docs/personal/bookmarks/{document_id}")
+    @api.post("/v1/docs/personal/bookmarks/{document_id}")
+    @api.patch("/v1/docs/personal/documents/{document_id}")
+    @api.post("/v1/docs/personal/documents/{document_id}")
+    async def personal_kb_update(
+        document_id: str,
+        request: Request,
+        x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
+    ) -> JSONResponse:
+        from react_agent.server.handlers.personal_kb import handle_personal_update
+
+        request_id = _request_id(x_request_id)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        status, payload = await run_in_threadpool(
+            handle_personal_update,
+            document_id,
+            body,
+            request_id,
+            actor_id=x_actor_id,
         )
         payload.setdefault("request_id", request_id)
         return JSONResponse(payload, status_code=status)
@@ -499,9 +612,13 @@ def create_app(
     async def chat_stream(
         request: ChatRequest,
         x_request_id: str | None = Header(default=None),
+        x_actor_id: str | None = Header(default=None, alias="X-Actor-Id"),
     ) -> StreamingResponse:
+        body = request.model_dump(exclude_none=True)
+        if x_actor_id and x_actor_id.strip() and not body.get("actor_id"):
+            body["actor_id"] = x_actor_id.strip()
         return _sse_response(
-            chat_handler, request.model_dump(exclude_none=True), _request_id(x_request_id)
+            chat_handler, body, _request_id(x_request_id)
         )
 
     @api.get("/v1/chat/stream")

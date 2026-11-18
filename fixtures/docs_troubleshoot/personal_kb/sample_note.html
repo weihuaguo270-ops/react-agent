@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>个人笔记：限流与重试</title>
+</head>
+<body>
+  <article>
+    <h1>个人笔记：限流与重试</h1>
+    <p>当上游返回 429 时，客户端应指数退避重试，并优先尊重 Retry-After 响应头。</p>
+    <p>个人收藏约定：单用户突发流量不超过每分钟 60 次，超出后进入冷却窗口。</p>
+    <p>与企业内部制度无关：这是员工自己整理的排查备忘。</p>
+  </article>
+</body>
+</html>

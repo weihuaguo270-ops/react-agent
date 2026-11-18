@@ -26,8 +26,18 @@ def load_app_tools() -> tuple[dict, list]:
 
 def app_system_prompt(question: str = "") -> Optional[str]:
     """返回当前 App 针对问题生成的附加系统提示词。"""
-    if not is_docs_troubleshoot():
-        return None
-    from react_agent.apps.docs_troubleshoot.prompt import get_system_prompt
+    try:
+        from react_agent.tools import active_tools_app
 
-    return get_system_prompt(question)
+        scoped = (active_tools_app() or "").strip().lower()
+    except Exception:
+        scoped = ""
+    if scoped in ("personal_kb", "personal"):
+        from react_agent.apps.docs_troubleshoot.personal_agent import get_system_prompt
+
+        return get_system_prompt(question)
+    if scoped in ("docs_troubleshoot", "docs") or is_docs_troubleshoot():
+        from react_agent.apps.docs_troubleshoot.prompt import get_system_prompt
+
+        return get_system_prompt(question)
+    return None

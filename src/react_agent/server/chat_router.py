@@ -65,7 +65,7 @@ APPLICATIONS = [
     {
         "id": "docs_troubleshoot",
         "pillar": "support_automation",
-        "description": "证据化文档/Runbook 问答（引用/拒答/现场证据）",
+        "description": "个人知识库沉淀与取回（引用/拒答；评测仍可用内置语料）",
         "offline": True,
     },
     {

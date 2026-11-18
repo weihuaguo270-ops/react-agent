@@ -10,6 +10,11 @@ REFUSE_TEMPLATE = (
     "请补充报错原文、相关配置，或先调用 search_docs / lookup_api 检索后再答。"
 )
 
+PERSONAL_REFUSE_TEMPLATE = (
+    "个人库中没有足够依据，无法给出确定结论。"
+    "请先投递网页链接或粘贴文本入库，再针对个人收藏提问。"
+)
+
 REFUSE_QUERY_NEEDLES = (
     "股价",
     "涨到多少",
@@ -43,16 +48,19 @@ _SOURCE_PATTERNS = (
     re.compile(r"\(source:\s*[^)]+\)", re.I),
     re.compile(r"根据\s+\S+\.(md|json|ya?ml)", re.I),
     re.compile(r"https?://platform\.claude\.com/\S+", re.I),
+    re.compile(r"https?://\S+", re.I),
 )
 
+_HTTP_URL_RE = re.compile(r"https?://[^\s,，\]\)\"']+", re.I)
 _OFFICIAL_URL_RE = re.compile(r"https?://platform\.claude\.com/[^\s,，\]\)\"']+", re.I)
 _FILE_SOURCE_RE = re.compile(r"([a-zA-Z0-9_\-./]+\.(?:md|json|ya?ml|txt))", re.I)
 
 
 def _normalize_claimed_source(raw: str) -> str:
     text = (raw or "").strip().rstrip(".,;；。")
-    if _OFFICIAL_URL_RE.fullmatch(text) or text.startswith("https://platform.claude.com/"):
-        return text
+    if text.startswith("http://") or text.startswith("https://"):
+        m = _HTTP_URL_RE.match(text)
+        return m.group(0) if m else text
     m = _FILE_SOURCE_RE.search(text)
     if m:
         return m.group(1).split("/")[-1]
@@ -60,12 +68,12 @@ def _normalize_claimed_source(raw: str) -> str:
 
 
 def extract_claimed_sources(answer: str) -> list[str]:
-    """Extract sources from explicit citation markers (filenames or official URLs)."""
+    """Extract sources from explicit citation markers (filenames or http(s) URLs)."""
     found: list[str] = []
     patterns = (
         re.compile(
             r"(?:来源|根据|\[source|source)\s*[:：\]]?\s*"
-            r"(https?://platform\.claude\.com/[^\s,，\]\)]+|"
+            r"(https?://[^\s,，\]\)]+|"
             r"[a-zA-Z0-9_\-./]+\.(?:md|json|ya?ml|txt))",
             re.I,
         ),
@@ -78,7 +86,7 @@ def extract_claimed_sources(answer: str) -> list[str]:
     if tail:
         for part in re.split(r"[,，]", tail.group(1)):
             part = part.strip()
-            url = _OFFICIAL_URL_RE.search(part)
+            url = _HTTP_URL_RE.search(part)
             if url:
                 found.append(_normalize_claimed_source(url.group(0)))
                 continue
@@ -143,6 +151,18 @@ def verify_citations(
     }
 
 
+def active_refuse_template() -> str:
+    """Pick refuse copy for personal KB vs corpus/eval paths."""
+    try:
+        from react_agent.apps.docs_troubleshoot.docs_sources import uses_personal
+
+        if uses_personal():
+            return PERSONAL_REFUSE_TEMPLATE
+    except Exception:  # noqa: BLE001 — policy must not fail closed on import issues
+        pass
+    return REFUSE_TEMPLATE
+
+
 def enforce_answer_policy(
     answer: str,
     *,
@@ -150,13 +170,14 @@ def enforce_answer_policy(
     must_refuse: bool = False,
 ) -> dict[str, Any]:
     """Apply refuse-if-uncited (or force refuse) policy to a draft answer."""
+    refuse_template = active_refuse_template()
     if must_refuse:
         text = (answer or "").strip()
         # Keep an explicit upstream refuse reason (e.g. Claude official fetch failure).
         refuse_answer = (
             text
-            if text.startswith("依据不足")
-            else REFUSE_TEMPLATE
+            if text.startswith("依据不足") or text.startswith("个人库中没有足够依据")
+            else refuse_template
         )
         return {
             "answer": refuse_answer,
@@ -167,7 +188,7 @@ def enforce_answer_policy(
     check = verify_citations(answer, allowed_sources=allowed_sources)
     if not check["ok"]:
         return {
-            "answer": REFUSE_TEMPLATE,
+            "answer": refuse_template,
             "refused": True,
             "policy": check["reason"],
             "citations": [],

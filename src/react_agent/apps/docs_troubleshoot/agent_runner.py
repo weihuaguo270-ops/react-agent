@@ -187,15 +187,19 @@ def decide_next_tool(state: dict[str, Any], called: set[str]) -> Optional[tuple[
 
     from react_agent.apps.docs_troubleshoot.docs_sources import (
         SOURCE_CLAUDE_OFFICIAL,
+        SOURCE_PERSONAL,
         resolve_docs_sources,
     )
 
-    needs_search = _needs_internal_retrieval(state) or (
-        SOURCE_CLAUDE_OFFICIAL in resolve_docs_sources(state.get("docs_sources"))
+    active_sources = resolve_docs_sources(state.get("docs_sources"))
+    needs_search = (
+        _needs_internal_retrieval(state)
+        or SOURCE_CLAUDE_OFFICIAL in active_sources
+        or SOURCE_PERSONAL in active_sources
     )
     if needs_search and "search_docs" not in called:
         return (
-            "Retrieve configured docs sources (corpus and/or Claude official) before stating any fact.",
+            "Retrieve configured docs sources before stating any fact.",
             "search_docs",
             {"query": query, "top_k": 3},
         )
@@ -233,6 +237,7 @@ def run_docs_agent(initial: Optional[dict[str, Any]] = None) -> AgentRunResult:
     set_request_app("docs_troubleshoot")
 
     from react_agent.apps.docs_troubleshoot.docs_sources import (
+        SOURCE_PERSONAL,
         reset_docs_sources,
         resolve_docs_sources,
         set_docs_sources,
@@ -256,7 +261,14 @@ def run_docs_agent(initial: Optional[dict[str, Any]] = None) -> AgentRunResult:
     try:
         if should_refuse_query(query):
             state["need_refuse"] = True
-            state["draft"] = "依据不足，无法给出确定结论。"
+            if SOURCE_PERSONAL in sources:
+                from react_agent.apps.docs_troubleshoot.policy import (
+                    PERSONAL_REFUSE_TEMPLATE,
+                )
+
+                state["draft"] = PERSONAL_REFUSE_TEMPLATE
+            else:
+                state["draft"] = "依据不足，无法给出确定结论。"
             state["allowed_sources"] = []
         else:
             state["evidence_bundle"] = collect_evidence_bundle(state)
@@ -294,21 +306,30 @@ def run_docs_agent(initial: Optional[dict[str, Any]] = None) -> AgentRunResult:
                 state.get("api_hits"),
                 evidence_bundle=state.get("evidence_bundle"),
             )
-            # Surface official-docs failure explicitly (do not look like a silent corpus miss).
+            # Surface official-docs / personal-kb failure explicitly (no silent corpus fallback).
             search_hits = state.get("search_hits") or {}
             if (
                 isinstance(search_hits, dict)
                 and not search_hits.get("ok")
-                and search_hits.get("message", "").startswith("claude_official")
                 and draft_out.get("need_refuse")
             ):
-                hint = search_hits.get("hint") or search_hits.get("error") or ""
-                draft_out["draft"] = (
-                    "依据不足，无法给出确定结论。"
-                    f" Claude 官方文档检索失败：{hint}"
-                    if hint
-                    else "依据不足，无法给出确定结论。Claude 官方文档检索失败。"
-                )
+                msg = str(search_hits.get("message") or "")
+                hint = str(search_hits.get("hint") or search_hits.get("error") or "")
+                if msg.startswith("claude_official"):
+                    draft_out["draft"] = (
+                        "依据不足，无法给出确定结论。"
+                        f" Claude 官方文档检索失败：{hint}"
+                        if hint
+                        else "依据不足，无法给出确定结论。Claude 官方文档检索失败。"
+                    )
+                elif msg in ("personal_kb_empty", "no_hits", "actor_required") or (
+                    SOURCE_PERSONAL in resolve_docs_sources(state.get("docs_sources"))
+                ):
+                    from react_agent.apps.docs_troubleshoot.policy import (
+                        PERSONAL_REFUSE_TEMPLATE,
+                    )
+
+                    draft_out["draft"] = hint or PERSONAL_REFUSE_TEMPLATE
             state.update(draft_out)
 
             # Agent must verify citations before release (same contract as LLM react_loop prompt).
@@ -339,11 +360,22 @@ def run_docs_agent(initial: Optional[dict[str, Any]] = None) -> AgentRunResult:
                 check = {"ok": False}
             if not check.get("ok") and not state.get("need_refuse"):
                 state["need_refuse"] = True
-                if "依据不足" not in draft:
-                    state["draft"] = (
-                        "依据不足，无法给出确定结论。"
-                        "请补充报错原文、相关配置，或先检索文档后再答。"
+                if "依据不足" not in draft and "个人库中没有足够依据" not in draft:
+                    from react_agent.apps.docs_troubleshoot.docs_sources import (
+                        SOURCE_PERSONAL,
+                        resolve_docs_sources as _resolve,
                     )
+                    from react_agent.apps.docs_troubleshoot.policy import (
+                        PERSONAL_REFUSE_TEMPLATE,
+                    )
+
+                    if SOURCE_PERSONAL in _resolve(state.get("docs_sources")):
+                        state["draft"] = PERSONAL_REFUSE_TEMPLATE
+                    else:
+                        state["draft"] = (
+                            "依据不足，无法给出确定结论。"
+                            "请补充报错原文、相关配置，或先检索文档后再答。"
+                        )
 
         from react_agent.apps.docs_troubleshoot.policy import enforce_answer_policy
         from react_agent.apps.docs_troubleshoot.diagnosis import build_diagnosis
